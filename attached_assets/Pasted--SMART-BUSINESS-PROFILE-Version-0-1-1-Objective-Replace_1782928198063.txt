@@ -1,0 +1,141 @@
+# SMART BUSINESS PROFILE
+## Version 0.1
+
+### 1. Objective
+
+Replace the default React + Vite starter page with the first branded screen for the Smart Business Profile application.
+
+This is the first product version.
+
+Keep the implementation as small and reliable as possible.
+
+---
+
+### 2. Existing Project Context
+
+- The project already exists.
+- It was imported from GitHub.
+- React + Vite + TypeScript is already configured.
+- Tailwind CSS is already available in the project. If it is not already configured, configure it using the official Tailwind setup for Vite before styling.
+- Do NOT create a new project.
+- Do NOT restructure the application.
+
+---
+
+### 3. Build
+
+Create a single responsive page containing:
+
+- Application title:
+  Smart Business Profile
+
+- Subtitle:
+  Create and share a professional digital business profile in minutes.
+
+- One primary button:
+  Create Business Profile
+
+Center all content vertically and horizontally.
+
+Use a modern, clean, minimal design.
+
+---
+
+### 4. Files Allowed to Modify
+
+Modify only files necessary for this version.
+
+Examples include:
+
+- src/App.tsx
+- src/App.css
+- src/index.css
+
+If Tailwind configuration is genuinely required, modify only the necessary Tailwind configuration files.
+
+Do not modify unrelated files.
+
+---
+
+### 5. Files NOT to Modify
+
+Do NOT modify:
+
+- package.json (unless Tailwind must be installed)
+- tsconfig files
+- Git configuration
+- README
+- Project structure
+
+---
+
+### 6. Do NOT Build
+
+Do NOT add:
+
+- Forms
+- Routing
+- Local Storage
+- Authentication
+- Database
+- Backend
+- QR Codes
+- Business Cards
+- Dashboard
+- Analytics
+- Upload functionality
+- Navigation bar
+- Footer
+- Additional pages
+
+---
+
+### 7. UI Requirements
+
+- Responsive
+- Mobile friendly
+- Minimal
+- Professional
+- Accessible
+- Modern spacing
+- Rounded button
+- Clean typography
+
+---
+
+### 8. Acceptance Criteria
+
+The application successfully runs.
+
+The default Vite page is completely removed.
+
+The page shows:
+
+- Smart Business Profile
+- Subtitle
+- Create Business Profile button
+
+No console errors.
+
+Responsive on desktop and mobile.
+
+---
+
+### 9. Final Report
+
+After implementation provide:
+
+- Files modified
+- Summary of changes
+- Any dependencies added
+- Any configuration changes
+
+---
+
+### 10. STOP after completion
+
+Do not implement Version 0.2.
+
+Do not add extra features.
+
+Stop after completing Version 0.1.
