@@ -1,0 +1,251 @@
+# SMART BUSINESS PROFILE
+## Version 0.4 – Interactive Business Profile Preview
+
+## Standard Instructions
+
+Before making any changes:
+
+1. Read the existing codebase completely.
+2. Preserve the current project architecture.
+3. Reuse existing components whenever possible.
+4. Preserve the current design language.
+5. Modify only the files required for this version.
+6. Do not refactor unrelated code.
+7. Do not add extra features.
+8. Do not anticipate future versions.
+9. If a new dependency is required, explain why and install only that dependency.
+10. Stop immediately after completing Version 0.4.
+
+---
+
+## 1. Objective
+
+Build Version 0.4 of Smart Business Profile.
+
+The objective is to generate a live Business Profile Preview using the information entered in the form.
+
+This version introduces the first functional digital business profile.
+
+Do NOT save any data permanently.
+
+---
+
+## 2. Existing Project Context
+
+Current project includes:
+
+- React + Vite + TypeScript
+- Tailwind CSS
+- React Router
+- Landing Page
+- Business Profile Form
+- Form Validation
+
+Continue working inside the existing GitHub-imported project.
+
+Do not restructure the repository.
+
+---
+
+## 3. Build
+
+When the user successfully clicks **Continue**, navigate to a new route:
+
+/profile-preview
+
+Pass the entered form data using React state (or another temporary in-memory method).
+
+Do NOT use:
+
+- Local Storage
+- Session Storage
+- Database
+- Backend
+
+---
+
+## 4. Business Profile Preview
+
+Create a professional responsive digital business card.
+
+Display:
+
+- Business Logo (if selected)
+- Business Name
+- Owner Name
+- Business Category
+- Phone Number
+- WhatsApp Number
+- Email Address
+- Website
+- Address
+- About Business
+
+If optional fields are empty, simply hide them.
+
+---
+
+## 5. Action Buttons
+
+Display three action buttons:
+
+- Call
+- WhatsApp
+- Email
+
+Buttons should use:
+
+Phone:
+
+tel:number
+
+WhatsApp:
+
+https://wa.me/
+
+Email:
+
+mailto:
+
+Buttons should work using the entered information.
+
+---
+
+## 6. Navigation
+
+Provide:
+
+Back to Edit
+
+This should return to the Create Profile page while preserving the current form data during this navigation session.
+
+Do NOT use Local Storage.
+
+---
+
+## 7. Logo
+
+Display the selected logo using a temporary object URL.
+
+Do NOT upload the image.
+
+Do NOT save the image.
+
+If no logo is selected:
+
+Display a simple circular placeholder containing the first letter of the Business Name.
+
+---
+
+## 8. Files Allowed to Modify
+
+Modify only files required for this version.
+
+Examples:
+
+- Create Profile page
+- Profile Preview page
+- Routing
+- Reusable Card component (if helpful)
+
+Do not modify unrelated configuration files.
+
+---
+
+## 9. Files NOT to Modify
+
+Do not modify unless absolutely necessary:
+
+- vite.config.ts
+- TypeScript configuration
+- ESLint configuration
+- Replit configuration
+- Git configuration
+- README
+
+---
+
+## 10. Do NOT Build
+
+Do NOT implement:
+
+- Local Storage
+- Database
+- Authentication
+- Backend
+- Dashboard
+- Analytics
+- QR Code
+- AI Assistant
+- Payments
+- Theme Switching
+- Share Button
+- Download
+- PDF Export
+
+Keep this version focused only on generating the preview.
+
+---
+
+## 11. UI Requirements
+
+Use Tailwind CSS.
+
+The preview should resemble a modern digital visiting card.
+
+Requirements:
+
+- Professional layout
+- Mobile responsive
+- Rounded card
+- Clean typography
+- Soft shadows
+- Consistent spacing
+- Modern buttons
+- Attractive color palette
+- Maximum card width approximately 450–500px
+
+---
+
+## 12. Acceptance Criteria
+
+Version 0.4 is complete only if:
+
+- Continue navigates to the preview page.
+- Entered information is displayed correctly.
+- Logo preview works.
+- Placeholder works if no logo is selected.
+- Call button works.
+- WhatsApp button works.
+- Email button works.
+- Back to Edit returns to the form with the entered data still available.
+- No console errors.
+- Responsive on desktop and mobile.
+
+---
+
+## 13. Final Report
+
+Provide:
+
+1. Files modified.
+2. Components created.
+3. Routes created.
+4. How form data is transferred.
+5. Confirmation that no unnecessary dependencies were added.
+6. Confirmation that all acceptance criteria passed.
+
+---
+
+## 14. STOP after completion
+
+Do NOT implement Version 0.5.
+
+Do NOT save data permanently.
+
+Do NOT add Local Storage.
+
+Do NOT anticipate future features.
+
+Stop immediately after completing Version 0.4.
+```

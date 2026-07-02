@@ -1,18 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-
-interface FormData {
-  businessName: string
-  ownerName: string
-  businessCategory: string
-  phoneNumber: string
-  whatsappNumber: string
-  email: string
-  website: string
-  address: string
-  aboutBusiness: string
-  logo: File | null
-}
+import type { FormData } from '../App.tsx'
 
 interface FormErrors {
   businessName?: string
@@ -31,25 +19,18 @@ const categories = [
   'Other',
 ]
 
-function CreateProfilePage() {
+interface CreateProfilePageProps {
+  formData: FormData
+  onChangeFormData: (data: FormData) => void
+}
+
+function CreateProfilePage({ formData, onChangeFormData }: CreateProfilePageProps) {
   const navigate = useNavigate()
 
-  const [formData, setFormData] = useState<FormData>({
-    businessName: '',
-    ownerName: '',
-    businessCategory: '',
-    phoneNumber: '',
-    whatsappNumber: '',
-    email: '',
-    website: '',
-    address: '',
-    aboutBusiness: '',
-    logo: null,
-  })
-
   const [errors, setErrors] = useState<FormErrors>({})
-  const [logoFileName, setLogoFileName] = useState<string>('')
-  const [success, setSuccess] = useState(false)
+  const [logoFileName, setLogoFileName] = useState<string>(
+    formData.logo ? formData.logo.name : ''
+  )
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -57,18 +38,16 @@ function CreateProfilePage() {
     >
   ) => {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    onChangeFormData({ ...formData, [name]: value })
     if (errors[name as keyof FormErrors]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }))
     }
-    if (success) setSuccess(false)
   }
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null
-    setFormData((prev) => ({ ...prev, logo: file }))
+    onChangeFormData({ ...formData, logo: file })
     setLogoFileName(file ? file.name : '')
-    if (success) setSuccess(false)
   }
 
   const validate = (): boolean => {
@@ -95,7 +74,7 @@ function CreateProfilePage() {
     e.preventDefault()
     const isValid = validate()
     if (isValid) {
-      setSuccess(true)
+      navigate('/profile-preview')
     }
   }
 
@@ -111,13 +90,6 @@ function CreateProfilePage() {
         <p className="text-gray-500 mb-8">
           Fill in your business details below.
         </p>
-
-        {success && (
-          <div className="mb-6 p-4 rounded-lg bg-green-50 border border-green-200 text-green-800 text-sm">
-            Form validation successful. Business Profile Preview will be
-            implemented in Version 0.4.
-          </div>
-        )}
 
         <form onSubmit={handleContinue} className="space-y-8">
           {/* Basic Information */}
