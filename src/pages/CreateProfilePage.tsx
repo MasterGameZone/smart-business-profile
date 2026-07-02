@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { FormData } from '../App.tsx'
+import { useProfile } from '../context/ProfileContext.tsx'
 
 interface FormErrors {
   businessName?: string
@@ -19,17 +19,13 @@ const categories = [
   'Other',
 ]
 
-interface CreateProfilePageProps {
-  formData: FormData
-  onChangeFormData: (data: FormData) => void
-}
-
-function CreateProfilePage({ formData, onChangeFormData }: CreateProfilePageProps) {
+function CreateProfilePage() {
   const navigate = useNavigate()
+  const { profileData, setProfileData } = useProfile()
 
   const [errors, setErrors] = useState<FormErrors>({})
   const [logoFileName, setLogoFileName] = useState<string>(
-    formData.logo ? formData.logo.name : ''
+    profileData.logo ? profileData.logo.name : ''
   )
 
   const handleChange = (
@@ -38,7 +34,7 @@ function CreateProfilePage({ formData, onChangeFormData }: CreateProfilePageProp
     >
   ) => {
     const { name, value } = e.target
-    onChangeFormData({ ...formData, [name]: value })
+    setProfileData({ ...profileData, [name]: value })
     if (errors[name as keyof FormErrors]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }))
     }
@@ -46,23 +42,23 @@ function CreateProfilePage({ formData, onChangeFormData }: CreateProfilePageProp
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null
-    onChangeFormData({ ...formData, logo: file })
+    setProfileData({ ...profileData, logo: file })
     setLogoFileName(file ? file.name : '')
   }
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {}
 
-    if (!formData.businessName.trim()) {
+    if (!profileData.businessName.trim()) {
       newErrors.businessName = 'Business Name is required'
     }
-    if (!formData.ownerName.trim()) {
+    if (!profileData.ownerName.trim()) {
       newErrors.ownerName = 'Owner Name is required'
     }
-    if (!formData.businessCategory) {
+    if (!profileData.businessCategory) {
       newErrors.businessCategory = 'Business Category is required'
     }
-    if (!formData.phoneNumber.trim()) {
+    if (!profileData.phoneNumber.trim()) {
       newErrors.phoneNumber = 'Phone Number is required'
     }
 
@@ -109,7 +105,7 @@ function CreateProfilePage({ formData, onChangeFormData }: CreateProfilePageProp
                   type="text"
                   id="businessName"
                   name="businessName"
-                  value={formData.businessName}
+                  value={profileData.businessName}
                   onChange={handleChange}
                   className={`${inputBase} ${
                     errors.businessName ? 'border-red-500' : 'border-gray-300'
@@ -133,7 +129,7 @@ function CreateProfilePage({ formData, onChangeFormData }: CreateProfilePageProp
                   type="text"
                   id="ownerName"
                   name="ownerName"
-                  value={formData.ownerName}
+                  value={profileData.ownerName}
                   onChange={handleChange}
                   className={`${inputBase} ${
                     errors.ownerName ? 'border-red-500' : 'border-gray-300'
@@ -156,7 +152,7 @@ function CreateProfilePage({ formData, onChangeFormData }: CreateProfilePageProp
                 <select
                   id="businessCategory"
                   name="businessCategory"
-                  value={formData.businessCategory}
+                  value={profileData.businessCategory}
                   onChange={handleChange}
                   className={`${inputBase} bg-white ${
                     errors.businessCategory
@@ -197,7 +193,7 @@ function CreateProfilePage({ formData, onChangeFormData }: CreateProfilePageProp
                   type="tel"
                   id="phoneNumber"
                   name="phoneNumber"
-                  value={formData.phoneNumber}
+                  value={profileData.phoneNumber}
                   onChange={handleChange}
                   className={`${inputBase} ${
                     errors.phoneNumber ? 'border-red-500' : 'border-gray-300'
@@ -221,7 +217,7 @@ function CreateProfilePage({ formData, onChangeFormData }: CreateProfilePageProp
                   type="tel"
                   id="whatsappNumber"
                   name="whatsappNumber"
-                  value={formData.whatsappNumber}
+                  value={profileData.whatsappNumber}
                   onChange={handleChange}
                   className={`${inputBase} border-gray-300`}
                 />
@@ -238,7 +234,7 @@ function CreateProfilePage({ formData, onChangeFormData }: CreateProfilePageProp
                   type="email"
                   id="email"
                   name="email"
-                  value={formData.email}
+                  value={profileData.email}
                   onChange={handleChange}
                   className={`${inputBase} border-gray-300`}
                 />
@@ -255,7 +251,7 @@ function CreateProfilePage({ formData, onChangeFormData }: CreateProfilePageProp
                   type="url"
                   id="website"
                   name="website"
-                  value={formData.website}
+                  value={profileData.website}
                   onChange={handleChange}
                   className={`${inputBase} border-gray-300`}
                 />
@@ -280,7 +276,7 @@ function CreateProfilePage({ formData, onChangeFormData }: CreateProfilePageProp
                   id="address"
                   name="address"
                   rows={3}
-                  value={formData.address}
+                  value={profileData.address}
                   onChange={handleChange}
                   className={`${inputBase} border-gray-300 resize-none`}
                 />
@@ -297,7 +293,7 @@ function CreateProfilePage({ formData, onChangeFormData }: CreateProfilePageProp
                   id="aboutBusiness"
                   name="aboutBusiness"
                   rows={4}
-                  value={formData.aboutBusiness}
+                  value={profileData.aboutBusiness}
                   onChange={handleChange}
                   className={`${inputBase} border-gray-300 resize-none`}
                 />

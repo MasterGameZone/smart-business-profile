@@ -1,0 +1,206 @@
+# SMART BUSINESS PROFILE
+## Version 0.5 – Session-Based Business Profile
+
+## Standard Instructions
+
+Before making any changes:
+
+1. Read the existing codebase completely.
+2. Preserve the current project architecture.
+3. Reuse existing components whenever possible.
+4. Preserve the current design language.
+5. Modify only the files required for this version.
+6. Do not refactor unrelated code.
+7. Do not add extra features.
+8. Do not anticipate future versions.
+9. If a new dependency is required, explain why and install only that dependency.
+10. Stop immediately after completing Version 0.5.
+
+---
+
+## 1. Objective
+
+Improve the Business Profile Preview by allowing users to freely move between the form and the preview without losing their entered information during the current browser session.
+
+This version improves usability only.
+
+Do NOT permanently save data.
+
+---
+
+## 2. Existing Project Context
+
+Current project includes:
+
+- React + Vite + TypeScript
+- Tailwind CSS
+- React Router
+- Landing Page
+- Business Profile Form
+- Business Profile Preview
+- Temporary in-memory data transfer
+
+Continue working inside the existing project.
+
+Do not restructure the application.
+
+---
+
+## 3. Build
+
+Improve the current data flow.
+
+The user should be able to:
+
+- Fill the form.
+- Open the preview.
+- Return to Edit.
+- Change any field.
+- Open the preview again.
+
+All entered information should remain available throughout the current browser session.
+
+Do NOT use:
+
+- Local Storage
+- Session Storage
+- Database
+- Backend
+
+Use React Context (or another appropriate in-memory global state solution) to manage the profile data.
+
+---
+
+## 4. Navigation
+
+Ensure these flows work correctly:
+
+Home
+
+↓
+
+Create Profile
+
+↓
+
+Profile Preview
+
+↓
+
+Back to Edit
+
+↓
+
+Profile Preview
+
+The entered information must remain available during this navigation.
+
+---
+
+## 5. Refactoring
+
+If appropriate, introduce:
+
+- ProfileContext
+- ProfileProvider
+
+Keep the implementation clean and simple.
+
+Avoid unnecessary abstraction.
+
+---
+
+## 6. Files Allowed to Modify
+
+Modify only files required for this version.
+
+Examples:
+
+- Routing
+- Context
+- Form
+- Preview
+
+Do not modify unrelated configuration files.
+
+---
+
+## 7. Files NOT to Modify
+
+Do not modify unless absolutely necessary:
+
+- vite.config.ts
+- TypeScript configuration
+- ESLint configuration
+- Replit configuration
+- Git configuration
+- README
+
+---
+
+## 8. Do NOT Build
+
+Do NOT implement:
+
+- Local Storage
+- Session Storage
+- Database
+- Authentication
+- Backend
+- QR Code
+- Analytics
+- Dashboard
+- AI
+- Share Button
+- Download
+- Export
+- Theme Switching
+
+---
+
+## 9. UI Requirements
+
+The UI should remain visually identical to Version 0.4.
+
+No redesign.
+
+Focus only on improving state management.
+
+---
+
+## 10. Acceptance Criteria
+
+Version 0.5 is complete only if:
+
+- Form data persists while navigating between pages.
+- Users can edit data multiple times.
+- Preview updates correctly after edits.
+- No page reloads occur.
+- No console errors.
+- No unnecessary dependencies are installed.
+
+---
+
+## 11. Final Report
+
+Provide:
+
+1. Files modified.
+2. Components or Context created.
+3. How state is managed.
+4. Confirmation that no unnecessary dependencies were added.
+5. Confirmation that all acceptance criteria passed.
+
+---
+
+## 12. STOP after completion
+
+Do NOT implement Version 0.6.
+
+Do NOT add Local Storage.
+
+Do NOT add backend functionality.
+
+Do NOT anticipate future features.
+
+Stop immediately after completing Version 0.5.
