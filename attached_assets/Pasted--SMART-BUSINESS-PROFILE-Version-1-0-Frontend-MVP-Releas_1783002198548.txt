@@ -1,0 +1,288 @@
+# SMART BUSINESS PROFILE
+## Version 1.0 – Frontend MVP Release
+
+## Standard Instructions
+
+Before making any changes:
+
+1. Read the existing codebase completely.
+2. Preserve the current project architecture.
+3. Reuse existing components whenever possible.
+4. Preserve the current design language.
+5. Modify only the files required for this version.
+6. Do not refactor unrelated code.
+7. Do not add extra features.
+8. Do not anticipate Version 2.0.
+9. If a new dependency is required, explain why and install only that dependency.
+10. Stop immediately after completing Version 1.0.
+
+---
+
+## 1. Objective
+
+Build Version 1.0 of Smart Business Profile.
+
+This is the first complete frontend MVP.
+
+The objective is to polish the entire application into a professional, production-ready frontend experience.
+
+Do NOT introduce any backend or authentication.
+
+---
+
+## 2. Existing Project Context
+
+Current project includes:
+
+- React + Vite + TypeScript
+- Tailwind CSS
+- React Router
+- Landing Page
+- Business Profile Form
+- Profile Preview
+- Local Storage
+- QR Code
+- Share Profile
+- Professional UI
+- Public Business Profile Layout
+
+Continue working inside the existing project.
+
+Do not restructure the repository.
+
+---
+
+## 3. Build
+
+Polish and complete the frontend.
+
+Focus on:
+
+- UI consistency
+- Better UX
+- Visual polish
+- Accessibility
+- Error handling
+- Responsive improvements
+
+No new major features.
+
+---
+
+## 4. Landing Page
+
+Improve the landing page.
+
+Include:
+
+- Better hero section
+- Better spacing
+- Improved typography
+- Small feature highlights
+
+Examples:
+
+- Digital Business Card
+- QR Code
+- Easy Sharing
+- Mobile Friendly
+
+Keep the page minimal.
+
+---
+
+## 5. Business Profile Form
+
+Improve the form.
+
+Add:
+
+- Better validation messages
+- Proper placeholders
+- Better field spacing
+- Loading state for Continue button
+- Better error styling
+
+Do not change functionality.
+
+---
+
+## 6. Profile Preview
+
+Improve overall presentation.
+
+Ensure:
+
+- Better visual hierarchy
+- Consistent spacing
+- Better section titles
+- Better empty states
+- Better responsive layout
+
+Keep all existing features working.
+
+---
+
+## 7. Navigation
+
+Improve navigation experience.
+
+Examples:
+
+- Better page transitions
+- Consistent back navigation
+- Prevent accidental form loss where appropriate
+
+Do not add authentication.
+
+---
+
+## 8. Error Handling
+
+Improve user experience.
+
+Handle gracefully:
+
+- Missing logo
+- Missing optional fields
+- Invalid URLs
+- Missing contact information
+
+Never show broken UI.
+
+---
+
+## 9. Accessibility
+
+Review the entire application.
+
+Ensure:
+
+- Proper labels
+- Semantic HTML
+- Keyboard navigation
+- Focus indicators
+- Color contrast
+- Accessible buttons
+
+---
+
+## 10. Responsive Design
+
+Review every page.
+
+Optimize for:
+
+- Mobile
+- Tablet
+- Desktop
+
+Ensure:
+
+- No overflow
+- Consistent spacing
+- Readable typography
+
+---
+
+## 11. Performance
+
+Review the project.
+
+Improve where appropriate:
+
+- Component reuse
+- Avoid duplicate code
+- Avoid unnecessary renders
+
+Do not perform large architectural refactors.
+
+---
+
+## 12. Files Allowed to Modify
+
+Modify only files required for this version.
+
+Do not create unnecessary folders.
+
+---
+
+## 13. Files NOT to Modify
+
+Do not modify unless absolutely necessary:
+
+- vite.config.ts
+- TypeScript configuration
+- ESLint configuration
+- Replit configuration
+- Git configuration
+- README
+
+---
+
+## 14. Do NOT Build
+
+Do NOT implement:
+
+- Backend
+- Database
+- Authentication
+- Supabase
+- Firebase
+- AI Assistant
+- Payments
+- Subscription Plans
+- Visitor Analytics
+- Business Directory
+- Search
+- Multi-user Accounts
+- Admin Dashboard
+
+Version 1.0 is the completion of the frontend MVP only.
+
+---
+
+## 15. Acceptance Criteria
+
+Version 1.0 is complete only if:
+
+- Landing page is polished.
+- Form is polished.
+- Preview page is polished.
+- QR Code works.
+- Share works.
+- Local Storage works.
+- Responsive on all devices.
+- No console errors.
+- No broken links.
+- No unnecessary dependencies.
+- UI appears production-ready.
+
+---
+
+## 16. Final Report
+
+Provide:
+
+1. Files modified.
+2. Components updated.
+3. UI improvements made.
+4. Accessibility improvements.
+5. Performance improvements.
+6. Dependencies added (if any).
+7. Confirmation that all acceptance criteria passed.
+8. Confirmation that no unnecessary files or folders were created.
+
+---
+
+## 17. STOP after completion
+
+This completes Version 1.0.
+
+Do NOT begin Version 2.0.
+
+Do NOT implement backend functionality.
+
+Do NOT anticipate future features.
+
+Stop immediately after completing Version 1.0.
