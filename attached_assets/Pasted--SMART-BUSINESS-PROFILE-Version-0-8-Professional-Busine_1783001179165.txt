@@ -1,0 +1,274 @@
+# SMART BUSINESS PROFILE
+## Version 0.8 – Professional Business Profile UI
+
+## Standard Instructions
+
+Before making any changes:
+
+1. Read the existing codebase completely.
+2. Preserve the current project architecture.
+3. Reuse existing components whenever possible.
+4. Preserve the current design language.
+5. Modify only the files required for this version.
+6. Do not refactor unrelated code.
+7. Do not add extra features.
+8. Do not anticipate future versions.
+9. If a new dependency is required, explain why and install only that dependency.
+10. Stop immediately after completing Version 0.8.
+
+---
+
+## 1. Objective
+
+Build Version 0.8 of Smart Business Profile.
+
+The objective is to transform the existing profile preview into a professional digital business profile that users would actually be comfortable sharing.
+
+This version focuses entirely on UI/UX improvements.
+
+Do NOT change application logic.
+
+---
+
+## 2. Existing Project Context
+
+Current project includes:
+
+- React + Vite + TypeScript
+- Tailwind CSS
+- React Router
+- Business Profile Form
+- Profile Preview
+- React Context
+- Local Storage
+- QR Code
+- Share Profile
+
+Continue working inside the existing project.
+
+Do not restructure the repository.
+
+---
+
+## 3. Build
+
+Redesign the Business Profile Preview into a premium-looking digital visiting card.
+
+Improve:
+
+- Visual hierarchy
+- Typography
+- Spacing
+- Colors
+- Card layout
+- Information grouping
+
+The page should look polished and modern.
+
+---
+
+## 4. Business Header
+
+Create a professional header section.
+
+Include:
+
+- Logo or placeholder
+- Business Name
+- Business Category
+- Owner Name
+
+The logo should appear inside a circular container.
+
+If no logo exists, display the first letter of the Business Name.
+
+---
+
+## 5. Information Sections
+
+Organize information into clearly separated sections.
+
+Examples:
+
+### Contact
+
+- Phone
+- WhatsApp
+- Email
+- Website
+
+### Business Details
+
+- Address
+- About Business
+
+Hide empty optional fields automatically.
+
+---
+
+## 6. Action Buttons
+
+Improve the existing buttons.
+
+Display them consistently:
+
+- Call
+- WhatsApp
+- Email
+- Share Profile
+
+Buttons should have:
+
+- Icons
+- Equal width
+- Responsive layout
+- Hover effects
+- Disabled state if data is unavailable
+
+---
+
+## 7. QR Code Section
+
+Improve the QR section.
+
+Include:
+
+- Card container
+- Heading
+- Description
+- Centered QR Code
+- Better spacing
+
+Keep the existing functionality unchanged.
+
+---
+
+## 8. Responsive Design
+
+Optimize for:
+
+- Mobile
+- Tablet
+- Desktop
+
+The profile should look excellent on all screen sizes.
+
+Avoid horizontal scrolling.
+
+---
+
+## 9. Accessibility
+
+Improve accessibility.
+
+Ensure:
+
+- Proper labels
+- Semantic HTML
+- Keyboard navigation
+- Visible focus states
+- Sufficient color contrast
+
+---
+
+## 10. Animation
+
+Add subtle animations only.
+
+Examples:
+
+- Button hover
+- Card fade-in
+- Smooth transitions
+
+Avoid heavy animation libraries.
+
+Use Tailwind transitions or simple CSS.
+
+---
+
+## 11. Files Allowed to Modify
+
+Modify only files necessary for this version.
+
+Examples:
+
+- Profile Preview page
+- Shared UI components
+- Styling
+
+Do not modify unrelated configuration files.
+
+---
+
+## 12. Files NOT to Modify
+
+Do not modify unless absolutely necessary:
+
+- vite.config.ts
+- TypeScript configuration
+- ESLint configuration
+- Replit configuration
+- Git configuration
+- README
+
+---
+
+## 13. Do NOT Build
+
+Do NOT implement:
+
+- Backend
+- Authentication
+- Database
+- Analytics
+- Dashboard
+- AI
+- Subscription
+- Visitor Tracking
+- Public Business Directory
+- Payments
+
+Focus only on UI improvements.
+
+---
+
+## 14. Acceptance Criteria
+
+Version 0.8 is complete only if:
+
+- Profile Preview has a professional modern design.
+- Existing functionality remains unchanged.
+- QR Code still works.
+- Share button still works.
+- Call, WhatsApp and Email buttons still work.
+- Responsive on all devices.
+- No console errors.
+- No unnecessary dependencies installed.
+
+---
+
+## 15. Final Report
+
+Provide:
+
+1. Files modified.
+2. Components updated.
+3. Any dependencies added.
+4. UI improvements made.
+5. Confirmation that all acceptance criteria passed.
+6. Confirmation that no unnecessary files or folders were created.
+
+---
+
+## 16. STOP after completion
+
+Do NOT implement Version 0.9.
+
+Do NOT modify application logic.
+
+Do NOT add backend functionality.
+
+Do NOT anticipate future features.
+
+Stop immediately after completing Version 0.8.
