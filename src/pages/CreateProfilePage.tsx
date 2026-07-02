@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useProfile } from '../context/ProfileContext.tsx'
 
@@ -21,12 +21,13 @@ const categories = [
 
 function CreateProfilePage() {
   const navigate = useNavigate()
-  const { profileData, setProfileData } = useProfile()
+  const { profileData, setProfileData, clearProfile } = useProfile()
 
   const [errors, setErrors] = useState<FormErrors>({})
   const [logoFileName, setLogoFileName] = useState<string>(
     profileData.logo ? profileData.logo.name : ''
   )
+  const logoInputRef = useRef<HTMLInputElement>(null)
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -71,6 +72,19 @@ function CreateProfilePage() {
     const isValid = validate()
     if (isValid) {
       navigate('/profile-preview')
+    }
+  }
+
+  const handleClearForm = () => {
+    const confirmed = window.confirm(
+      'Are you sure you want to clear all form data? This cannot be undone.'
+    )
+    if (!confirmed) return
+    clearProfile()
+    setErrors({})
+    setLogoFileName('')
+    if (logoInputRef.current) {
+      logoInputRef.current.value = ''
     }
   }
 
@@ -314,6 +328,7 @@ function CreateProfilePage() {
                 Business Logo
               </label>
               <input
+                ref={logoInputRef}
                 type="file"
                 id="logo"
                 name="logo"
@@ -343,6 +358,13 @@ function CreateProfilePage() {
               className="inline-flex items-center justify-center px-8 py-3 text-base font-medium text-gray-700 bg-gray-100 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
             >
               Back to Home
+            </button>
+            <button
+              type="button"
+              onClick={handleClearForm}
+              className="inline-flex items-center justify-center px-8 py-3 text-base font-medium text-red-600 bg-red-50 rounded-full hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
+            >
+              Clear Form
             </button>
           </div>
         </form>

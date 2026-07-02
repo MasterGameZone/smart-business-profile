@@ -1,0 +1,204 @@
+# SMART BUSINESS PROFILE
+## Version 0.6 – Persistent Local Storage
+
+## Standard Instructions
+
+Before making any changes:
+
+1. Read the existing codebase completely.
+2. Preserve the current project architecture.
+3. Reuse existing components whenever possible.
+4. Preserve the current design language.
+5. Modify only the files required for this version.
+6. Do not refactor unrelated code.
+7. Do not add extra features.
+8. Do not anticipate future versions.
+9. If a new dependency is required, explain why and install only that dependency.
+10. Stop immediately after completing Version 0.6.
+
+---
+
+## 1. Objective
+
+Build Version 0.6 of Smart Business Profile.
+
+The objective is to automatically save the business profile locally so users do not lose their information after refreshing the browser.
+
+This is the first persistence feature.
+
+Use browser Local Storage only.
+
+---
+
+## 2. Existing Project Context
+
+Current project includes:
+
+- React + Vite + TypeScript
+- Tailwind CSS
+- React Router
+- Business Profile Form
+- Business Profile Preview
+- React Context for temporary state
+
+Continue working inside the existing project.
+
+Do not restructure the application.
+
+---
+
+## 3. Build
+
+Implement automatic Local Storage support.
+
+When the user updates any field:
+
+- Save the latest profile data automatically.
+- Restore the data automatically when the application loads.
+- The user should not have to click a Save button.
+
+The restore should happen silently.
+
+---
+
+## 4. Logo Handling
+
+Do NOT attempt to store image files in Local Storage.
+
+Store every field except the uploaded logo.
+
+When the application reloads:
+
+- Restore all text information.
+- Clear the logo field.
+- Display the default placeholder until the user selects the logo again.
+
+---
+
+## 5. Clear Data
+
+Add a new button on the Create Profile page:
+
+Clear Form
+
+When clicked:
+
+- Clear all form fields.
+- Remove the saved Local Storage data.
+- Reset the Context state.
+- Navigate back to the empty form.
+
+Ask for confirmation before clearing.
+
+---
+
+## 6. State Management
+
+Continue using the existing React Context.
+
+Local Storage should synchronize with Context.
+
+Context remains the application's working state.
+
+Local Storage acts only as persistent storage.
+
+---
+
+## 7. Files Allowed to Modify
+
+Modify only files required for this version.
+
+Examples:
+
+- Profile Context
+- Create Profile page
+- Local Storage utility (if created)
+
+Do not modify unrelated configuration files.
+
+---
+
+## 8. Files NOT to Modify
+
+Do not modify unless absolutely necessary:
+
+- vite.config.ts
+- TypeScript configuration
+- ESLint configuration
+- Replit configuration
+- Git configuration
+- README
+
+---
+
+## 9. Do NOT Build
+
+Do NOT implement:
+
+- Backend
+- Database
+- Authentication
+- Cloud Storage
+- QR Code
+- Dashboard
+- AI
+- Analytics
+- Export
+- Download
+- Theme Switching
+- User Accounts
+
+---
+
+## 10. UI Requirements
+
+The UI should remain visually consistent with Version 0.5.
+
+Only add:
+
+- Clear Form button
+- Confirmation dialog
+
+No redesign.
+
+---
+
+## 11. Acceptance Criteria
+
+Version 0.6 is complete only if:
+
+- Profile data automatically saves.
+- Refreshing the page restores all text fields.
+- Logo is intentionally not restored.
+- Clear Form removes both Context data and Local Storage.
+- Confirmation dialog appears before clearing.
+- Preview continues to work.
+- No console errors.
+- No unnecessary dependencies are installed.
+
+---
+
+## 12. Final Report
+
+Provide:
+
+1. Files modified.
+2. How Local Storage is implemented.
+3. Local Storage key name used.
+4. Confirmation that logo is excluded.
+5. Confirmation that all acceptance criteria passed.
+6. Confirmation that no unnecessary files or dependencies were added.
+
+---
+
+## 13. STOP after completion
+
+Do NOT implement Version 0.7.
+
+Do NOT add backend functionality.
+
+Do NOT add authentication.
+
+Do NOT anticipate future features.
+
+Stop immediately after completing Version 0.6.
