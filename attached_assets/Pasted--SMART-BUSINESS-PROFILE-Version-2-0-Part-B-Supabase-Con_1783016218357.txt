@@ -1,0 +1,127 @@
+# SMART BUSINESS PROFILE
+## Version 2.0 – Part B (Supabase Connection)
+
+## Objective
+
+Connect the existing React application to the already-created Supabase project.
+
+The Supabase project already exists.
+
+Do NOT create a new Supabase project.
+
+Do NOT modify any existing application functionality.
+
+Only establish the backend connection.
+
+---
+
+## Existing Project
+
+The project already contains:
+
+- React + Vite + TypeScript
+- Tailwind CSS
+- React Router
+- Local Storage
+- QR Code
+- Landing Page
+- Business Profile Form
+- Profile Preview
+
+Continue working inside the existing project.
+
+---
+
+## Tasks
+
+1. Install the official Supabase JavaScript client.
+
+2. Create a reusable Supabase client.
+
+Example structure:
+
+src/
+  lib/
+    supabase.ts
+
+3. Read credentials from environment variables.
+
+Create/update:
+
+.env.example
+
+Include only placeholders:
+
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+
+Do NOT hardcode any credentials.
+
+4. Configure the Supabase client using:
+
+import { createClient } from "@supabase/supabase-js"
+
+Use:
+
+import.meta.env.VITE_SUPABASE_URL
+import.meta.env.VITE_SUPABASE_ANON_KEY
+
+5. Do NOT create database tables.
+
+6. Do NOT implement authentication.
+
+7. Do NOT implement CRUD operations.
+
+8. Do NOT modify existing pages.
+
+9. Add a simple connection test that confirms the client initializes successfully without affecting the UI.
+
+10. If any dependency is installed, explain why.
+
+---
+
+## Files Allowed
+
+- package.json
+- package-lock.json
+- .env.example
+- src/lib/supabase.ts
+
+Only modify additional files if absolutely necessary.
+
+---
+
+## Files NOT to Modify
+
+- Existing pages
+- Existing components
+- Existing routing
+- Existing UI
+- Existing business logic
+
+---
+
+## Final Report
+
+Provide:
+
+1. Files modified.
+2. Dependencies installed.
+3. Environment variables required.
+4. Confirmation that no credentials were hardcoded.
+5. Confirmation that the project builds successfully.
+6. Confirmation that the frontend functionality remains unchanged.
+
+---
+
+## STOP
+
+Stop after the Supabase connection has been established.
+
+Do NOT begin database design.
+
+Do NOT create tables.
+
+Do NOT implement authentication.
+
+Do NOT anticipate Version 2.1.
