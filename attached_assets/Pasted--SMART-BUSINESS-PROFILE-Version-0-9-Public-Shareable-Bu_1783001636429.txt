@@ -1,0 +1,292 @@
+# SMART BUSINESS PROFILE
+## Version 0.9 – Public Shareable Business Profile (Frontend Only)
+
+## Standard Instructions
+
+Before making any changes:
+
+1. Read the existing codebase completely.
+2. Preserve the current project architecture.
+3. Reuse existing components whenever possible.
+4. Preserve the current design language.
+5. Modify only the files required for this version.
+6. Do not refactor unrelated code.
+7. Do not add extra features.
+8. Do not anticipate future versions.
+9. If a new dependency is required, explain why and install only that dependency.
+10. Stop immediately after completing Version 0.9.
+
+---
+
+## 1. Objective
+
+Build Version 0.9 of Smart Business Profile.
+
+The objective is to make the generated business profile feel like a real public business page.
+
+This version remains completely frontend-only.
+
+Do NOT introduce any backend or authentication.
+
+---
+
+## 2. Existing Project Context
+
+Current project includes:
+
+- React + Vite + TypeScript
+- Tailwind CSS
+- React Router
+- Business Profile Form
+- Business Profile Preview
+- Local Storage
+- QR Code
+- Share Profile
+- Professional UI
+
+Continue working inside the existing project.
+
+Do not restructure the repository.
+
+---
+
+## 3. Build
+
+Transform the Profile Preview page into a realistic public business profile.
+
+Improve the page layout so it resembles a professional online business profile instead of only a preview card.
+
+Keep all existing functionality.
+
+---
+
+## 4. Business Profile Sections
+
+Display information in professional sections.
+
+### Header
+
+- Business Logo
+- Business Name
+- Category
+- Owner Name
+
+---
+
+### Contact
+
+- Call
+- WhatsApp
+- Email
+- Website
+
+---
+
+### About
+
+Display About Business.
+
+Hide the section if empty.
+
+---
+
+### Address
+
+Display Address.
+
+Hide if empty.
+
+---
+
+### Business Hours
+
+Add a static placeholder section.
+
+Display:
+
+Monday – Sunday
+
+9:00 AM – 6:00 PM
+
+Mention in code comments that dynamic business hours will be implemented in a future version.
+
+---
+
+### Gallery
+
+Display three placeholder image cards.
+
+Use simple placeholders.
+
+Do NOT implement uploads yet.
+
+---
+
+## 5. Profile Header Actions
+
+Display:
+
+- Share
+- QR Code
+
+Keep existing functionality.
+
+Improve layout only.
+
+---
+
+## 6. Empty State
+
+If no business profile data exists:
+
+Display a professional empty state.
+
+Include:
+
+Title:
+
+"No Business Profile Found"
+
+Description:
+
+"Create your business profile to see it here."
+
+Button:
+
+Create Business Profile
+
+Navigate back to the form.
+
+---
+
+## 7. Responsive Design
+
+Optimize the entire page for:
+
+- Mobile
+- Tablet
+- Desktop
+
+Maintain consistent spacing.
+
+Avoid horizontal scrolling.
+
+---
+
+## 8. Performance
+
+Do not introduce unnecessary re-renders.
+
+Reuse existing components.
+
+Avoid duplicate UI.
+
+---
+
+## 9. Files Allowed to Modify
+
+Modify only files required for this version.
+
+Examples:
+
+- Profile Preview page
+- Shared UI components
+
+Do not modify unrelated configuration files.
+
+---
+
+## 10. Files NOT to Modify
+
+Do not modify unless absolutely necessary:
+
+- vite.config.ts
+- TypeScript configuration
+- ESLint configuration
+- Replit configuration
+- Git configuration
+- README
+
+---
+
+## 11. Do NOT Build
+
+Do NOT implement:
+
+- Backend
+- Authentication
+- Database
+- Public URLs
+- Analytics
+- Visitor Tracking
+- AI Assistant
+- Dashboard
+- Payment
+- Subscription
+- Business Directory
+- Search
+- Editable Gallery
+
+Keep this version focused only on making the profile look like a real public business page.
+
+---
+
+## 12. UI Requirements
+
+Maintain the current design language.
+
+Use:
+
+- Tailwind CSS
+- Cards
+- Rounded corners
+- Professional spacing
+- Consistent typography
+- Responsive layout
+- Soft shadows
+
+Do not redesign unrelated pages.
+
+---
+
+## 13. Acceptance Criteria
+
+Version 0.9 is complete only if:
+
+- Existing functionality continues working.
+- Profile resembles a real public business page.
+- Empty state works correctly.
+- Placeholder Gallery appears.
+- Placeholder Business Hours appear.
+- QR Code still works.
+- Share button still works.
+- Responsive across devices.
+- No console errors.
+- No unnecessary dependencies installed.
+
+---
+
+## 14. Final Report
+
+Provide:
+
+1. Files modified.
+2. Components updated.
+3. UI improvements made.
+4. Dependencies added (if any).
+5. Confirmation that all acceptance criteria passed.
+6. Confirmation that no unnecessary files or folders were created.
+
+---
+
+## 15. STOP after completion
+
+Do NOT implement Version 1.0.
+
+Do NOT add backend functionality.
+
+Do NOT add authentication.
+
+Do NOT anticipate future features.
+
+Stop immediately after completing Version 0.9.
