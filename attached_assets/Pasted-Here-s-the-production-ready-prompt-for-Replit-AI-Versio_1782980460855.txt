@@ -1,0 +1,214 @@
+Here's the production-ready prompt for **Replit AI**.
+
+---
+
+# Version 0.2 – Smart Business Profile
+
+## 1. Objective
+
+Build **Version 0.2** of the Smart Business Profile application.
+
+The objective is to introduce **basic frontend navigation** by creating a dedicated **Create Business Profile** page while preserving the existing landing page.
+
+This version establishes the application's page structure only.
+
+---
+
+## 2. Existing Project Context
+
+* The project already exists as an official **React + Vite + TypeScript** application.
+* The repository was imported from GitHub.
+* Tailwind CSS is already installed and configured.
+* Version 0.1 has been completed.
+* The current landing page contains:
+
+  * Project title
+  * Subtitle
+  * "Create Business Profile" button
+
+Continue working inside the existing project.
+
+Do **not** create a new project or modify the project architecture.
+
+---
+
+## 3. Build
+
+### A. Install React Router
+
+If `react-router-dom` is not already installed, install only the latest stable version.
+
+---
+
+### B. Configure Routing
+
+Create two routes:
+
+```text
+/
+```
+
+Landing Page
+
+```text
+/create-profile
+```
+
+Create Profile Page
+
+---
+
+### C. Landing Page
+
+Keep the current UI exactly as it is.
+
+When the user clicks:
+
+```text
+Create Business Profile
+```
+
+Navigate to:
+
+```text
+/create-profile
+```
+
+without reloading the page.
+
+---
+
+### D. Create Profile Page
+
+Create a new page with:
+
+Heading:
+
+```text
+Create Business Profile
+```
+
+Description:
+
+```text
+This page will contain the business profile form in the next version.
+```
+
+Button:
+
+```text
+Back to Home
+```
+
+Clicking the button should navigate back to:
+
+```text
+/
+```
+
+---
+
+## 4. Files Allowed to Modify
+
+Modify only the files required for this version.
+
+Examples include:
+
+* `src/main.tsx`
+* `src/App.tsx`
+* New page components
+* New routing components
+
+Install only the dependency required for routing.
+
+---
+
+## 5. Files NOT to Modify
+
+Do not modify unless absolutely necessary:
+
+* `vite.config.ts`
+* TypeScript configuration
+* ESLint configuration
+* Replit configuration
+* Build configuration
+
+Do not restructure the repository.
+
+---
+
+## 6. Do NOT Build
+
+Do **not** implement:
+
+* Business profile form
+* Input fields
+* Local storage
+* Validation
+* Image upload
+* Business preview
+* Database
+* Authentication
+* Dashboard
+* QR codes
+* AI features
+* Backend
+* API
+* Global state management
+* Theme switching
+* Additional pages
+
+Keep this version focused solely on routing.
+
+---
+
+## 7. UI Requirements
+
+The new page should:
+
+* Match the existing design language.
+* Use Tailwind CSS.
+* Be responsive.
+* Center the content vertically and horizontally.
+* Maintain consistent spacing and typography.
+* Keep the interface minimal and clean.
+
+---
+
+## 8. Acceptance Criteria
+
+Version 0.2 is complete only if:
+
+* The landing page still displays correctly.
+* Clicking **Create Business Profile** navigates to `/create-profile`.
+* The Create Profile page displays the heading, description, and Back button.
+* Clicking **Back to Home** returns to the landing page.
+* Navigation occurs without a page refresh.
+* No console errors.
+* The application runs successfully in Replit.
+* The published application (if republished) also functions correctly.
+
+---
+
+## 9. Final Report
+
+After implementation, provide:
+
+1. Files modified.
+2. New dependency installed (if any).
+3. Routes created.
+4. Components created.
+5. Confirmation that all acceptance criteria passed.
+6. Confirmation that no unnecessary files or folders were created.
+
+---
+
+## 10. STOP after completion
+
+Do **not** implement Version 0.3.
+
+Do **not** add the business profile form.
+
+Do **not** anticipate future features.
+
+Stop after Version 0.2 is complete and wait for review.
