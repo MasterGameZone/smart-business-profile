@@ -1,10 +1,13 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import QRCode from 'react-qr-code'
 import { useProfile } from '../context/ProfileContext.tsx'
 
 function ProfilePreviewPage() {
   const navigate = useNavigate()
   const { profileData } = useProfile()
+
+  const [copyMessage, setCopyMessage] = useState('')
 
   const logoUrl = useMemo(() => {
     if (profileData.logo) {
@@ -21,11 +24,36 @@ function ProfilePreviewPage() {
     }
   }, [logoUrl])
 
+  const profileUrl = window.location.href
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: profileData.businessName || 'Business Profile',
+          url: profileUrl,
+        })
+      } catch {
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(profileUrl)
+        setCopyMessage('Profile link copied to clipboard.')
+        setTimeout(() => setCopyMessage(''), 3000)
+      } catch {
+        setCopyMessage('Unable to copy link.')
+        setTimeout(() => setCopyMessage(''), 3000)
+      }
+    }
+  }
+
   const displayPhone = profileData.phoneNumber.trim()
   const displayWhatsApp = profileData.whatsappNumber.trim() || displayPhone
   const displayEmail = profileData.email.trim()
 
   const firstLetter = profileData.businessName.trim().charAt(0).toUpperCase()
+
+  const hasProfile = profileData.businessName.trim().length > 0
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
@@ -254,6 +282,56 @@ function ProfilePreviewPage() {
             </div>
           </div>
         </div>
+
+        {/* QR Code Section */}
+        {hasProfile && (
+          <div className="mt-6 bg-white rounded-2xl shadow-lg px-6 py-8">
+            <h2 className="text-lg font-semibold text-gray-900 text-center mb-1">
+              QR Code
+            </h2>
+            <p className="text-sm text-gray-500 text-center mb-6">
+              Scan this QR Code to open this business profile.
+            </p>
+            <div className="flex justify-center">
+              <div className="p-3 border border-gray-200 rounded-xl bg-white inline-block">
+                <QRCode
+                  value={profileUrl}
+                  size={180}
+                  bgColor="#ffffff"
+                  fgColor="#1e293b"
+                  level="M"
+                />
+              </div>
+            </div>
+
+            {/* Share button */}
+            <div className="mt-6 flex flex-col items-center gap-3">
+              <button
+                type="button"
+                onClick={handleShare}
+                className="inline-flex items-center justify-center gap-2 px-8 py-3 text-base font-medium text-white bg-blue-600 rounded-full hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+                  />
+                </svg>
+                Share Profile
+              </button>
+              {copyMessage && (
+                <p className="text-sm text-green-600 font-medium">{copyMessage}</p>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Back to Edit */}
         <div className="mt-6 text-center">

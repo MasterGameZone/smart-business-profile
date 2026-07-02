@@ -1,0 +1,217 @@
+# SMART BUSINESS PROFILE
+## Version 0.7 – QR Code Generation & Sharing
+
+## Standard Instructions
+
+Before making any changes:
+
+1. Read the existing codebase completely.
+2. Preserve the current project architecture.
+3. Reuse existing components whenever possible.
+4. Preserve the current design language.
+5. Modify only the files required for this version.
+6. Do not refactor unrelated code.
+7. Do not add extra features.
+8. Do not anticipate future versions.
+9. If a new dependency is required, explain why and install only that dependency.
+10. Stop immediately after completing Version 0.7.
+
+---
+
+## 1. Objective
+
+Build Version 0.7 of Smart Business Profile.
+
+The objective is to allow users to generate and share a QR Code for their business profile preview.
+
+This version introduces QR Code functionality only.
+
+Do NOT implement backend or permanent public profile URLs.
+
+---
+
+## 2. Existing Project Context
+
+Current project includes:
+
+- React + Vite + TypeScript
+- Tailwind CSS
+- React Router
+- Business Profile Form
+- Business Profile Preview
+- React Context
+- Local Storage
+
+Continue working inside the existing project.
+
+Do not restructure the application.
+
+---
+
+## 3. Build
+
+Generate a QR Code representing the current Business Profile Preview URL.
+
+Since there is no backend or public profile yet, generate the QR Code using the application's current preview route.
+
+Display the QR Code inside the Profile Preview page.
+
+If the preview data is unavailable, do not display the QR Code.
+
+---
+
+## 4. QR Code Section
+
+Create a dedicated section below the profile card.
+
+Include:
+
+Heading:
+
+QR Code
+
+Description:
+
+Scan this QR Code to open this business profile.
+
+Display:
+
+- QR Code
+- Small border around the QR Code
+- White background
+- Responsive sizing
+
+---
+
+## 5. Share Button
+
+Add a new button:
+
+Share Profile
+
+Behaviour:
+
+If the browser supports the Web Share API:
+
+- Share the current page URL.
+
+Otherwise:
+
+- Copy the current page URL to the clipboard.
+- Display a success message:
+
+Profile link copied to clipboard.
+
+---
+
+## 6. Dependencies
+
+If required, install only one lightweight QR Code library.
+
+Do not install multiple libraries.
+
+Mention the dependency in the Final Report.
+
+---
+
+## 7. Files Allowed to Modify
+
+Modify only files required for this version.
+
+Examples:
+
+- Profile Preview page
+- Shared utilities (if necessary)
+
+Do not modify unrelated configuration files.
+
+---
+
+## 8. Files NOT to Modify
+
+Do not modify unless absolutely necessary:
+
+- vite.config.ts
+- TypeScript configuration
+- ESLint configuration
+- Replit configuration
+- Git configuration
+- README
+
+---
+
+## 9. Do NOT Build
+
+Do NOT implement:
+
+- Backend
+- Public profile hosting
+- Authentication
+- Database
+- Analytics
+- Dashboard
+- AI Assistant
+- Payment Integration
+- Visitor Tracking
+- Download QR Code
+- QR Code customization
+
+Keep this version focused only on QR Code generation and sharing.
+
+---
+
+## 10. UI Requirements
+
+Use Tailwind CSS.
+
+The QR section should:
+
+- Match the existing design.
+- Be centered.
+- Responsive.
+- Professional spacing.
+- Consistent with the profile card.
+
+The Share button should match the application's existing button style.
+
+---
+
+## 11. Acceptance Criteria
+
+Version 0.7 is complete only if:
+
+- QR Code is displayed on the Profile Preview page.
+- QR Code updates when profile data changes.
+- Share button works.
+- Clipboard fallback works.
+- No console errors.
+- Responsive on desktop and mobile.
+- Only one new dependency is installed (if required).
+
+---
+
+## 12. Final Report
+
+Provide:
+
+1. Files modified.
+2. Components created.
+3. Dependency installed (if any).
+4. How sharing is implemented.
+5. Confirmation that all acceptance criteria passed.
+6. Confirmation that no unnecessary files or folders were created.
+
+---
+
+## 13. STOP after completion
+
+Do NOT implement Version 0.8.
+
+Do NOT add backend functionality.
+
+Do NOT create permanent public profile URLs.
+
+Do NOT anticipate future features.
+
+Stop immediately after completing Version 0.7.
+```
