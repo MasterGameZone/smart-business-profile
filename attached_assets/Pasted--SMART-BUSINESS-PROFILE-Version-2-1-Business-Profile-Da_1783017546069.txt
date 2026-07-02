@@ -1,0 +1,240 @@
+# SMART BUSINESS PROFILE
+## Version 2.1 – Business Profile Database Schema
+
+## Standard Instructions
+
+Before making any changes:
+
+1. Read the existing codebase completely.
+2. Preserve the current project architecture.
+3. Reuse existing components whenever possible.
+4. Modify only the files required for this version.
+5. Do not refactor unrelated code.
+6. Do not add extra features.
+7. Do not anticipate future versions.
+8. Use the existing Supabase connection.
+9. Stop immediately after completing Version 2.1.
+
+---
+
+## 1. Objective
+
+Build Version 2.1 of Smart Business Profile.
+
+The objective is to create the first production database schema for storing Business Profiles.
+
+This version is ONLY responsible for database design and migration.
+
+Do NOT connect the form to the database yet.
+
+---
+
+## 2. Existing Project Context
+
+Current project includes:
+
+- React + Vite + TypeScript
+- Tailwind CSS
+- React Router
+- Business Profile Form
+- Profile Preview
+- Local Storage
+- QR Code
+- Share Profile
+- Supabase connection
+- Environment variables configured using Replit Secrets
+
+Continue working inside the existing project.
+
+Do not restructure the project.
+
+---
+
+## 3. Build
+
+Create the initial Supabase database schema.
+
+Create one table:
+
+business_profiles
+
+Columns:
+
+id
+- UUID
+- Primary Key
+- Default: gen_random_uuid()
+
+business_name
+- TEXT
+- Required
+
+owner_name
+- TEXT
+- Required
+
+business_category
+- TEXT
+- Required
+
+phone_number
+- TEXT
+- Required
+
+whatsapp_number
+- TEXT
+- Optional
+
+email
+- TEXT
+- Optional
+
+website
+- TEXT
+- Optional
+
+address
+- TEXT
+- Optional
+
+about_business
+- TEXT
+- Optional
+
+logo_url
+- TEXT
+- Optional
+
+created_at
+- TIMESTAMP WITH TIME ZONE
+- Default: now()
+
+updated_at
+- TIMESTAMP WITH TIME ZONE
+- Default: now()
+
+---
+
+## 4. Row Level Security
+
+Enable Row Level Security (RLS).
+
+For now, create temporary development policies that allow:
+
+- Insert
+- Select
+- Update
+
+for anonymous users.
+
+Clearly comment that these policies are temporary and will be replaced after authentication is implemented.
+
+---
+
+## 5. Database Migration
+
+Create the schema using a proper SQL migration or Supabase migration file.
+
+Do NOT ask the user to manually create the table.
+
+The schema should be reproducible.
+
+---
+
+## 6. TypeScript Types
+
+Generate or create TypeScript types/interfaces corresponding to the database table.
+
+Store them in an appropriate location such as:
+
+src/types/
+
+These types should match the database schema.
+
+---
+
+## 7. Files Allowed to Modify
+
+Only modify files required for:
+
+- Database migration
+- Supabase configuration (if required)
+- Type definitions
+
+Do not modify existing pages or UI.
+
+---
+
+## 8. Files NOT to Modify
+
+Do not modify:
+
+- Landing Page
+- Business Profile Form
+- Profile Preview
+- Existing routing
+- Existing UI
+- Existing business logic
+
+---
+
+## 9. Do NOT Build
+
+Do NOT implement:
+
+- Saving data
+- Reading data
+- Editing data
+- Authentication
+- User Accounts
+- Dashboard
+- Analytics
+- QR improvements
+- AI features
+- Storage buckets
+
+This version is schema design only.
+
+---
+
+## 10. Acceptance Criteria
+
+Version 2.1 is complete only if:
+
+- business_profiles table exists.
+- All specified columns are created.
+- UUID primary key works.
+- created_at works.
+- updated_at works.
+- RLS is enabled.
+- Temporary development policies are created.
+- TypeScript types match the schema.
+- Existing frontend continues working.
+- No console errors.
+
+---
+
+## 11. Final Report
+
+Provide:
+
+1. Files created.
+2. Files modified.
+3. SQL migration created.
+4. Table schema summary.
+5. RLS policies created.
+6. TypeScript types created.
+7. Confirmation that the frontend was not modified.
+8. Confirmation that all acceptance criteria passed.
+
+---
+
+## 12. STOP after completion
+
+Do NOT implement Version 2.2.
+
+Do NOT connect the form to the database.
+
+Do NOT modify the frontend.
+
+Stop immediately after completing Version 2.1.
