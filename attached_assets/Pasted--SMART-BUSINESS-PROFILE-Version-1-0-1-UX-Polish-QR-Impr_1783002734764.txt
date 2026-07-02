@@ -1,0 +1,275 @@
+# SMART BUSINESS PROFILE
+## Version 1.0.1 – UX Polish & QR Improvements
+
+## Standard Instructions
+
+Before making any changes:
+
+1. Read the existing codebase completely.
+2. Preserve the current project architecture.
+3. Reuse existing components whenever possible.
+4. Preserve the current design language.
+5. Modify only the files required for this version.
+6. Do not refactor unrelated code.
+7. Do not add extra features.
+8. Keep all existing functionality working.
+9. If a new dependency is required, explain why and install only that dependency.
+10. Stop immediately after completing Version 1.0.1.
+
+---
+
+## 1. Objective
+
+Improve the overall user experience of Smart Business Profile without changing the existing workflow.
+
+This version focuses only on UX improvements and QR Code enhancements.
+
+---
+
+## 2. Existing Project Context
+
+The application already includes:
+
+- Landing Page
+- Business Profile Form
+- Profile Preview
+- Local Storage
+- QR Code
+- Share Profile
+- Responsive UI
+
+Continue working inside the existing project.
+
+Do not restructure the project.
+
+---
+
+## 3. Replace "Continue" Button
+
+The button on the Create Profile page currently says:
+
+Preview
+
+Keep this label.
+
+Do NOT rename it back to Continue.
+
+---
+
+## 4. Save Profile
+
+Add a new primary button on the Profile Preview page:
+
+Save Profile
+
+Behaviour:
+
+- Save the current profile to Local Storage.
+- If auto-save already exists, keep it.
+- Clicking Save Profile should explicitly save the latest data again.
+- Display a professional success toast/message:
+
+"Business Profile saved successfully."
+
+Do not navigate anywhere.
+
+---
+
+## 5. QR Code Improvements
+
+Keep the existing QR Code.
+
+Add two new actions below it.
+
+### Download QR Code
+
+Create a button:
+
+Download QR Code
+
+Behaviour:
+
+- Download the QR Code as a PNG image.
+- Use a clean filename:
+
+business-profile-qr.png
+
+---
+
+### Share QR Code
+
+Create another button:
+
+Share QR Code
+
+Behaviour:
+
+If the browser supports sharing image files using the Web Share API:
+
+- Share the QR Code image.
+
+Otherwise:
+
+- Automatically download the QR Code image.
+- Display a message:
+
+"Your browser doesn't support direct QR sharing. The QR Code has been downloaded instead."
+
+---
+
+## 6. Existing Share Button
+
+Keep the existing Share Profile button.
+
+Do not remove or change its functionality.
+
+It should continue sharing the business profile link.
+
+---
+
+## 7. Toast Notifications
+
+Replace browser alert() dialogs (if any) with professional toast notifications.
+
+Use lightweight implementation.
+
+Display toasts for:
+
+- Profile Saved
+- Link Copied
+- QR Downloaded
+- QR Shared
+- Validation Success
+
+Do not install a large UI framework only for notifications.
+
+---
+
+## 8. Button Layout
+
+On the Profile Preview page, arrange action buttons professionally.
+
+Recommended order:
+
+- Call
+- WhatsApp
+- Email
+
+Next row:
+
+- Share Profile
+- Save Profile
+
+QR Section:
+
+- Download QR Code
+- Share QR Code
+
+Maintain responsive behaviour.
+
+---
+
+## 9. UI Requirements
+
+Maintain the existing design language.
+
+Do not redesign the application.
+
+Use:
+
+- Tailwind CSS
+- Consistent spacing
+- Rounded buttons
+- Responsive layout
+- Equal button widths where appropriate
+
+---
+
+## 10. Files Allowed to Modify
+
+Modify only files required for this version.
+
+Examples:
+
+- Profile Preview page
+- QR Code component
+- Toast component (if created)
+- Local Storage utility (if required)
+
+Do not modify unrelated configuration files.
+
+---
+
+## 11. Files NOT to Modify
+
+Do not modify unless absolutely necessary:
+
+- vite.config.ts
+- TypeScript configuration
+- ESLint configuration
+- Replit configuration
+- Git configuration
+- README
+
+---
+
+## 12. Do NOT Build
+
+Do NOT implement:
+
+- Backend
+- Authentication
+- Database
+- Public Profile URLs
+- Analytics
+- Dashboard
+- AI Assistant
+- Payments
+- Business Directory
+- Visitor Tracking
+
+Keep this version focused only on UX improvements.
+
+---
+
+## 13. Acceptance Criteria
+
+Version 1.0.1 is complete only if:
+
+- Preview button remains unchanged.
+- Save Profile button is added and works.
+- Existing auto-save continues working.
+- QR Code can be downloaded as PNG.
+- QR Code can be shared or downloaded as a fallback.
+- Existing Share Profile button still works.
+- Toast notifications replace alert dialogs.
+- Responsive layout remains intact.
+- No console errors.
+- No unnecessary dependencies are installed.
+
+---
+
+## 14. Final Report
+
+Provide:
+
+1. Files modified.
+2. Components created or updated.
+3. Dependencies added (if any).
+4. QR download implementation details.
+5. QR sharing implementation details.
+6. Toast notification implementation details.
+7. Confirmation that all acceptance criteria passed.
+8. Confirmation that no unnecessary files or folders were created.
+
+---
+
+## 15. STOP after completion
+
+Do NOT implement Version 1.1.
+
+Do NOT add backend functionality.
+
+Do NOT anticipate future features.
+
+Stop immediately after completing Version 1.0.1.

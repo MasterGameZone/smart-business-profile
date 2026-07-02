@@ -60,6 +60,7 @@ interface ProfileContextValue {
   profileData: ProfileData
   setProfileData: (data: ProfileData) => void
   clearProfile: () => void
+  saveProfile: () => void
 }
 
 const ProfileContext = createContext<ProfileContextValue | null>(null)
@@ -77,8 +78,12 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     setProfileDataState(defaultProfileData)
   }
 
+  const saveProfile = () => {
+    saveToStorage(profileData)
+  }
+
   return (
-    <ProfileContext.Provider value={{ profileData, setProfileData, clearProfile }}>
+    <ProfileContext.Provider value={{ profileData, setProfileData, clearProfile, saveProfile }}>
       {children}
     </ProfileContext.Provider>
   )
