@@ -1,0 +1,184 @@
+# SMART BUSINESS PROFILE
+## Version 0.3
+
+## 1. Objective
+
+Build Version 0.3 of Smart Business Profile.
+
+The objective is to create a clean, responsive Business Profile Form on the existing Create Profile page.
+
+This version is only responsible for collecting user information.
+
+Do not generate the profile preview yet.
+
+---
+
+## 2. Existing Project Context
+
+- React + Vite + TypeScript project.
+- Tailwind CSS already configured.
+- React Router already configured.
+- Landing page completed.
+- Create Profile page already exists.
+
+Work only inside the existing project.
+
+Do not restructure the application.
+
+---
+
+## 3. Build
+
+Replace the placeholder Create Profile page with a responsive form.
+
+Create the following fields:
+
+Business Name *
+
+Owner Name *
+
+Business Category *
+
+Phone Number *
+
+WhatsApp Number
+
+Email Address
+
+Website
+
+Address
+
+About Business
+
+Business Logo (image upload)
+
+The logo upload should only allow selecting an image.
+
+Do not process or preview the image yet.
+
+---
+
+Buttons
+
+Primary Button
+
+Continue
+
+Secondary Button
+
+Back to Home
+
+The Continue button should not submit anywhere yet.
+
+It should simply validate required fields and remain on the same page.
+
+---
+
+## 4. Validation
+
+Required:
+
+- Business Name
+- Owner Name
+- Business Category
+- Phone Number
+
+Show simple inline validation messages.
+
+No advanced validation.
+
+No libraries.
+
+---
+
+## 5. Files Allowed to Modify
+
+Only modify files required for this version.
+
+Create reusable components if helpful.
+
+Do not modify unrelated configuration files.
+
+---
+
+## 6. Do NOT Build
+
+Do NOT implement:
+
+- Local Storage
+- Business Card Preview
+- Database
+- Authentication
+- Backend
+- API
+- QR Code
+- AI
+- Dashboard
+- Analytics
+- Theme switching
+- Image preview
+- Form submission
+- Saving data
+
+---
+
+## 7. UI Requirements
+
+Use Tailwind CSS.
+
+Professional spacing.
+
+Responsive layout.
+
+Maximum form width approximately 700px.
+
+Grouped inputs.
+
+Good typography.
+
+Consistent button styling.
+
+Accessible labels.
+
+Mobile friendly.
+
+---
+
+## 8. Acceptance Criteria
+
+The Create Profile page displays the complete form.
+
+Required fields validate correctly.
+
+Back to Home still works.
+
+Continue button does not navigate.
+
+Responsive on desktop and mobile.
+
+No console errors.
+
+No unnecessary dependencies.
+
+---
+
+## 9. Final Report
+
+Provide:
+
+- Files modified
+- Components created
+- Validation implemented
+- Any dependency added
+- Confirmation that Acceptance Criteria passed
+
+---
+
+## 10. STOP after completion
+
+Do not implement Version 0.4.
+
+Do not create the profile preview.
+
+Stop after completing Version 0.3.
