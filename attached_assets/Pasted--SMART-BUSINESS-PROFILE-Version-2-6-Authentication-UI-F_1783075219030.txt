@@ -1,0 +1,296 @@
+# SMART BUSINESS PROFILE
+## Version 2.6 – Authentication UI Foundation
+
+## Standard Instructions
+
+Before making any changes:
+
+1. Read the existing codebase completely.
+2. Preserve the current project architecture.
+3. Reuse existing components whenever possible.
+4. Modify only the files required for this version.
+5. Do not refactor unrelated code.
+6. Do not add extra features.
+7. Do not anticipate future versions.
+8. Do NOT implement actual authentication yet.
+9. Stop immediately after completing Version 2.6.
+
+---
+
+## 1. Objective
+
+Build the complete Authentication UI for Smart Business Profile.
+
+This version is UI only.
+
+No login, signup, or authentication logic should be implemented.
+
+The goal is to establish a professional authentication interface that will be connected to Supabase Auth in Version 2.7.
+
+---
+
+## 2. Existing Project Context
+
+The project already contains:
+
+- React + Vite + TypeScript
+- Tailwind CSS
+- React Router
+- Supabase Integration
+- Business Profile CRUD
+- Public Business Profile Pages
+
+Continue working inside the existing project.
+
+Do not restructure the application.
+
+---
+
+## 3. Build
+
+Create the following pages:
+
+- Login
+- Sign Up
+- Forgot Password
+- Reset Password
+
+Add appropriate React Router routes for each page.
+
+Do not connect them to Supabase yet.
+
+---
+
+## 4. Login Page
+
+Include:
+
+- Email
+- Password
+- Show/Hide Password toggle
+- Remember Me checkbox (UI only)
+- Login button
+- Forgot Password link
+- Sign Up link
+
+Validation:
+
+- Required fields
+- Email format
+- Password minimum 8 characters
+
+Client-side validation only.
+
+---
+
+## 5. Sign Up Page
+
+Include:
+
+- Full Name
+- Email
+- Password
+- Confirm Password
+- Show/Hide Password
+- Create Account button
+- Login link
+
+Validation:
+
+- Required fields
+- Email format
+- Password minimum 8 characters
+- Passwords must match
+
+No backend calls.
+
+---
+
+## 6. Forgot Password Page
+
+Include:
+
+- Email field
+- Send Reset Link button
+- Back to Login link
+
+Client-side validation only.
+
+After successful validation display:
+
+"If this email exists, a reset link will be sent."
+
+Do not actually send emails.
+
+---
+
+## 7. Reset Password Page
+
+Include:
+
+- New Password
+- Confirm Password
+- Show/Hide Password
+- Reset Password button
+
+Client-side validation only.
+
+Do not implement reset functionality.
+
+---
+
+## 8. Shared Authentication Layout
+
+Create a reusable authentication layout.
+
+Requirements:
+
+- Centered authentication card
+- Application logo/title
+- Welcome message
+- Consistent spacing
+- Responsive design
+- Reusable form styling
+
+Avoid duplicate layouts across pages.
+
+---
+
+## 9. Navigation
+
+Implement navigation between:
+
+Login
+
+↓
+
+Sign Up
+
+↓
+
+Forgot Password
+
+↓
+
+Reset Password
+
+All navigation should work correctly.
+
+---
+
+## 10. Accessibility
+
+Ensure:
+
+- Semantic HTML
+- Labels for all fields
+- Keyboard navigation
+- Visible focus states
+- Accessible buttons
+- Proper ARIA attributes where appropriate
+
+---
+
+## 11. UI Requirements
+
+Use Tailwind CSS.
+
+Maintain the application's existing design language.
+
+Use:
+
+- Rounded cards
+- Professional typography
+- Consistent spacing
+- Responsive layout
+- Subtle hover transitions
+
+Do not redesign existing pages.
+
+---
+
+## 12. Files Allowed
+
+Modify only files required for:
+
+- Authentication pages
+- Routing
+- Shared authentication components
+
+Do not modify existing business profile functionality.
+
+---
+
+## 13. Files NOT to Modify
+
+Do not modify:
+
+- Business Profile Form
+- Profile Preview
+- Public Business Profile Page
+- Database schema
+- Supabase client
+- CRUD functionality
+- QR functionality
+- Share functionality
+
+---
+
+## 14. Do NOT Build
+
+Do NOT implement:
+
+- Login
+- Signup
+- Logout
+- Email Verification
+- Password Reset Logic
+- Protected Routes
+- User Sessions
+- Business Ownership
+- Dashboard
+
+This version is UI only.
+
+---
+
+## 15. Acceptance Criteria
+
+Version 2.6 is complete only if:
+
+- Login page exists.
+- Sign Up page exists.
+- Forgot Password page exists.
+- Reset Password page exists.
+- Shared authentication layout is reused.
+- Client-side validation works.
+- Navigation between authentication pages works.
+- Responsive on desktop and mobile.
+- Existing application functionality remains unchanged.
+- No console errors.
+
+---
+
+## 16. Final Report
+
+Provide:
+
+1. Files created.
+2. Files modified.
+3. Components created.
+4. Routes added.
+5. Validation implemented.
+6. Confirmation that existing functionality remains unchanged.
+7. Confirmation that all acceptance criteria passed.
+
+---
+
+## 17. STOP
+
+Do NOT implement Version 2.7.
+
+Do NOT connect Supabase Auth.
+
+Do NOT implement login or signup functionality.
+
+Stop immediately after completing Version 2.6.

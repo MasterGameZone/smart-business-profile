@@ -1,0 +1,93 @@
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import AuthLayout, { authInputBase, authLabel, authError } from '../../components/AuthLayout.tsx'
+
+interface FormErrors {
+  email?: string
+}
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function ForgotPasswordPage() {
+  const [email, setEmail] = useState('')
+  const [errors, setErrors] = useState<FormErrors>({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+
+  const validate = (): boolean => {
+    const newErrors: FormErrors = {}
+    if (!email.trim()) {
+      newErrors.email = 'Email is required.'
+    } else if (!EMAIL_REGEX.test(email.trim())) {
+      newErrors.email = 'Enter a valid email address.'
+    }
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    const isValid = validate()
+    if (isValid) {
+      setSubmitted(true)
+    } else {
+      const firstErrorField = document.querySelector('[aria-invalid="true"]') as HTMLElement | null
+      firstErrorField?.focus()
+    }
+    setIsSubmitting(false)
+  }
+
+  return (
+    <AuthLayout
+      title="Forgot Password"
+      subtitle="Enter your email and we'll help you get back in."
+      footer={
+        <p className="text-sm text-gray-500">
+          Remembered your password?{' '}
+          <Link to="/login" className="font-semibold text-blue-600 hover:text-blue-700 focus:outline-none focus:underline">
+            Back to login
+          </Link>
+        </p>
+      }
+    >
+      {submitted ? (
+        <div role="status" className="rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3 text-sm text-emerald-700">
+          If this email exists, a reset link will be sent.
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} noValidate className="space-y-5">
+          <div>
+            <label htmlFor="email" className={authLabel}>
+              Email <span className="text-red-500" aria-hidden="true">*</span>
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              autoComplete="email"
+              aria-required="true"
+              aria-invalid={Boolean(errors.email)}
+              className={`${authInputBase} ${errors.email ? 'border-red-400 bg-red-50/30 focus:ring-red-400' : 'border-gray-300'}`}
+            />
+            {authError(errors.email)}
+          </div>
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            aria-busy={isSubmitting}
+            className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold text-white bg-blue-600 rounded-full hover:bg-blue-700 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all disabled:opacity-70 disabled:cursor-not-allowed disabled:active:scale-100"
+          >
+            Send Reset Link
+          </button>
+        </form>
+      )}
+    </AuthLayout>
+  )
+}
+
+export default ForgotPasswordPage
