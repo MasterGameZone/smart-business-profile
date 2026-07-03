@@ -1,0 +1,275 @@
+# SMART BUSINESS PROFILE
+## Version 2.9 – Business Dashboard
+
+## Standard Instructions
+
+Before making any changes:
+
+1. Read the existing codebase completely.
+2. Preserve the current project architecture.
+3. Reuse existing components whenever possible.
+4. Modify only the files required for this version.
+5. Do not refactor unrelated code.
+6. Do not add extra features.
+7. Do not anticipate future versions.
+8. Use the existing authentication and ownership system.
+9. Stop immediately after completing Version 2.9.
+
+---
+
+## 1. Objective
+
+Build the first Business Dashboard.
+
+The dashboard should become the authenticated user's central place for managing their business profile.
+
+This version focuses on dashboard layout and profile management only.
+
+---
+
+## 2. Existing Project Context
+
+The project already includes:
+
+- Supabase Authentication
+- Protected Routes
+- Business Ownership
+- Business Profile CRUD
+- Public Business Profile Pages
+- Existing Navigation
+
+Continue working inside the existing project.
+
+Do not restructure the application.
+
+---
+
+## 3. Build
+
+Create a new protected route:
+
+/dashboard
+
+Only authenticated users may access it.
+
+Unauthenticated users must be redirected to Login.
+
+---
+
+## 4. Dashboard Layout
+
+Display:
+
+Header
+
+- Welcome message
+- User email
+- Logout button
+
+Main Section
+
+"My Business"
+
+If the user already owns a business profile:
+
+Display:
+
+- Business Name
+- Category
+- Slug
+- Created Date
+- Last Updated Date
+
+Actions:
+
+- View Public Profile
+- Edit Profile
+
+---
+
+## 5. Empty State
+
+If the authenticated user does not yet own a business profile:
+
+Display:
+
+Title:
+
+Create Your First Business Profile
+
+Description:
+
+You haven't created a business profile yet.
+
+Button:
+
+Create Business Profile
+
+Navigate to the existing Create Profile page.
+
+---
+
+## 6. Profile Lookup
+
+Create a reusable function:
+
+getBusinessProfileByOwner(ownerId)
+
+Requirements:
+
+- Query business_profiles
+- Filter using owner_id
+- Return one profile or null
+
+Reuse this function throughout the dashboard.
+
+---
+
+## 7. Dashboard Navigation
+
+When authenticated:
+
+Navigation should include:
+
+- Dashboard
+- My Business
+- Logout
+
+When anonymous:
+
+Navigation should continue showing:
+
+- Login
+- Sign Up
+
+Maintain the existing navigation style.
+
+---
+
+## 8. Loading State
+
+While loading the dashboard:
+
+Display a centered loading indicator.
+
+Do not display incomplete content.
+
+---
+
+## 9. Error State
+
+If profile loading fails:
+
+Display:
+
+Unable to load your business profile.
+
+Provide a Retry button.
+
+Log detailed errors only to the console.
+
+---
+
+## 10. Files Allowed
+
+Modify only:
+
+- Dashboard page
+- Routing
+- Navigation
+- Supabase service
+- Business services
+- Types (if required)
+
+---
+
+## 11. Files NOT to Modify
+
+Do not modify:
+
+- Business Profile Form
+- Public Profile Page
+- QR functionality
+- Share functionality
+- Database schema
+- Existing migrations
+
+---
+
+## 12. Do NOT Build
+
+Do NOT implement:
+
+- Analytics
+- Charts
+- Visitor Tracking
+- Business Directory
+- Search
+- Reviews
+- AI Assistant
+- Team Accounts
+- Subscription Plans
+
+Keep this version focused only on the Business Dashboard.
+
+---
+
+## 13. UI Requirements
+
+Use the existing design language.
+
+Dashboard should include:
+
+- Responsive layout
+- Dashboard cards
+- Professional spacing
+- Consistent typography
+- Mobile-friendly navigation
+
+Do not redesign existing pages.
+
+---
+
+## 14. Acceptance Criteria
+
+Version 2.9 is complete only if:
+
+- Dashboard route exists.
+- Route is protected.
+- Authenticated users can access it.
+- Anonymous users are redirected to Login.
+- Business profile loads using owner_id.
+- Empty state works correctly.
+- View Public Profile opens the existing public profile.
+- Edit Profile opens the existing edit flow.
+- Navigation updates correctly.
+- Loading and error states work.
+- Existing functionality remains unchanged.
+- No console errors.
+
+---
+
+## 15. Final Report
+
+Provide:
+
+1. Files created.
+2. Files modified.
+3. Dashboard components created.
+4. Navigation updates.
+5. Profile retrieval implementation.
+6. Loading and error state implementation.
+7. Confirmation that all acceptance criteria passed.
+8. Confirmation that existing functionality remains unaffected.
+
+---
+
+## 16. STOP
+
+Do NOT implement Version 3.0.
+
+Do NOT implement Business Directory.
+
+Do NOT implement Analytics.
+
+Stop immediately after completing Version 2.9.

@@ -78,8 +78,21 @@ function LandingPage() {
       <div className="absolute top-0 right-0 px-4 py-4 z-10">
         {!isLoading && (
           user ? (
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-500 hidden sm:inline">{user.email}</span>
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-end">
+              <button
+                type="button"
+                onClick={() => navigate('/dashboard')}
+                className="inline-flex items-center px-3 sm:px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 focus:outline-none focus:underline transition-colors"
+              >
+                Dashboard
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/dashboard')}
+                className="inline-flex items-center px-3 sm:px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 focus:outline-none focus:underline transition-colors"
+              >
+                My Business
+              </button>
               <button
                 type="button"
                 onClick={handleLogout}

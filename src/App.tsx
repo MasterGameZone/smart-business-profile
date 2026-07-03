@@ -7,6 +7,7 @@ import LoginPage from './pages/auth/LoginPage.tsx'
 import SignUpPage from './pages/auth/SignUpPage.tsx'
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage.tsx'
 import ResetPasswordPage from './pages/auth/ResetPasswordPage.tsx'
+import DashboardPage from './pages/DashboardPage.tsx'
 import ProtectedRoute from './components/ProtectedRoute.tsx'
 
 function App() {
@@ -30,6 +31,14 @@ function App() {
         }
       />
       <Route path="/business/:slug" element={<PublicBusinessProfilePage />} />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignUpPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />

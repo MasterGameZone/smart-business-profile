@@ -127,3 +127,19 @@ export async function getBusinessProfileBySlug(
 
   return data ?? null
 }
+
+export async function getBusinessProfileByOwner(
+  ownerId: string
+): Promise<BusinessProfileRow | null> {
+  const { data, error } = await supabase
+    .from('business_profiles')
+    .select('*')
+    .eq('owner_id', ownerId)
+    .maybeSingle()
+
+  if (error) {
+    throw error
+  }
+
+  return data ?? null
+}
