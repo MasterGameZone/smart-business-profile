@@ -1,0 +1,206 @@
+# SMART BUSINESS PROFILE
+## Version 2.4 – Public Business Profile Page
+
+## Standard Instructions
+
+Before making any changes:
+
+1. Read the existing codebase completely.
+2. Preserve the current project architecture.
+3. Reuse existing components whenever possible.
+4. Modify only the files required for this version.
+5. Do not refactor unrelated code.
+6. Do not add extra features.
+7. Do not anticipate future versions.
+8. Use the existing Supabase connection.
+9. Use the existing slug implementation.
+10. Stop immediately after completing Version 2.4.
+
+---
+
+## 1. Objective
+
+Build the first public business profile page.
+
+Users should be able to visit:
+
+/business/:slug
+
+and view the corresponding business profile fetched from Supabase.
+
+---
+
+## 2. Existing Context
+
+The project already includes:
+
+- Business Profile Form
+- Profile Preview
+- Save Profile
+- Supabase integration
+- business_profiles table
+- slug generation
+- getBusinessProfileBySlug(slug)
+
+Reuse the existing retrieval function.
+
+---
+
+## 3. Build
+
+Create a new public route:
+
+/business/:slug
+
+When opened:
+
+- Read the slug from the URL.
+- Fetch the profile using getBusinessProfileBySlug().
+- Display the business profile using the existing profile layout.
+
+Do not duplicate UI.
+
+Reuse existing components wherever possible.
+
+---
+
+## 4. Loading State
+
+While loading:
+
+Display a centered loading indicator.
+
+---
+
+## 5. Error State
+
+If no profile exists:
+
+Display a professional page:
+
+Title:
+
+Business Profile Not Found
+
+Description:
+
+The requested business profile does not exist or may have been removed.
+
+Provide a button:
+
+Back to Home
+
+---
+
+## 6. Profile Display
+
+Display:
+
+- Logo (or placeholder)
+- Business Name
+- Owner Name
+- Category
+- Phone
+- WhatsApp
+- Email
+- Website
+- Address
+- About Business
+- QR Code
+- Share Profile
+
+Hide empty optional fields.
+
+---
+
+## 7. Routing
+
+Do not modify existing routes.
+
+Only add:
+
+/business/:slug
+
+Existing functionality must continue working.
+
+---
+
+## 8. Performance
+
+Reuse:
+
+- Existing profile components
+- Existing button components
+- Existing QR implementation
+
+Avoid duplicate layouts.
+
+---
+
+## 9. Files Allowed
+
+Modify only files required for:
+
+- Routing
+- Public profile page
+- Shared components (if necessary)
+
+Do not modify unrelated pages.
+
+---
+
+## 10. Do NOT Build
+
+Do NOT implement:
+
+- Authentication
+- Editing
+- Delete
+- Dashboard
+- Analytics
+- Business Directory
+- Search
+- AI Assistant
+- Storage Buckets
+
+Focus only on public profile viewing.
+
+---
+
+## 11. Acceptance Criteria
+
+Version 2.4 is complete only if:
+
+- /business/:slug route exists.
+- Existing profiles load correctly.
+- Invalid slugs show the Not Found page.
+- Existing profile layout is reused.
+- Existing QR functionality still works.
+- Existing Share Profile still works.
+- Responsive on desktop and mobile.
+- No console errors.
+
+---
+
+## 12. Final Report
+
+Provide:
+
+1. Files modified.
+2. Components reused.
+3. New route added.
+4. Loading state implementation.
+5. Not Found state implementation.
+6. Confirmation that all acceptance criteria passed.
+
+---
+
+## 13. STOP
+
+Do NOT implement Version 2.5.
+
+Do NOT implement authentication.
+
+Do NOT implement editing.
+
+Stop immediately after completing Version 2.4.

@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom'
 import LandingPage from './pages/LandingPage.tsx'
 import CreateProfilePage from './pages/CreateProfilePage.tsx'
 import ProfilePreviewPage from './pages/ProfilePreviewPage.tsx'
+import PublicBusinessProfilePage from './pages/PublicBusinessProfilePage.tsx'
 
 function App() {
   return (
@@ -9,6 +10,7 @@ function App() {
       <Route path="/" element={<LandingPage />} />
       <Route path="/create-profile" element={<CreateProfilePage />} />
       <Route path="/profile-preview" element={<ProfilePreviewPage />} />
+      <Route path="/business/:slug" element={<PublicBusinessProfilePage />} />
     </Routes>
   )
 }
