@@ -1,0 +1,240 @@
+# SMART BUSINESS PROFILE
+## Version 2.9.1 – Multi-Business Dashboard
+
+## Standard Instructions
+
+Before making any changes:
+
+1. Read the existing codebase completely.
+2. Preserve the current project architecture.
+3. Reuse existing components whenever possible.
+4. Modify only the files required for this version.
+5. Do not refactor unrelated code.
+6. Do not add extra features.
+7. Do not anticipate Version 3.0.
+8. Preserve all existing authentication, ownership, and public profile functionality.
+9. Stop immediately after completing Version 2.9.1.
+
+---
+
+## 1. Objective
+
+Upgrade the Business Dashboard to support multiple business profiles owned by a single authenticated user.
+
+This replaces the previous assumption that each user owns only one business profile.
+
+---
+
+## 2. Existing Context
+
+The project already includes:
+
+- Authentication
+- Protected Routes
+- Business Ownership
+- Business CRUD
+- Public Business Profiles
+- Business Dashboard
+
+Continue working inside the existing project.
+
+Do not restructure the application.
+
+---
+
+## 3. Dashboard Retrieval
+
+Replace the current single-profile query.
+
+Instead of expecting exactly one profile:
+
+Retrieve all business profiles belonging to the authenticated user.
+
+Create or update a reusable function:
+
+getBusinessProfilesByOwner(ownerId)
+
+Requirements:
+
+- Query business_profiles
+- Filter using owner_id
+- Order by created_at descending
+- Return an array of Business Profiles
+
+Do NOT use .single().
+
+---
+
+## 4. Dashboard Layout
+
+Replace the "My Business" section with:
+
+"My Businesses"
+
+Display every owned business as a card.
+
+Each card should display:
+
+- Business Logo (or placeholder)
+- Business Name
+- Business Category
+- Slug
+- Created Date
+- Last Updated Date
+
+---
+
+## 5. Business Actions
+
+Each business card should include:
+
+- View Public Profile
+- Edit Profile
+
+Reuse the existing functionality.
+
+Do not duplicate logic.
+
+---
+
+## 6. Create New Business
+
+Add a primary button:
+
+Create New Business
+
+Navigate to the existing Create Profile page.
+
+Do not change the Create Profile workflow.
+
+---
+
+## 7. Empty State
+
+If the user owns zero businesses:
+
+Display the existing empty state:
+
+- Create Your First Business Profile
+- Create Business Profile button
+
+Reuse the existing implementation.
+
+---
+
+## 8. Loading State
+
+Display the loading indicator until all businesses are loaded.
+
+Do not render partial results.
+
+---
+
+## 9. Error State
+
+If retrieval fails:
+
+Display:
+
+Unable to load your businesses.
+
+Provide:
+
+Retry
+
+Log detailed errors only to the console.
+
+---
+
+## 10. Navigation
+
+Keep the existing navigation unchanged.
+
+Do not redesign the dashboard.
+
+Only replace the single-business section with the multi-business list.
+
+---
+
+## 11. Files Allowed
+
+Modify only:
+
+- Dashboard
+- Business retrieval service
+- Types (if required)
+
+Do not modify unrelated pages.
+
+---
+
+## 12. Files NOT to Modify
+
+Do not modify:
+
+- Authentication
+- Business Profile Form
+- Public Profile Pages
+- Database schema
+- Existing migrations
+- QR functionality
+- Share functionality
+
+---
+
+## 13. Do NOT Build
+
+Do NOT implement:
+
+- Business deletion
+- Business switching
+- Business archiving
+- Search
+- Pagination
+- Dashboard analytics
+- AI Assistant
+- Team accounts
+
+Keep this version focused only on multi-business support.
+
+---
+
+## 14. Acceptance Criteria
+
+Version 2.9.1 is complete only if:
+
+- Dashboard displays all businesses owned by the authenticated user.
+- One business displays correctly.
+- Multiple businesses display correctly.
+- Zero businesses display the existing empty state.
+- View Public Profile works for every business.
+- Edit Profile works for every business.
+- Create New Business button works.
+- No PGRST116 errors occur.
+- Existing functionality remains unchanged.
+- No console errors.
+
+---
+
+## 15. Final Report
+
+Provide:
+
+1. Files modified.
+2. Components updated.
+3. Query changes.
+4. Dashboard improvements.
+5. Confirmation that PGRST116 is resolved.
+6. Confirmation that all acceptance criteria passed.
+
+---
+
+## 16. STOP
+
+Do NOT implement Version 3.0.
+
+Do NOT implement Business Directory.
+
+Do NOT add dashboard analytics.
+
+Stop immediately after completing Version 2.9.1.

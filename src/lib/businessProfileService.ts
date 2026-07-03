@@ -128,18 +128,18 @@ export async function getBusinessProfileBySlug(
   return data ?? null
 }
 
-export async function getBusinessProfileByOwner(
+export async function getBusinessProfilesByOwner(
   ownerId: string
-): Promise<BusinessProfileRow | null> {
+): Promise<BusinessProfileRow[]> {
   const { data, error } = await supabase
     .from('business_profiles')
     .select('*')
     .eq('owner_id', ownerId)
-    .maybeSingle()
+    .order('created_at', { ascending: false })
 
   if (error) {
     throw error
   }
 
-  return data ?? null
+  return data ?? []
 }
