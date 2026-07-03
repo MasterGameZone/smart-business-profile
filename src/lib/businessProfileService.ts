@@ -1,8 +1,11 @@
 import { supabase } from './supabase'
 import type { BusinessProfileInsert, BusinessProfileRow } from '../types/businessProfile'
 import type { ProfileData } from '../context/ProfileContext'
+import { slugify } from '../utils/slug'
 
-export function mapProfileDataToInsert(data: ProfileData): BusinessProfileInsert {
+export function mapProfileDataToInsert(
+  data: ProfileData
+): Omit<BusinessProfileInsert, 'slug'> {
   return {
     business_name: data.businessName.trim(),
     owner_name: data.ownerName.trim(),
@@ -17,10 +20,43 @@ export function mapProfileDataToInsert(data: ProfileData): BusinessProfileInsert
   }
 }
 
+async function slugExists(candidate: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('business_profiles')
+    .select('id')
+    .eq('slug', candidate)
+    .maybeSingle()
+
+  if (error) {
+    throw error
+  }
+
+  return Boolean(data)
+}
+
+export async function generateUniqueSlug(businessName: string): Promise<string> {
+  const baseSlug = slugify(businessName) || 'business'
+
+  let candidate = baseSlug
+  let suffix = 2
+
+  while (await slugExists(candidate)) {
+    candidate = `${baseSlug}-${suffix}`
+    suffix += 1
+  }
+
+  return candidate
+}
+
 export async function insertBusinessProfile(
   data: ProfileData
 ): Promise<BusinessProfileRow> {
-  const payload = mapProfileDataToInsert(data)
+  const slug = await generateUniqueSlug(data.businessName)
+
+  const payload: BusinessProfileInsert = {
+    ...mapProfileDataToInsert(data),
+    slug,
+  }
 
   const { data: inserted, error } = await supabase
     .from('business_profiles')
@@ -37,4 +73,20 @@ export async function insertBusinessProfile(
   }
 
   return inserted
+}
+
+export async function getBusinessProfileBySlug(
+  slug: string
+): Promise<BusinessProfileRow | null> {
+  const { data, error } = await supabase
+    .from('business_profiles')
+    .select('*')
+    .eq('slug', slug)
+    .maybeSingle()
+
+  if (error) {
+    throw error
+  }
+
+  return data ?? null
 }

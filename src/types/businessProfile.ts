@@ -15,6 +15,7 @@ export interface BusinessProfileRow {
   address: string | null
   about_business: string | null
   logo_url: string | null
+  slug: string
   created_at: string
   updated_at: string
 }
@@ -31,6 +32,7 @@ export interface BusinessProfileInsert {
   address?: string | null
   about_business?: string | null
   logo_url?: string | null
+  slug: string
   created_at?: string
   updated_at?: string
 }
@@ -46,6 +48,7 @@ export interface BusinessProfileUpdate {
   address?: string | null
   about_business?: string | null
   logo_url?: string | null
+  slug?: string
   updated_at?: string
 }
 

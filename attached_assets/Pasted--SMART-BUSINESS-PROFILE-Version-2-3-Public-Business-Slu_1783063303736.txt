@@ -1,0 +1,250 @@
+# SMART BUSINESS PROFILE
+## Version 2.3 – Public Business Slug & Profile Retrieval
+
+## Standard Instructions
+
+Before making any changes:
+
+1. Read the existing codebase completely.
+2. Preserve the current project architecture.
+3. Reuse existing components whenever possible.
+4. Modify only the files required for this version.
+5. Do not refactor unrelated code.
+6. Do not add extra features.
+7. Do not anticipate future versions.
+8. Use the existing Supabase connection.
+9. Use the existing business_profiles table.
+10. Stop immediately after completing Version 2.3.
+
+---
+
+## 1. Objective
+
+Build Version 2.3 of Smart Business Profile.
+
+The objective is to introduce a permanent, human-readable Business Slug and make every saved business profile retrievable using that slug.
+
+This is the foundation for public business profile URLs.
+
+---
+
+## 2. Existing Project Context
+
+Current project includes:
+
+- React + Vite + TypeScript
+- Tailwind CSS
+- React Router
+- Business Profile Form
+- Profile Preview
+- Supabase integration
+- Save Profile functionality
+- business_profiles database table
+
+Continue working inside the existing project.
+
+Do not restructure the project.
+
+---
+
+## 3. Database Changes
+
+Create a new SQL migration.
+
+Modify the existing business_profiles table.
+
+Add:
+
+slug
+
+Properties:
+
+- TEXT
+- NOT NULL
+- UNIQUE
+
+Create a unique index on slug.
+
+Do not modify existing rows manually.
+
+The migration should safely handle existing data.
+
+---
+
+## 4. Slug Generation
+
+When a user saves a new Business Profile:
+
+Automatically generate a slug from the Business Name.
+
+Example:
+
+Business Name:
+
+ABC Dental Clinic
+
+Slug:
+
+abc-dental-clinic
+
+Rules:
+
+- Lowercase
+- Replace spaces with hyphens
+- Remove special characters
+- Collapse multiple hyphens
+- Trim leading/trailing hyphens
+
+If the slug already exists:
+
+Append:
+
+-2
+
+Then:
+
+-3
+
+Etc.
+
+Examples:
+
+abc-dental-clinic
+
+abc-dental-clinic-2
+
+abc-dental-clinic-3
+
+The slug generation should be deterministic and reliable.
+
+---
+
+## 5. Save Operation
+
+When Save Profile is clicked:
+
+Insert the generated slug into the database.
+
+Keep all existing save behaviour unchanged.
+
+---
+
+## 6. Profile Retrieval
+
+Create a reusable function:
+
+getBusinessProfileBySlug(slug)
+
+The function should:
+
+- Query Supabase
+- Return one Business Profile
+- Return null if no profile exists
+
+Do not build a public page yet.
+
+Only create the retrieval function.
+
+---
+
+## 7. TypeScript
+
+Update the Business Profile type.
+
+Include:
+
+slug: string
+
+Maintain full type safety.
+
+Do not use any.
+
+---
+
+## 8. Files Allowed
+
+Modify only:
+
+- Supabase service
+- Database migration
+- Business types
+- Save logic
+
+Create a utility if needed:
+
+src/utils/slug.ts
+
+Do not modify unrelated pages.
+
+---
+
+## 9. Files NOT to Modify
+
+Do not modify:
+
+- Landing Page
+- Existing routing
+- Preview UI
+- QR functionality
+- Share functionality
+
+---
+
+## 10. Do NOT Build
+
+Do NOT implement:
+
+- Authentication
+- Public profile page
+- Editing
+- Delete profile
+- Dashboard
+- Search
+- Directory
+- Analytics
+- AI Assistant
+- Storage buckets
+
+This version only creates the foundation.
+
+---
+
+## 11. Acceptance Criteria
+
+Version 2.3 is complete only if:
+
+- slug column exists.
+- slug is unique.
+- Existing profiles receive a valid slug through the migration.
+- New profiles automatically generate a slug.
+- Duplicate business names generate unique slugs.
+- Save Profile continues working.
+- getBusinessProfileBySlug() works correctly.
+- No console errors.
+- Existing UI remains unchanged.
+
+---
+
+## 12. Final Report
+
+Provide:
+
+1. Files modified.
+2. Files created.
+3. SQL migration created.
+4. Slug generation logic.
+5. Duplicate slug handling.
+6. Retrieval function implementation.
+7. Confirmation that all acceptance criteria passed.
+
+---
+
+## 13. STOP
+
+Do NOT implement Version 2.4.
+
+Do NOT create public profile pages.
+
+Do NOT modify routing.
+
+Stop immediately after completing Version 2.3.
