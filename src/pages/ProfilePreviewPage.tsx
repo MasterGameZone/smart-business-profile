@@ -169,7 +169,8 @@ function ProfilePreviewPage() {
       setHasSaved(true)
       showToast('Business Profile saved successfully.')
     } catch (error) {
-      console.error('Failed to save business profile:', error)
+      console.error('Supabase Error:', error)
+      console.error('Supabase Error (JSON):', JSON.stringify(error, Object.getOwnPropertyNames(error as object)))
       showToast('Something went wrong while saving. Please try again.', 'error')
     } finally {
       setIsSaving(false)
