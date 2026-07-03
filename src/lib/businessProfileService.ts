@@ -1,11 +1,9 @@
 import { supabase } from './supabase'
-import type { BusinessProfileInsert, BusinessProfileRow } from '../types/businessProfile'
+import type { BusinessProfileInsert, BusinessProfileRow, BusinessProfileUpdate } from '../types/businessProfile'
 import type { ProfileData } from '../context/ProfileContext'
 import { slugify } from '../utils/slug'
 
-export function mapProfileDataToInsert(
-  data: ProfileData
-): Omit<BusinessProfileInsert, 'slug'> {
+function mapProfileDataToFields(data: ProfileData) {
   return {
     business_name: data.businessName.trim(),
     owner_name: data.ownerName.trim(),
@@ -16,6 +14,14 @@ export function mapProfileDataToInsert(
     website: data.website.trim() || null,
     address: data.address.trim() || null,
     about_business: data.aboutBusiness.trim() || null,
+  }
+}
+
+export function mapProfileDataToInsert(
+  data: ProfileData
+): Omit<BusinessProfileInsert, 'slug'> {
+  return {
+    ...mapProfileDataToFields(data),
     logo_url: null,
   }
 }
@@ -73,6 +79,30 @@ export async function insertBusinessProfile(
   }
 
   return inserted
+}
+
+export async function updateBusinessProfile(
+  id: string,
+  data: ProfileData
+): Promise<BusinessProfileRow> {
+  const payload: BusinessProfileUpdate = mapProfileDataToFields(data)
+
+  const { data: updated, error } = await supabase
+    .from('business_profiles')
+    .update(payload)
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) {
+    throw error
+  }
+
+  if (!updated) {
+    throw new Error('Update succeeded but no row was returned.')
+  }
+
+  return updated
 }
 
 export async function getBusinessProfileBySlug(

@@ -1,6 +1,8 @@
 import { createContext, useContext, useState } from 'react'
 
 export interface ProfileData {
+  id: string | null
+  slug: string | null
   businessName: string
   ownerName: string
   businessCategory: string
@@ -11,9 +13,12 @@ export interface ProfileData {
   address: string
   aboutBusiness: string
   logo: File | null
+  existingLogoUrl: string | null
 }
 
 const defaultProfileData: ProfileData = {
+  id: null,
+  slug: null,
   businessName: '',
   ownerName: '',
   businessCategory: '',
@@ -24,6 +29,7 @@ const defaultProfileData: ProfileData = {
   address: '',
   aboutBusiness: '',
   logo: null,
+  existingLogoUrl: null,
 }
 
 interface ProfileContextValue {

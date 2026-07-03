@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useProfile } from '../context/ProfileContext.tsx'
 import { insertBusinessProfile } from '../lib/businessProfileService.ts'
 import { ToastContainer, type ToastItem, type ToastType } from '../components/Toast.tsx'
@@ -9,18 +9,28 @@ import { svgContainerToBlob, triggerBlobDownload } from '../utils/qr.ts'
 // ── Page component ─────────────────────────────────────────────────────────
 function ProfilePreviewPage() {
   const navigate = useNavigate()
-  const { profileData } = useProfile()
+  const location = useLocation()
+  const { profileData, setProfileData } = useProfile()
 
   const [toasts, setToasts]     = useState<ToastItem[]>([])
   const [mounted, setMounted]   = useState(false)
   const [isSaving, setIsSaving] = useState(false)
-  const [hasSaved, setHasSaved] = useState(false)
+  const [hasSaved, setHasSaved] = useState(Boolean(profileData.id))
   const qrSectionRef             = useRef<HTMLElement>(null)
   const qrCodeRef                = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setMounted(true))
     return () => cancelAnimationFrame(id)
+  }, [])
+
+  useEffect(() => {
+    const state = location.state as { updateSuccess?: boolean } | null
+    if (state?.updateSuccess) {
+      showToast('Business Profile updated successfully.')
+      navigate(location.pathname, { replace: true, state: null })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const logoUrl = useMemo(() => {
@@ -77,7 +87,13 @@ function ProfilePreviewPage() {
 
     setIsSaving(true)
     try {
-      await insertBusinessProfile(profileData)
+      const saved = await insertBusinessProfile(profileData)
+      setProfileData({
+        ...profileData,
+        id: saved.id,
+        slug: saved.slug,
+        existingLogoUrl: saved.logo_url,
+      })
       setHasSaved(true)
       showToast('Business Profile saved successfully.')
     } catch (error) {
@@ -114,6 +130,10 @@ function ProfilePreviewPage() {
     } catch {
       // user cancelled share — no toast
     }
+  }
+
+  const handleEditProfile = () => {
+    navigate('/create-profile')
   }
 
   // ── Derived values ──
@@ -173,38 +193,45 @@ function ProfilePreviewPage() {
             onDownloadQR={handleDownloadQR}
             onShareQR={handleShareQR}
             saveButtonSlot={
-              <button
-                type="button"
-                onClick={handleSaveProfile}
-                disabled={isSaving || hasSaved}
-                aria-busy={isSaving}
-                aria-label={hasSaved ? 'Profile already saved' : 'Save profile to database'}
-                className="flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-70 disabled:cursor-not-allowed disabled:active:scale-100"
-              >
-                {isSaving ? (
-                  <>
-                    <svg className="w-4 h-4 shrink-0 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    Saving…
-                  </>
-                ) : hasSaved ? (
-                  <>
-                    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    Saved
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                    </svg>
-                    Save Profile
-                  </>
-                )}
-              </button>
+              hasSaved ? (
+                <button
+                  type="button"
+                  onClick={handleEditProfile}
+                  aria-label="Edit business profile"
+                  className="flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold bg-amber-500 text-white hover:bg-amber-600 active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-400"
+                >
+                  <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Edit Profile
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleSaveProfile}
+                  disabled={isSaving}
+                  aria-busy={isSaving}
+                  aria-label="Save profile to database"
+                  className="flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-70 disabled:cursor-not-allowed disabled:active:scale-100"
+                >
+                  {isSaving ? (
+                    <>
+                      <svg className="w-4 h-4 shrink-0 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      Saving…
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                      </svg>
+                      Save Profile
+                    </>
+                  )}
+                </button>
+              )
             }
             footerSlot={
               <div className="text-center pt-2 pb-2">

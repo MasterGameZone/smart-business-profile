@@ -1,0 +1,248 @@
+# SMART BUSINESS PROFILE
+## Version 2.5 – Business Profile Editing
+
+## Standard Instructions
+
+Before making any changes:
+
+1. Read the existing codebase completely.
+2. Preserve the current project architecture.
+3. Reuse existing components whenever possible.
+4. Modify only the files required for this version.
+5. Do not refactor unrelated code.
+6. Do not add extra features.
+7. Do not anticipate future versions.
+8. Use the existing Supabase connection.
+9. Stop immediately after completing Version 2.5.
+
+---
+
+## 1. Objective
+
+Build Version 2.5 of Smart Business Profile.
+
+The objective is to allow a saved Business Profile to be loaded back into the existing form, edited, and updated in Supabase.
+
+This is the first CRUD enhancement.
+
+Do NOT implement authentication.
+
+---
+
+## 2. Existing Project Context
+
+Current project includes:
+
+- Business Profile Form
+- Profile Preview
+- Save Profile
+- Public Business Profile Page
+- Supabase Integration
+- Slug-based profile retrieval
+
+Continue working inside the existing project.
+
+Do not restructure the application.
+
+---
+
+## 3. Build
+
+Implement profile editing.
+
+When viewing a Business Profile Preview, add:
+
+Edit Profile
+
+When clicked:
+
+- Load the existing profile into the Business Profile Form.
+- Populate every editable field.
+- Preserve the existing slug.
+- Preserve the existing database ID.
+
+The form should switch into Edit Mode.
+
+---
+
+## 4. Update Profile
+
+When the user clicks:
+
+Update Profile
+
+Perform a Supabase UPDATE instead of INSERT.
+
+Update all editable fields.
+
+Do NOT create a new database row.
+
+Do NOT change:
+
+- id
+- slug
+- created_at
+
+Automatically update:
+
+updated_at
+
+---
+
+## 5. Form Behaviour
+
+Display:
+
+Create Mode
+
+when creating a new profile.
+
+Display:
+
+Edit Mode
+
+when editing an existing profile.
+
+Update the page heading accordingly.
+
+---
+
+## 6. Validation
+
+Reuse the existing validation.
+
+Maintain the same required fields.
+
+Do not introduce new validation rules.
+
+---
+
+## 7. Navigation
+
+Flow:
+
+Create Profile
+
+↓
+
+Preview
+
+↓
+
+Save
+
+↓
+
+Edit
+
+↓
+
+Update
+
+↓
+
+Preview
+
+The updated information should appear immediately after the update succeeds.
+
+---
+
+## 8. Error Handling
+
+If the update fails:
+
+- Display a professional error toast.
+- Keep the form data intact.
+- Do not lose the current profile.
+
+If the update succeeds:
+
+Display:
+
+"Business Profile updated successfully."
+
+---
+
+## 9. Files Allowed
+
+Modify only files required for:
+
+- Form
+- Preview
+- Supabase service
+- Types
+
+Do not modify unrelated pages.
+
+---
+
+## 10. Files NOT to Modify
+
+Do not modify:
+
+- Landing Page
+- Public Profile Route
+- QR functionality
+- Share functionality
+- Database schema
+- Existing migrations
+
+---
+
+## 11. Do NOT Build
+
+Do NOT implement:
+
+- Authentication
+- Delete Profile
+- Dashboard
+- Analytics
+- AI Assistant
+- Multiple Profiles
+- Business Directory
+- Search
+- Storage Buckets
+
+Focus only on updating an existing profile.
+
+---
+
+## 12. Acceptance Criteria
+
+Version 2.5 is complete only if:
+
+- Existing profile loads into the form.
+- Edit Mode is displayed correctly.
+- Update performs a Supabase UPDATE.
+- No duplicate rows are created.
+- id remains unchanged.
+- slug remains unchanged.
+- created_at remains unchanged.
+- updated_at changes automatically.
+- Updated profile displays correctly.
+- Existing public profile URL continues to work.
+- No console errors.
+
+---
+
+## 13. Final Report
+
+Provide:
+
+1. Files modified.
+2. Components updated.
+3. Update implementation details.
+4. Navigation changes.
+5. Confirmation that all acceptance criteria passed.
+
+---
+
+## 14. STOP
+
+Do NOT implement Version 2.6.
+
+Do NOT implement authentication.
+
+Do NOT implement delete functionality.
+
+Stop immediately after completing Version 2.5.

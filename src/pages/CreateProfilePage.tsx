@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useProfile } from '../context/ProfileContext.tsx'
+import { updateBusinessProfile } from '../lib/businessProfileService.ts'
+import { ToastContainer, type ToastItem, type ToastType } from '../components/Toast.tsx'
 
 interface FormErrors {
   businessName?: string
@@ -22,13 +24,21 @@ const categories = [
 function CreateProfilePage() {
   const navigate = useNavigate()
   const { profileData, setProfileData, clearProfile } = useProfile()
+  const isEditMode = Boolean(profileData.id)
 
   const [errors, setErrors] = useState<FormErrors>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [logoFileName, setLogoFileName] = useState<string>(
     profileData.logo ? profileData.logo.name : ''
   )
+  const [toasts, setToasts] = useState<ToastItem[]>([])
   const logoInputRef = useRef<HTMLInputElement>(null)
+
+  const showToast = (message: string, type: ToastType = 'success') => {
+    const id = Date.now()
+    setToasts((prev) => [...prev, { id, message, type }])
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4000)
+  }
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -66,16 +76,44 @@ function CreateProfilePage() {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleContinue = (e: React.FormEvent) => {
+  const handleContinue = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
     const isValid = validate()
-    if (isValid) {
-      navigate('/profile-preview')
-    } else {
+    if (!isValid) {
       setIsSubmitting(false)
       const firstErrorField = document.querySelector('[aria-invalid="true"]') as HTMLElement | null
       firstErrorField?.focus()
+      return
+    }
+
+    if (!isEditMode) {
+      navigate('/profile-preview')
+      return
+    }
+
+    try {
+      const updated = await updateBusinessProfile(profileData.id as string, profileData)
+      setProfileData({
+        ...profileData,
+        businessName: updated.business_name,
+        ownerName: updated.owner_name,
+        businessCategory: updated.business_category,
+        phoneNumber: updated.phone_number,
+        whatsappNumber: updated.whatsapp_number || '',
+        email: updated.email || '',
+        website: updated.website || '',
+        address: updated.address || '',
+        aboutBusiness: updated.about_business || '',
+        id: updated.id,
+        slug: updated.slug,
+        existingLogoUrl: updated.logo_url,
+      })
+      navigate('/profile-preview', { state: { updateSuccess: true } })
+    } catch (error) {
+      console.error('Failed to update business profile:', error)
+      showToast('Something went wrong while updating. Please try again.', 'error')
+      setIsSubmitting(false)
     }
   }
 
@@ -133,9 +171,17 @@ function CreateProfilePage() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-10">
+        <ToastContainer toasts={toasts} />
         <div className="mb-8">
+          <span
+            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold mb-2 ${
+              isEditMode ? 'bg-amber-50 text-amber-700' : 'bg-blue-50 text-blue-700'
+            }`}
+          >
+            {isEditMode ? 'Edit Mode' : 'Create Mode'}
+          </span>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight mb-1.5">
-            Create Your Profile
+            {isEditMode ? 'Edit Your Profile' : 'Create Your Profile'}
           </h1>
           <p className="text-sm text-gray-500">
             Fields marked with <span className="text-red-500 font-medium">*</span> are required.
@@ -390,7 +436,7 @@ function CreateProfilePage() {
                 </>
               ) : (
                 <>
-                  Preview Profile
+                  {isEditMode ? 'Update Profile' : 'Preview Profile'}
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
