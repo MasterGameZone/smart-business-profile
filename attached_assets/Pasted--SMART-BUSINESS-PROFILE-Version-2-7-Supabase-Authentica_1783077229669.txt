@@ -1,0 +1,270 @@
+# SMART BUSINESS PROFILE
+## Version 2.7 – Supabase Authentication (Login & Signup)
+
+## Standard Instructions
+
+Before making any changes:
+
+1. Read the existing codebase completely.
+2. Preserve the current project architecture.
+3. Reuse existing components whenever possible.
+4. Modify only the files required for this version.
+5. Do not refactor unrelated code.
+6. Do not add extra features.
+7. Do not anticipate future versions.
+8. Use the existing Supabase project and client.
+9. Stop immediately after completing Version 2.7.
+
+---
+
+## 1. Objective
+
+Implement real authentication using Supabase Auth.
+
+This version should connect the existing Authentication UI to Supabase.
+
+Users should be able to:
+
+- Create an account
+- Login
+- Logout
+- Receive email verification
+- Request password reset
+
+Do NOT implement protected routes yet.
+
+Do NOT associate users with business profiles yet.
+
+---
+
+## 2. Existing Project Context
+
+The project already includes:
+
+- Authentication UI
+- Supabase Client
+- Business Profile CRUD
+- Public Business Profiles
+- Existing Routing
+
+Continue working inside the existing project.
+
+Do not restructure the application.
+
+---
+
+## 3. Sign Up
+
+Connect the existing Sign Up page to Supabase Auth.
+
+Requirements:
+
+- Create account using email and password.
+- Validate existing client-side rules before submission.
+- Show loading state.
+- Prevent duplicate submissions.
+
+If successful:
+
+Display a success message:
+
+"Account created successfully. Please verify your email before logging in."
+
+Do not automatically log the user in.
+
+---
+
+## 4. Login
+
+Connect the Login page.
+
+Requirements:
+
+- Email
+- Password
+
+If login succeeds:
+
+- Create a Supabase session.
+- Redirect to the Home page.
+
+If login fails:
+
+Display a user-friendly error toast.
+
+Do not expose raw Supabase errors.
+
+---
+
+## 5. Logout
+
+Implement logout functionality.
+
+Requirements:
+
+- Clear the current session.
+- Redirect to the Landing Page.
+- Display a success toast.
+
+Do not remove any user data.
+
+---
+
+## 6. Forgot Password
+
+Connect the existing Forgot Password page.
+
+Requirements:
+
+- Send a password reset email using Supabase Auth.
+- Display a generic success message.
+
+Do not reveal whether an email exists.
+
+---
+
+## 7. Reset Password
+
+Implement password reset.
+
+Requirements:
+
+- Update the password using Supabase Auth.
+- Display a success toast.
+- Redirect to Login after success.
+
+Reuse the existing Reset Password page.
+
+---
+
+## 8. Authentication State
+
+Create a reusable authentication service.
+
+Monitor authentication state.
+
+Provide helper methods:
+
+- signUp()
+- signIn()
+- signOut()
+- resetPassword()
+- updatePassword()
+- getCurrentUser()
+
+Use reusable code.
+
+Avoid duplicating Supabase calls.
+
+---
+
+## 9. Session Persistence
+
+The user should remain logged in after refreshing the page.
+
+Use the default Supabase session persistence.
+
+Do not implement custom storage.
+
+---
+
+## 10. Error Handling
+
+Handle common errors gracefully.
+
+Examples:
+
+- Invalid email
+- Wrong password
+- Email already registered
+- Weak password
+- Network error
+
+Display professional user-friendly messages.
+
+Log detailed errors only to the console.
+
+---
+
+## 11. Files Allowed
+
+Modify only files required for:
+
+- Authentication pages
+- Authentication service
+- Routing (only where necessary)
+- Supabase Auth integration
+
+---
+
+## 12. Files NOT to Modify
+
+Do not modify:
+
+- Business Profile Form
+- Business Profile CRUD
+- Public Business Profile Page
+- Database schema
+- Existing migrations
+- QR functionality
+- Share functionality
+
+---
+
+## 13. Do NOT Build
+
+Do NOT implement:
+
+- Protected Routes
+- User ↔ Business ownership
+- Dashboard
+- Business Directory
+- Analytics
+- AI Assistant
+
+These belong to future versions.
+
+---
+
+## 14. Acceptance Criteria
+
+Version 2.7 is complete only if:
+
+- Users can sign up successfully.
+- Email verification is sent.
+- Users can log in.
+- Users can log out.
+- Password reset email can be requested.
+- Password can be updated.
+- Session persists after refresh.
+- Existing Business Profile functionality remains unchanged.
+- No console errors during successful authentication.
+
+---
+
+## 15. Final Report
+
+Provide:
+
+1. Files modified.
+2. Files created.
+3. Authentication methods implemented.
+4. Routes updated.
+5. Session management implementation.
+6. Error handling implemented.
+7. Confirmation that all acceptance criteria passed.
+8. Confirmation that existing Business Profile functionality remains unaffected.
+
+---
+
+## 16. STOP
+
+Do NOT implement Version 2.8.
+
+Do NOT implement Protected Routes.
+
+Do NOT associate users with business profiles.
+
+Do NOT modify Business Profile CRUD.
+
+Stop immediately after completing Version 2.7.

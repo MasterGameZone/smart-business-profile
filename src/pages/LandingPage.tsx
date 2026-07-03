@@ -1,4 +1,8 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext.tsx'
+import { signOut } from '../lib/authService.ts'
+import { ToastContainer, type ToastItem, type ToastType } from '../components/Toast.tsx'
 
 const features = [
   {
@@ -41,9 +45,71 @@ const features = [
 
 function LandingPage() {
   const navigate = useNavigate()
+  const { user, isLoading } = useAuth()
+  const [toasts, setToasts] = useState<ToastItem[]>([])
+  const [isSigningOut, setIsSigningOut] = useState(false)
+
+  const showToast = (message: string, type: ToastType = 'success') => {
+    const id = Date.now()
+    setToasts((prev) => [...prev, { id, message, type }])
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4000)
+  }
+
+  const handleLogout = async () => {
+    if (isSigningOut) return
+    setIsSigningOut(true)
+    const { error } = await signOut()
+    setIsSigningOut(false)
+
+    if (error) {
+      showToast(error, 'error')
+      return
+    }
+
+    showToast('You have been logged out.')
+    navigate('/')
+  }
 
   return (
     <div className="min-h-screen bg-white">
+      <ToastContainer toasts={toasts} />
+
+      {/* ── Auth nav ── */}
+      <div className="absolute top-0 right-0 px-4 py-4 z-10">
+        {!isLoading && (
+          user ? (
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-500 hidden sm:inline">{user.email}</span>
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={isSigningOut}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-full hover:bg-gray-50 active:scale-95 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all border border-gray-200 disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {isSigningOut ? 'Logging out…' : 'Log Out'}
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => navigate('/login')}
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 focus:outline-none focus:underline transition-colors"
+              >
+                Log In
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/signup')}
+                className="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-full hover:bg-blue-700 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all"
+              >
+                Sign Up
+              </button>
+            </div>
+          )
+        )}
+      </div>
+
       {/* ── Hero ── */}
       <section
         aria-label="Hero"

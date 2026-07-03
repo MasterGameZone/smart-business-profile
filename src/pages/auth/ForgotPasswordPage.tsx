@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import AuthLayout, { authInputBase, authLabel, authError } from '../../components/AuthLayout.tsx'
+import { ToastContainer, type ToastItem, type ToastType } from '../../components/Toast.tsx'
+import { resetPassword } from '../../lib/authService.ts'
 
 interface FormErrors {
   email?: string
@@ -13,6 +15,13 @@ function ForgotPasswordPage() {
   const [errors, setErrors] = useState<FormErrors>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [toasts, setToasts] = useState<ToastItem[]>([])
+
+  const showToast = (message: string, type: ToastType = 'success') => {
+    const id = Date.now()
+    setToasts((prev) => [...prev, { id, message, type }])
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4000)
+  }
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {}
@@ -25,17 +34,27 @@ function ForgotPasswordPage() {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsSubmitting(true)
+    if (isSubmitting) return
+
     const isValid = validate()
-    if (isValid) {
-      setSubmitted(true)
-    } else {
+    if (!isValid) {
       const firstErrorField = document.querySelector('[aria-invalid="true"]') as HTMLElement | null
       firstErrorField?.focus()
+      return
     }
+
+    setIsSubmitting(true)
+    const { error } = await resetPassword(email)
     setIsSubmitting(false)
+
+    if (error) {
+      showToast(error, 'error')
+      return
+    }
+
+    setSubmitted(true)
   }
 
   return (
@@ -51,6 +70,8 @@ function ForgotPasswordPage() {
         </p>
       }
     >
+      <ToastContainer toasts={toasts} />
+
       {submitted ? (
         <div role="status" className="rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3 text-sm text-emerald-700">
           If this email exists, a reset link will be sent.
@@ -82,7 +103,17 @@ function ForgotPasswordPage() {
             aria-busy={isSubmitting}
             className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold text-white bg-blue-600 rounded-full hover:bg-blue-700 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all disabled:opacity-70 disabled:cursor-not-allowed disabled:active:scale-100"
           >
-            Send Reset Link
+            {isSubmitting ? (
+              <>
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Sending…
+              </>
+            ) : (
+              'Send Reset Link'
+            )}
           </button>
         </form>
       )}
