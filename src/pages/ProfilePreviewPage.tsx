@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import QRCode from 'react-qr-code'
 import { useProfile } from '../context/ProfileContext.tsx'
+import { insertBusinessProfile } from '../lib/businessProfileService.ts'
 
 // ── Toast ──────────────────────────────────────────────────────────────────
 type ToastType = 'success' | 'info' | 'error'
@@ -96,12 +97,14 @@ function triggerBlobDownload(blob: Blob, filename: string) {
 // ── Page component ─────────────────────────────────────────────────────────
 function ProfilePreviewPage() {
   const navigate = useNavigate()
-  const { profileData, saveProfile } = useProfile()
+  const { profileData } = useProfile()
 
-  const [toasts, setToasts]   = useState<ToastItem[]>([])
-  const [mounted, setMounted] = useState(false)
-  const qrSectionRef          = useRef<HTMLElement>(null)
-  const qrCodeRef             = useRef<HTMLDivElement>(null)
+  const [toasts, setToasts]     = useState<ToastItem[]>([])
+  const [mounted, setMounted]   = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [hasSaved, setHasSaved] = useState(false)
+  const qrSectionRef             = useRef<HTMLElement>(null)
+  const qrCodeRef                = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setMounted(true))
@@ -147,9 +150,30 @@ function ProfilePreviewPage() {
     }
   }
 
-  const handleSaveProfile = () => {
-    saveProfile()
-    showToast('Business Profile saved successfully.')
+  const handleSaveProfile = async () => {
+    if (isSaving || hasSaved) return
+
+    if (
+      !profileData.businessName.trim() ||
+      !profileData.ownerName.trim() ||
+      !profileData.businessCategory ||
+      !profileData.phoneNumber.trim()
+    ) {
+      showToast('Please complete all required fields before saving.', 'error')
+      return
+    }
+
+    setIsSaving(true)
+    try {
+      await insertBusinessProfile(profileData)
+      setHasSaved(true)
+      showToast('Business Profile saved successfully.')
+    } catch (error) {
+      console.error('Failed to save business profile:', error)
+      showToast('Something went wrong while saving. Please try again.', 'error')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const handleDownloadQR = async () => {
@@ -376,13 +400,34 @@ function ProfilePreviewPage() {
                   <button
                     type="button"
                     onClick={handleSaveProfile}
-                    aria-label="Save profile to local storage"
-                    className="flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
+                    disabled={isSaving || hasSaved}
+                    aria-busy={isSaving}
+                    aria-label={hasSaved ? 'Profile already saved' : 'Save profile to database'}
+                    className="flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-70 disabled:cursor-not-allowed disabled:active:scale-100"
                   >
-                    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                    </svg>
-                    Save Profile
+                    {isSaving ? (
+                      <>
+                        <svg className="w-4 h-4 shrink-0 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        Saving…
+                      </>
+                    ) : hasSaved ? (
+                      <>
+                        <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Saved
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                        </svg>
+                        Save Profile
+                      </>
+                    )}
                   </button>
                 </div>
 

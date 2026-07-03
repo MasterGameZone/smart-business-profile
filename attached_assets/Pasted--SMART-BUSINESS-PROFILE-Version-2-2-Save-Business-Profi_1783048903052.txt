@@ -1,0 +1,215 @@
+# SMART BUSINESS PROFILE
+## Version 2.2 – Save Business Profile to Supabase
+
+## Standard Instructions
+
+Before making any changes:
+
+1. Read the existing codebase completely.
+2. Preserve the current project architecture.
+3. Reuse existing components whenever possible.
+4. Modify only the files required for this version.
+5. Do not refactor unrelated code.
+6. Do not add extra features.
+7. Use the existing Supabase connection.
+8. Use the existing business_profiles table.
+9. Stop immediately after completing Version 2.2.
+
+---
+
+## 1. Objective
+
+Replace Local Storage with Supabase for saving Business Profiles.
+
+The user should now save their profile into the database instead of browser Local Storage.
+
+Do NOT implement profile retrieval.
+
+Do NOT implement editing.
+
+Do NOT implement authentication.
+
+---
+
+## 2. Existing Project Context
+
+Current project includes:
+
+- React + Vite + TypeScript
+- Tailwind CSS
+- React Router
+- Business Profile Form
+- Profile Preview
+- Supabase connection
+- business_profiles table
+- QR Code
+- Share Profile
+
+Continue working inside the existing project.
+
+Do not restructure the project.
+
+---
+
+## 3. Build
+
+When the user clicks "Save Profile":
+
+- Validate the form.
+- Insert a new row into the business_profiles table.
+- Show a loading state while saving.
+- Prevent duplicate submissions.
+- Show a professional success toast after successful save.
+
+Do not redirect the user.
+
+Remain on the current page.
+
+---
+
+## 4. Error Handling
+
+If saving fails:
+
+- Show a user-friendly error toast.
+- Do not crash the application.
+- Keep the entered data intact.
+- Log the detailed error only to the console.
+
+---
+
+## 5. Local Storage
+
+Remove Local Storage as the primary persistence mechanism.
+
+If any Local Storage logic exists for saving profiles:
+
+- Remove it.
+- Keep only temporary UI state if absolutely necessary.
+
+The database becomes the single source of truth for profile storage.
+
+---
+
+## 6. Data Mapping
+
+Map fields correctly:
+
+business_name
+owner_name
+business_category
+phone_number
+whatsapp_number
+email
+website
+address
+about_business
+logo_url
+
+Do not insert created_at or updated_at manually.
+
+Allow Supabase defaults to handle them.
+
+---
+
+## 7. Type Safety
+
+Use the existing TypeScript types created in Version 2.1.
+
+Avoid using "any".
+
+---
+
+## 8. UI
+
+Keep the current UI unchanged.
+
+Only add:
+
+- Loading state
+- Success toast
+- Error toast
+
+No redesign.
+
+---
+
+## 9. Files Allowed
+
+Modify only files required for:
+
+- Save logic
+- Supabase service
+- Types
+- Form submission
+
+---
+
+## 10. Files NOT to Modify
+
+Do not modify:
+
+- Landing page
+- Routing
+- Preview layout
+- QR functionality
+- Share functionality
+- Database schema
+- Migration files
+
+---
+
+## 11. Do NOT Build
+
+Do NOT implement:
+
+- Fetching profiles
+- Editing profiles
+- Deleting profiles
+- Authentication
+- Dashboard
+- Public profile URLs
+- Storage buckets
+- Analytics
+- AI features
+
+---
+
+## 12. Acceptance Criteria
+
+Version 2.2 is complete only if:
+
+- Clicking "Save Profile" inserts a new row into business_profiles.
+- No Local Storage is used for profile persistence.
+- Loading state is shown while saving.
+- Success toast appears after save.
+- Error toast appears on failure.
+- Duplicate submissions are prevented.
+- Existing UI remains unchanged.
+- No console errors during successful save.
+
+---
+
+## 13. Final Report
+
+Provide:
+
+1. Files modified.
+2. Files created.
+3. Database operations implemented.
+4. Local Storage logic removed.
+5. Error handling added.
+6. Loading state implementation.
+7. Confirmation that all acceptance criteria passed.
+
+---
+
+## 14. STOP
+
+Do NOT implement Version 2.3.
+
+Do NOT implement profile retrieval.
+
+Do NOT implement editing.
+
+Stop immediately after completing Version 2.2.
