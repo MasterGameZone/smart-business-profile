@@ -1,0 +1,1 @@
+- [Supabase migrations application](supabase-migrations.md) — migration files aren't auto-applied; live DB is external Supabase, DATABASE_URL is an unused Replit PG. User must apply manually.

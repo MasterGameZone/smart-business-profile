@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import AuthLayout, { authInputBase, authLabel, authError } from '../../components/AuthLayout.tsx'
 import PasswordField from '../../components/PasswordField.tsx'
 import { ToastContainer, type ToastItem, type ToastType } from '../../components/Toast.tsx'
@@ -14,6 +14,8 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname || '/'
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -64,7 +66,7 @@ function LoginPage() {
       return
     }
 
-    navigate('/')
+    navigate(from, { replace: true })
   }
 
   return (

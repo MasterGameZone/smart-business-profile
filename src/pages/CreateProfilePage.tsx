@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useProfile } from '../context/ProfileContext.tsx'
+import { useAuth } from '../context/AuthContext.tsx'
 import { updateBusinessProfile } from '../lib/businessProfileService.ts'
 import { ToastContainer, type ToastItem, type ToastType } from '../components/Toast.tsx'
 
@@ -24,7 +25,10 @@ const categories = [
 function CreateProfilePage() {
   const navigate = useNavigate()
   const { profileData, setProfileData, clearProfile } = useProfile()
+  const { user } = useAuth()
   const isEditMode = Boolean(profileData.id)
+  const isForbidden =
+    isEditMode && Boolean(profileData.ownerId) && profileData.ownerId !== user?.id
 
   const [errors, setErrors] = useState<FormErrors>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -148,6 +152,34 @@ function CreateProfilePage() {
     ) : null
 
   const sectionHeading = 'text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4 pb-2 border-b border-gray-100'
+
+  if (isForbidden) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-white to-slate-50 flex items-center justify-center px-4">
+        <div className="max-w-md w-full text-center">
+          <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-6">
+            <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">403 - Access Denied</h1>
+          <p className="text-sm text-gray-500 mb-8">
+            You don&apos;t have permission to edit this business profile. It belongs to another user.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="inline-flex items-center justify-center gap-2 px-8 py-3 text-sm font-semibold text-white bg-blue-600 rounded-full hover:bg-blue-700 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Home
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-slate-50">

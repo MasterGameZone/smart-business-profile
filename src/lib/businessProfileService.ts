@@ -2,6 +2,7 @@ import { supabase } from './supabase'
 import type { BusinessProfileInsert, BusinessProfileRow, BusinessProfileUpdate } from '../types/businessProfile'
 import type { ProfileData } from '../context/ProfileContext'
 import { slugify } from '../utils/slug'
+import { getCurrentUser } from './authService'
 
 function mapProfileDataToFields(data: ProfileData) {
   return {
@@ -57,11 +58,17 @@ export async function generateUniqueSlug(businessName: string): Promise<string> 
 export async function insertBusinessProfile(
   data: ProfileData
 ): Promise<BusinessProfileRow> {
+  const user = await getCurrentUser()
+  if (!user) {
+    throw new Error('You must be logged in to save a business profile.')
+  }
+
   const slug = await generateUniqueSlug(data.businessName)
 
   const payload: BusinessProfileInsert = {
     ...mapProfileDataToInsert(data),
     slug,
+    owner_id: user.id,
   }
 
   const { data: inserted, error } = await supabase

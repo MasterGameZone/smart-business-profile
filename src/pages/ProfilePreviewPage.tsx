@@ -92,6 +92,7 @@ function ProfilePreviewPage() {
         ...profileData,
         id: saved.id,
         slug: saved.slug,
+        ownerId: saved.owner_id,
         existingLogoUrl: saved.logo_url,
       })
       setHasSaved(true)

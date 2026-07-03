@@ -3,6 +3,7 @@ import { createContext, useContext, useState } from 'react'
 export interface ProfileData {
   id: string | null
   slug: string | null
+  ownerId: string | null
   businessName: string
   ownerName: string
   businessCategory: string
@@ -19,6 +20,7 @@ export interface ProfileData {
 const defaultProfileData: ProfileData = {
   id: null,
   slug: null,
+  ownerId: null,
   businessName: '',
   ownerName: '',
   businessCategory: '',

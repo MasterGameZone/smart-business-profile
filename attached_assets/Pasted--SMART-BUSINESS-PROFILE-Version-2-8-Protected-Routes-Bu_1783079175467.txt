@@ -1,0 +1,223 @@
+# SMART BUSINESS PROFILE
+## Version 2.8 – Protected Routes & Business Ownership
+
+## Standard Instructions
+
+Before making any changes:
+
+1. Read the existing codebase completely.
+2. Preserve the current project architecture.
+3. Reuse existing components whenever possible.
+4. Modify only the files required for this version.
+5. Do not refactor unrelated code.
+6. Do not add extra features.
+7. Do not anticipate future versions.
+8. Use the existing Supabase Auth implementation.
+9. Stop immediately after completing Version 2.8.
+
+---
+
+## 1. Objective
+
+Protect business management features so that only authenticated users can create, edit, and manage business profiles.
+
+Associate each Business Profile with the authenticated user.
+
+---
+
+## 2. Existing Project Context
+
+Current project includes:
+
+- Supabase Authentication
+- Business Profile CRUD
+- Public Business Profile Pages
+- Existing Routing
+
+Continue working inside the existing project.
+
+Do not restructure the application.
+
+---
+
+## 3. Database Changes
+
+Create a new SQL migration.
+
+Modify the existing business_profiles table.
+
+Add:
+
+owner_id
+
+Properties:
+
+- UUID
+- Nullable initially
+- Foreign Key referencing auth.users(id)
+
+Backfill existing rows as NULL.
+
+Do not delete existing data.
+
+---
+
+## 4. Save Profile
+
+When creating a new profile:
+
+- User must be authenticated.
+- Automatically save:
+  owner_id = authenticated user's ID.
+
+Do not ask the user to choose an owner.
+
+---
+
+## 5. Protected Routes
+
+Protect the following routes:
+
+- Create Profile
+- Edit Profile
+- Save Profile
+
+If the user is not logged in:
+
+- Redirect to Login.
+- Preserve the originally requested route if practical.
+
+Public profile pages must remain publicly accessible.
+
+---
+
+## 6. Authorization
+
+When editing a profile:
+
+Verify:
+
+owner_id == authenticated user ID
+
+If the profile belongs to another user:
+
+Display:
+
+403 - Access Denied
+
+Do not expose profile editing.
+
+---
+
+## 7. Navigation
+
+When logged in:
+
+Show:
+
+- Dashboard
+- Logout
+
+When logged out:
+
+Show:
+
+- Login
+- Sign Up
+
+Keep navigation simple.
+
+---
+
+## 8. Row Level Security
+
+Create a SQL migration updating RLS policies.
+
+Rules:
+
+Authenticated users:
+
+- Can create their own profiles.
+- Can update only their own profiles.
+
+Anonymous users:
+
+- Can read public business profiles.
+- Cannot create or update profiles.
+
+---
+
+## 9. Files Allowed
+
+Modify only:
+
+- Authentication service
+- Routing
+- Business Profile CRUD
+- SQL migration
+- Types
+
+---
+
+## 10. Files NOT to Modify
+
+Do not modify:
+
+- Landing Page layout
+- Public Profile UI
+- QR functionality
+- Share functionality
+
+---
+
+## 11. Do NOT Build
+
+Do NOT implement:
+
+- Dashboard
+- Business Directory
+- Analytics
+- AI Assistant
+- Team Accounts
+- Role Management
+
+---
+
+## 12. Acceptance Criteria
+
+Version 2.8 is complete only if:
+
+- Protected routes work.
+- Anonymous users are redirected to Login.
+- New profiles store owner_id.
+- Existing public profiles remain accessible.
+- Users cannot edit another user's profile.
+- RLS policies enforce ownership.
+- Existing public functionality remains unchanged.
+- No console errors.
+
+---
+
+## 13. Final Report
+
+Provide:
+
+1. Files modified.
+2. Files created.
+3. SQL migration created.
+4. Protected routes implemented.
+5. Ownership implementation details.
+6. Updated RLS policies.
+7. Confirmation that all acceptance criteria passed.
+
+---
+
+## 14. STOP
+
+Do NOT implement Version 2.9.
+
+Do NOT implement Dashboard.
+
+Do NOT implement Business Directory.
+
+Stop immediately after completing Version 2.8.
