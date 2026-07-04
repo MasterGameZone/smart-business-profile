@@ -1,0 +1,214 @@
+# SMART BUSINESS PROFILE
+## Version 3.1 – Directory Search
+
+## Standard Instructions
+
+Before making any changes:
+
+1. Read the existing codebase completely.
+2. Preserve the current project architecture.
+3. Reuse existing components whenever possible.
+4. Modify only the files required for this version.
+5. Do not refactor unrelated code.
+6. Do not add extra features.
+7. Do not anticipate Version 3.2.
+8. Preserve all existing functionality.
+9. Stop immediately after completing Version 3.1.
+
+---
+
+## 1. Objective
+
+Implement real-time search for the Public Business Directory.
+
+Visitors should be able to quickly search businesses without leaving the Directory page.
+
+This version introduces search only.
+
+Do NOT implement category filters or location filters.
+
+---
+
+## 2. Existing Context
+
+The application already includes:
+
+- Public Directory
+- Public Business Profiles
+- Dashboard
+- Authentication
+- Business CRUD
+
+Continue working inside the existing project.
+
+---
+
+## 3. Search UI
+
+At the top of the Directory page add a search bar.
+
+Placeholder:
+
+Search businesses...
+
+The search bar should be responsive and match the existing design language.
+
+---
+
+## 4. Search Behaviour
+
+Implement client-side real-time search.
+
+Filter businesses while typing.
+
+Search should be case-insensitive.
+
+Search across:
+
+- Business Name
+- Business Category
+- Owner Name
+
+The filtering should happen instantly.
+
+Do not require pressing Enter.
+
+---
+
+## 5. Search Results
+
+Display:
+
+"No businesses found."
+
+when the search returns zero results.
+
+Do not display an error.
+
+---
+
+## 6. Performance
+
+Load the business list once.
+
+Searching should occur in memory.
+
+Do NOT perform a new Supabase query on every keystroke.
+
+---
+
+## 7. Search State
+
+If the search box is cleared:
+
+Restore the complete business list.
+
+---
+
+## 8. UI
+
+Highlight the number of matching businesses.
+
+Example:
+
+Showing 18 businesses
+
+or
+
+Showing 3 of 18 businesses
+
+Update dynamically.
+
+---
+
+## 9. Accessibility
+
+Ensure:
+
+- Search input has an associated label.
+- Keyboard navigation works.
+- Focus states remain visible.
+
+---
+
+## 10. Files Allowed
+
+Modify only:
+
+- Directory page
+- Search component (if created)
+
+Do not modify unrelated pages.
+
+---
+
+## 11. Files NOT to Modify
+
+Do not modify:
+
+- Authentication
+- Dashboard
+- CRUD logic
+- Database schema
+- Supabase services
+- QR functionality
+- Share functionality
+
+---
+
+## 12. Do NOT Build
+
+Do NOT implement:
+
+- Category filters
+- Location filters
+- Sorting
+- Pagination
+- Infinite scrolling
+- Search suggestions
+- AI search
+
+These belong to later versions.
+
+---
+
+## 13. Acceptance Criteria
+
+Version 3.1 is complete only if:
+
+- Search bar exists.
+- Search is real-time.
+- Search is case-insensitive.
+- Business Name is searchable.
+- Category is searchable.
+- Owner Name is searchable.
+- Clearing the search restores all businesses.
+- Result counter updates correctly.
+- Empty search state works.
+- Existing functionality remains unchanged.
+- No console errors.
+
+---
+
+## 14. Final Report
+
+Provide:
+
+1. Files modified.
+2. Components created.
+3. Search implementation details.
+4. Performance considerations.
+5. Confirmation that all acceptance criteria passed.
+6. Confirmation that no existing functionality was affected.
+
+---
+
+## 15. STOP
+
+Do NOT implement Version 3.2.
+
+Do NOT implement category filters.
+
+Do NOT implement sorting.
+
+Stop immediately after completing Version 3.1.

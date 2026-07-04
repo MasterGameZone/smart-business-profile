@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getPublicBusinessProfiles } from '../lib/businessProfileService.ts'
 import type { PublicBusinessProfileRow } from '../types/businessProfile.ts'
@@ -17,6 +17,7 @@ function DirectoryPage() {
 
   const [loadState, setLoadState] = useState<LoadState>('loading')
   const [profiles, setProfiles] = useState<PublicBusinessProfileRow[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
 
   const loadProfiles = useCallback(async () => {
     setLoadState('loading')
@@ -33,6 +34,19 @@ function DirectoryPage() {
   useEffect(() => {
     loadProfiles()
   }, [loadProfiles])
+
+  const filteredProfiles = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase()
+    if (!query) return profiles
+
+    return profiles.filter((profile) => {
+      return (
+        profile.business_name.toLowerCase().includes(query) ||
+        profile.business_category.toLowerCase().includes(query) ||
+        profile.owner_name.toLowerCase().includes(query)
+      )
+    })
+  }, [profiles, searchQuery])
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-slate-50">
@@ -57,6 +71,43 @@ function DirectoryPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight mb-1.5">Business Directory</h1>
           <p className="text-sm text-gray-500">Browse published business profiles.</p>
         </div>
+
+        {loadState === 'found' && (
+          <div className="mb-6">
+            <label htmlFor="directory-search" className="sr-only">
+              Search businesses
+            </label>
+            <div className="relative">
+              <svg
+                className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"
+                />
+              </svg>
+              <input
+                id="directory-search"
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search businesses..."
+                className="w-full sm:max-w-md pl-11 pr-4 py-2.5 text-sm text-gray-900 bg-white border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              />
+            </div>
+            <p className="mt-3 text-sm text-gray-500" aria-live="polite">
+              {searchQuery.trim()
+                ? `Showing ${filteredProfiles.length} of ${profiles.length} businesses`
+                : `Showing ${profiles.length} businesses`}
+            </p>
+          </div>
+        )}
 
         {/* ── Loading State ── */}
         {loadState === 'loading' && (
@@ -100,10 +151,17 @@ function DirectoryPage() {
           </div>
         )}
 
+        {/* ── No Search Results ── */}
+        {loadState === 'found' && filteredProfiles.length === 0 && (
+          <div className="flex flex-col items-center justify-center min-h-[30vh] text-center px-4 bg-white rounded-2xl border border-gray-100 shadow-sm py-16">
+            <p className="text-gray-700 font-medium">No businesses found.</p>
+          </div>
+        )}
+
         {/* ── Business Cards ── */}
-        {loadState === 'found' && (
+        {loadState === 'found' && filteredProfiles.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            {profiles.map((profile) => (
+            {filteredProfiles.map((profile) => (
               <div
                 key={profile.id}
                 className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col"
