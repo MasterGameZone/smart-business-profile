@@ -6,6 +6,7 @@ import type { PublicBusinessProfileRow } from '../types/businessProfile.ts'
 type LoadState = 'loading' | 'found' | 'empty' | 'error'
 
 const ABOUT_TRUNCATE_LENGTH = 140
+const ALL_CATEGORIES = 'All Categories'
 
 function truncate(text: string, length: number): string {
   if (text.length <= length) return text
@@ -18,6 +19,7 @@ function DirectoryPage() {
   const [loadState, setLoadState] = useState<LoadState>('loading')
   const [profiles, setProfiles] = useState<PublicBusinessProfileRow[]>([])
   const [searchQuery, setSearchQuery] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState(ALL_CATEGORIES)
 
   const loadProfiles = useCallback(async () => {
     setLoadState('loading')
@@ -35,18 +37,35 @@ function DirectoryPage() {
     loadProfiles()
   }, [loadProfiles])
 
+  const categories = useMemo(() => {
+    const unique = Array.from(new Set(profiles.map((profile) => profile.business_category)))
+    unique.sort((a, b) => a.localeCompare(b))
+    return [ALL_CATEGORIES, ...unique]
+  }, [profiles])
+
   const filteredProfiles = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
-    if (!query) return profiles
 
     return profiles.filter((profile) => {
+      const matchesCategory = selectedCategory === ALL_CATEGORIES || profile.business_category === selectedCategory
+      if (!matchesCategory) return false
+
+      if (!query) return true
+
       return (
         profile.business_name.toLowerCase().includes(query) ||
         profile.business_category.toLowerCase().includes(query) ||
         profile.owner_name.toLowerCase().includes(query)
       )
     })
-  }, [profiles, searchQuery])
+  }, [profiles, searchQuery, selectedCategory])
+
+  const hasActiveFilters = searchQuery.trim().length > 0 || selectedCategory !== ALL_CATEGORIES
+
+  const clearFilters = useCallback(() => {
+    setSearchQuery('')
+    setSelectedCategory(ALL_CATEGORIES)
+  }, [])
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-slate-50">
@@ -74,35 +93,55 @@ function DirectoryPage() {
 
         {loadState === 'found' && (
           <div className="mb-6">
-            <label htmlFor="directory-search" className="sr-only">
-              Search businesses
-            </label>
-            <div className="relative">
-              <svg
-                className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1 sm:max-w-md">
+                <label htmlFor="directory-search" className="sr-only">
+                  Search businesses
+                </label>
+                <svg
+                  className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"
+                  />
+                </svg>
+                <input
+                  id="directory-search"
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search businesses..."
+                  className="w-full pl-11 pr-4 py-2.5 text-sm text-gray-900 bg-white border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 />
-              </svg>
-              <input
-                id="directory-search"
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search businesses..."
-                className="w-full sm:max-w-md pl-11 pr-4 py-2.5 text-sm text-gray-900 bg-white border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              />
+              </div>
+
+              <div className="sm:w-56">
+                <label htmlFor="directory-category" className="sr-only">
+                  Filter by category
+                </label>
+                <select
+                  id="directory-category"
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full px-4 py-2.5 text-sm text-gray-900 bg-white border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                >
+                  {categories.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
             <p className="mt-3 text-sm text-gray-500" aria-live="polite">
-              {searchQuery.trim()
+              {hasActiveFilters
                 ? `Showing ${filteredProfiles.length} of ${profiles.length} businesses`
                 : `Showing ${profiles.length} businesses`}
             </p>
@@ -151,10 +190,17 @@ function DirectoryPage() {
           </div>
         )}
 
-        {/* ── No Search Results ── */}
+        {/* ── No Filter Results ── */}
         {loadState === 'found' && filteredProfiles.length === 0 && (
           <div className="flex flex-col items-center justify-center min-h-[30vh] text-center px-4 bg-white rounded-2xl border border-gray-100 shadow-sm py-16">
-            <p className="text-gray-700 font-medium">No businesses found.</p>
+            <p className="text-gray-700 font-medium mb-6">No businesses found matching your filters.</p>
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-full hover:bg-blue-700 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all"
+            >
+              Clear Filters
+            </button>
           </div>
         )}
 

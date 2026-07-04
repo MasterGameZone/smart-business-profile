@@ -1,0 +1,250 @@
+# SMART BUSINESS PROFILE
+## Version 3.2 – Business Category Filters
+
+## Standard Instructions
+
+Before making any changes:
+
+1. Read the existing codebase completely.
+2. Preserve the current project architecture.
+3. Reuse existing components whenever possible.
+4. Modify only the files required for this version.
+5. Do not refactor unrelated code.
+6. Do not add extra features.
+7. Do not anticipate Version 3.3.
+8. Preserve all existing functionality.
+9. Stop immediately after completing Version 3.2.
+
+---
+
+## 1. Objective
+
+Add category filtering to the Public Business Directory.
+
+Users should be able to quickly browse businesses by category.
+
+Filtering should work together with the existing search functionality.
+
+---
+
+## 2. Existing Context
+
+The application already includes:
+
+- Public Directory
+- Real-time Search
+- Public Business Profiles
+- Dashboard
+- Business CRUD
+
+Continue working inside the existing project.
+
+---
+
+## 3. Category List
+
+Generate the available categories dynamically from the loaded businesses.
+
+Do NOT hardcode category names.
+
+Categories should be:
+
+- Unique
+- Sorted alphabetically
+
+Always include:
+
+All Categories
+
+as the first option.
+
+---
+
+## 4. Filter UI
+
+Add a category filter above the directory.
+
+Desktop:
+
+Display as a dropdown.
+
+Mobile:
+
+Display as a responsive dropdown.
+
+Maintain the current design language.
+
+---
+
+## 5. Filter Behaviour
+
+When a category is selected:
+
+Display only businesses belonging to that category.
+
+Selecting:
+
+All Categories
+
+should restore the full directory.
+
+Filtering must happen instantly.
+
+No page reload.
+
+---
+
+## 6. Search + Category
+
+Search and category filtering must work together.
+
+Example:
+
+Search:
+
+Dental
+
+Category:
+
+Healthcare
+
+Results:
+
+Businesses matching BOTH conditions.
+
+---
+
+## 7. Result Counter
+
+Update the existing result counter.
+
+Examples:
+
+Showing 25 businesses
+
+Showing 4 of 25 businesses
+
+Reflect both search and category filters.
+
+---
+
+## 8. Empty State
+
+If no businesses match:
+
+Display:
+
+"No businesses found matching your filters."
+
+Provide:
+
+Clear Filters
+
+Clicking it should:
+
+- Clear search
+- Reset category
+- Restore the full directory
+
+---
+
+## 9. Performance
+
+Reuse the already loaded business list.
+
+Do NOT issue new Supabase queries when filtering.
+
+Filtering should occur entirely in memory.
+
+---
+
+## 10. Accessibility
+
+Ensure:
+
+- Proper label for the category dropdown
+- Keyboard navigation
+- Visible focus states
+- Screen reader friendly controls
+
+---
+
+## 11. Files Allowed
+
+Modify only:
+
+- Directory page
+- Filter component (if created)
+
+Do not modify unrelated pages.
+
+---
+
+## 12. Files NOT to Modify
+
+Do not modify:
+
+- Authentication
+- Dashboard
+- CRUD logic
+- Database schema
+- Supabase services
+- QR functionality
+- Share functionality
+
+---
+
+## 13. Do NOT Build
+
+Do NOT implement:
+
+- Location filters
+- Maps
+- Sorting
+- Pagination
+- Infinite scrolling
+- AI recommendations
+
+These belong to future versions.
+
+---
+
+## 14. Acceptance Criteria
+
+Version 3.2 is complete only if:
+
+- Categories are generated dynamically.
+- All Categories option works.
+- Category filtering is instant.
+- Search and category filters work together.
+- Result counter updates correctly.
+- Empty state works.
+- Clear Filters restores the full directory.
+- Existing functionality remains unchanged.
+- No console errors.
+
+---
+
+## 15. Final Report
+
+Provide:
+
+1. Files modified.
+2. Components created or updated.
+3. Category generation implementation.
+4. Filter implementation details.
+5. Performance considerations.
+6. Confirmation that all acceptance criteria passed.
+7. Confirmation that no existing functionality was affected.
+
+---
+
+## 16. STOP
+
+Do NOT implement Version 3.3.
+
+Do NOT implement location filtering.
+
+Do NOT implement maps.
+
+Stop immediately after completing Version 3.2.
