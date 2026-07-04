@@ -81,6 +81,13 @@ function LandingPage() {
             <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-end">
               <button
                 type="button"
+                onClick={() => navigate('/directory')}
+                className="inline-flex items-center px-3 sm:px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 focus:outline-none focus:underline transition-colors"
+              >
+                Directory
+              </button>
+              <button
+                type="button"
                 onClick={() => navigate('/dashboard')}
                 className="inline-flex items-center px-3 sm:px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 focus:outline-none focus:underline transition-colors"
               >
@@ -103,7 +110,14 @@ function LandingPage() {
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-end">
+              <button
+                type="button"
+                onClick={() => navigate('/directory')}
+                className="inline-flex items-center px-3 sm:px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 focus:outline-none focus:underline transition-colors"
+              >
+                Directory
+              </button>
               <button
                 type="button"
                 onClick={() => navigate('/login')}

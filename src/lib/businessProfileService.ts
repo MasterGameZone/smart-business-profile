@@ -1,5 +1,10 @@
 import { supabase } from './supabase'
-import type { BusinessProfileInsert, BusinessProfileRow, BusinessProfileUpdate } from '../types/businessProfile'
+import type {
+  BusinessProfileInsert,
+  BusinessProfileRow,
+  BusinessProfileUpdate,
+  PublicBusinessProfileRow,
+} from '../types/businessProfile'
 import type { ProfileData } from '../context/ProfileContext'
 import { slugify } from '../utils/slug'
 import { getCurrentUser } from './authService'
@@ -136,6 +141,21 @@ export async function getBusinessProfilesByOwner(
     .select('*')
     .eq('owner_id', ownerId)
     .order('created_at', { ascending: false })
+
+  if (error) {
+    throw error
+  }
+
+  return data ?? []
+}
+
+export async function getPublicBusinessProfiles(): Promise<PublicBusinessProfileRow[]> {
+  const { data, error } = await supabase
+    .from('business_profiles')
+    .select(
+      'id, business_name, owner_name, business_category, about_business, logo_url, slug, owner_id, created_at, updated_at'
+    )
+    .order('business_name', { ascending: true })
 
   if (error) {
     throw error

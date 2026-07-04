@@ -8,6 +8,7 @@ import SignUpPage from './pages/auth/SignUpPage.tsx'
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage.tsx'
 import ResetPasswordPage from './pages/auth/ResetPasswordPage.tsx'
 import DashboardPage from './pages/DashboardPage.tsx'
+import DirectoryPage from './pages/DirectoryPage.tsx'
 import ProtectedRoute from './components/ProtectedRoute.tsx'
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
         }
       />
       <Route path="/business/:slug" element={<PublicBusinessProfilePage />} />
+      <Route path="/directory" element={<DirectoryPage />} />
       <Route
         path="/dashboard"
         element={

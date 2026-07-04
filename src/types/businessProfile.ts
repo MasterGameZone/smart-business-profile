@@ -55,6 +55,20 @@ export interface BusinessProfileUpdate {
   updated_at?: string
 }
 
+export type PublicBusinessProfileRow = Pick<
+  BusinessProfileRow,
+  | 'id'
+  | 'business_name'
+  | 'owner_name'
+  | 'business_category'
+  | 'about_business'
+  | 'logo_url'
+  | 'slug'
+  | 'owner_id'
+  | 'created_at'
+  | 'updated_at'
+>
+
 export interface Database {
   public: {
     Tables: {

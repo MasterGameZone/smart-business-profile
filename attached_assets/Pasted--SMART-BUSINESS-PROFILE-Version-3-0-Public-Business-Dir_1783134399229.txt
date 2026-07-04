@@ -1,0 +1,242 @@
+# SMART BUSINESS PROFILE
+## Version 3.0 – Public Business Directory
+
+## Standard Instructions
+
+Before making any changes:
+
+1. Read the existing codebase completely.
+2. Preserve the current project architecture.
+3. Reuse existing components whenever possible.
+4. Modify only the files required for this version.
+5. Do not refactor unrelated code.
+6. Do not add extra features.
+7. Do not anticipate Version 3.1.
+8. Preserve all existing functionality.
+9. Stop immediately after completing Version 3.0.
+
+---
+
+## 1. Objective
+
+Build the first Public Business Directory.
+
+Visitors should be able to browse all publicly available business profiles.
+
+This version is browse-only.
+
+No search.
+
+No filters.
+
+No categories.
+
+---
+
+## 2. Existing Project Context
+
+The application already includes:
+
+- Authentication
+- Business Dashboard
+- Public Business Profile Pages
+- Multi-Business Ownership
+- Supabase Backend
+
+Continue working inside the existing project.
+
+Do not restructure the application.
+
+---
+
+## 3. Public Route
+
+Create a new public route:
+
+/directory
+
+This route must be accessible without authentication.
+
+---
+
+## 4. Business Retrieval
+
+Create a reusable function:
+
+getPublicBusinessProfiles()
+
+Requirements:
+
+- Query business_profiles
+- Order by business_name ascending
+- Return all public business profiles
+- Use existing TypeScript types
+
+---
+
+## 5. Directory Layout
+
+Display each business as a responsive card.
+
+Each card should display:
+
+- Logo (or placeholder)
+- Business Name
+- Business Category
+- Owner Name
+- Short About Business (truncate if necessary)
+- Slug
+
+Each card should include:
+
+View Profile
+
+Reuse the existing public profile route.
+
+---
+
+## 6. Empty State
+
+If no businesses exist:
+
+Display:
+
+No businesses have been published yet.
+
+Do not show errors.
+
+---
+
+## 7. Loading State
+
+Display a loading indicator while retrieving businesses.
+
+Do not render partial results.
+
+---
+
+## 8. Error State
+
+If retrieval fails:
+
+Display:
+
+Unable to load businesses.
+
+Provide:
+
+Retry
+
+Log detailed errors only to the console.
+
+---
+
+## 9. Navigation
+
+Add:
+
+Directory
+
+to the public navigation.
+
+Maintain the existing design language.
+
+---
+
+## 10. Performance
+
+Reuse existing components wherever practical.
+
+Avoid duplicate layouts.
+
+Do not fetch unnecessary fields.
+
+---
+
+## 11. Files Allowed
+
+Modify only:
+
+- Directory page
+- Routing
+- Navigation
+- Business retrieval service
+- Types (if required)
+
+---
+
+## 12. Files NOT to Modify
+
+Do not modify:
+
+- Authentication
+- Dashboard
+- Business CRUD
+- Database schema
+- Existing migrations
+- QR functionality
+- Share functionality
+
+---
+
+## 13. Do NOT Build
+
+Do NOT implement:
+
+- Search
+- Category filters
+- Location filters
+- Maps
+- Pagination
+- Infinite scrolling
+- Favorites
+- Reviews
+- Ratings
+- Analytics
+- AI Assistant
+
+Those belong to future versions.
+
+---
+
+## 14. Acceptance Criteria
+
+Version 3.0 is complete only if:
+
+- /directory route exists.
+- Public users can access it.
+- Businesses load from Supabase.
+- Business cards render correctly.
+- View Profile works.
+- Empty state works.
+- Loading state works.
+- Error state works.
+- Navigation includes Directory.
+- Existing functionality remains unchanged.
+- No console errors.
+
+---
+
+## 15. Final Report
+
+Provide:
+
+1. Files created.
+2. Files modified.
+3. Components created.
+4. Retrieval implementation.
+5. Navigation updates.
+6. Confirmation that all acceptance criteria passed.
+7. Confirmation that no existing functionality was affected.
+
+---
+
+## 16. STOP
+
+Do NOT implement Version 3.1.
+
+Do NOT implement search.
+
+Do NOT implement filters.
+
+Stop immediately after completing Version 3.0.
