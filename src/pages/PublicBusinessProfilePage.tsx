@@ -1,12 +1,33 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getBusinessProfileBySlug } from '../lib/businessProfileService.ts'
+import { usePageMeta } from '../hooks/usePageMeta.ts'
 import type { BusinessProfileRow } from '../types/businessProfile.ts'
 import { ToastContainer, type ToastItem, type ToastType } from '../components/Toast.tsx'
 import BusinessProfileDisplay from '../components/BusinessProfileDisplay.tsx'
 import { svgContainerToBlob, triggerBlobDownload } from '../utils/qr.ts'
 
 type LoadState = 'loading' | 'found' | 'not-found' | 'error'
+
+const META_DESCRIPTION_LENGTH = 155
+
+function truncateMetaDescription(value: string): string {
+  if (value.length <= META_DESCRIPTION_LENGTH) return value
+  return `${value.slice(0, META_DESCRIPTION_LENGTH - 1).trimEnd()}...`
+}
+
+function buildProfileDescription(profile: BusinessProfileRow): string {
+  const businessName = profile.business_name.trim() || 'this business'
+  const category = profile.business_category.trim()
+  const about = profile.about_business?.trim()
+
+  if (!about) {
+    return `View contact details, business information, and QR code for ${businessName}.`
+  }
+
+  const categoryText = category ? ` - ${category}.` : '.'
+  return truncateMetaDescription(`${businessName}${categoryText} ${about}`)
+}
 
 function PublicBusinessProfilePage() {
   const navigate = useNavigate()
@@ -19,6 +40,21 @@ function PublicBusinessProfilePage() {
   const qrCodeRef = useRef<HTMLDivElement>(null)
 
   const profileUrl = window.location.href
+  const metaBusinessName = profile?.business_name.trim() || 'Business Profile'
+  const metaTitle = `${metaBusinessName} | Smart Business Profile`
+  const metaDescription = profile
+    ? buildProfileDescription(profile)
+    : 'View contact details, business information, and QR code for this business profile.'
+
+  usePageMeta({
+    title: metaTitle,
+    description: metaDescription,
+    ogTitle: metaTitle,
+    ogDescription: metaDescription,
+    ogUrl: profileUrl,
+    twitterTitle: metaTitle,
+    twitterDescription: metaDescription,
+  })
 
   const showToast = useCallback((message: string, type: ToastType = 'success') => {
     const id = Date.now()

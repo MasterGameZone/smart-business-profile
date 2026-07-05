@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import AuthLayout, { authError } from '../../components/AuthLayout.tsx'
 import PasswordField from '../../components/PasswordField.tsx'
 import { ToastContainer, type ToastItem, type ToastType } from '../../components/Toast.tsx'
+import { usePageMeta } from '../../hooks/usePageMeta.ts'
 import { updatePassword } from '../../lib/authService.ts'
 
 interface FormErrors {
@@ -12,6 +13,11 @@ interface FormErrors {
 
 function ResetPasswordPage() {
   const navigate = useNavigate()
+
+  usePageMeta({
+    title: 'Reset Password | Smart Business Profile',
+    description: 'Choose a new password for your Smart Business Profile account.',
+  })
 
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')

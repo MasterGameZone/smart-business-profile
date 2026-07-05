@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import AuthLayout, { authInputBase, authLabel, authError } from '../../components/AuthLayout.tsx'
 import PasswordField from '../../components/PasswordField.tsx'
 import { ToastContainer, type ToastItem, type ToastType } from '../../components/Toast.tsx'
+import { usePageMeta } from '../../hooks/usePageMeta.ts'
 import { signIn } from '../../lib/authService.ts'
 
 interface FormErrors {
@@ -16,6 +17,11 @@ function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname || '/'
+
+  usePageMeta({
+    title: 'Login | Smart Business Profile',
+    description: 'Log in to manage your Smart Business Profile account and business profiles.',
+  })
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')

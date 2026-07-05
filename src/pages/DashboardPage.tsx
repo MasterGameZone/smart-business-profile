@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext.tsx'
 import { useProfile } from '../context/ProfileContext.tsx'
 import { signOut } from '../lib/authService.ts'
 import { getBusinessProfilesByOwner } from '../lib/businessProfileService.ts'
+import { usePageMeta } from '../hooks/usePageMeta.ts'
 import type { BusinessProfileRow } from '../types/businessProfile.ts'
 import { ToastContainer, type ToastItem, type ToastType } from '../components/Toast.tsx'
 
@@ -21,6 +22,11 @@ function DashboardPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { profileData, setProfileData, clearProfile } = useProfile()
+
+  usePageMeta({
+    title: 'Dashboard | Smart Business Profile',
+    description: 'Manage your business profiles from your Smart Business Profile dashboard.',
+  })
 
   const [loadState, setLoadState] = useState<LoadState>('loading')
   const [profiles, setProfiles] = useState<BusinessProfileRow[]>([])

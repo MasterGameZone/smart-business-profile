@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useProfile } from '../context/ProfileContext.tsx'
 import { useAuth } from '../context/AuthContext.tsx'
 import { updateBusinessProfile } from '../lib/businessProfileService.ts'
+import { usePageMeta } from '../hooks/usePageMeta.ts'
 import { ToastContainer, type ToastItem, type ToastType } from '../components/Toast.tsx'
 
 interface FormErrors {
@@ -26,6 +27,12 @@ function CreateProfilePage() {
   const navigate = useNavigate()
   const { profileData, setProfileData, clearProfile } = useProfile()
   const { user } = useAuth()
+
+  usePageMeta({
+    title: 'Create Business Profile | Smart Business Profile',
+    description: 'Create a professional business profile with contact details, QR code, and public sharing link.',
+  })
+
   const isEditMode = Boolean(profileData.id)
   const isForbidden =
     isEditMode && Boolean(profileData.ownerId) && profileData.ownerId !== user?.id

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import AuthLayout, { authInputBase, authLabel, authError } from '../../components/AuthLayout.tsx'
 import PasswordField from '../../components/PasswordField.tsx'
 import { ToastContainer, type ToastItem, type ToastType } from '../../components/Toast.tsx'
+import { usePageMeta } from '../../hooks/usePageMeta.ts'
 import { signUp } from '../../lib/authService.ts'
 
 interface FormErrors {
@@ -15,6 +16,11 @@ interface FormErrors {
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function SignUpPage() {
+  usePageMeta({
+    title: 'Sign Up | Smart Business Profile',
+    description: 'Create your Smart Business Profile account and start building a public business profile.',
+  })
+
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')

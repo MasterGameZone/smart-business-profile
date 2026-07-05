@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import AuthLayout, { authInputBase, authLabel, authError } from '../../components/AuthLayout.tsx'
 import { ToastContainer, type ToastItem, type ToastType } from '../../components/Toast.tsx'
+import { usePageMeta } from '../../hooks/usePageMeta.ts'
 import { resetPassword } from '../../lib/authService.ts'
 
 interface FormErrors {
@@ -11,6 +12,11 @@ interface FormErrors {
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function ForgotPasswordPage() {
+  usePageMeta({
+    title: 'Forgot Password | Smart Business Profile',
+    description: 'Request a password reset link for your Smart Business Profile account.',
+  })
+
   const [email, setEmail] = useState('')
   const [errors, setErrors] = useState<FormErrors>({})
   const [isSubmitting, setIsSubmitting] = useState(false)

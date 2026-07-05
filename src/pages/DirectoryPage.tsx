@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getPublicBusinessProfiles } from '../lib/businessProfileService.ts'
+import { usePageMeta } from '../hooks/usePageMeta.ts'
 import type { PublicBusinessProfileRow } from '../types/businessProfile.ts'
 
 type LoadState = 'loading' | 'found' | 'empty' | 'error'
@@ -15,6 +16,11 @@ function truncate(text: string, length: number): string {
 
 function DirectoryPage() {
   const navigate = useNavigate()
+
+  usePageMeta({
+    title: 'Business Directory | Smart Business Profile',
+    description: 'Browse and discover public business profiles by name, category, and location.',
+  })
 
   const [loadState, setLoadState] = useState<LoadState>('loading')
   const [profiles, setProfiles] = useState<PublicBusinessProfileRow[]>([])

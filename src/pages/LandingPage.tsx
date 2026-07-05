@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.tsx'
 import { signOut } from '../lib/authService.ts'
+import { usePageMeta } from '../hooks/usePageMeta.ts'
 import { ToastContainer, type ToastItem, type ToastType } from '../components/Toast.tsx'
 
 const features = [
@@ -46,6 +47,13 @@ const features = [
 function LandingPage() {
   const navigate = useNavigate()
   const { user, isLoading } = useAuth()
+
+  usePageMeta({
+    title: 'Smart Business Profile | Digital Business Cards for Local Businesses',
+    description:
+      'Create a professional digital business profile with contact buttons, public link, QR code, and business discovery.',
+  })
+
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const [isSigningOut, setIsSigningOut] = useState(false)
 

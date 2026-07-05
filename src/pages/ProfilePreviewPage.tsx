@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useProfile } from '../context/ProfileContext.tsx'
 import { insertBusinessProfile } from '../lib/businessProfileService.ts'
+import { usePageMeta } from '../hooks/usePageMeta.ts'
 import { ToastContainer, type ToastItem, type ToastType } from '../components/Toast.tsx'
 import BusinessProfileDisplay from '../components/BusinessProfileDisplay.tsx'
 import { svgContainerToBlob, triggerBlobDownload } from '../utils/qr.ts'
@@ -11,6 +12,11 @@ function ProfilePreviewPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { profileData, setProfileData } = useProfile()
+
+  usePageMeta({
+    title: 'Preview Business Profile | Smart Business Profile',
+    description: 'Preview and save your Smart Business Profile before sharing it publicly.',
+  })
 
   const [toasts, setToasts]     = useState<ToastItem[]>([])
   const [mounted, setMounted]   = useState(false)
