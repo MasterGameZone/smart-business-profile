@@ -1,75 +1,243 @@
-# React + TypeScript + Vite
+Smart Business Profile
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Production-grade digital business profile platform built using React, TypeScript, Vite and Supabase.
 
-Currently, two official plugins are available:
+--------------------------------------------------
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Project Status
 
-## React Compiler
+Current Version
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+3.x
 
-## Expanding the ESLint configuration
+Status
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Active Development
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+--------------------------------------------------
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+Technology Stack
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Frontend
 
-```
+React
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+TypeScript
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Vite
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Backend
 
-```
+Supabase
+
+Database
+
+PostgreSQL
+
+Hosting
+
+Vercel
+
+Version Control
+
+GitHub
+
+Development Environment
+
+VS Code
+
+--------------------------------------------------
+
+Repository Structure
+
+src/
+
+Application source code
+
+docs/
+
+Engineering documentation
+
+supabase/
+
+Database migrations
+
+public/
+
+Static assets
+
+--------------------------------------------------
+
+Developer Onboarding
+
+Every contributor should read the following documents before making changes.
+
+1. docs/00_PROJECT_BIBLE.md
+
+Project vision and engineering philosophy.
+
+2. docs/01_ARCHITECTURE.md
+
+System architecture.
+
+3. docs/02_DATABASE.md
+
+Database documentation.
+
+4. docs/03_ENGINEERING_STANDARDS.md
+
+Coding standards.
+
+5. docs/04_WORKFLOW.md
+
+Development lifecycle.
+
+6. docs/05_CODEX_INSTRUCTIONS.md
+
+Engineering operating manual.
+
+7. docs/06_FEATURE_TEMPLATE.md
+
+Engineering ticket template.
+
+8. docs/07_CHANGELOG.md
+
+Release history.
+
+9. docs/08_ROADMAP.md
+
+Product roadmap.
+
+--------------------------------------------------
+
+Quick Start
+
+Clone repository
+
+Install dependencies
+
+npm install
+
+Configure environment
+
+Copy
+
+.env.example
+
+to
+
+.env
+
+Update Supabase credentials.
+
+Start development
+
+npm run dev
+
+Build project
+
+npm run build
+
+Preview production build
+
+npm run preview
+
+--------------------------------------------------
+
+Development Workflow
+
+Feature Request
+
+↓
+
+Planning
+
+↓
+
+Architecture
+
+↓
+
+Engineering Ticket
+
+↓
+
+Implementation
+
+↓
+
+Testing
+
+↓
+
+Review
+
+↓
+
+Commit
+
+↓
+
+Push
+
+↓
+
+Release
+
+--------------------------------------------------
+
+Git Workflow
+
+Start development
+
+git pull
+
+npm run dev
+
+Before commit
+
+git status
+
+npm run build
+
+Commit
+
+git add .
+
+git commit -m "Version X.X - Feature"
+
+git push
+
+--------------------------------------------------
+
+Source of Truth
+
+GitHub is the only source of truth.
+
+Never modify production directly.
+
+Never commit secrets.
+
+Never commit .env.
+
+--------------------------------------------------
+
+Documentation
+
+All engineering documentation is located inside the docs directory.
+
+Documentation should always be updated together with the implementation.
+
+--------------------------------------------------
+
+Project Philosophy
+
+Reliable software over fast software.
+
+Maintainability over shortcuts.
+
+Architecture before implementation.
+
+Documentation before assumptions.
+
+Verification before deployment.
