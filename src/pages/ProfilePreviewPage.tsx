@@ -7,6 +7,7 @@ import { usePageMeta } from '../hooks/usePageMeta.ts'
 import { ToastContainer, type ToastItem, type ToastType } from '../components/Toast.tsx'
 import BusinessProfileDisplay from '../components/BusinessProfileDisplay.tsx'
 import { svgContainerToBlob, triggerBlobDownload } from '../utils/qr.ts'
+import AppHeader from '../components/AppHeader.tsx'
 
 function parsePreviewServices(text: string): string[] {
   return text
@@ -157,7 +158,7 @@ function ProfilePreviewPage() {
         existingGalleryImageUrls: Array.isArray(saved.gallery_images) ? saved.gallery_images : [],
       })
       setHasSaved(true)
-      showToast('Business Profile saved successfully.')
+      navigate('/dashboard', { state: { profileCreated: true } })
     } catch (error) {
       console.error('Failed to save business profile:', error)
       showToast('Something went wrong while saving. Please try again.', 'error')
@@ -203,6 +204,7 @@ function ProfilePreviewPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-100 to-blue-50 pb-12">
       <ToastContainer toasts={toasts} />
+      <AppHeader />
 
       <div
         className={`mx-auto max-w-2xl px-4 pt-6 transition-all duration-500 ease-out ${

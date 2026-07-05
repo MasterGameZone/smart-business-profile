@@ -12,6 +12,7 @@ import { updateBusinessProfile } from '../lib/businessProfileService.ts'
 import { validateImageFile } from '../lib/storageService.ts'
 import { usePageMeta } from '../hooks/usePageMeta.ts'
 import { ToastContainer, type ToastItem, type ToastType } from '../components/Toast.tsx'
+import AppHeader from '../components/AppHeader.tsx'
 
 interface FormErrors {
   businessName?: string
@@ -423,7 +424,7 @@ function CreateProfilePage() {
         galleryImages: [],
         existingGalleryImageUrls: Array.isArray(updated.gallery_images) ? updated.gallery_images : [],
       })
-      navigate('/profile-preview', { state: { updateSuccess: true } })
+      navigate('/dashboard', { state: { profileUpdated: true } })
     } catch (error) {
       console.error('Failed to update business profile:', error)
       showToast('Something went wrong while updating. Please try again.', 'error')
@@ -500,24 +501,7 @@ function CreateProfilePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-slate-50">
-      {/* ── Page header ── */}
-      <header className="bg-white border-b border-gray-100 px-4 py-4 sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => navigate('/')}
-            className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 focus:outline-none focus:underline transition-colors"
-            aria-label="Back to home"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Home
-          </button>
-          <span className="text-sm font-semibold text-gray-900">Smart Business Profile</span>
-          <div className="w-16" aria-hidden="true" />
-        </div>
-      </header>
+      <AppHeader />
 
       <main className="max-w-2xl mx-auto px-4 py-10">
         <ToastContainer toasts={toasts} />
@@ -760,7 +744,7 @@ function CreateProfilePage() {
                 />
                 {fieldError('tagline')}
                 <p id="tagline-help" className="mt-1.5 text-xs text-gray-400">
-                  This will appear under the business name in a future public profile display.
+                  This appears under the business name on the public profile.
                 </p>
               </div>
 
@@ -931,7 +915,7 @@ function CreateProfilePage() {
                 <option value="private">Private</option>
               </select>
               <p className="mt-1.5 text-xs text-gray-400">
-                This saves the visibility setting only. Public access behavior is not changed in this version.
+                Public profiles can appear in the directory. Private profiles stay hidden from public visitors.
               </p>
             </div>
           </section>
@@ -1099,6 +1083,14 @@ function CreateProfilePage() {
                   </svg>
                 </>
               )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigate('/dashboard')}
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-medium text-gray-700 bg-white rounded-full hover:bg-gray-50 active:scale-95 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all border border-gray-200"
+            >
+              Dashboard
             </button>
 
             <button

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { getPublicBusinessProfiles } from '../lib/businessProfileService.ts'
 import { usePageMeta } from '../hooks/usePageMeta.ts'
 import type { PublicBusinessProfileRow } from '../types/businessProfile.ts'
+import AppHeader from '../components/AppHeader.tsx'
 
 type LoadState = 'loading' | 'found' | 'empty' | 'error'
 
@@ -82,21 +83,7 @@ function DirectoryPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-slate-50">
-      {/* ── Header ── */}
-      <header className="bg-white border-b border-gray-100 px-4 py-4">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => navigate('/')}
-            className="inline-flex items-center gap-2 text-sm font-bold text-gray-900 tracking-tight focus:outline-none"
-          >
-            <span className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-bold">
-              SB
-            </span>
-            Smart Business Profile
-          </button>
-        </div>
-      </header>
+      <AppHeader />
 
       <main className="max-w-5xl mx-auto px-4 py-10">
         <div className="mb-8">

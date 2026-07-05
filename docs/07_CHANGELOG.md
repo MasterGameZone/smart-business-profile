@@ -1,809 +1,388 @@
-# Smart Business Profile
-# Changelog
+# Smart Business Profile – Changelog
 
-Version: 1.0
+Last Updated: 2026-07-05  
+Status: Active  
 
-Document Purpose
+---
 
-This document records the complete development history of the Smart Business Profile project.
+## Version 0.1 – Landing Page Foundation
 
-Every completed version must be documented here.
+Status: Completed
 
-The changelog provides a chronological history of:
+- Replaced default starter screen with Smart Business Profile landing page.
+- Added basic project branding and entry point.
 
-- Features
-- Improvements
-- Bug Fixes
-- Database Changes
-- Documentation Updates
-- Deployment Status
+---
 
-This document should always reflect the latest released version.
+## Version 0.2 – Routing Foundation
 
---------------------------------------------------
+Status: Completed
 
-Change Log Format
+- Added React Router.
+- Added create profile route.
+- Added basic navigation between home and create profile page.
 
-Every version should follow this structure.
+---
 
-Version
+## Version 0.3 – Business Profile Form
 
-Release Date
+Status: Completed
 
-Status
+- Added form for basic business profile details.
+- Added required field validation.
+- Added initial logo selection UI.
 
-Summary
+---
 
-Added
+## Version 0.4 – Profile Preview
 
-Changed
+Status: Completed
 
-Improved
+- Added preview interface.
+- Displayed entered business details.
+- Added basic contact actions.
 
-Fixed
+---
 
-Database
+## Version 0.5 – Session State
 
-Documentation
+Status: Completed
 
-Breaking Changes
+- Added session-level state handling for profile data.
+- Improved form-to-preview continuity.
 
-Migration Required
+---
 
-Testing Status
+## Version 0.6 – Local Storage
 
-Deployment Status
+Status: Completed
 
-Developer Notes
+- Added local persistence for profile form data.
+- Added clear form behavior.
 
---------------------------------------------------
+---
 
-Version 3.0
+## Version 0.7 – QR Code and Sharing
 
-Release Date
+Status: Completed
 
-Not Released
+- Added QR code generation.
+- Added share profile behavior.
 
-Status
+---
 
-Completed
+## Version 0.8 – Professional Profile UI
 
-Summary
+Status: Completed
 
-Implemented the Public Business Directory foundation and completed the migration from Replit to a professional VS Code based development workflow.
+- Improved visual presentation of profile preview.
+- Added more polished business-card style layout.
 
-Added
+---
 
-Public Business Directory foundation.
+## Version 0.9 – Public Profile Layout
 
-Business listing infrastructure.
+Status: Completed
 
-Public profile architecture.
+- Improved public-facing profile structure.
+- Added sections such as contact, about, address, and static business hours.
 
-Development documentation.
+---
 
-Engineering workflow.
+## Version 1.0 – Frontend MVP Polish
 
-Codex integration planning.
+Status: Completed
 
-Changed
+- Polished frontend MVP.
+- Improved responsiveness and user interface consistency.
 
-Development workflow migrated from Replit to VS Code.
+---
 
-GitHub established as the single source of truth.
+## Version 1.0.1 – Save and QR Improvements
 
-Engineering process redesigned around ChatGPT and Codex.
+Status: Completed
 
-Improved
+- Added Save Profile behavior.
+- Added better toast feedback.
+- Added QR download/share improvements.
 
-Project documentation.
+---
 
-Development workflow.
+## Version 2.0 – Supabase Connection
 
-Engineering standards.
+Status: Completed
 
-Project architecture.
+- Connected app to Supabase.
+- Added Supabase client setup.
+- Added environment variable usage.
+- Important fix: Supabase URL must be base project URL, not REST endpoint.
 
-Fixed
+---
 
-Migration related development issues.
+## Version 2.1 – Business Profile Schema
 
-Package lock consistency.
+Status: Completed
 
-Local development environment.
+- Created `business_profiles` table.
+- Added basic business profile fields.
+- Enabled RLS.
+- Added initial development policies.
 
-Database
+---
 
-No schema changes.
+## Version 2.2 – Save Profile to Supabase
 
-Documentation
+Status: Completed
 
-Created Project Bible.
+- Added save-to-Supabase behavior.
+- Fixed duplicated `/rest/v1` Supabase URL issue.
+- Confirmed profile rows insert successfully.
 
-Created Architecture documentation.
+---
 
-Created Database documentation.
+## Version 2.3 – Slug and Profile Retrieval
 
-Created Engineering Standards.
+Status: Completed
 
-Created Workflow documentation.
+- Added profile slug.
+- Added unique slug handling.
+- Added public profile retrieval by slug.
 
-Created Codex Instructions.
+---
 
-Created Feature Template.
+## Version 2.4 – Public Business Profile Page
 
-Created Changelog.
+Status: Completed
 
-Created Roadmap.
+- Added public route for business profiles.
+- Added loading, not found, and public profile display states.
 
-Breaking Changes
+---
 
-None.
+## Version 2.5 – Business Profile Editing
 
-Migration Required
+Status: Completed
 
-No.
+- Added edit flow for existing profiles.
+- Preserved ID, slug, and created timestamp.
+- Updated profiles instead of duplicating rows.
 
-Testing Status
+---
 
-Verified.
+## Version 2.6 – Authentication UI
 
-Deployment Status
+Status: Completed
 
-Development.
+- Added login page.
+- Added signup page.
+- Added forgot password page.
+- Added reset password page.
+- UI only at this stage.
 
-Developer Notes
+---
 
-This version establishes the foundation for long-term development.
+## Version 2.7 – Supabase Authentication
 
---------------------------------------------------
+Status: Completed
 
-Version 3.1
+- Connected auth pages to Supabase Auth.
+- Added signup, login, logout, and session handling.
+- Added password reset flow.
+- Email verification works.
+- Supabase rate limit may appear during repeated auth testing.
 
-Release Date
+---
 
-Pending
+## Version 2.8 – Protected Routes and Business Ownership
 
-Status
+Status: Completed
 
-Planned
+- Added `owner_id`.
+- Protected create/edit routes.
+- New profiles store authenticated user ID.
+- Unauthorized edit access returns access denied behavior.
+- RLS ownership rules verified through app testing.
 
-Summary
+---
 
-Reserved for future implementation.
+## Version 2.9 – Business Dashboard
 
-Added
+Status: Completed
 
-None.
+- Added protected dashboard.
+- Added basic dashboard layout.
+- Added owned business profile display.
+- Added dashboard empty state.
 
-Changed
+---
 
-None.
+## Version 2.9.1 – Multi-Business Dashboard
 
-Improved
+Status: Completed
 
-None.
+- Updated dashboard to support multiple business profiles per user.
+- Replaced single-profile assumption.
+- Resolved Supabase multiple-row `.single()` issue.
 
-Fixed
+---
 
-None.
+## Version 3.0 – Public Business Directory
 
-Database
+Status: Completed
 
-None.
+- Added `/directory`.
+- Added public list of business profiles.
+- Added directory cards and profile links.
 
-Documentation
+---
 
-None.
+## Version 3.1 – Directory Search
 
-Breaking Changes
+Status: Completed
 
-None.
+- Added real-time client-side directory search.
+- Search supports business name, category, and owner name.
 
-Migration Required
+---
 
-No.
+## Version 3.2 – Category Filters
 
-Testing Status
+Status: Completed
 
-Pending.
+- Added dynamic category filter.
+- Added combined search and category filtering.
+- Added result counter and clear filters behavior.
 
-Deployment Status
+---
 
-Pending.
+## Version 3.3 – Location Filter
 
-Developer Notes
+Status: Completed
 
-Reserved.
+- Added directory location/address filter.
+- Combined search, category, and location filtering.
+- Added clear filters support for all directory filters.
 
---------------------------------------------------
+---
 
-Version 3.2
+## Version 3.4 – SEO and Metadata Foundation
 
-Release Date
+Status: Completed
 
-Pending
+- Added default app metadata.
+- Added page-specific titles and descriptions.
+- Added public profile metadata foundation.
+- Added Open Graph and Twitter metadata foundation.
 
-Status
+Note:
 
-Planned
+- This is client-side metadata only.
+- No SSR, prerendering, sitemap, or deployment SEO was implemented.
 
-Summary
+---
 
-Reserved.
+## Version 3.5 – Profile Enrichment Schema Foundation
 
---------------------------------------------------
+Status: Completed
 
-Version 3.3
+- Added enrichment fields:
+  - tagline
+  - services
+  - working_hours
+  - google_maps_url
+  - social_links
+  - keywords
+  - cover_banner_url
+  - gallery_images
+  - is_public
+- Updated TypeScript types.
+- Updated database documentation.
+- Fixed unrelated TypeScript build blockers before commit.
 
-Release Date
+---
 
-Pending
+## Version 3.6 – Profile Enrichment Form Editing
 
-Status
+Status: Completed
 
-Planned
+- Added form inputs for:
+  - tagline
+  - services
+  - working hours
+  - Google Maps link
+  - social links
+  - keywords/tags
+  - profile visibility
+- Added create/edit persistence.
+- Added edit-mode reload for enrichment fields.
+- Public display was not part of this version.
 
-Summary
+---
 
-Reserved.
+## Version 3.7 – Public Profile Display Upgrade
 
---------------------------------------------------
+Status: Completed
 
-Version 3.4
+- Displayed enrichment fields on public profile pages.
+- Displayed enrichment fields in preview mode.
+- Added public visibility behavior:
+  - private profiles hidden from directory
+  - private profiles not publicly exposed
+- Preserved dashboard and edit access for private profile owners.
 
-Release Date
+---
 
-Pending
+## Version 3.8 – Supabase Storage Foundation
 
-Status
+Status: Completed
 
-Planned
+- Created `business-assets` Supabase Storage bucket.
+- Added public read and authenticated write policies.
+- Added image validation:
+  - JPG
+  - PNG
+  - WebP
+  - max 5 MB
+- Added storage helper service.
+- Added persistent logo upload.
+- Stored logo URL in `logo_url`.
 
-Summary
+---
 
-Reserved.
+## Version 3.9 – Cover Banner and Gallery UI
 
---------------------------------------------------
+Status: Completed / To Verify Commit Status
 
-Version 3.5
+- Added cover banner upload UI.
+- Added gallery image upload UI.
+- Used Supabase Storage foundation.
+- Saved `cover_banner_url`.
+- Saved `gallery_images`.
+- Displayed cover banner and gallery in preview mode.
+- Displayed cover banner and gallery on public profile page.
+- Preserved private profile visibility behavior.
 
-Release Date
+To Verify:
 
-Pending
+- Confirm latest Version 3.9 changes have been committed and pushed to GitHub.
 
-Status
+---
 
-Implemented
+## Next Recommended Version
 
-Summary
+## Version 4.0 – Navigation, Routing, and App Layout Stabilization
 
-Added the schema and TypeScript foundation for future richer business profiles.
+Status: Recommended Next Task
 
-Added
+Goal:
 
-Profile enrichment migration for tagline, services, working hours, Google Maps URL, social links, keywords, cover banner URL, gallery images, and profile visibility.
+Improve structure and user flow before adding more business features.
 
-Changed
+Main concerns:
 
-Business profile TypeScript types now include optional enrichment fields.
-
-Database
-
-Created migration 20260705010000_add_profile_enrichment_fields.sql.
-
-Documentation
-
-Updated database schema documentation and roadmap notes for profile enrichment foundation.
-
-Breaking Changes
-
-None.
-
-Migration Required
-
-Yes. Requires manual Supabase review and execution.
-
-Testing Status
-
-Pending build verification.
-
-Deployment Status
-
-Development.
-
-Developer Notes
-
-No UI, storage bucket, upload flow, public profile display, or form editing was added in this version.
-
---------------------------------------------------
-
-Version 3.6
-
-Release Date
-
-Pending
-
-Status
-
-Implemented
-
-Summary
-
-Added create/edit form support for profile enrichment fields.
-
-Added
-
-Business tagline, services, working hours, Google Maps URL, social media links, keywords, and profile visibility inputs.
-
-Changed
-
-Business profile create/update payload mapping now saves enrichment fields.
-
-Improved
-
-Edit mode now hydrates saved enrichment values back into the form.
-
-Database
-
-No schema changes. Uses Version 3.5 enrichment columns.
-
-Documentation
-
-Updated changelog and roadmap notes for Version 3.6.
-
-Breaking Changes
-
-None.
-
-Migration Required
-
-No.
-
-Testing Status
-
-Pending build verification.
-
-Deployment Status
-
-Development.
-
-Developer Notes
-
-No public profile display upgrade, image upload, gallery upload, Google Maps embed, or Supabase Storage work was added.
-
---------------------------------------------------
-
-Version 3.7
-
-Release Date
-
-Pending
-
-Status
-
-Implemented
-
-Summary
-
-Upgraded the public business profile to display enrichment fields and enforced private profile visibility rules for public surfaces.
-
-Added
-
-Public display for tagline, services, working hours, Google Maps link, social links, and keywords when data exists.
-
-Changed
-
-Public profile metadata now uses richer business context.
-
-Improved
-
-Directory retrieval now excludes private profiles.
-
-Fixed
-
-Public business routes no longer expose profiles marked as private.
-
-Database
-
-No schema changes. Uses Version 3.5 enrichment columns.
-
-Documentation
-
-Updated changelog and roadmap notes for Version 3.7.
-
-Breaking Changes
-
-None.
-
-Migration Required
-
-No.
-
-Testing Status
-
-Pending build verification.
-
-Deployment Status
-
-Development.
-
-Developer Notes
-
-No cover banner display, gallery display, image upload, Storage work, map embedding, or verification badges were added.
-
---------------------------------------------------
-
-Version 3.8
-
-Release Date
-
-Pending
-
-Status
-
-Implemented
-
-Summary
-
-Added the Supabase Storage foundation for public business profile assets and integrated persistent logo uploads.
-
-Added
-
-Created the business-assets Storage migration and reusable storage helper functions for logo, cover, and gallery assets.
-
-Changed
-
-Business logo saving now uploads selected logo files to Supabase Storage and stores the returned public URL in logo_url.
-
-Improved
-
-Logo validation now allows JPG, PNG, and WebP images up to 5 MB.
-
-Fixed
-
-Editing without selecting a new logo preserves the existing logo_url.
-
-Database
-
-Created migration 20260705020000_create_business_assets_storage.sql. Migration must be manually reviewed and applied in Supabase.
-
-Documentation
-
-Updated database storage documentation and roadmap notes for Version 3.8.
-
-Breaking Changes
-
-None.
-
-Migration Required
-
-Yes. Requires manual Supabase review and execution.
-
-Testing Status
-
-Pending build verification.
-
-Deployment Status
-
-Development.
-
-Developer Notes
-
-No cover banner UI, gallery UI, image cropper, compression package, Storage bucket application, or Version 3.9 work was added.
-
---------------------------------------------------
-
-Version 3.9
-
-Release Date
-
-Pending
-
-Status
-
-Implemented
-
-Summary
-
-Added cover banner and gallery upload/display support using the existing Supabase Storage foundation.
-
-Added
-
-Cover banner upload field, business gallery upload field, preview display, and public profile display.
-
-Changed
-
-Business profile create/update now saves cover_banner_url and gallery_images alongside existing profile image data.
-
-Improved
-
-Image validation and gallery limit handling now cover logo, cover banner, and gallery images.
-
-Fixed
-
-Edit mode now reloads and preserves existing cover banner and gallery image URLs unless changed.
-
-Database
-
-No schema changes. Uses Version 3.5 cover_banner_url and gallery_images fields and the Version 3.8 business-assets bucket.
-
-Documentation
-
-Updated database storage documentation and roadmap notes for Version 3.9.
-
-Breaking Changes
-
-None.
-
-Migration Required
-
-No new migration. Requires the Version 3.8 Storage migration to be applied before upload testing.
-
-Testing Status
-
-Pending build verification.
-
-Deployment Status
-
-Development.
-
-Developer Notes
-
-No new bucket, Storage policy, migration, cropper, compression package, drag-and-drop, lightbox, or Version 4.0 work was added.
-
---------------------------------------------------
-
-Release Categories
-
-Added
-
-Completely new functionality.
-
-Changed
-
-Existing functionality modified.
-
-Improved
-
-Performance, maintainability, usability, or developer experience improvements.
-
-Fixed
-
-Bug fixes.
-
-Deprecated
-
-Features scheduled for removal.
-
-Removed
-
-Features removed.
-
-Security
-
-Security improvements.
-
-Documentation
-
-Documentation updates.
-
-Database
-
-Schema or migration changes.
-
---------------------------------------------------
-
-Version Numbering
-
-Major Version
-
-Breaking architectural changes.
-
-Example
-
-4.0
-
-Minor Version
-
-New feature release.
-
-Example
-
-3.5
-
-Patch Version
-
-Bug fixes and small improvements.
-
-Example
-
-3.5.1
-
---------------------------------------------------
-
-Release Rules
-
-Every completed release must:
-
-Be fully tested.
-
-Be manually verified.
-
-Pass build verification.
-
-Be committed to Git.
-
-Be pushed to GitHub.
-
-Update documentation if necessary.
-
-Be recorded in this changelog.
-
---------------------------------------------------
-
-Documentation Rules
-
-If a release changes architecture
-
-Update
-
-ARCHITECTURE.md
-
-If a release changes database
-
-Update
-
-DATABASE.md
-
-If a release changes workflow
-
-Update
-
-WORKFLOW.md
-
-If a release changes standards
-
-Update
-
-ENGINEERING_STANDARDS.md
-
-If a release changes project direction
-
-Update
-
-PROJECT_BIBLE.md
-
---------------------------------------------------
-
-Breaking Change Policy
-
-Breaking changes should be avoided whenever possible.
-
-If unavoidable, document:
-
-Reason
-
-Affected Modules
-
-Migration Steps
-
-Rollback Strategy
-
-Expected Impact
-
---------------------------------------------------
-
-Database Change Policy
-
-Every schema modification should include:
-
-Migration Name
-
-Migration Purpose
-
-Affected Tables
-
-Rollback Strategy
-
-Verification Status
-
---------------------------------------------------
-
-Deployment Policy
-
-Each release should record:
-
-Development
-
-Testing
-
-Production
-
-Rollback Completed
-
-Deployment Date
-
---------------------------------------------------
-
-Testing Policy
-
-Every release must verify:
-
-Application starts.
-
-Application builds.
-
-Authentication works.
-
-Database works.
-
-Storage works.
-
-Routing works.
-
-Responsive layout verified.
-
-No console errors.
-
-No TypeScript errors.
-
---------------------------------------------------
-
-Developer Notes
-
-Every release should include engineering notes.
-
-Examples
-
-Architectural decisions.
-
-Known limitations.
-
-Future improvements.
-
-Technical debt.
-
-Lessons learned.
-
---------------------------------------------------
-
-Current Project Status
-
-Current Stable Version
-
-3.0
-
-Development Status
-
-Active Development
-
-Primary Branch
-
-main
-
-Source of Truth
-
-GitHub
-
-Development Environment
-
-VS Code
-
-Production Hosting
-
-Vercel
-
-Backend
-
-Supabase
-
---------------------------------------------------
-
-Final Statement
-
-This changelog serves as the official release history of the Smart Business Profile project.
-
-Every completed version should be recorded here before beginning the next version.
-
-Maintaining an accurate changelog provides traceability, simplifies debugging, supports future development, and preserves the historical evolution of the project.
+- navigation between pages feels weak
+- dashboard needs better structure
+- logout placement may be illogical
+- save flow redirects need improvement
+- create/edit/public profile pages need stronger connection
+- app should feel like one polished product

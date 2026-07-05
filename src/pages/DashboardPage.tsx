@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.tsx'
 import {
   formatKeywordsForForm,
@@ -8,13 +8,18 @@ import {
   normalizeWorkingHours,
   useProfile,
 } from '../context/ProfileContext.tsx'
-import { signOut } from '../lib/authService.ts'
 import { getBusinessProfilesByOwner } from '../lib/businessProfileService.ts'
 import { usePageMeta } from '../hooks/usePageMeta.ts'
 import type { BusinessProfileRow } from '../types/businessProfile.ts'
 import { ToastContainer, type ToastItem, type ToastType } from '../components/Toast.tsx'
+import AppHeader from '../components/AppHeader.tsx'
 
 type LoadState = 'loading' | 'found' | 'empty' | 'error'
+
+interface DashboardLocationState {
+  profileCreated?: boolean
+  profileUpdated?: boolean
+}
 
 function formatDate(value: string): string {
   return new Date(value).toLocaleDateString(undefined, {
@@ -26,6 +31,7 @@ function formatDate(value: string): string {
 
 function DashboardPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useAuth()
   const { profileData, setProfileData, clearProfile } = useProfile()
 
@@ -37,7 +43,6 @@ function DashboardPage() {
   const [loadState, setLoadState] = useState<LoadState>('loading')
   const [profiles, setProfiles] = useState<BusinessProfileRow[]>([])
   const [toasts, setToasts] = useState<ToastItem[]>([])
-  const [isSigningOut, setIsSigningOut] = useState(false)
 
   const showToast = useCallback((message: string, type: ToastType = 'success') => {
     const id = Date.now()
@@ -63,19 +68,16 @@ function DashboardPage() {
     loadProfiles()
   }, [loadProfiles])
 
-  const handleLogout = async () => {
-    if (isSigningOut) return
-    setIsSigningOut(true)
-    const { error } = await signOut()
-    setIsSigningOut(false)
-
-    if (error) {
-      showToast(error, 'error')
-      return
+  useEffect(() => {
+    const state = location.state as DashboardLocationState | null
+    if (state?.profileCreated) {
+      showToast('Business Profile saved successfully.')
+      navigate(location.pathname, { replace: true, state: null })
+    } else if (state?.profileUpdated) {
+      showToast('Business Profile updated successfully.')
+      navigate(location.pathname, { replace: true, state: null })
     }
-
-    navigate('/')
-  }
+  }, [location.pathname, location.state, navigate, showToast])
 
   const handleCreateProfile = () => {
     clearProfile()
@@ -124,25 +126,33 @@ function DashboardPage() {
     <div className="min-h-screen bg-gradient-to-b from-white to-slate-50">
       <ToastContainer toasts={toasts} />
 
-      {/* ── Header ── */}
-      <header className="bg-white border-b border-gray-100 px-4 py-4 sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <p className="text-lg font-bold text-gray-900 tracking-tight">Welcome back</p>
-            <p className="text-sm text-gray-500">{user?.email}</p>
-          </div>
-          <button
-            type="button"
-            onClick={handleLogout}
-            disabled={isSigningOut}
-            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-full hover:bg-gray-50 active:scale-95 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all border border-gray-200 disabled:opacity-70 disabled:cursor-not-allowed self-start sm:self-auto"
-          >
-            {isSigningOut ? 'Logging out…' : 'Log Out'}
-          </button>
-        </div>
-      </header>
+      <AppHeader />
 
       <main id="my-business" className="max-w-3xl mx-auto px-4 py-10">
+        <div className="mb-6 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <p className="text-sm font-medium text-gray-500">Signed in as</p>
+          <p className="mt-1 text-base font-semibold text-gray-900 break-all">{user?.email}</p>
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+            <button
+              type="button"
+              onClick={handleCreateProfile}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:scale-95"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Create Business
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/directory')}
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 active:scale-95"
+            >
+              Browse Directory
+            </button>
+          </div>
+        </div>
+
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight mb-1.5">My Businesses</h1>
@@ -239,7 +249,18 @@ function DashboardPage() {
                   )}
                   <div className="min-w-0">
                     <p className="text-base font-semibold text-gray-900 truncate">{profile.business_name}</p>
-                    <p className="text-sm text-gray-500">{profile.business_category}</p>
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <p className="text-sm text-gray-500">{profile.business_category}</p>
+                      <span
+                        className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                          profile.is_public === false
+                            ? 'bg-gray-100 text-gray-600'
+                            : 'bg-emerald-50 text-emerald-700'
+                        }`}
+                      >
+                        {profile.is_public === false ? 'Private' : 'Public'}
+                      </span>
+                    </div>
                   </div>
                 </div>
 

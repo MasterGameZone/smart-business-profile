@@ -7,6 +7,7 @@ import type { BusinessProfileRow } from '../types/businessProfile.ts'
 import { ToastContainer, type ToastItem, type ToastType } from '../components/Toast.tsx'
 import BusinessProfileDisplay from '../components/BusinessProfileDisplay.tsx'
 import { svgContainerToBlob, triggerBlobDownload } from '../utils/qr.ts'
+import AppHeader from '../components/AppHeader.tsx'
 
 type LoadState = 'loading' | 'found' | 'not-found' | 'private' | 'error'
 
@@ -156,6 +157,7 @@ function PublicBusinessProfilePage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-100 to-blue-50 pb-12">
       <ToastContainer toasts={toasts} />
+      <AppHeader />
 
       <div className="mx-auto max-w-2xl px-4 pt-6">
         {loadState === 'loading' && (

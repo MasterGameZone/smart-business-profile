@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
+import AppHeader from './AppHeader.tsx'
 
 export const authInputBase =
   'w-full px-4 py-2.5 border rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-sm'
@@ -28,25 +28,9 @@ interface AuthLayoutProps {
 }
 
 function AuthLayout({ title, subtitle, children, footer }: AuthLayoutProps) {
-  const navigate = useNavigate()
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-slate-50 flex flex-col">
-      <header className="px-4 py-4">
-        <div className="max-w-2xl mx-auto flex items-center justify-center">
-          <button
-            type="button"
-            onClick={() => navigate('/')}
-            className="inline-flex items-center gap-2 text-sm font-semibold text-gray-900 focus:outline-none focus:underline transition-colors"
-            aria-label="Go to home page"
-          >
-            <span className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-bold" aria-hidden="true">
-              SB
-            </span>
-            Smart Business Profile
-          </button>
-        </div>
-      </header>
+      <AppHeader />
 
       <main className="flex-1 flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-md">
