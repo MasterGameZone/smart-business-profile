@@ -173,6 +173,8 @@ Profile Enrichment Schema Foundation
 
 Profile Enrichment Form Editing
 
+Public Profile Display Upgrade
+
 Public Listing Improvements
 
 Performance Improvements
@@ -476,6 +478,8 @@ Implement remaining Version 3 features.
 Prepare schema foundation for richer business profiles.
 
 Add create/edit form support for profile enrichment fields.
+
+Upgrade public profile display and enforce private profile visibility.
 
 Perform production testing.
 

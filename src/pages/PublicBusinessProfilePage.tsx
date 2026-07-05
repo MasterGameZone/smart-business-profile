@@ -8,7 +8,7 @@ import { ToastContainer, type ToastItem, type ToastType } from '../components/To
 import BusinessProfileDisplay from '../components/BusinessProfileDisplay.tsx'
 import { svgContainerToBlob, triggerBlobDownload } from '../utils/qr.ts'
 
-type LoadState = 'loading' | 'found' | 'not-found' | 'error'
+type LoadState = 'loading' | 'found' | 'not-found' | 'private' | 'error'
 
 const META_DESCRIPTION_LENGTH = 155
 
@@ -19,15 +19,16 @@ function truncateMetaDescription(value: string): string {
 
 function buildProfileDescription(profile: BusinessProfileRow): string {
   const businessName = profile.business_name.trim() || 'this business'
+  const tagline = profile.tagline?.trim()
   const category = profile.business_category.trim()
   const about = profile.about_business?.trim()
+  const detailParts = [tagline, category, about].filter((value): value is string => Boolean(value))
 
-  if (!about) {
+  if (detailParts.length === 0) {
     return `View contact details, business information, and QR code for ${businessName}.`
   }
 
-  const categoryText = category ? ` - ${category}.` : '.'
-  return truncateMetaDescription(`${businessName}${categoryText} ${about}`)
+  return truncateMetaDescription(`${businessName} - ${detailParts.join('. ')}`)
 }
 
 function PublicBusinessProfilePage() {
@@ -60,7 +61,7 @@ function PublicBusinessProfilePage() {
   const showToast = useCallback((message: string, type: ToastType = 'success') => {
     const id = Date.now()
     setToasts((prev) => [...prev, { id, message, type }])
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4000)
+    setTimeout(() => setToasts((prev) => prev.filter((toast) => toast.id !== id)), 4000)
   }, [])
 
   useEffect(() => {
@@ -68,20 +69,30 @@ function PublicBusinessProfilePage() {
 
     async function loadProfile() {
       if (!slug) {
+        setProfile(null)
         setLoadState('not-found')
         return
       }
 
+      setProfile(null)
       setLoadState('loading')
+
       try {
         const result = await getBusinessProfileBySlug(slug)
         if (cancelled) return
-        if (result) {
-          setProfile(result)
-          setLoadState('found')
-        } else {
+
+        if (!result) {
           setLoadState('not-found')
+          return
         }
+
+        if (result.is_public === false) {
+          setLoadState('private')
+          return
+        }
+
+        setProfile(result)
+        setLoadState('found')
       } catch (error) {
         if (cancelled) return
         console.error('Failed to load business profile:', error)
@@ -102,7 +113,7 @@ function PublicBusinessProfilePage() {
       try {
         await navigator.share({ title, url: profileUrl })
       } catch {
-        // user cancelled — no toast needed
+        // User cancelled share.
       }
     } else {
       try {
@@ -138,7 +149,7 @@ function PublicBusinessProfilePage() {
         showToast("Your browser doesn't support direct QR sharing. The QR Code has been downloaded instead.", 'info')
       }
     } catch {
-      // user cancelled share — no toast
+      // User cancelled share.
     }
   }
 
@@ -146,36 +157,38 @@ function PublicBusinessProfilePage() {
     <div className="min-h-screen bg-gradient-to-b from-slate-100 to-blue-50 pb-12">
       <ToastContainer toasts={toasts} />
 
-      <div className="max-w-2xl mx-auto px-4 pt-6">
-        {/* ── Loading State ── */}
+      <div className="mx-auto max-w-2xl px-4 pt-6">
         {loadState === 'loading' && (
-          <div className="flex flex-col items-center justify-center min-h-[70vh] text-center px-4">
-            <svg className="w-10 h-10 text-blue-500 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+          <div className="flex min-h-[70vh] flex-col items-center justify-center px-4 text-center">
+            <svg className="h-10 w-10 animate-spin text-blue-500" fill="none" viewBox="0 0 24 24" aria-hidden="true">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            <p className="mt-4 text-sm text-gray-500">Loading business profile…</p>
+            <p className="mt-4 text-sm text-gray-500">Loading business profile...</p>
           </div>
         )}
 
-        {/* ── Not Found / Error State ── */}
-        {(loadState === 'not-found' || loadState === 'error') && (
-          <div className="flex flex-col items-center justify-center min-h-[70vh] text-center px-4">
-            <div className="w-20 h-20 rounded-full bg-red-50 flex items-center justify-center mb-6">
-              <svg className="w-10 h-10 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        {(loadState === 'not-found' || loadState === 'private' || loadState === 'error') && (
+          <div className="flex min-h-[70vh] flex-col items-center justify-center px-4 text-center">
+            <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-red-50">
+              <svg className="h-10 w-10 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Business Profile Not Found</h1>
-            <p className="text-gray-500 mb-8 max-w-sm">
-              The requested business profile does not exist or may have been removed.
+            <h1 className="mb-2 text-2xl font-bold text-gray-900">
+              {loadState === 'private' ? 'Business Profile Unavailable' : 'Business Profile Not Found'}
+            </h1>
+            <p className="mb-8 max-w-sm text-gray-500">
+              {loadState === 'private'
+                ? 'This business profile is not publicly available.'
+                : 'The requested business profile does not exist or may have been removed.'}
             </p>
             <button
               type="button"
               onClick={() => navigate('/')}
-              className="inline-flex items-center gap-2 px-8 py-3 bg-blue-600 text-white text-sm font-semibold rounded-full hover:bg-blue-700 active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-8 py-3 text-sm font-semibold text-white transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:scale-95"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
               Back to Home
@@ -183,7 +196,6 @@ function PublicBusinessProfilePage() {
           </div>
         )}
 
-        {/* ── Profile Content ── */}
         {loadState === 'found' && profile && (
           <BusinessProfileDisplay
             profile={{
@@ -197,6 +209,12 @@ function PublicBusinessProfilePage() {
               address: profile.address || '',
               aboutBusiness: profile.about_business || '',
               logoUrl: profile.logo_url,
+              tagline: profile.tagline,
+              services: profile.services,
+              workingHours: profile.working_hours,
+              googleMapsUrl: profile.google_maps_url,
+              socialLinks: profile.social_links,
+              keywords: profile.keywords,
             }}
             profileUrl={profileUrl}
             onShare={handleShare}

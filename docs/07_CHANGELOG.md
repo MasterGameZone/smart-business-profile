@@ -374,6 +374,66 @@ No public profile display upgrade, image upload, gallery upload, Google Maps emb
 
 --------------------------------------------------
 
+Version 3.7
+
+Release Date
+
+Pending
+
+Status
+
+Implemented
+
+Summary
+
+Upgraded the public business profile to display enrichment fields and enforced private profile visibility rules for public surfaces.
+
+Added
+
+Public display for tagline, services, working hours, Google Maps link, social links, and keywords when data exists.
+
+Changed
+
+Public profile metadata now uses richer business context.
+
+Improved
+
+Directory retrieval now excludes private profiles.
+
+Fixed
+
+Public business routes no longer expose profiles marked as private.
+
+Database
+
+No schema changes. Uses Version 3.5 enrichment columns.
+
+Documentation
+
+Updated changelog and roadmap notes for Version 3.7.
+
+Breaking Changes
+
+None.
+
+Migration Required
+
+No.
+
+Testing Status
+
+Pending build verification.
+
+Deployment Status
+
+Development.
+
+Developer Notes
+
+No cover banner display, gallery display, image upload, Storage work, map embedding, or verification badges were added.
+
+--------------------------------------------------
+
 Release Categories
 
 Added

@@ -8,7 +8,29 @@ import { ToastContainer, type ToastItem, type ToastType } from '../components/To
 import BusinessProfileDisplay from '../components/BusinessProfileDisplay.tsx'
 import { svgContainerToBlob, triggerBlobDownload } from '../utils/qr.ts'
 
-// ── Page component ─────────────────────────────────────────────────────────
+function parsePreviewServices(text: string): string[] {
+  return text
+    .split('\n')
+    .map((service) => service.trim())
+    .filter(Boolean)
+}
+
+function parsePreviewKeywords(text: string): string[] {
+  const seen = new Set<string>()
+  const keywords: string[] = []
+
+  for (const keyword of text.split(',')) {
+    const trimmed = keyword.trim()
+    const key = trimmed.toLowerCase()
+    if (!trimmed || seen.has(key)) continue
+
+    seen.add(key)
+    keywords.push(trimmed)
+  }
+
+  return keywords
+}
+
 function ProfilePreviewPage() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -19,16 +41,22 @@ function ProfilePreviewPage() {
     description: 'Preview and save your Smart Business Profile before sharing it publicly.',
   })
 
-  const [toasts, setToasts]     = useState<ToastItem[]>([])
-  const [mounted, setMounted]   = useState(false)
+  const [toasts, setToasts] = useState<ToastItem[]>([])
+  const [mounted, setMounted] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [hasSaved, setHasSaved] = useState(Boolean(profileData.id))
-  const qrSectionRef             = useRef<HTMLElement>(null) as RefObject<HTMLElement>
-  const qrCodeRef                = useRef<HTMLDivElement>(null) as RefObject<HTMLDivElement>
+  const qrSectionRef = useRef<HTMLElement>(null) as RefObject<HTMLElement>
+  const qrCodeRef = useRef<HTMLDivElement>(null) as RefObject<HTMLDivElement>
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setMounted(true))
     return () => cancelAnimationFrame(id)
+  }, [])
+
+  const showToast = useCallback((message: string, type: ToastType = 'success') => {
+    const id = Date.now()
+    setToasts((prev) => [...prev, { id, message, type }])
+    setTimeout(() => setToasts((prev) => prev.filter((toast) => toast.id !== id)), 4000)
   }, [])
 
   useEffect(() => {
@@ -37,8 +65,7 @@ function ProfilePreviewPage() {
       showToast('Business Profile updated successfully.')
       navigate(location.pathname, { replace: true, state: null })
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [location.pathname, location.state, navigate, showToast])
 
   const logoUrl = useMemo(() => {
     if (profileData.logo) return URL.createObjectURL(profileData.logo)
@@ -46,19 +73,15 @@ function ProfilePreviewPage() {
   }, [profileData.logo])
 
   useEffect(() => {
-    return () => { if (logoUrl) URL.revokeObjectURL(logoUrl) }
+    return () => {
+      if (logoUrl) URL.revokeObjectURL(logoUrl)
+    }
   }, [logoUrl])
 
   const profileUrl = window.location.href
+  const previewServices = useMemo(() => parsePreviewServices(profileData.servicesText), [profileData.servicesText])
+  const previewKeywords = useMemo(() => parsePreviewKeywords(profileData.keywordsText), [profileData.keywordsText])
 
-  // ── Toast helper ──
-  const showToast = useCallback((message: string, type: ToastType = 'success') => {
-    const id = Date.now()
-    setToasts((prev) => [...prev, { id, message, type }])
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4000)
-  }, [])
-
-  // ── Handlers ──
   const handleShare = async () => {
     if (navigator.share) {
       try {
@@ -67,7 +90,7 @@ function ProfilePreviewPage() {
           url: profileUrl,
         })
       } catch {
-        // user cancelled — no toast needed
+        // User cancelled share.
       }
     } else {
       try {
@@ -136,7 +159,7 @@ function ProfilePreviewPage() {
         showToast("Your browser doesn't support direct QR sharing. The QR Code has been downloaded instead.", 'info')
       }
     } catch {
-      // user cancelled share — no toast
+      // User cancelled share.
     }
   }
 
@@ -144,7 +167,6 @@ function ProfilePreviewPage() {
     navigate('/create-profile')
   }
 
-  // ── Derived values ──
   const hasProfile = profileData.businessName.trim().length > 0
 
   return (
@@ -152,26 +174,25 @@ function ProfilePreviewPage() {
       <ToastContainer toasts={toasts} />
 
       <div
-        className={`max-w-2xl mx-auto px-4 pt-6 transition-all duration-500 ease-out ${
-          mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
+        className={`mx-auto max-w-2xl px-4 pt-6 transition-all duration-500 ease-out ${
+          mounted ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0'
         }`}
       >
-        {/* ── Empty State ── */}
         {!hasProfile && (
-          <div className="flex flex-col items-center justify-center min-h-[70vh] text-center px-4">
-            <div className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center mb-6">
-              <svg className="w-10 h-10 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <div className="flex min-h-[70vh] flex-col items-center justify-center px-4 text-center">
+            <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-blue-50">
+              <svg className="h-10 w-10 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">No Business Profile Found</h1>
-            <p className="text-gray-500 mb-8 max-w-sm">Create your business profile to see it here.</p>
+            <h1 className="mb-2 text-2xl font-bold text-gray-900">No Business Profile Found</h1>
+            <p className="mb-8 max-w-sm text-gray-500">Create your business profile to see it here.</p>
             <button
               type="button"
               onClick={() => navigate('/create-profile')}
-              className="inline-flex items-center gap-2 px-8 py-3 bg-blue-600 text-white text-sm font-semibold rounded-full hover:bg-blue-700 active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-8 py-3 text-sm font-semibold text-white transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:scale-95"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
               Create Business Profile
@@ -179,7 +200,6 @@ function ProfilePreviewPage() {
           </div>
         )}
 
-        {/* ── Profile Content ── */}
         {hasProfile && (
           <BusinessProfileDisplay
             profile={{
@@ -193,6 +213,12 @@ function ProfilePreviewPage() {
               address: profileData.address,
               aboutBusiness: profileData.aboutBusiness,
               logoUrl,
+              tagline: profileData.tagline,
+              services: previewServices,
+              workingHours: profileData.workingHours,
+              googleMapsUrl: profileData.googleMapsUrl,
+              socialLinks: profileData.socialLinks,
+              keywords: previewKeywords,
             }}
             profileUrl={profileUrl}
             onShare={handleShare}
@@ -206,9 +232,9 @@ function ProfilePreviewPage() {
                   type="button"
                   onClick={handleEditProfile}
                   aria-label="Edit business profile"
-                  className="flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold bg-amber-500 text-white hover:bg-amber-600 active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-400"
+                  className="flex items-center justify-center gap-2 rounded-xl bg-amber-500 py-3 text-sm font-semibold text-white transition-all hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 active:scale-95"
                 >
-                  <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                   Edit Profile
@@ -220,19 +246,19 @@ function ProfilePreviewPage() {
                   disabled={isSaving}
                   aria-busy={isSaving}
                   aria-label="Save profile to database"
-                  className="flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-70 disabled:cursor-not-allowed disabled:active:scale-100"
+                  className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white transition-all hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-70 disabled:active:scale-100"
                 >
                   {isSaving ? (
                     <>
-                      <svg className="w-4 h-4 shrink-0 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                      <svg className="h-4 w-4 shrink-0 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                       </svg>
-                      Saving…
+                      Saving...
                     </>
                   ) : (
                     <>
-                      <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                       </svg>
                       Save Profile
@@ -242,13 +268,13 @@ function ProfilePreviewPage() {
               )
             }
             footerSlot={
-              <div className="text-center pt-2 pb-2">
+              <div className="pb-2 pt-2 text-center">
                 <button
                   type="button"
                   onClick={() => navigate('/create-profile')}
-                  className="inline-flex items-center justify-center gap-2 px-8 py-3 text-sm font-medium text-gray-600 bg-white rounded-full hover:bg-gray-50 active:scale-95 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all shadow-sm"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-8 py-3 text-sm font-medium text-gray-600 shadow-sm transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 active:scale-95"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 17l-5-5m0 0l5-5m-5 5h12" />
                   </svg>
                   Back to Edit

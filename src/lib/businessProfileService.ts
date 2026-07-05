@@ -215,6 +215,7 @@ export async function getPublicBusinessProfiles(): Promise<PublicBusinessProfile
     .select(
       'id, business_name, owner_name, business_category, address, about_business, logo_url, slug, owner_id, created_at, updated_at'
     )
+    .eq('is_public', true)
     .order('business_name', { ascending: true })
 
   if (error) {
