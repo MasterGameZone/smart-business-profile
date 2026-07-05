@@ -266,6 +266,58 @@ Reserved.
 
 --------------------------------------------------
 
+Version 3.5
+
+Release Date
+
+Pending
+
+Status
+
+Implemented
+
+Summary
+
+Added the schema and TypeScript foundation for future richer business profiles.
+
+Added
+
+Profile enrichment migration for tagline, services, working hours, Google Maps URL, social links, keywords, cover banner URL, gallery images, and profile visibility.
+
+Changed
+
+Business profile TypeScript types now include optional enrichment fields.
+
+Database
+
+Created migration 20260705010000_add_profile_enrichment_fields.sql.
+
+Documentation
+
+Updated database schema documentation and roadmap notes for profile enrichment foundation.
+
+Breaking Changes
+
+None.
+
+Migration Required
+
+Yes. Requires manual Supabase review and execution.
+
+Testing Status
+
+Pending build verification.
+
+Deployment Status
+
+Development.
+
+Developer Notes
+
+No UI, storage bucket, upload flow, public profile display, or form editing was added in this version.
+
+--------------------------------------------------
+
 Release Categories
 
 Added

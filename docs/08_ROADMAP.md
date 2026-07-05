@@ -169,6 +169,8 @@ Location Support
 
 Search Functionality
 
+Profile Enrichment Schema Foundation
+
 Public Listing Improvements
 
 Performance Improvements
@@ -468,6 +470,8 @@ Primary Tasks
 Complete documentation.
 
 Implement remaining Version 3 features.
+
+Prepare schema foundation for richer business profiles.
 
 Perform production testing.
 

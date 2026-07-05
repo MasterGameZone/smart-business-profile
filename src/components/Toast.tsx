@@ -1,3 +1,5 @@
+import type { ReactElement } from 'react'
+
 export type ToastType = 'success' | 'info' | 'error'
 export interface ToastItem { id: number; message: string; type: ToastType }
 
@@ -7,7 +9,7 @@ export function ToastContainer({ toasts }: { toasts: ToastItem[] }) {
     info:    'bg-gray-700 text-white',
     error:   'bg-red-600  text-white',
   }
-  const icons: Record<ToastType, JSX.Element> = {
+  const icons: Record<ToastType, ReactElement> = {
     success: (
       <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import type { RefObject } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getBusinessProfileBySlug } from '../lib/businessProfileService.ts'
 import { usePageMeta } from '../hooks/usePageMeta.ts'
@@ -36,8 +37,8 @@ function PublicBusinessProfilePage() {
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const [loadState, setLoadState] = useState<LoadState>('loading')
   const [profile, setProfile] = useState<BusinessProfileRow | null>(null)
-  const qrSectionRef = useRef<HTMLElement>(null)
-  const qrCodeRef = useRef<HTMLDivElement>(null)
+  const qrSectionRef = useRef<HTMLElement>(null) as RefObject<HTMLElement>
+  const qrCodeRef = useRef<HTMLDivElement>(null) as RefObject<HTMLDivElement>
 
   const profileUrl = window.location.href
   const metaBusinessName = profile?.business_name.trim() || 'Business Profile'

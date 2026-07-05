@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { RefObject } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useProfile } from '../context/ProfileContext.tsx'
 import { insertBusinessProfile } from '../lib/businessProfileService.ts'
@@ -22,8 +23,8 @@ function ProfilePreviewPage() {
   const [mounted, setMounted]   = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [hasSaved, setHasSaved] = useState(Boolean(profileData.id))
-  const qrSectionRef             = useRef<HTMLElement>(null)
-  const qrCodeRef                = useRef<HTMLDivElement>(null)
+  const qrSectionRef             = useRef<HTMLElement>(null) as RefObject<HTMLElement>
+  const qrCodeRef                = useRef<HTMLDivElement>(null) as RefObject<HTMLDivElement>
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setMounted(true))

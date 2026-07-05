@@ -93,7 +93,15 @@ Stores the primary business profile for each authenticated user.
 | website | TEXT | Yes | Website URL |
 | address | TEXT | Yes | Business address |
 | about_business | TEXT | Yes | Business description |
+| tagline | TEXT | Yes | Short business tagline for future profile enrichment |
+| services | JSONB | Yes | Future editable list of business services |
 | working_hours | JSONB | Yes | Weekly business hours |
+| google_maps_url | TEXT | Yes | Google Maps profile or location link |
+| social_links | JSONB | Yes | Future social media links |
+| keywords | TEXT[] | Yes | Business keywords/tags for future discovery |
+| cover_banner_url | TEXT | Yes | Future cover banner image URL |
+| gallery_images | TEXT[] | Yes | Future gallery image URLs |
+| is_public | BOOLEAN | Yes | Profile visibility flag |
 | profile_image_url | TEXT | Yes | Business logo/profile image |
 | profile_qr_code | TEXT | Yes | Generated QR code URL |
 | slug | TEXT | No | Public unique slug |
@@ -215,6 +223,7 @@ Future buckets may include:
 | 2.1 | Initial business_profiles table | Completed |
 | 2.2 | Supabase CRUD integration | Completed |
 | 2.3 | Public slug support | Completed |
+| 3.5 | Profile enrichment schema foundation | Pending |
 | Future | Additional modules | Planned |
 
 Detailed migration SQL should remain inside the `/supabase/migrations` directory.

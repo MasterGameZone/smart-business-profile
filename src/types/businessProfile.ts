@@ -3,6 +3,9 @@
  * created in supabase/migrations/20260702000000_create_business_profiles.sql
  */
 
+export type JsonObject = Record<string, unknown>
+export type SocialLinks = Record<string, string>
+
 export interface BusinessProfileRow {
   id: string
   business_name: string
@@ -15,6 +18,15 @@ export interface BusinessProfileRow {
   address: string | null
   about_business: string | null
   logo_url: string | null
+  tagline: string | null
+  services: unknown[] | null
+  working_hours: JsonObject | null
+  google_maps_url: string | null
+  social_links: SocialLinks | null
+  keywords: string[] | null
+  cover_banner_url: string | null
+  gallery_images: string[] | null
+  is_public: boolean | null
   slug: string
   owner_id: string | null
   created_at: string
@@ -33,6 +45,15 @@ export interface BusinessProfileInsert {
   address?: string | null
   about_business?: string | null
   logo_url?: string | null
+  tagline?: string | null
+  services?: unknown[] | null
+  working_hours?: JsonObject | null
+  google_maps_url?: string | null
+  social_links?: SocialLinks | null
+  keywords?: string[] | null
+  cover_banner_url?: string | null
+  gallery_images?: string[] | null
+  is_public?: boolean | null
   slug: string
   owner_id?: string | null
   created_at?: string
@@ -50,6 +71,15 @@ export interface BusinessProfileUpdate {
   address?: string | null
   about_business?: string | null
   logo_url?: string | null
+  tagline?: string | null
+  services?: unknown[] | null
+  working_hours?: JsonObject | null
+  google_maps_url?: string | null
+  social_links?: SocialLinks | null
+  keywords?: string[] | null
+  cover_banner_url?: string | null
+  gallery_images?: string[] | null
+  is_public?: boolean | null
   slug?: string
   owner_id?: string | null
   updated_at?: string
