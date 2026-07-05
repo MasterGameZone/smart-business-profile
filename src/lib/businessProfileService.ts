@@ -9,6 +9,7 @@ import type { ProfileData } from '../context/ProfileContext'
 import { workingDays, socialLinkFields } from '../context/ProfileContext'
 import { slugify } from '../utils/slug'
 import { getCurrentUser } from './authService'
+import { uploadBusinessLogo, validateImageFile } from './storageService'
 
 function parseServices(text: string): string[] {
   return text
@@ -83,6 +84,15 @@ function mapProfileDataToFields(data: ProfileData) {
   }
 }
 
+function validateLogoBeforeProfileWrite(file: File | null): void {
+  if (!file) return
+
+  const validation = validateImageFile(file)
+  if (!validation.valid) {
+    throw new Error(validation.error || 'Invalid logo image.')
+  }
+}
+
 export function mapProfileDataToInsert(
   data: ProfileData
 ): Omit<BusinessProfileInsert, 'slug'> {
@@ -128,6 +138,8 @@ export async function insertBusinessProfile(
     throw new Error('You must be logged in to save a business profile.')
   }
 
+  validateLogoBeforeProfileWrite(data.logo)
+
   const slug = await generateUniqueSlug(data.businessName)
 
   const payload: BusinessProfileInsert = {
@@ -150,6 +162,31 @@ export async function insertBusinessProfile(
     throw new Error('Insert succeeded but no row was returned.')
   }
 
+  if (data.logo) {
+    const uploadedLogo = await uploadBusinessLogo({
+      file: data.logo,
+      ownerId: user.id,
+      businessProfileId: inserted.id,
+    })
+
+    const { data: updatedWithLogo, error: logoUpdateError } = await supabase
+      .from('business_profiles')
+      .update({ logo_url: uploadedLogo.publicUrl })
+      .eq('id', inserted.id)
+      .select()
+      .single()
+
+    if (logoUpdateError) {
+      throw logoUpdateError
+    }
+
+    if (!updatedWithLogo) {
+      throw new Error('Logo upload succeeded but the profile row was not returned.')
+    }
+
+    return updatedWithLogo
+  }
+
   return inserted
 }
 
@@ -158,6 +195,23 @@ export async function updateBusinessProfile(
   data: ProfileData
 ): Promise<BusinessProfileRow> {
   const payload: BusinessProfileUpdate = mapProfileDataToFields(data)
+
+  validateLogoBeforeProfileWrite(data.logo)
+
+  if (data.logo) {
+    const user = await getCurrentUser()
+    if (!user) {
+      throw new Error('You must be logged in to update a business profile logo.')
+    }
+
+    const uploadedLogo = await uploadBusinessLogo({
+      file: data.logo,
+      ownerId: user.id,
+      businessProfileId: id,
+    })
+
+    payload.logo_url = uploadedLogo.publicUrl
+  }
 
   const { data: updated, error } = await supabase
     .from('business_profiles')

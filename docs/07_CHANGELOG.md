@@ -434,6 +434,66 @@ No cover banner display, gallery display, image upload, Storage work, map embedd
 
 --------------------------------------------------
 
+Version 3.8
+
+Release Date
+
+Pending
+
+Status
+
+Implemented
+
+Summary
+
+Added the Supabase Storage foundation for public business profile assets and integrated persistent logo uploads.
+
+Added
+
+Created the business-assets Storage migration and reusable storage helper functions for logo, cover, and gallery assets.
+
+Changed
+
+Business logo saving now uploads selected logo files to Supabase Storage and stores the returned public URL in logo_url.
+
+Improved
+
+Logo validation now allows JPG, PNG, and WebP images up to 5 MB.
+
+Fixed
+
+Editing without selecting a new logo preserves the existing logo_url.
+
+Database
+
+Created migration 20260705020000_create_business_assets_storage.sql. Migration must be manually reviewed and applied in Supabase.
+
+Documentation
+
+Updated database storage documentation and roadmap notes for Version 3.8.
+
+Breaking Changes
+
+None.
+
+Migration Required
+
+Yes. Requires manual Supabase review and execution.
+
+Testing Status
+
+Pending build verification.
+
+Deployment Status
+
+Development.
+
+Developer Notes
+
+No cover banner UI, gallery UI, image cropper, compression package, Storage bucket application, or Version 3.9 work was added.
+
+--------------------------------------------------
+
 Release Categories
 
 Added

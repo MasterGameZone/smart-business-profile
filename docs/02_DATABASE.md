@@ -207,12 +207,52 @@ Supabase Storage
 | Bucket | Purpose |
 |----------|----------|
 | business-images | Business logos and profile images |
+| business-assets | Public business profile images for logos, future cover banners, and future gallery images |
 
 Future buckets may include:
 
 - Documents
-- Gallery Images
 - Verification Files
+
+---
+
+## Bucket: business-assets
+
+Purpose
+
+Stores public-facing image assets for business profiles.
+
+Status
+
+Migration prepared in Version 3.8. Manual Supabase review and execution required before production use.
+
+Folder structure
+
+```
+business-profiles/{owner_id}/{business_profile_id}/logo/{file}
+business-profiles/{owner_id}/{business_profile_id}/cover/{file}
+business-profiles/{owner_id}/{business_profile_id}/gallery/{file}
+```
+
+Allowed image types
+
+- image/jpeg
+- image/png
+- image/webp
+
+Maximum file size
+
+- 5 MB
+
+Access model
+
+- Public read for displaying public profile and directory images.
+- Authenticated upload/update/delete for assets inside the authenticated user's owner_id folder.
+- Application code generates controlled asset paths.
+
+Developer notes
+
+Version 3.8 adds helper functions for logo, cover, and gallery uploads. Only logo upload is integrated into the current UI. Cover banner and gallery UI are intentionally not implemented yet.
 
 ---
 
@@ -224,6 +264,7 @@ Future buckets may include:
 | 2.2 | Supabase CRUD integration | Completed |
 | 2.3 | Public slug support | Completed |
 | 3.5 | Profile enrichment schema foundation | Pending |
+| 3.8 | Supabase Storage foundation for business-assets bucket | Pending manual review |
 | Future | Additional modules | Planned |
 
 Detailed migration SQL should remain inside the `/supabase/migrations` directory.

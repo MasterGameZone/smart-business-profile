@@ -69,14 +69,14 @@ function ProfilePreviewPage() {
 
   const logoUrl = useMemo(() => {
     if (profileData.logo) return URL.createObjectURL(profileData.logo)
-    return null
-  }, [profileData.logo])
+    return profileData.existingLogoUrl
+  }, [profileData.existingLogoUrl, profileData.logo])
 
   useEffect(() => {
     return () => {
-      if (logoUrl) URL.revokeObjectURL(logoUrl)
+      if (profileData.logo && logoUrl) URL.revokeObjectURL(logoUrl)
     }
-  }, [logoUrl])
+  }, [logoUrl, profileData.logo])
 
   const profileUrl = window.location.href
   const previewServices = useMemo(() => parsePreviewServices(profileData.servicesText), [profileData.servicesText])
@@ -123,6 +123,7 @@ function ProfilePreviewPage() {
         id: saved.id,
         slug: saved.slug,
         ownerId: saved.owner_id,
+        logo: null,
         existingLogoUrl: saved.logo_url,
       })
       setHasSaved(true)

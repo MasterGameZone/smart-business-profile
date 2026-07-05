@@ -175,6 +175,8 @@ Profile Enrichment Form Editing
 
 Public Profile Display Upgrade
 
+Supabase Storage Foundation
+
 Public Listing Improvements
 
 Performance Improvements
@@ -480,6 +482,8 @@ Prepare schema foundation for richer business profiles.
 Add create/edit form support for profile enrichment fields.
 
 Upgrade public profile display and enforce private profile visibility.
+
+Add Supabase Storage foundation for business profile assets.
 
 Perform production testing.
 

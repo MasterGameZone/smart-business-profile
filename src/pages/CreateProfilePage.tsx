@@ -9,6 +9,7 @@ import {
 } from '../context/ProfileContext.tsx'
 import { useAuth } from '../context/AuthContext.tsx'
 import { updateBusinessProfile } from '../lib/businessProfileService.ts'
+import { validateImageFile } from '../lib/storageService.ts'
 import { usePageMeta } from '../hooks/usePageMeta.ts'
 import { ToastContainer, type ToastItem, type ToastType } from '../components/Toast.tsx'
 
@@ -26,6 +27,7 @@ interface FormErrors {
   youtube?: string
   x?: string
   keywordsText?: string
+  logo?: string
 }
 
 const categories = [
@@ -108,8 +110,28 @@ function CreateProfilePage() {
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null
+
+    if (!file) {
+      setProfileData({ ...profileData, logo: null })
+      setLogoFileName('')
+      setErrors((prev) => ({ ...prev, logo: undefined }))
+      return
+    }
+
+    const validation = validateImageFile(file)
+    if (!validation.valid) {
+      setProfileData({ ...profileData, logo: null })
+      setLogoFileName('')
+      setErrors((prev) => ({ ...prev, logo: validation.error }))
+      if (logoInputRef.current) {
+        logoInputRef.current.value = ''
+      }
+      return
+    }
+
     setProfileData({ ...profileData, logo: file })
     setLogoFileName(file ? file.name : '')
+    setErrors((prev) => ({ ...prev, logo: undefined }))
   }
 
   const handleSocialLinkChange = (key: SocialLinkKey, value: string) => {
@@ -248,6 +270,7 @@ function CreateProfilePage() {
         isPublic: updated.is_public ?? true,
         id: updated.id,
         slug: updated.slug,
+        logo: null,
         existingLogoUrl: updated.logo_url,
       })
       navigate('/profile-preview', { state: { updateSuccess: true } })
@@ -771,10 +794,13 @@ function CreateProfilePage() {
                 type="file"
                 id="logo"
                 name="logo"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp"
                 onChange={handleLogoChange}
+                aria-invalid={!!errors.logo}
+                aria-describedby={errors.logo ? 'logo-error' : 'logo-help'}
                 className={`${inputBase} border-gray-300 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 file:transition-colors`}
               />
+              {fieldError('logo')}
               {logoFileName ? (
                 <p className="mt-1.5 text-xs text-gray-500 flex items-center gap-1">
                   <svg className="w-3.5 h-3.5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -783,7 +809,7 @@ function CreateProfilePage() {
                   {logoFileName}
                 </p>
               ) : (
-                <p className="mt-1.5 text-xs text-gray-400">PNG, JPG or GIF recommended. Not stored between sessions.</p>
+                <p id="logo-help" className="mt-1.5 text-xs text-gray-400">JPG, PNG, or WebP only. Maximum file size is 5 MB.</p>
               )}
             </div>
           </section>
