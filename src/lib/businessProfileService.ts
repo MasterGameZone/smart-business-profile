@@ -153,7 +153,7 @@ export async function getPublicBusinessProfiles(): Promise<PublicBusinessProfile
   const { data, error } = await supabase
     .from('business_profiles')
     .select(
-      'id, business_name, owner_name, business_category, about_business, logo_url, slug, owner_id, created_at, updated_at'
+      'id, business_name, owner_name, business_category, address, about_business, logo_url, slug, owner_id, created_at, updated_at'
     )
     .order('business_name', { ascending: true })
 

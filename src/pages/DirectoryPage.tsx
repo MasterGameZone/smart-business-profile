@@ -20,6 +20,7 @@ function DirectoryPage() {
   const [profiles, setProfiles] = useState<PublicBusinessProfileRow[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState(ALL_CATEGORIES)
+  const [locationQuery, setLocationQuery] = useState('')
 
   const loadProfiles = useCallback(async () => {
     setLoadState('loading')
@@ -45,10 +46,14 @@ function DirectoryPage() {
 
   const filteredProfiles = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
+    const location = locationQuery.trim().toLowerCase()
 
     return profiles.filter((profile) => {
       const matchesCategory = selectedCategory === ALL_CATEGORIES || profile.business_category === selectedCategory
       if (!matchesCategory) return false
+
+      const matchesLocation = !location || Boolean(profile.address?.toLowerCase().includes(location))
+      if (!matchesLocation) return false
 
       if (!query) return true
 
@@ -58,13 +63,15 @@ function DirectoryPage() {
         profile.owner_name.toLowerCase().includes(query)
       )
     })
-  }, [profiles, searchQuery, selectedCategory])
+  }, [profiles, searchQuery, selectedCategory, locationQuery])
 
-  const hasActiveFilters = searchQuery.trim().length > 0 || selectedCategory !== ALL_CATEGORIES
+  const hasActiveFilters =
+    searchQuery.trim().length > 0 || selectedCategory !== ALL_CATEGORIES || locationQuery.trim().length > 0
 
   const clearFilters = useCallback(() => {
     setSearchQuery('')
     setSelectedCategory(ALL_CATEGORIES)
+    setLocationQuery('')
   }, [])
 
   return (
@@ -118,6 +125,35 @@ function DirectoryPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search businesses..."
+                  className="w-full pl-11 pr-4 py-2.5 text-sm text-gray-900 bg-white border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                />
+              </div>
+
+              <div className="relative flex-1 sm:max-w-md">
+                <label htmlFor="directory-location" className="sr-only">
+                  Search by location or address
+                </label>
+                <svg
+                  className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 21s7-4.35 7-11a7 7 0 10-14 0c0 6.65 7 11 7 11z"
+                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10.5h.01" />
+                </svg>
+                <input
+                  id="directory-location"
+                  type="text"
+                  value={locationQuery}
+                  onChange={(e) => setLocationQuery(e.target.value)}
+                  placeholder="Search by location or address..."
                   className="w-full pl-11 pr-4 py-2.5 text-sm text-gray-900 bg-white border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 />
               </div>

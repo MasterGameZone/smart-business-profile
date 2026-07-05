@@ -61,6 +61,7 @@ export type PublicBusinessProfileRow = Pick<
   | 'business_name'
   | 'owner_name'
   | 'business_category'
+  | 'address'
   | 'about_business'
   | 'logo_url'
   | 'slug'
