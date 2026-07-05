@@ -1,6 +1,6 @@
 # Smart Business Profile – Current Status
 
-Last Updated: 2026-07-05  
+Last Updated: 2026-07-06  
 Status: Active Local Development  
 Environment: VS Code local  
 Local URL: http://localhost:5000  
@@ -33,6 +33,7 @@ Development:
 Deployment:
 
 - Vercel planned
+- Vercel configuration prepared in Version 4.1
 - Not deployed yet
 
 Inactive:
@@ -240,32 +241,34 @@ Known limitation:
 
 ### 3.1 App Layout and Navigation
 
-Status: Needs work
+Status: Stabilized in Version 4.0
 
-Known problems:
+Completed:
 
-- navigation between pages feels weak
-- dashboard lacks helpful structure
-- logout button placement is not always logical
-- save flow does not always redirect cleanly
-- users may need to manually go back multiple times
-- create/edit/profile pages do not feel connected enough
-- app does not yet feel structurally polished
+- shared app navigation/header
+- logged-in and logged-out navigation states
+- dashboard as owner hub
+- improved create/edit save redirects
+- public/profile/directory navigation consistency
 
-Recommended next task:
+To Verify:
 
-Version 4.0 – Navigation, Routing, and App Layout Stabilization
+- continued manual UX review on mobile and desktop
+
 
 ---
 
 ### 3.2 Deployment
 
-Status: Pending
+Status: Prepared / Not Deployed
 
-- Vercel is planned
-- production deployment not yet completed
-- production auth redirects not yet verified
-- production storage/public URLs not yet verified
+- Vercel is planned as the deployment target.
+- Version 4.1 added SPA route refresh support for Vercel.
+- Safe public frontend environment variables are documented.
+- Supabase Auth redirect setup is documented for the project owner.
+- Production deployment has not been completed.
+- Production auth redirects are not yet verified.
+- Production storage/public URLs are not yet verified.
 
 ---
 
@@ -309,11 +312,9 @@ Planned direction only.
 
 Current limitations:
 
-- app layout needs stabilization
-- navigation is not yet production-polished
-- dashboard is functional but not refined
-- save/edit redirects need improvement
 - Vercel deployment not done
+- production auth redirects not verified
+- production storage/public URLs not verified
 - no analytics
 - no subscription system
 - no appointments
@@ -327,23 +328,21 @@ Current limitations:
 
 ---
 
-## 5. Current UX / Navigation Issues
+## 5. Current Deployment Issues
 
 Main current concern:
 
-The product has strong features, but the user journey does not yet feel smooth.
+The app is prepared for Vercel deployment, but production deployment and production verification have not been completed.
 
 Observed issues:
 
-- poor navigation between pages
-- dashboard lacks helpful navigation structure
-- logout button placement feels illogical in some screens
-- save flow does not redirect well
-- users must manually go back multiple times
-- edit/create/profile pages do not feel well connected
-- overall app structure does not yet feel polished
+- Vercel project has not been deployed yet
+- Vercel environment variables still need to be configured
+- Supabase Auth production redirect URLs still need to be configured
+- production route refresh behavior still needs to be verified after deploy
+- production QR/share behavior still needs to be verified after deploy
 
-This should be fixed before adding more large features.
+This should be verified before adding more large features.
 
 ---
 
@@ -351,15 +350,15 @@ This should be fixed before adding more large features.
 
 Priority order:
 
-1. Stabilize app navigation, routing, and layout.
-2. Improve dashboard and business management flow.
-3. Improve save/edit redirect behavior.
-4. Make the app feel like one connected product.
-5. Then move to business verification or deployment.
+1. Deploy to Vercel.
+2. Configure Vercel environment variables.
+3. Configure Supabase Auth URL settings.
+4. Verify production routes, auth redirects, storage URLs, and public sharing.
+5. Then move to the next approved product feature.
 
 Recommended next version:
 
-Version 4.0 – Navigation, Routing, and App Layout Stabilization
+Production deployment and verification after project owner approval.
 
 ---
 

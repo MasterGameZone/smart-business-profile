@@ -1,6 +1,6 @@
 # Smart Business Profile – Handoff Note
 
-Last Updated: 2026-07-05  
+Last Updated: 2026-07-06  
 Use this note when starting a new chat.
 
 ---
@@ -84,37 +84,40 @@ Completed major features:
 - logo upload
 - cover banner upload/display
 - gallery upload/display
+- navigation/routing/layout stabilization
+- Vercel deployment preparation
+- Vercel SPA route refresh configuration
 
 ---
 
 ## Current Main Issue
 
-The app has strong features but the overall navigation, routing, layout, button placement, and save/edit flow need stabilization.
+The app is prepared for first Vercel deployment, but production deployment and verification have not been completed.
 
 Known concerns:
 
-- navigation between pages feels weak
-- dashboard needs stronger structure
-- logout placement feels illogical in some screens
-- save flow does not redirect cleanly
-- users may need to go back manually multiple times
-- create/edit/profile pages do not feel connected enough
+- Vercel project has not been deployed yet
+- Vercel environment variables need to be configured
+- Supabase Auth production URLs need to be configured
+- production route refresh behavior needs verification
+- production auth/reset redirects need verification
+- production QR/share and Supabase Storage URLs need verification
 
 ---
 
 ## Current Recommended Task
 
-Version 4.0 – Navigation, Routing, and App Layout Stabilization
+Production deployment and verification after project owner approval
 
 Focus:
 
-- improve app layout
-- improve navigation
-- improve dashboard flow
-- improve create/edit/save redirects
-- make the app feel structurally polished
+- deploy to Vercel
+- configure Vercel environment variables
+- configure Supabase Auth URL settings
+- verify direct route refreshes
+- verify auth, QR/share, public profiles, directory, and image loading in production
 
-Do not add new business features in Version 4.0.
+Do not add new business features during deployment verification.
 
 ---
 
@@ -144,7 +147,7 @@ Before suggesting or implementing anything:
 
 6. Do not weaken auth, ownership, RLS, or private profile visibility.
 
-7. Do not add new features while working on Version 4.0.
+7. Do not add new features while preparing or verifying deployment.
 
 8. Keep changes minimal and testable.
 
@@ -152,6 +155,8 @@ Before suggesting or implementing anything:
 
 ## To Verify
 
-- Confirm latest Version 3.9 changes are committed and pushed to GitHub.
 - Confirm `npm run build` passes after pulling latest code.
 - Confirm local app runs at `http://localhost:5000`.
+- Confirm Vercel environment variables are configured.
+- Confirm Supabase Auth URL Configuration includes local and production URLs.
+- Confirm direct route refreshes work after production deployment.

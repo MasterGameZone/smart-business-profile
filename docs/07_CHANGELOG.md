@@ -1,7 +1,7 @@
 # Smart Business Profile – Changelog
 
-Last Updated: 2026-07-05  
-Status: Active  
+Last Updated: 2026-07-05
+Status: Active
 
 ---
 
@@ -368,21 +368,40 @@ To Verify:
 
 ---
 
-## Next Recommended Version
-
 ## Version 4.0 – Navigation, Routing, and App Layout Stabilization
 
-Status: Recommended Next Task
+Status: Completed
 
-Goal:
+- Added shared app navigation/header.
+- Added appropriate logged-in and logged-out navigation states.
+- Improved dashboard as the owner hub.
+- Improved create/edit save redirects.
+- Improved navigation consistency across landing, auth, dashboard, directory, preview, and public profile pages.
+- Corrected active navigation styling and logged-in Home access during approval cleanup.
 
-Improve structure and user flow before adding more business features.
+---
 
-Main concerns:
+## Version 4.1 – Vercel Deployment Preparation and Production Readiness
 
-- navigation between pages feels weak
-- dashboard needs better structure
-- logout placement may be illogical
-- save flow redirects need improvement
-- create/edit/public profile pages need stronger connection
-- app should feel like one polished product
+Status: Implemented / Not Deployed
+
+- Added Vercel single-page app routing support.
+- Confirmed Vite build command remains `npm run build`.
+- Confirmed Vercel output directory remains `dist`.
+- Confirmed safe frontend Supabase environment variables:
+  - `VITE_SUPABASE_URL`
+  - `VITE_SUPABASE_ANON_KEY`
+- Documented Vercel deployment setup.
+- Documented Supabase Auth production URL configuration requirements.
+- Confirmed public profile/share URLs use runtime browser URL behavior rather than hardcoded localhost URLs.
+
+Note:
+
+- Production deployment has not been performed yet.
+- Production auth redirects and storage/public URLs still require verification after deployment.
+
+---
+
+## Next Recommended Step
+
+Deploy to Vercel after owner approval, configure Vercel/Supabase settings, and verify production routes, auth redirects, storage URLs, and public sharing.

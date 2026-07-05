@@ -144,6 +144,65 @@ npm run preview
 
 --------------------------------------------------
 
+Vercel Deployment
+
+Deployment target
+
+Vercel
+
+Build command
+
+npm run build
+
+Output directory
+
+dist
+
+Required Vercel environment variables
+
+VITE_SUPABASE_URL
+
+VITE_SUPABASE_ANON_KEY
+
+Use the public Supabase project URL and anon key only.
+Do not add service role keys or private secrets to the frontend.
+
+Direct route refresh support
+
+The project includes vercel.json with a single-page app rewrite so routes such as:
+
+/directory
+
+/login
+
+/signup
+
+/dashboard
+
+/create-profile
+
+/profile-preview
+
+/business/{slug}
+
+load the React app when opened directly or refreshed in production.
+
+Supabase Auth URL configuration
+
+After the first Vercel deployment, update Supabase Auth URL Configuration manually.
+
+Include:
+
+http://localhost:5000
+
+https://your-production-domain.vercel.app
+
+https://your-production-domain.vercel.app/reset-password
+
+The reset password flow uses the current runtime origin, so local development redirects to the local app and production redirects to the deployed Vercel domain.
+
+--------------------------------------------------
+
 Development Workflow
 
 Feature Request
