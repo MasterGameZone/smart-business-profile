@@ -209,12 +209,14 @@ function PublicBusinessProfilePage() {
               address: profile.address || '',
               aboutBusiness: profile.about_business || '',
               logoUrl: profile.logo_url,
+              coverBannerUrl: profile.cover_banner_url,
               tagline: profile.tagline,
               services: profile.services,
               workingHours: profile.working_hours,
               googleMapsUrl: profile.google_maps_url,
               socialLinks: profile.social_links,
               keywords: profile.keywords,
+              galleryImages: profile.gallery_images,
             }}
             profileUrl={profileUrl}
             onShare={handleShare}

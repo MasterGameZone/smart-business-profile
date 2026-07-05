@@ -9,7 +9,14 @@ import type { ProfileData } from '../context/ProfileContext'
 import { workingDays, socialLinkFields } from '../context/ProfileContext'
 import { slugify } from '../utils/slug'
 import { getCurrentUser } from './authService'
-import { uploadBusinessLogo, validateImageFile } from './storageService'
+import {
+  uploadBusinessCover,
+  uploadBusinessGalleryImage,
+  uploadBusinessLogo,
+  validateImageFile,
+} from './storageService'
+
+const MAX_GALLERY_IMAGES = 6
 
 function parseServices(text: string): string[] {
   return text
@@ -80,17 +87,75 @@ function mapProfileDataToFields(data: ProfileData) {
     google_maps_url: data.googleMapsUrl.trim() || null,
     social_links: mapSocialLinks(data),
     keywords: parseKeywords(data.keywordsText),
+    cover_banner_url: data.existingCoverBannerUrl || null,
+    gallery_images: data.existingGalleryImageUrls,
     is_public: data.isPublic,
   }
 }
 
-function validateLogoBeforeProfileWrite(file: File | null): void {
+function validateImageBeforeProfileWrite(file: File | null): void {
   if (!file) return
 
   const validation = validateImageFile(file)
   if (!validation.valid) {
-    throw new Error(validation.error || 'Invalid logo image.')
+    throw new Error(validation.error || 'Invalid image file.')
   }
+}
+
+function validateImagesBeforeProfileWrite(data: ProfileData): void {
+  validateImageBeforeProfileWrite(data.logo)
+  validateImageBeforeProfileWrite(data.coverBanner)
+  data.galleryImages.forEach((file) => validateImageBeforeProfileWrite(file))
+
+  if (data.existingGalleryImageUrls.length + data.galleryImages.length > MAX_GALLERY_IMAGES) {
+    throw new Error(`You can upload up to ${MAX_GALLERY_IMAGES} gallery images.`)
+  }
+}
+
+async function uploadPendingProfileImages(
+  ownerId: string,
+  businessProfileId: string,
+  data: ProfileData
+): Promise<Pick<BusinessProfileUpdate, 'logo_url' | 'cover_banner_url' | 'gallery_images'>> {
+  const updates: Pick<BusinessProfileUpdate, 'logo_url' | 'cover_banner_url' | 'gallery_images'> = {}
+
+  if (data.logo) {
+    const uploadedLogo = await uploadBusinessLogo({
+      file: data.logo,
+      ownerId,
+      businessProfileId,
+    })
+
+    updates.logo_url = uploadedLogo.publicUrl
+  }
+
+  if (data.coverBanner) {
+    const uploadedCover = await uploadBusinessCover({
+      file: data.coverBanner,
+      ownerId,
+      businessProfileId,
+    })
+
+    updates.cover_banner_url = uploadedCover.publicUrl
+  }
+
+  if (data.galleryImages.length > 0) {
+    const uploadedGalleryUrls: string[] = []
+
+    for (const file of data.galleryImages) {
+      const uploadedGalleryImage = await uploadBusinessGalleryImage({
+        file,
+        ownerId,
+        businessProfileId,
+      })
+
+      uploadedGalleryUrls.push(uploadedGalleryImage.publicUrl)
+    }
+
+    updates.gallery_images = [...data.existingGalleryImageUrls, ...uploadedGalleryUrls]
+  }
+
+  return updates
 }
 
 export function mapProfileDataToInsert(
@@ -138,7 +203,7 @@ export async function insertBusinessProfile(
     throw new Error('You must be logged in to save a business profile.')
   }
 
-  validateLogoBeforeProfileWrite(data.logo)
+  validateImagesBeforeProfileWrite(data)
 
   const slug = await generateUniqueSlug(data.businessName)
 
@@ -162,29 +227,25 @@ export async function insertBusinessProfile(
     throw new Error('Insert succeeded but no row was returned.')
   }
 
-  if (data.logo) {
-    const uploadedLogo = await uploadBusinessLogo({
-      file: data.logo,
-      ownerId: user.id,
-      businessProfileId: inserted.id,
-    })
+  const imageUpdates = await uploadPendingProfileImages(user.id, inserted.id, data)
 
-    const { data: updatedWithLogo, error: logoUpdateError } = await supabase
+  if (Object.keys(imageUpdates).length > 0) {
+    const { data: updatedWithImages, error: imageUpdateError } = await supabase
       .from('business_profiles')
-      .update({ logo_url: uploadedLogo.publicUrl })
+      .update(imageUpdates)
       .eq('id', inserted.id)
       .select()
       .single()
 
-    if (logoUpdateError) {
-      throw logoUpdateError
+    if (imageUpdateError) {
+      throw imageUpdateError
     }
 
-    if (!updatedWithLogo) {
-      throw new Error('Logo upload succeeded but the profile row was not returned.')
+    if (!updatedWithImages) {
+      throw new Error('Image upload succeeded but the profile row was not returned.')
     }
 
-    return updatedWithLogo
+    return updatedWithImages
   }
 
   return inserted
@@ -196,21 +257,15 @@ export async function updateBusinessProfile(
 ): Promise<BusinessProfileRow> {
   const payload: BusinessProfileUpdate = mapProfileDataToFields(data)
 
-  validateLogoBeforeProfileWrite(data.logo)
+  validateImagesBeforeProfileWrite(data)
 
-  if (data.logo) {
+  if (data.logo || data.coverBanner || data.galleryImages.length > 0) {
     const user = await getCurrentUser()
     if (!user) {
-      throw new Error('You must be logged in to update a business profile logo.')
+      throw new Error('You must be logged in to update business profile images.')
     }
 
-    const uploadedLogo = await uploadBusinessLogo({
-      file: data.logo,
-      ownerId: user.id,
-      businessProfileId: id,
-    })
-
-    payload.logo_url = uploadedLogo.publicUrl
+    Object.assign(payload, await uploadPendingProfileImages(user.id, id, data))
   }
 
   const { data: updated, error } = await supabase

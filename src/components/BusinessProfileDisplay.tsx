@@ -13,12 +13,14 @@ export interface BusinessProfileDisplayData {
   address: string
   aboutBusiness: string
   logoUrl: string | null
+  coverBannerUrl?: string | null
   tagline?: string | null
   services?: unknown[] | null
   workingHours?: JsonObject | null
   googleMapsUrl?: string | null
   socialLinks?: SocialLinks | null
   keywords?: string[] | null
+  galleryImages?: string[] | null
 }
 
 interface BusinessProfileDisplayProps {
@@ -67,6 +69,18 @@ function toValidUrl(value: string | null | undefined): string | null {
   try {
     const url = new URL(trimmed)
     return url.protocol === 'http:' || url.protocol === 'https:' ? url.toString() : null
+  } catch {
+    return null
+  }
+}
+
+function toDisplayImageUrl(value: string | null | undefined): string | null {
+  const trimmed = trimText(value)
+  if (!trimmed) return null
+
+  try {
+    const url = new URL(trimmed)
+    return ['http:', 'https:', 'blob:'].includes(url.protocol) ? trimmed : null
   } catch {
     return null
   }
@@ -152,12 +166,16 @@ function BusinessProfileDisplay({
   const displayWebsite = trimText(profile.website)
   const displayAddress = trimText(profile.address)
   const displayTagline = trimText(profile.tagline)
+  const coverBannerUrl = toDisplayImageUrl(profile.coverBannerUrl)
   const firstLetter = profile.businessName.trim().charAt(0).toUpperCase()
   const serviceItems = normalizeStringArray(profile.services)
   const workingHours = normalizeWorkingHours(profile.workingHours)
   const googleMapsUrl = toValidUrl(profile.googleMapsUrl)
   const socialLinks = normalizeSocialLinks(profile.socialLinks)
   const keywordItems = normalizeStringArray(profile.keywords)
+  const galleryItems = normalizeStringArray(profile.galleryImages)
+    .map(toDisplayImageUrl)
+    .filter((url): url is string => Boolean(url))
 
   const scrollToQR = () => {
     qrSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -166,18 +184,27 @@ function BusinessProfileDisplay({
   return (
     <div className="space-y-4">
       <article className={cardBase}>
-        <div
-          aria-hidden="true"
-          className="relative h-36 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700"
-        >
-          <div
-            className="absolute inset-0 opacity-10"
-            style={{
-              backgroundImage:
-                'radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)',
-              backgroundSize: '40px 40px',
-            }}
-          />
+        <div className="relative h-36 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700">
+          {coverBannerUrl ? (
+            <img
+              src={coverBannerUrl}
+              alt={`${profile.businessName} cover banner`}
+              className="h-full w-full object-cover"
+              onError={(event) => {
+                event.currentTarget.style.display = 'none'
+              }}
+            />
+          ) : (
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 opacity-10"
+              style={{
+                backgroundImage:
+                  'radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)',
+                backgroundSize: '40px 40px',
+              }}
+            />
+          )}
         </div>
 
         <div className="px-6 pb-6 sm:px-8">
@@ -466,6 +493,25 @@ function BusinessProfileDisplay({
               </li>
             ))}
           </ul>
+        </section>
+      )}
+
+      {galleryItems.length > 0 && (
+        <section aria-label="Gallery" className={`${cardBase} px-6 py-6 sm:px-8`}>
+          <h2 className={sectionHeading}>Gallery</h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {galleryItems.map((imageUrl, index) => (
+              <img
+                key={imageUrl}
+                src={imageUrl}
+                alt={`${profile.businessName} gallery image ${index + 1}`}
+                className="aspect-square w-full rounded-xl border border-gray-100 bg-gray-50 object-cover"
+                onError={(event) => {
+                  event.currentTarget.style.display = 'none'
+                }}
+              />
+            ))}
+          </div>
         </section>
       )}
 

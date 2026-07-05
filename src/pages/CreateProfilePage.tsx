@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   socialLinkFields,
@@ -28,7 +28,12 @@ interface FormErrors {
   x?: string
   keywordsText?: string
   logo?: string
+  coverBanner?: string
+  galleryImages?: string
 }
+
+const MAX_GALLERY_IMAGES = 6
+const imageAccept = 'image/jpeg,image/png,image/webp'
 
 const categories = [
   'Retail',
@@ -68,6 +73,11 @@ function parseKeywords(text: string): string[] {
   return keywords
 }
 
+function validateSelectedImage(file: File): string | null {
+  const validation = validateImageFile(file)
+  return validation.valid ? null : validation.error || 'Invalid image file.'
+}
+
 function CreateProfilePage() {
   const navigate = useNavigate()
   const { profileData, setProfileData, clearProfile } = useProfile()
@@ -87,8 +97,42 @@ function CreateProfilePage() {
   const [logoFileName, setLogoFileName] = useState<string>(
     profileData.logo ? profileData.logo.name : ''
   )
+  const [coverBannerFileName, setCoverBannerFileName] = useState<string>(
+    profileData.coverBanner ? profileData.coverBanner.name : ''
+  )
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const logoInputRef = useRef<HTMLInputElement>(null)
+  const coverBannerInputRef = useRef<HTMLInputElement>(null)
+  const galleryInputRef = useRef<HTMLInputElement>(null)
+
+  const coverBannerPreviewUrl = useMemo(() => {
+    if (profileData.coverBanner) return URL.createObjectURL(profileData.coverBanner)
+    return profileData.existingCoverBannerUrl
+  }, [profileData.coverBanner, profileData.existingCoverBannerUrl])
+
+  const selectedGalleryPreviews = useMemo(
+    () =>
+      profileData.galleryImages.map((file, index) => ({
+        key: `${file.name}-${file.lastModified}-${index}`,
+        name: file.name,
+        url: URL.createObjectURL(file),
+      })),
+    [profileData.galleryImages]
+  )
+
+  useEffect(() => {
+    return () => {
+      if (profileData.coverBanner && coverBannerPreviewUrl) {
+        URL.revokeObjectURL(coverBannerPreviewUrl)
+      }
+    }
+  }, [coverBannerPreviewUrl, profileData.coverBanner])
+
+  useEffect(() => {
+    return () => {
+      selectedGalleryPreviews.forEach((preview) => URL.revokeObjectURL(preview.url))
+    }
+  }, [selectedGalleryPreviews])
 
   const showToast = (message: string, type: ToastType = 'success') => {
     const id = Date.now()
@@ -118,11 +162,11 @@ function CreateProfilePage() {
       return
     }
 
-    const validation = validateImageFile(file)
-    if (!validation.valid) {
+    const validationError = validateSelectedImage(file)
+    if (validationError) {
       setProfileData({ ...profileData, logo: null })
       setLogoFileName('')
-      setErrors((prev) => ({ ...prev, logo: validation.error }))
+      setErrors((prev) => ({ ...prev, logo: validationError }))
       if (logoInputRef.current) {
         logoInputRef.current.value = ''
       }
@@ -132,6 +176,108 @@ function CreateProfilePage() {
     setProfileData({ ...profileData, logo: file })
     setLogoFileName(file ? file.name : '')
     setErrors((prev) => ({ ...prev, logo: undefined }))
+  }
+
+  const handleCoverBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null
+
+    if (!file) {
+      setProfileData({ ...profileData, coverBanner: null })
+      setCoverBannerFileName('')
+      setErrors((prev) => ({ ...prev, coverBanner: undefined }))
+      return
+    }
+
+    const validationError = validateSelectedImage(file)
+    if (validationError) {
+      setProfileData({ ...profileData, coverBanner: null })
+      setCoverBannerFileName('')
+      setErrors((prev) => ({ ...prev, coverBanner: validationError }))
+      if (coverBannerInputRef.current) {
+        coverBannerInputRef.current.value = ''
+      }
+      return
+    }
+
+    setProfileData({ ...profileData, coverBanner: file })
+    setCoverBannerFileName(file.name)
+    setErrors((prev) => ({ ...prev, coverBanner: undefined }))
+  }
+
+  const handleClearCoverBanner = () => {
+    setProfileData({
+      ...profileData,
+      coverBanner: null,
+      existingCoverBannerUrl: null,
+    })
+    setCoverBannerFileName('')
+    setErrors((prev) => ({ ...prev, coverBanner: undefined }))
+    if (coverBannerInputRef.current) {
+      coverBannerInputRef.current.value = ''
+    }
+  }
+
+  const handleGalleryImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(e.target.files ?? [])
+    if (selectedFiles.length === 0) return
+
+    const remainingSlots =
+      MAX_GALLERY_IMAGES - profileData.existingGalleryImageUrls.length - profileData.galleryImages.length
+
+    if (remainingSlots <= 0) {
+      setErrors((prev) => ({ ...prev, galleryImages: `You can upload up to ${MAX_GALLERY_IMAGES} gallery images.` }))
+      if (galleryInputRef.current) {
+        galleryInputRef.current.value = ''
+      }
+      return
+    }
+
+    const validFiles: File[] = []
+
+    for (const file of selectedFiles) {
+      const validationError = validateSelectedImage(file)
+      if (validationError) {
+        setErrors((prev) => ({ ...prev, galleryImages: validationError }))
+        if (galleryInputRef.current) {
+          galleryInputRef.current.value = ''
+        }
+        return
+      }
+
+      validFiles.push(file)
+    }
+
+    const allowedFiles = validFiles.slice(0, remainingSlots)
+    const limitMessage =
+      validFiles.length > remainingSlots
+        ? `Only ${remainingSlots} more gallery image${remainingSlots === 1 ? '' : 's'} can be added. The extra files were not selected.`
+        : undefined
+
+    setProfileData({
+      ...profileData,
+      galleryImages: [...profileData.galleryImages, ...allowedFiles],
+    })
+    setErrors((prev) => ({ ...prev, galleryImages: limitMessage }))
+
+    if (galleryInputRef.current) {
+      galleryInputRef.current.value = ''
+    }
+  }
+
+  const handleRemoveSelectedGalleryImage = (index: number) => {
+    setProfileData({
+      ...profileData,
+      galleryImages: profileData.galleryImages.filter((_, imageIndex) => imageIndex !== index),
+    })
+    setErrors((prev) => ({ ...prev, galleryImages: undefined }))
+  }
+
+  const handleRemoveExistingGalleryImage = (url: string) => {
+    setProfileData({
+      ...profileData,
+      existingGalleryImageUrls: profileData.existingGalleryImageUrls.filter((imageUrl) => imageUrl !== url),
+    })
+    setErrors((prev) => ({ ...prev, galleryImages: undefined }))
   }
 
   const handleSocialLinkChange = (key: SocialLinkKey, value: string) => {
@@ -272,6 +418,10 @@ function CreateProfilePage() {
         slug: updated.slug,
         logo: null,
         existingLogoUrl: updated.logo_url,
+        coverBanner: null,
+        existingCoverBannerUrl: updated.cover_banner_url,
+        galleryImages: [],
+        existingGalleryImageUrls: Array.isArray(updated.gallery_images) ? updated.gallery_images : [],
       })
       navigate('/profile-preview', { state: { updateSuccess: true } })
     } catch (error) {
@@ -289,8 +439,15 @@ function CreateProfilePage() {
     clearProfile()
     setErrors({})
     setLogoFileName('')
+    setCoverBannerFileName('')
     if (logoInputRef.current) {
       logoInputRef.current.value = ''
+    }
+    if (coverBannerInputRef.current) {
+      coverBannerInputRef.current.value = ''
+    }
+    if (galleryInputRef.current) {
+      galleryInputRef.current.value = ''
     }
   }
 
@@ -794,7 +951,7 @@ function CreateProfilePage() {
                 type="file"
                 id="logo"
                 name="logo"
-                accept="image/jpeg,image/png,image/webp"
+                accept={imageAccept}
                 onChange={handleLogoChange}
                 aria-invalid={!!errors.logo}
                 aria-describedby={errors.logo ? 'logo-error' : 'logo-help'}
@@ -810,6 +967,110 @@ function CreateProfilePage() {
                 </p>
               ) : (
                 <p id="logo-help" className="mt-1.5 text-xs text-gray-400">JPG, PNG, or WebP only. Maximum file size is 5 MB.</p>
+              )}
+            </div>
+
+            <div className="pt-5 border-t border-gray-100">
+              <label htmlFor="coverBanner" className="block text-sm font-medium text-gray-700 mb-1.5">
+                Cover Banner
+                <span className="ml-2 text-xs text-gray-400 font-normal">Optional</span>
+              </label>
+              <input
+                ref={coverBannerInputRef}
+                type="file"
+                id="coverBanner"
+                name="coverBanner"
+                accept={imageAccept}
+                onChange={handleCoverBannerChange}
+                aria-invalid={!!errors.coverBanner}
+                aria-describedby={errors.coverBanner ? 'coverBanner-error' : 'coverBanner-help'}
+                className={`${inputBase} border-gray-300 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 file:transition-colors`}
+              />
+              {fieldError('coverBanner')}
+              <p id="coverBanner-help" className="mt-1.5 text-xs text-gray-400">
+                Upload a wide banner image for the top of your public business profile. JPG, PNG, or WebP only. Maximum file size is 5 MB.
+              </p>
+              {coverBannerPreviewUrl && (
+                <div className="mt-3">
+                  <img
+                    src={coverBannerPreviewUrl}
+                    alt="Selected cover banner preview"
+                    className="w-full aspect-[3/1] rounded-xl object-cover border border-gray-100 bg-gray-50"
+                  />
+                  <div className="mt-2 flex items-center justify-between gap-3">
+                    <p className="text-xs text-gray-500 truncate">
+                      {coverBannerFileName || 'Current cover banner'}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleClearCoverBanner}
+                      className="text-xs font-medium text-red-600 hover:text-red-700 focus:outline-none focus:underline"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="pt-5 border-t border-gray-100">
+              <label htmlFor="galleryImages" className="block text-sm font-medium text-gray-700 mb-1.5">
+                Business Gallery
+                <span className="ml-2 text-xs text-gray-400 font-normal">Optional</span>
+              </label>
+              <input
+                ref={galleryInputRef}
+                type="file"
+                id="galleryImages"
+                name="galleryImages"
+                accept={imageAccept}
+                multiple
+                onChange={handleGalleryImagesChange}
+                aria-invalid={!!errors.galleryImages}
+                aria-describedby={errors.galleryImages ? 'galleryImages-error' : 'galleryImages-help'}
+                className={`${inputBase} border-gray-300 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 file:transition-colors`}
+              />
+              {fieldError('galleryImages')}
+              <p id="galleryImages-help" className="mt-1.5 text-xs text-gray-400">
+                Upload photos of your shop, clinic, office, work, products, or services. Up to {MAX_GALLERY_IMAGES} images.
+              </p>
+
+              {(profileData.existingGalleryImageUrls.length > 0 || selectedGalleryPreviews.length > 0) && (
+                <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {profileData.existingGalleryImageUrls.map((url) => (
+                    <div key={url} className="relative group">
+                      <img
+                        src={url}
+                        alt="Saved gallery preview"
+                        className="w-full aspect-square rounded-xl object-cover border border-gray-100 bg-gray-50"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveExistingGalleryImage(url)}
+                        className="absolute top-2 right-2 rounded-full bg-white/95 px-2 py-1 text-xs font-medium text-red-600 shadow-sm hover:bg-white focus:outline-none focus:ring-2 focus:ring-red-400"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+
+                  {selectedGalleryPreviews.map((preview, index) => (
+                    <div key={preview.key} className="relative group">
+                      <img
+                        src={preview.url}
+                        alt={`Selected gallery preview ${index + 1}`}
+                        className="w-full aspect-square rounded-xl object-cover border border-gray-100 bg-gray-50"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveSelectedGalleryImage(index)}
+                        className="absolute top-2 right-2 rounded-full bg-white/95 px-2 py-1 text-xs font-medium text-red-600 shadow-sm hover:bg-white focus:outline-none focus:ring-2 focus:ring-red-400"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </section>

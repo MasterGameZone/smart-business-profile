@@ -106,6 +106,12 @@ function DashboardPage() {
       isPublic: profile.is_public ?? true,
       logo: null,
       existingLogoUrl: profile.logo_url,
+      coverBanner: null,
+      existingCoverBannerUrl: profile.cover_banner_url,
+      galleryImages: [],
+      existingGalleryImageUrls: Array.isArray(profile.gallery_images)
+        ? profile.gallery_images.filter((imageUrl): imageUrl is string => typeof imageUrl === 'string')
+        : [],
     })
     navigate('/create-profile')
   }

@@ -177,6 +177,8 @@ Public Profile Display Upgrade
 
 Supabase Storage Foundation
 
+Cover Banner and Gallery UI
+
 Public Listing Improvements
 
 Performance Improvements
@@ -484,6 +486,8 @@ Add create/edit form support for profile enrichment fields.
 Upgrade public profile display and enforce private profile visibility.
 
 Add Supabase Storage foundation for business profile assets.
+
+Add cover banner and gallery upload/display support.
 
 Perform production testing.
 

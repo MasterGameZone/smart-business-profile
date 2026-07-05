@@ -99,8 +99,8 @@ Stores the primary business profile for each authenticated user.
 | google_maps_url | TEXT | Yes | Google Maps profile or location link |
 | social_links | JSONB | Yes | Future social media links |
 | keywords | TEXT[] | Yes | Business keywords/tags for future discovery |
-| cover_banner_url | TEXT | Yes | Future cover banner image URL |
-| gallery_images | TEXT[] | Yes | Future gallery image URLs |
+| cover_banner_url | TEXT | Yes | Cover banner image URL |
+| gallery_images | TEXT[] | Yes | Gallery image URLs |
 | is_public | BOOLEAN | Yes | Profile visibility flag |
 | profile_image_url | TEXT | Yes | Business logo/profile image |
 | profile_qr_code | TEXT | Yes | Generated QR code URL |
@@ -252,7 +252,7 @@ Access model
 
 Developer notes
 
-Version 3.8 adds helper functions for logo, cover, and gallery uploads. Only logo upload is integrated into the current UI. Cover banner and gallery UI are intentionally not implemented yet.
+Version 3.8 added helper functions for logo, cover, and gallery uploads. Version 3.9 integrates cover banner and gallery upload/display UI using the same business-assets bucket.
 
 ---
 

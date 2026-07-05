@@ -494,6 +494,66 @@ No cover banner UI, gallery UI, image cropper, compression package, Storage buck
 
 --------------------------------------------------
 
+Version 3.9
+
+Release Date
+
+Pending
+
+Status
+
+Implemented
+
+Summary
+
+Added cover banner and gallery upload/display support using the existing Supabase Storage foundation.
+
+Added
+
+Cover banner upload field, business gallery upload field, preview display, and public profile display.
+
+Changed
+
+Business profile create/update now saves cover_banner_url and gallery_images alongside existing profile image data.
+
+Improved
+
+Image validation and gallery limit handling now cover logo, cover banner, and gallery images.
+
+Fixed
+
+Edit mode now reloads and preserves existing cover banner and gallery image URLs unless changed.
+
+Database
+
+No schema changes. Uses Version 3.5 cover_banner_url and gallery_images fields and the Version 3.8 business-assets bucket.
+
+Documentation
+
+Updated database storage documentation and roadmap notes for Version 3.9.
+
+Breaking Changes
+
+None.
+
+Migration Required
+
+No new migration. Requires the Version 3.8 Storage migration to be applied before upload testing.
+
+Testing Status
+
+Pending build verification.
+
+Deployment Status
+
+Development.
+
+Developer Notes
+
+No new bucket, Storage policy, migration, cropper, compression package, drag-and-drop, lightbox, or Version 4.0 work was added.
+
+--------------------------------------------------
+
 Release Categories
 
 Added

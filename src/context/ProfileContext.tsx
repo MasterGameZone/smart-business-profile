@@ -132,6 +132,10 @@ export interface ProfileData {
   isPublic: boolean
   logo: File | null
   existingLogoUrl: string | null
+  coverBanner: File | null
+  existingCoverBannerUrl: string | null
+  galleryImages: File[]
+  existingGalleryImageUrls: string[]
 }
 
 function createDefaultProfileData(): ProfileData {
@@ -157,6 +161,10 @@ function createDefaultProfileData(): ProfileData {
     isPublic: true,
     logo: null,
     existingLogoUrl: null,
+    coverBanner: null,
+    existingCoverBannerUrl: null,
+    galleryImages: [],
+    existingGalleryImageUrls: [],
   }
 }
 

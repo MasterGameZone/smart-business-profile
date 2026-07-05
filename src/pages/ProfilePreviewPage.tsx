@@ -72,15 +72,41 @@ function ProfilePreviewPage() {
     return profileData.existingLogoUrl
   }, [profileData.existingLogoUrl, profileData.logo])
 
+  const coverBannerUrl = useMemo(() => {
+    if (profileData.coverBanner) return URL.createObjectURL(profileData.coverBanner)
+    return profileData.existingCoverBannerUrl
+  }, [profileData.coverBanner, profileData.existingCoverBannerUrl])
+
+  const selectedGalleryPreviewUrls = useMemo(
+    () => profileData.galleryImages.map((file) => URL.createObjectURL(file)),
+    [profileData.galleryImages]
+  )
+
   useEffect(() => {
     return () => {
       if (profileData.logo && logoUrl) URL.revokeObjectURL(logoUrl)
     }
   }, [logoUrl, profileData.logo])
 
+  useEffect(() => {
+    return () => {
+      if (profileData.coverBanner && coverBannerUrl) URL.revokeObjectURL(coverBannerUrl)
+    }
+  }, [coverBannerUrl, profileData.coverBanner])
+
+  useEffect(() => {
+    return () => {
+      selectedGalleryPreviewUrls.forEach((url) => URL.revokeObjectURL(url))
+    }
+  }, [selectedGalleryPreviewUrls])
+
   const profileUrl = window.location.href
   const previewServices = useMemo(() => parsePreviewServices(profileData.servicesText), [profileData.servicesText])
   const previewKeywords = useMemo(() => parsePreviewKeywords(profileData.keywordsText), [profileData.keywordsText])
+  const galleryImageUrls = useMemo(
+    () => [...profileData.existingGalleryImageUrls, ...selectedGalleryPreviewUrls],
+    [profileData.existingGalleryImageUrls, selectedGalleryPreviewUrls]
+  )
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -125,6 +151,10 @@ function ProfilePreviewPage() {
         ownerId: saved.owner_id,
         logo: null,
         existingLogoUrl: saved.logo_url,
+        coverBanner: null,
+        existingCoverBannerUrl: saved.cover_banner_url,
+        galleryImages: [],
+        existingGalleryImageUrls: Array.isArray(saved.gallery_images) ? saved.gallery_images : [],
       })
       setHasSaved(true)
       showToast('Business Profile saved successfully.')
@@ -214,12 +244,14 @@ function ProfilePreviewPage() {
               address: profileData.address,
               aboutBusiness: profileData.aboutBusiness,
               logoUrl,
+              coverBannerUrl,
               tagline: profileData.tagline,
               services: previewServices,
               workingHours: profileData.workingHours,
               googleMapsUrl: profileData.googleMapsUrl,
               socialLinks: profileData.socialLinks,
               keywords: previewKeywords,
+              galleryImages: galleryImageUrls,
             }}
             profileUrl={profileUrl}
             onShare={handleShare}
