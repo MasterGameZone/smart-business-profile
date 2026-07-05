@@ -318,6 +318,62 @@ No UI, storage bucket, upload flow, public profile display, or form editing was 
 
 --------------------------------------------------
 
+Version 3.6
+
+Release Date
+
+Pending
+
+Status
+
+Implemented
+
+Summary
+
+Added create/edit form support for profile enrichment fields.
+
+Added
+
+Business tagline, services, working hours, Google Maps URL, social media links, keywords, and profile visibility inputs.
+
+Changed
+
+Business profile create/update payload mapping now saves enrichment fields.
+
+Improved
+
+Edit mode now hydrates saved enrichment values back into the form.
+
+Database
+
+No schema changes. Uses Version 3.5 enrichment columns.
+
+Documentation
+
+Updated changelog and roadmap notes for Version 3.6.
+
+Breaking Changes
+
+None.
+
+Migration Required
+
+No.
+
+Testing Status
+
+Pending build verification.
+
+Deployment Status
+
+Development.
+
+Developer Notes
+
+No public profile display upgrade, image upload, gallery upload, Google Maps embed, or Supabase Storage work was added.
+
+--------------------------------------------------
+
 Release Categories
 
 Added

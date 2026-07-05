@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.tsx'
-import { useProfile } from '../context/ProfileContext.tsx'
+import {
+  formatKeywordsForForm,
+  formatServicesForForm,
+  normalizeSocialLinks,
+  normalizeWorkingHours,
+  useProfile,
+} from '../context/ProfileContext.tsx'
 import { signOut } from '../lib/authService.ts'
 import { getBusinessProfilesByOwner } from '../lib/businessProfileService.ts'
 import { usePageMeta } from '../hooks/usePageMeta.ts'
@@ -91,6 +97,13 @@ function DashboardPage() {
       website: profile.website || '',
       address: profile.address || '',
       aboutBusiness: profile.about_business || '',
+      tagline: profile.tagline || '',
+      servicesText: formatServicesForForm(profile.services),
+      workingHours: normalizeWorkingHours(profile.working_hours),
+      googleMapsUrl: profile.google_maps_url || '',
+      socialLinks: normalizeSocialLinks(profile.social_links),
+      keywordsText: formatKeywordsForForm(profile.keywords),
+      isPublic: profile.is_public ?? true,
       logo: null,
       existingLogoUrl: profile.logo_url,
     })

@@ -1,6 +1,12 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useProfile } from '../context/ProfileContext.tsx'
+import {
+  socialLinkFields,
+  useProfile,
+  workingDays,
+  type SocialLinkKey,
+  type WorkingDayKey,
+} from '../context/ProfileContext.tsx'
 import { useAuth } from '../context/AuthContext.tsx'
 import { updateBusinessProfile } from '../lib/businessProfileService.ts'
 import { usePageMeta } from '../hooks/usePageMeta.ts'
@@ -11,6 +17,15 @@ interface FormErrors {
   ownerName?: string
   businessCategory?: string
   phoneNumber?: string
+  tagline?: string
+  workingHours?: string
+  googleMapsUrl?: string
+  facebook?: string
+  instagram?: string
+  linkedin?: string
+  youtube?: string
+  x?: string
+  keywordsText?: string
 }
 
 const categories = [
@@ -22,6 +37,34 @@ const categories = [
   'Professional Services',
   'Other',
 ]
+
+function isValidOptionalUrl(value: string): boolean {
+  const trimmed = value.trim()
+  if (!trimmed) return true
+
+  try {
+    const url = new URL(trimmed)
+    return url.protocol === 'http:' || url.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
+function parseKeywords(text: string): string[] {
+  const seen = new Set<string>()
+  const keywords: string[] = []
+
+  for (const value of text.split(',')) {
+    const keyword = value.trim()
+    const key = keyword.toLowerCase()
+    if (!keyword || seen.has(key)) continue
+
+    seen.add(key)
+    keywords.push(keyword)
+  }
+
+  return keywords
+}
 
 function CreateProfilePage() {
   const navigate = useNavigate()
@@ -69,6 +112,57 @@ function CreateProfilePage() {
     setLogoFileName(file ? file.name : '')
   }
 
+  const handleSocialLinkChange = (key: SocialLinkKey, value: string) => {
+    setProfileData({
+      ...profileData,
+      socialLinks: {
+        ...profileData.socialLinks,
+        [key]: value,
+      },
+    })
+    if (errors[key]) {
+      setErrors((prev) => ({ ...prev, [key]: undefined }))
+    }
+  }
+
+  const handleWorkingHoursChange = (
+    dayKey: WorkingDayKey,
+    field: 'open' | 'close',
+    value: string
+  ) => {
+    setProfileData({
+      ...profileData,
+      workingHours: {
+        ...profileData.workingHours,
+        [dayKey]: {
+          ...profileData.workingHours[dayKey],
+          [field]: value,
+        },
+      },
+    })
+    if (errors.workingHours) {
+      setErrors((prev) => ({ ...prev, workingHours: undefined }))
+    }
+  }
+
+  const handleClosedChange = (dayKey: WorkingDayKey, checked: boolean) => {
+    setProfileData({
+      ...profileData,
+      workingHours: {
+        ...profileData.workingHours,
+        [dayKey]: {
+          ...profileData.workingHours[dayKey],
+          open: checked ? '' : profileData.workingHours[dayKey].open,
+          close: checked ? '' : profileData.workingHours[dayKey].close,
+          closed: checked,
+        },
+      },
+    })
+    if (errors.workingHours) {
+      setErrors((prev) => ({ ...prev, workingHours: undefined }))
+    }
+  }
+
   const validate = (): boolean => {
     const newErrors: FormErrors = {}
     if (!profileData.businessName.trim()) {
@@ -82,6 +176,33 @@ function CreateProfilePage() {
     }
     if (!profileData.phoneNumber.trim()) {
       newErrors.phoneNumber = 'Phone number is required.'
+    }
+    if (profileData.tagline.trim().length > 120) {
+      newErrors.tagline = 'Tagline must be 120 characters or fewer.'
+    }
+    if (!isValidOptionalUrl(profileData.googleMapsUrl)) {
+      newErrors.googleMapsUrl = 'Enter a valid Google Maps URL.'
+    }
+    for (const { key, label } of socialLinkFields) {
+      if (!isValidOptionalUrl(profileData.socialLinks[key])) {
+        newErrors[key] = `Enter a valid ${label} URL.`
+      }
+    }
+    const keywords = parseKeywords(profileData.keywordsText)
+    if (keywords.length > 20) {
+      newErrors.keywordsText = 'Use 20 keywords or fewer.'
+    } else if (keywords.some((keyword) => keyword.length > 40)) {
+      newErrors.keywordsText = 'Each keyword must be 40 characters or fewer.'
+    }
+    const hasIncompleteHours = workingDays.some(({ key }) => {
+      const day = profileData.workingHours[key]
+      if (day.closed) return false
+      const hasOpen = day.open.trim().length > 0
+      const hasClose = day.close.trim().length > 0
+      return hasOpen !== hasClose
+    })
+    if (hasIncompleteHours) {
+      newErrors.workingHours = 'Provide both open and close times, or mark the day closed.'
     }
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -116,6 +237,15 @@ function CreateProfilePage() {
         website: updated.website || '',
         address: updated.address || '',
         aboutBusiness: updated.about_business || '',
+        tagline: updated.tagline || '',
+        servicesText: Array.isArray(updated.services)
+          ? updated.services.filter((service): service is string => typeof service === 'string').join('\n')
+          : '',
+        workingHours: profileData.workingHours,
+        googleMapsUrl: updated.google_maps_url || '',
+        socialLinks: profileData.socialLinks,
+        keywordsText: Array.isArray(updated.keywords) ? updated.keywords.join(', ') : '',
+        isPublic: updated.is_public ?? true,
         id: updated.id,
         slug: updated.slug,
         existingLogoUrl: updated.logo_url,
@@ -232,7 +362,7 @@ function CreateProfilePage() {
           {/* ── Basic Information ── */}
           <section aria-labelledby="section-basic">
             <h2 id="section-basic" className={sectionHeading}>
-              Basic Information
+              Basic Business Information
             </h2>
             <div className="space-y-5">
 
@@ -425,7 +555,208 @@ function CreateProfilePage() {
             </div>
           </section>
 
-          {/* ── Branding ── */}
+          {/* Profile Enrichment */}
+          <section aria-labelledby="section-enrichment">
+            <h2 id="section-enrichment" className={sectionHeading}>
+              Profile Enrichment
+            </h2>
+            <div className="space-y-5">
+              <div>
+                <label htmlFor="tagline" className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Business Tagline
+                  <span className="ml-2 text-xs text-gray-400 font-normal">Optional</span>
+                </label>
+                <input
+                  type="text"
+                  id="tagline"
+                  name="tagline"
+                  value={profileData.tagline}
+                  onChange={handleChange}
+                  maxLength={120}
+                  placeholder="Example: Trusted local dental care for your family"
+                  aria-invalid={!!errors.tagline}
+                  aria-describedby={errors.tagline ? 'tagline-error' : 'tagline-help'}
+                  className={`${inputBase} ${errors.tagline ? 'border-red-400 bg-red-50/30 focus:ring-red-400' : 'border-gray-300'}`}
+                />
+                {fieldError('tagline')}
+                <p id="tagline-help" className="mt-1.5 text-xs text-gray-400">
+                  This will appear under the business name in a future public profile display.
+                </p>
+              </div>
+
+              <div>
+                <label htmlFor="servicesText" className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Services
+                  <span className="ml-2 text-xs text-gray-400 font-normal">Optional</span>
+                </label>
+                <textarea
+                  id="servicesText"
+                  name="servicesText"
+                  rows={4}
+                  value={profileData.servicesText}
+                  onChange={handleChange}
+                  placeholder={'Dental Checkup\nTeeth Cleaning\nRoot Canal Treatment'}
+                  className={`${inputBase} border-gray-300 resize-none`}
+                />
+                <p className="mt-1.5 text-xs text-gray-400">Enter one service per line.</p>
+              </div>
+
+              <div>
+                <label htmlFor="keywordsText" className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Business Keywords / Tags
+                  <span className="ml-2 text-xs text-gray-400 font-normal">Optional</span>
+                </label>
+                <textarea
+                  id="keywordsText"
+                  name="keywordsText"
+                  rows={3}
+                  value={profileData.keywordsText}
+                  onChange={handleChange}
+                  placeholder="dentist, root canal, dental clinic, teeth cleaning"
+                  aria-invalid={!!errors.keywordsText}
+                  aria-describedby={errors.keywordsText ? 'keywordsText-error' : 'keywordsText-help'}
+                  className={`${inputBase} ${errors.keywordsText ? 'border-red-400 bg-red-50/30 focus:ring-red-400' : 'border-gray-300'} resize-none`}
+                />
+                {fieldError('keywordsText')}
+                <p id="keywordsText-help" className="mt-1.5 text-xs text-gray-400">
+                  Separate keywords with commas. Use up to 20 keywords, 40 characters each.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* Working Hours */}
+          <section aria-labelledby="section-hours">
+            <h2 id="section-hours" className={sectionHeading}>
+              Working Hours
+            </h2>
+            <div className="space-y-4">
+              {workingDays.map(({ key, label }) => {
+                const day = profileData.workingHours[key]
+
+                return (
+                  <div key={key} className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr] gap-3 sm:items-end">
+                    <div>
+                      <p className="text-sm font-medium text-gray-700 mb-1.5">{label}</p>
+                      <label htmlFor={`${key}-closed`} className="inline-flex items-center gap-2 text-sm text-gray-600">
+                        <input
+                          type="checkbox"
+                          id={`${key}-closed`}
+                          checked={day.closed}
+                          onChange={(e) => handleClosedChange(key, e.target.checked)}
+                          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0"
+                        />
+                        Closed
+                      </label>
+                    </div>
+
+                    <div>
+                      <label htmlFor={`${key}-open`} className="block text-sm font-medium text-gray-700 mb-1.5">
+                        Open
+                      </label>
+                      <input
+                        type="time"
+                        id={`${key}-open`}
+                        value={day.open}
+                        disabled={day.closed}
+                        onChange={(e) => handleWorkingHoursChange(key, 'open', e.target.value)}
+                        className={`${inputBase} border-gray-300 disabled:bg-gray-50 disabled:text-gray-400`}
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor={`${key}-close`} className="block text-sm font-medium text-gray-700 mb-1.5">
+                        Close
+                      </label>
+                      <input
+                        type="time"
+                        id={`${key}-close`}
+                        value={day.close}
+                        disabled={day.closed}
+                        onChange={(e) => handleWorkingHoursChange(key, 'close', e.target.value)}
+                        className={`${inputBase} border-gray-300 disabled:bg-gray-50 disabled:text-gray-400`}
+                      />
+                    </div>
+                  </div>
+                )
+              })}
+              {fieldError('workingHours')}
+            </div>
+          </section>
+
+          {/* Online Presence */}
+          <section aria-labelledby="section-online">
+            <h2 id="section-online" className={sectionHeading}>
+              Online Presence
+            </h2>
+            <div className="space-y-5">
+              <div>
+                <label htmlFor="googleMapsUrl" className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Google Maps Link
+                  <span className="ml-2 text-xs text-gray-400 font-normal">Optional</span>
+                </label>
+                <input
+                  type="url"
+                  id="googleMapsUrl"
+                  name="googleMapsUrl"
+                  value={profileData.googleMapsUrl}
+                  onChange={handleChange}
+                  placeholder="https://maps.google.com/..."
+                  aria-invalid={!!errors.googleMapsUrl}
+                  aria-describedby={errors.googleMapsUrl ? 'googleMapsUrl-error' : undefined}
+                  className={`${inputBase} ${errors.googleMapsUrl ? 'border-red-400 bg-red-50/30 focus:ring-red-400' : 'border-gray-300'}`}
+                />
+                {fieldError('googleMapsUrl')}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                {socialLinkFields.map(({ key, label, placeholder }) => (
+                  <div key={key}>
+                    <label htmlFor={`social-${key}`} className="block text-sm font-medium text-gray-700 mb-1.5">
+                      {label}
+                    </label>
+                    <input
+                      type="url"
+                      id={`social-${key}`}
+                      value={profileData.socialLinks[key]}
+                      onChange={(e) => handleSocialLinkChange(key, e.target.value)}
+                      placeholder={placeholder}
+                      aria-invalid={!!errors[key]}
+                      aria-describedby={errors[key] ? `${key}-error` : undefined}
+                      className={`${inputBase} ${errors[key] ? 'border-red-400 bg-red-50/30 focus:ring-red-400' : 'border-gray-300'}`}
+                    />
+                    {fieldError(key)}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Visibility */}
+          <section aria-labelledby="section-visibility">
+            <h2 id="section-visibility" className={sectionHeading}>
+              Visibility
+            </h2>
+            <div>
+              <label htmlFor="isPublic" className="block text-sm font-medium text-gray-700 mb-1.5">
+                Profile Visibility
+              </label>
+              <select
+                id="isPublic"
+                value={profileData.isPublic ? 'public' : 'private'}
+                onChange={(e) => setProfileData({ ...profileData, isPublic: e.target.value === 'public' })}
+                className={`${inputBase} border-gray-300 bg-white`}
+              >
+                <option value="public">Public</option>
+                <option value="private">Private</option>
+              </select>
+              <p className="mt-1.5 text-xs text-gray-400">
+                This saves the visibility setting only. Public access behavior is not changed in this version.
+              </p>
+            </div>
+          </section>
+
+          {/* Branding */}
           <section aria-labelledby="section-branding">
             <h2 id="section-branding" className={sectionHeading}>
               Branding

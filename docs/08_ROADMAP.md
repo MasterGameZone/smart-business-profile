@@ -171,6 +171,8 @@ Search Functionality
 
 Profile Enrichment Schema Foundation
 
+Profile Enrichment Form Editing
+
 Public Listing Improvements
 
 Performance Improvements
@@ -472,6 +474,8 @@ Complete documentation.
 Implement remaining Version 3 features.
 
 Prepare schema foundation for richer business profiles.
+
+Add create/edit form support for profile enrichment fields.
 
 Perform production testing.
 

@@ -6,8 +6,61 @@ import type {
   PublicBusinessProfileRow,
 } from '../types/businessProfile'
 import type { ProfileData } from '../context/ProfileContext'
+import { workingDays, socialLinkFields } from '../context/ProfileContext'
 import { slugify } from '../utils/slug'
 import { getCurrentUser } from './authService'
+
+function parseServices(text: string): string[] {
+  return text
+    .split('\n')
+    .map((service) => service.trim())
+    .filter(Boolean)
+}
+
+function parseKeywords(text: string): string[] {
+  const seen = new Set<string>()
+  const keywords: string[] = []
+
+  for (const keyword of text.split(',')) {
+    const trimmed = keyword.trim()
+    const key = trimmed.toLowerCase()
+    if (!trimmed || seen.has(key)) continue
+
+    seen.add(key)
+    keywords.push(trimmed)
+  }
+
+  return keywords
+}
+
+function mapWorkingHours(data: ProfileData): Record<string, { open: string; close: string; closed: boolean }> | Record<string, never> {
+  const hasWorkingHours = workingDays.some(({ key }) => {
+    const day = data.workingHours[key]
+    return day.closed || day.open.trim().length > 0 || day.close.trim().length > 0
+  })
+
+  if (!hasWorkingHours) return {}
+
+  return workingDays.reduce<Record<string, { open: string; close: string; closed: boolean }>>((hours, { key }) => {
+    const day = data.workingHours[key]
+    hours[key] = {
+      open: day.closed ? '' : day.open.trim(),
+      close: day.closed ? '' : day.close.trim(),
+      closed: day.closed,
+    }
+    return hours
+  }, {})
+}
+
+function mapSocialLinks(data: ProfileData): Record<string, string> {
+  return socialLinkFields.reduce<Record<string, string>>((links, { key }) => {
+    const value = data.socialLinks[key].trim()
+    if (value) {
+      links[key] = value
+    }
+    return links
+  }, {})
+}
 
 function mapProfileDataToFields(data: ProfileData) {
   return {
@@ -20,6 +73,13 @@ function mapProfileDataToFields(data: ProfileData) {
     website: data.website.trim() || null,
     address: data.address.trim() || null,
     about_business: data.aboutBusiness.trim() || null,
+    tagline: data.tagline.trim() || null,
+    services: parseServices(data.servicesText),
+    working_hours: mapWorkingHours(data),
+    google_maps_url: data.googleMapsUrl.trim() || null,
+    social_links: mapSocialLinks(data),
+    keywords: parseKeywords(data.keywordsText),
+    is_public: data.isPublic,
   }
 }
 
