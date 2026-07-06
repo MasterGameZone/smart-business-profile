@@ -26,7 +26,7 @@ function PasswordField({
 
   return (
     <div>
-      <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1.5">
+      <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-slate-200">
         {label} <span className="text-red-500" aria-hidden="true">*</span>
       </label>
       <div className="relative">
@@ -40,14 +40,14 @@ function PasswordField({
           autoComplete={autoComplete}
           aria-required="true"
           aria-invalid={hasError}
-          className={`${authInputBase} pr-11 ${hasError ? 'border-red-400 bg-red-50/30 focus:ring-red-400' : 'border-gray-300'}`}
+          className={`${authInputBase} pr-11 ${hasError ? 'border-red-400/70 bg-red-500/10 focus:ring-red-400' : ''}`}
         />
         <button
           type="button"
           onClick={() => setVisible((v) => !v)}
           aria-label={visible ? 'Hide password' : 'Show password'}
           aria-pressed={visible}
-          className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600 focus:outline-none focus:text-blue-600 transition-colors"
+          className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 focus:outline-none focus:text-sky-300"
         >
           {visible ? (
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

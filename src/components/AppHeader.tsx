@@ -21,7 +21,10 @@ function AppHeader() {
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const [shouldAnimateEntrance] = useState(() => !hasPlayedNavbarEntrance)
   const isLandingPage = location.pathname === '/'
-  const isDarkLandingNavbar = isLandingPage
+  const isDirectoryPage = location.pathname === '/directory'
+  const isAuthEntryPage = location.pathname === '/login' || location.pathname === '/signup'
+  const isSimpleDarkNavbarPage = isAuthEntryPage || isDirectoryPage
+  const isDarkLandingNavbar = isLandingPage || isSimpleDarkNavbarPage
   const navbarInteractionStyle: CSSProperties = {
     WebkitTapHighlightColor: 'transparent',
   }
@@ -38,7 +41,9 @@ function AppHeader() {
     setTimeout(() => setToasts((prev) => prev.filter((toast) => toast.id !== id)), 4000)
   }
 
-  const navItems: NavItem[] = user
+  const navItems: NavItem[] = isSimpleDarkNavbarPage
+    ? [{ label: 'Home', path: '/' }]
+    : user
     ? [
         { label: 'Home', path: '/' },
         { label: 'Dashboard', path: '/dashboard' },
@@ -128,7 +133,7 @@ function AppHeader() {
         >
           <div
             className={`flex items-center justify-between gap-2 sm:gap-3 ${
-              isLandingPage && !user ? 'flex-nowrap' : 'flex-wrap'
+              (isLandingPage || isSimpleDarkNavbarPage) && !user ? 'flex-nowrap' : 'flex-wrap'
             }`}
           >
             <button
@@ -157,13 +162,13 @@ function AppHeader() {
                 />
                 <span className="relative z-10">SB</span>
               </span>
-              {!(isLandingPage && !user) && 'Smart Business Profile'}
+              {!((isLandingPage || isSimpleDarkNavbarPage) && !user) && 'Smart Business Profile'}
             </button>
 
             {!isLoading && (
               <nav
                 className={`flex items-center ${
-                  isLandingPage && !user
+                  (isLandingPage || isSimpleDarkNavbarPage) && !user
                     ? 'ml-auto shrink-0 flex-nowrap gap-1 sm:gap-2'
                     : 'w-full flex-wrap justify-end gap-2 pt-2 sm:w-auto sm:pt-0'
                 }`}

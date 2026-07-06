@@ -87,10 +87,11 @@ function SignUpPage() {
     <AuthLayout
       title="Create Your Account"
       subtitle="Sign up to start building your business profile."
+      darkBackground
       footer={
-        <p className="text-sm text-gray-500">
+        <p className="text-lg text-slate-300">
           Already have an account?{' '}
-          <Link to="/login" className="font-semibold text-blue-600 hover:text-blue-700 focus:outline-none focus:underline">
+          <Link to="/login" className="font-semibold text-sky-400 focus:outline-none focus:underline">
             Log in
           </Link>
         </p>
@@ -99,7 +100,7 @@ function SignUpPage() {
       <ToastContainer toasts={toasts} />
 
       {submitted ? (
-        <div role="status" className="rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3 text-sm text-emerald-700">
+        <div role="status" className="rounded-xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
           Account created successfully. Please verify your email before logging in.
         </div>
       ) : (
@@ -118,7 +119,7 @@ function SignUpPage() {
               autoComplete="name"
               aria-required="true"
               aria-invalid={Boolean(errors.fullName)}
-              className={`${authInputBase} ${errors.fullName ? 'border-red-400 bg-red-50/30 focus:ring-red-400' : 'border-gray-300'}`}
+              className={`${authInputBase} ${errors.fullName ? 'border-red-400/70 bg-red-500/10 focus:ring-red-400' : ''}`}
             />
             {authError(errors.fullName)}
           </div>
@@ -137,7 +138,7 @@ function SignUpPage() {
               autoComplete="email"
               aria-required="true"
               aria-invalid={Boolean(errors.email)}
-              className={`${authInputBase} ${errors.email ? 'border-red-400 bg-red-50/30 focus:ring-red-400' : 'border-gray-300'}`}
+              className={`${authInputBase} ${errors.email ? 'border-red-400/70 bg-red-500/10 focus:ring-red-400' : ''}`}
             />
             {authError(errors.email)}
           </div>
@@ -172,7 +173,7 @@ function SignUpPage() {
             type="submit"
             disabled={isSubmitting}
             aria-busy={isSubmitting}
-            className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold text-white bg-blue-600 rounded-full hover:bg-blue-700 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all disabled:opacity-70 disabled:cursor-not-allowed disabled:active:scale-100"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,#38bdf8_0%,#2563eb_55%,#0f172a_100%)] px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_32px_-20px_rgba(56,189,248,0.42)] focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2 focus:ring-offset-slate-950 disabled:cursor-not-allowed disabled:opacity-70"
           >
             {isSubmitting ? (
               <>

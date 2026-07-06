@@ -79,10 +79,11 @@ function LoginPage() {
     <AuthLayout
       title="Welcome Back"
       subtitle="Log in to manage your business profile."
+      darkBackground
       footer={
-        <p className="text-sm text-gray-500">
+        <p className="text-lg text-slate-300">
           Don&apos;t have an account?{' '}
-          <Link to="/signup" className="font-semibold text-blue-600 hover:text-blue-700 focus:outline-none focus:underline">
+          <Link to="/signup" className="font-semibold text-sky-400 focus:outline-none focus:underline">
             Sign up
           </Link>
         </p>
@@ -105,7 +106,7 @@ function LoginPage() {
             autoComplete="email"
             aria-required="true"
             aria-invalid={Boolean(errors.email)}
-            className={`${authInputBase} ${errors.email ? 'border-red-400 bg-red-50/30 focus:ring-red-400' : 'border-gray-300'}`}
+            className={`${authInputBase} ${errors.email ? 'border-red-400/70 bg-red-500/10 focus:ring-red-400' : ''}`}
           />
           {authError(errors.email)}
         </div>
@@ -124,20 +125,20 @@ function LoginPage() {
         </div>
 
         <div className="flex items-center justify-between">
-          <label htmlFor="rememberMe" className="inline-flex items-center gap-2 text-sm text-gray-600 select-none">
+          <label htmlFor="rememberMe" className="inline-flex select-none items-center gap-2 text-sm text-slate-300">
             <input
               type="checkbox"
               id="rememberMe"
               name="rememberMe"
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
-              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0"
+              className="h-4 w-4 rounded border-white/15 bg-white/5 text-sky-500 focus:ring-2 focus:ring-sky-400 focus:ring-offset-0"
             />
             Remember me
           </label>
           <Link
             to="/forgot-password"
-            className="text-sm font-medium text-blue-600 hover:text-blue-700 focus:outline-none focus:underline"
+            className="text-sm font-medium text-sky-400 focus:outline-none focus:underline"
           >
             Forgot password?
           </Link>
@@ -147,7 +148,7 @@ function LoginPage() {
           type="submit"
           disabled={isSubmitting}
           aria-busy={isSubmitting}
-          className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold text-white bg-blue-600 rounded-full hover:bg-blue-700 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all disabled:opacity-70 disabled:cursor-not-allowed disabled:active:scale-100"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,#38bdf8_0%,#2563eb_55%,#0f172a_100%)] px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_32px_-20px_rgba(56,189,248,0.42)] focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2 focus:ring-offset-slate-950 disabled:cursor-not-allowed disabled:opacity-70"
         >
           {isSubmitting ? (
             <>
