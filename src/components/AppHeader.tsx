@@ -89,14 +89,14 @@ function AppHeader() {
       'group relative inline-flex min-w-[4.5rem] items-center justify-center overflow-hidden rounded-full border px-3 py-2 text-xs font-semibold tracking-[0.01em] transition-all duration-300 ease-out focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-50 active:scale-[0.985] sm:min-w-[5rem] sm:px-4 sm:py-2.5 sm:text-sm'
 
     if (isCta) {
-      return `${baseClass} border-slate-900/80 bg-[linear-gradient(135deg,#020617_0%,#0f172a_30%,#111827_55%,#0f172a_78%,#020617_100%)] bg-[length:180%_180%] bg-[position:0%_50%] text-white shadow-[0_16px_34px_-20px_rgba(15,23,42,0.8)] hover:-translate-y-1 hover:scale-[1.03] hover:border-slate-800 hover:bg-[position:100%_50%] hover:shadow-[0_28px_48px_-18px_rgba(15,23,42,0.76)] focus:ring-slate-400`
+      return `${baseClass} border-slate-900/80 bg-[linear-gradient(135deg,#020617_0%,#0f172a_34%,#111827_62%,#020617_100%)] text-white shadow-[0_16px_34px_-20px_rgba(15,23,42,0.8)] hover:-translate-y-0.5 hover:border-slate-800 hover:shadow-[0_22px_38px_-18px_rgba(15,23,42,0.7)] focus:ring-slate-400 ${isActive ? 'ring-2 ring-slate-200/90 ring-offset-2 ring-offset-slate-50 shadow-[0_18px_36px_-18px_rgba(15,23,42,0.82)]' : ''}`
     }
 
     if (isActive) {
-      return `${baseClass} border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(226,232,240,0.92))] text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.96),0_14px_28px_-24px_rgba(15,23,42,0.45)] hover:-translate-y-0.5 hover:scale-[1.015] hover:border-slate-300 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.98),0_20px_34px_-22px_rgba(15,23,42,0.42)]`
+      return `${baseClass} border-slate-300/90 bg-[linear-gradient(180deg,rgba(241,245,249,1),rgba(226,232,240,0.96))] text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.98),0_12px_24px_-22px_rgba(15,23,42,0.3)] ring-1 ring-slate-200/90 hover:border-slate-300 hover:bg-[linear-gradient(180deg,rgba(237,242,247,1),rgba(226,232,240,0.98))] hover:shadow-[inset_0_1px_0_rgba(255,255,255,1),0_14px_24px_-22px_rgba(15,23,42,0.3)]`
     }
 
-    return `${baseClass} border-transparent bg-transparent text-slate-700 hover:-translate-y-0.5 hover:scale-[1.015] hover:border-slate-200 hover:bg-[linear-gradient(180deg,rgba(241,245,249,0.98),rgba(226,232,240,0.94))] hover:text-slate-950 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_18px_30px_-24px_rgba(15,23,42,0.34)]`
+    return `${baseClass} border-transparent bg-transparent text-slate-700 hover:border-slate-200 hover:bg-[linear-gradient(180deg,rgba(248,250,252,0.98),rgba(241,245,249,0.94))] hover:text-slate-950 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_10px_18px_-22px_rgba(15,23,42,0.2)]`
   }
 
   return (
@@ -132,27 +132,27 @@ function AppHeader() {
                 aria-label="Primary navigation"
               >
                 {navItems.map((item) => (
-                  <button
-                    key={item.path}
-                    type="button"
-                    onClick={() => handleNavItemClick(item)}
-                    className={navButtonClass(item)}
-                    aria-current={item.type !== 'scroll' && location.pathname === item.path ? 'page' : undefined}
-                  >
-                    {item.emphasis && (
-                      <>
-                        <span
-                          aria-hidden="true"
-                          className="pointer-events-none absolute inset-x-4 top-[1px] h-[42%] rounded-full bg-white/20 blur-md transition-all duration-300 ease-out group-hover:inset-x-3 group-hover:opacity-100"
-                        />
-                        <span
-                          aria-hidden="true"
-                          className="pointer-events-none absolute inset-y-0 -left-1/3 w-1/3 rotate-12 bg-white/30 opacity-0 blur-xl transition-[transform,opacity] duration-500 ease-out group-hover:translate-x-[285%] group-hover:opacity-80"
-                        />
-                      </>
-                    )}
-                    <span className="relative z-10">{item.label}</span>
-                  </button>
+                  (() => {
+                    const isItemActive = item.type !== 'scroll' && location.pathname === item.path
+
+                    return (
+                      <button
+                        key={item.path}
+                        type="button"
+                        onClick={() => handleNavItemClick(item)}
+                        className={navButtonClass(item)}
+                        aria-current={isItemActive ? 'page' : undefined}
+                      >
+                        {item.emphasis && !isItemActive && (
+                          <span
+                            aria-hidden="true"
+                            className="pointer-events-none absolute inset-x-4 top-[1px] h-[42%] rounded-full bg-white/18 blur-md transition-opacity duration-300 ease-out group-hover:opacity-100"
+                          />
+                        )}
+                        <span className="relative z-10">{item.label}</span>
+                      </button>
+                    )
+                  })()
                 ))}
                 {user && (
                   <button
