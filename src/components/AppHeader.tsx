@@ -34,7 +34,7 @@ function AppHeader() {
         { label: 'Home', path: '/' },
         { label: 'Directory', path: '/directory' },
         { label: 'Login', path: '/login' },
-        { label: 'Sign Up', path: '/signup', emphasis: true },
+        { label: 'Get Started', path: '/signup', emphasis: true },
       ]
 
   const handleLogout = async () => {

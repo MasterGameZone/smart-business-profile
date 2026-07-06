@@ -1,6 +1,6 @@
 # Smart Business Profile – Changelog
 
-Last Updated: 2026-07-05
+Last Updated: 2026-07-06
 Status: Active
 
 ---
@@ -399,6 +399,21 @@ Note:
 
 - Production deployment has not been performed yet.
 - Production auth redirects and storage/public URLs still require verification after deployment.
+
+---
+
+## Version 4.3 - Landing Page Positioning Update
+
+Status: Implemented
+
+- Updated landing page messaging to clearly serve business owners and visitors.
+- Added hero CTAs for `Get Started` and `Browse Businesses`.
+- Routed `Browse Businesses` to `/directory`.
+- Preserved existing owner get-started flow through protected profile creation.
+- Added concise business-owner and visitor value sections.
+- Added a two-path How It Works section.
+- Updated landing feature copy so it represents profile creation and business discovery.
+- Updated logged-out header primary CTA label to `Get Started` while preserving the existing signup route.
 
 ---
 

@@ -1,110 +1,77 @@
-# Current Task - Version 4.1
+# Current Task - Version 4.3
 
 Last Updated: 2026-07-06
-Status: Implemented / Awaiting Deployment Verification
+Status: Implemented / Awaiting Review
 Owner: Project Owner
 Implementation: Codex / Project AI
 Planning & Review: ChatGPT
 
 ---
 
-# Version 4.1 - Vercel Deployment Preparation and Production Readiness
+# Version 4.3 - Landing Page Positioning Update
 
 ## 1. Objective
 
-Prepare Smart Business Profile for first Vercel deployment while preserving existing application behavior.
+Update the landing page so it clearly supports two current journeys:
 
-This version is deployment-readiness work only. It does not add product features.
+- business owners who create and manage public business profiles
+- visitors who browse public businesses without signing up
+
+This is a UI/content/navigation positioning update only.
 
 ---
 
 ## 2. Implemented Scope
 
-- Audited Vite build readiness.
-- Audited React Router direct-route refresh behavior.
-- Audited Supabase environment variable usage.
-- Audited public profile/share URL generation.
-- Added Vercel SPA rewrite configuration.
-- Documented Vercel deployment settings.
-- Documented required Supabase Auth URL configuration.
-- Updated project status and handoff documentation.
+- Updated hero copy to explain both profile creation and business discovery.
+- Added clear hero CTAs:
+  - `Get Started`
+  - `Browse Businesses`
+- Routed `Browse Businesses` to `/directory`.
+- Preserved the existing protected owner get-started flow through `/create-profile`.
+- Added concise business-owner value content.
+- Added concise visitor value content.
+- Added a two-path How It Works section.
+- Updated feature copy to cover both profile management and public discovery.
+- Updated the logged-out header primary CTA label to `Get Started` while preserving the `/signup` route.
 
 ---
 
-## 3. Deployment Configuration
+## 3. Constraints Preserved
 
-Vercel build command:
+No changes were made to:
 
-```bash
-npm run build
-```
-
-Vercel output directory:
-
-```text
-dist
-```
-
-Required Vercel environment variables:
-
-```text
-VITE_SUPABASE_URL
-VITE_SUPABASE_ANON_KEY
-```
-
-Do not add service role keys or private secrets to the frontend.
+- authentication logic
+- visitor accounts
+- dashboard ownership behavior
+- directory filtering logic
+- public profile behavior
+- QR/share logic
+- Supabase configuration
+- database schema
+- migrations
+- package dependencies
+- `.env`
 
 ---
 
-## 4. Supabase Auth Setup Required After Deployment
+## 4. Verification Required
 
-The project owner must update Supabase Auth URL Configuration manually after the first Vercel deployment.
+Before approval, verify locally:
 
-Include:
-
-```text
-http://localhost:5000
-https://your-production-domain.vercel.app
-https://your-production-domain.vercel.app/reset-password
-```
-
-Use the real Vercel production domain when it is known.
-
----
-
-## 5. Production Verification Required
-
-After deployment, verify:
-
-- production home page loads
-- refresh works on `/directory`
-- refresh works on `/login`
-- refresh works on `/signup`
-- refresh works on `/dashboard`
-- refresh works on `/business/{real-slug}`
-- logged-out protected route redirects still work
-- login/logout still works
-- password reset redirect returns to production `/reset-password`
-- public profile QR/share URLs use the production domain
-- public image URLs still load from Supabase Storage
+- landing page loads cleanly
+- `Get Started` opens the existing owner creation/login path
+- `Browse Businesses` opens `/directory`
+- logged-out Login still opens `/login`
+- logged-out Get Started still opens `/signup` from the header
+- logged-in navigation still shows Home, Dashboard, Directory, Create Business, Logout
+- directory search/category/location filters still work
+- public profile pages still work
+- QR/share behavior still works
+- mobile landing layout remains clean
 
 ---
 
-## 6. Constraints Still Active
+## 5. Next Step
 
-Do not:
-
-- add new product features
-- add dependencies
-- modify `.env`
-- add database migrations
-- change Supabase policies
-- change Supabase schema
-- modify package scripts unless explicitly approved
-- deploy unless explicitly instructed
-
----
-
-## 7. Next Step
-
-Project owner should review Version 4.1, then deploy to Vercel manually or provide explicit deployment instructions.
+Project owner should manually review the Version 4.3 landing page positioning update.

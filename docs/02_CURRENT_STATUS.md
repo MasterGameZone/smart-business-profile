@@ -49,6 +49,7 @@ Inactive:
 Completed:
 
 - landing page
+- business-owner and visitor landing page positioning
 - navigation links
 - create profile entry point
 - directory link
