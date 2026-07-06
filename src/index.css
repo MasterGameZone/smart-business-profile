@@ -23,3 +23,43 @@ body {
     transform: translateY(0);
   }
 }
+
+@keyframes landingGlowDrift {
+  0%, 100% {
+    opacity: 0.45;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  50% {
+    opacity: 0.7;
+    transform: translate3d(2%, -3%, 0) scale(1.05);
+  }
+}
+
+@keyframes landingStreakFloat {
+  0%, 100% {
+    opacity: 0.42;
+    transform: translate3d(-3%, 0, 0) rotate(-6deg);
+  }
+
+  50% {
+    opacity: 0.62;
+    transform: translate3d(4%, -2%, 0) rotate(-4deg);
+  }
+}
+
+.landing-ambient-drift {
+  animation: landingGlowDrift 18s ease-in-out infinite;
+}
+
+.landing-streak-float {
+  animation: landingStreakFloat 22s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-ambient-drift,
+  .landing-streak-float {
+    animation: none !important;
+    transform: none !important;
+  }
+}

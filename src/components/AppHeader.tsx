@@ -86,22 +86,31 @@ function AppHeader() {
   }
 
   const navButtonClass = (item: NavItem) => {
+    const isActive = item.type !== 'scroll' && location.pathname === item.path
     const isCta = item.emphasis
     const baseClass =
-      'relative inline-flex min-w-[4.5rem] items-center justify-center overflow-hidden rounded-full border px-3 py-2 text-xs font-semibold tracking-[0.01em] focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300/80 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50 sm:min-w-[5rem] sm:px-4 sm:py-2.5 sm:text-sm'
+      'relative inline-flex min-w-[4rem] items-center justify-center overflow-hidden rounded-full border px-3 py-1 text-xs font-semibold tracking-[0.01em] focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300/80 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50 sm:min-w-[4.5rem] sm:px-3.5 sm:py-1.5 sm:text-sm'
 
     if (isCta) {
-      return `${baseClass} border-slate-900/80 bg-[linear-gradient(135deg,#020617_0%,#0f172a_34%,#111827_62%,#020617_100%)] text-white shadow-[0_16px_34px_-20px_rgba(15,23,42,0.8)] focus-visible:ring-slate-400`
+      return `${baseClass} ${
+        isActive
+          ? 'border-slate-700 bg-[linear-gradient(135deg,#0f172a_0%,#1e293b_100%)] text-white shadow-[0_14px_28px_-18px_rgba(15,23,42,0.7)]'
+          : 'border-slate-900/80 bg-[linear-gradient(135deg,#020617_0%,#0f172a_34%,#111827_62%,#020617_100%)] text-white shadow-[0_16px_34px_-20px_rgba(15,23,42,0.8)]'
+      } focus-visible:ring-slate-400`
     }
 
-    return `${baseClass} border-transparent bg-transparent text-slate-700`
+    return `${baseClass} ${
+      isActive
+        ? 'border-slate-200 bg-[linear-gradient(180deg,rgba(241,245,249,0.98),rgba(226,232,240,0.92))] text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_10px_18px_-24px_rgba(15,23,42,0.18)]'
+        : 'border-transparent bg-transparent text-slate-700'
+    }`
   }
 
   return (
-    <header className="sticky top-0 z-30 w-full px-3 pt-0 pb-2 sm:px-4 sm:pb-3">
+    <header className="sticky top-0 z-30 w-full px-3 pt-0 pb-0.5 sm:px-4 sm:pb-1">
       <ToastContainer toasts={toasts} />
       <div className={`mx-auto w-full max-w-[1440px] ${shouldAnimateEntrance ? 'animate-[navFloatIn_620ms_cubic-bezier(0.22,1,0.36,1)]' : ''}`}>
-        <div className="rounded-b-[2rem] rounded-t-none border border-slate-200/80 border-t-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.94))] px-3 py-3 shadow-[0_22px_48px_-30px_rgba(15,23,42,0.34),0_14px_24px_-24px_rgba(15,23,42,0.22)] backdrop-blur-xl sm:rounded-[2rem] sm:border-t sm:px-4 sm:py-3.5 md:px-5">
+        <div className="rounded-[2rem] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.94))] px-3 py-1.5 sm:px-4 sm:py-2 md:px-5 shadow-[0_22px_48px_-30px_rgba(15,23,42,0.34),0_14px_24px_-24px_rgba(15,23,42,0.22)] backdrop-blur-xl">
           <div
             className={`flex items-center justify-between gap-2 sm:gap-3 ${
               isLandingPage && !user ? 'flex-nowrap' : 'flex-wrap'
@@ -114,7 +123,7 @@ function AppHeader() {
               aria-label="Go to Smart Business Profile home"
               style={navbarInteractionStyle}
             >
-              <span className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[linear-gradient(145deg,#020617_0%,#0f172a_65%,#111827_100%)] text-[11px] font-bold text-white shadow-[0_14px_30px_-18px_rgba(15,23,42,0.72)] sm:h-11 sm:w-11 sm:text-xs">
+              <span className="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[linear-gradient(145deg,#020617_0%,#0f172a_65%,#111827_100%)] text-[10px] font-bold text-white shadow-[0_14px_30px_-18px_rgba(15,23,42,0.72)] sm:h-9 sm:w-9 sm:text-[11px]">
                 <span className="pointer-events-none absolute inset-x-2 top-1 h-3 rounded-full bg-white/20 blur-sm" aria-hidden="true" />
                 <span className="relative z-10">SB</span>
               </span>
@@ -146,7 +155,7 @@ function AppHeader() {
                     type="button"
                     onClick={handleLogout}
                     disabled={isSigningOut}
-                    className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.92))] px-3 py-2 text-xs font-medium text-slate-700 shadow-[0_12px_26px_-22px_rgba(15,23,42,0.38)] focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50 disabled:cursor-not-allowed disabled:opacity-70 sm:px-4 sm:py-2.5 sm:text-sm"
+                    className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.92))] px-3 py-1 text-xs font-medium text-slate-700 shadow-[0_12px_26px_-22px_rgba(15,23,42,0.38)] focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50 disabled:cursor-not-allowed disabled:opacity-70 sm:px-3.5 sm:py-1.5 sm:text-sm"
                     style={navbarInteractionStyle}
                   >
                     {isSigningOut ? 'Logging out...' : 'Log Out'}

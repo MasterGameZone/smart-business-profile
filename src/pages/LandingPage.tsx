@@ -72,6 +72,11 @@ const businessCategories = [
   'Electricians',
 ]
 
+const darkCardClass =
+  'rounded-3xl border border-white/10 bg-white/6 p-6 shadow-[0_28px_80px_-42px_rgba(2,12,27,0.95)] backdrop-blur-md sm:p-8'
+
+const sectionHeadingClass = 'text-xl font-bold tracking-tight text-slate-50 sm:text-2xl md:text-3xl'
+
 function LandingPage() {
   const navigate = useNavigate()
 
@@ -82,25 +87,40 @@ function LandingPage() {
   })
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="relative min-h-screen overflow-x-clip bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.16),transparent_28%),linear-gradient(180deg,#020617_0%,#030712_34%,#020617_100%)] text-slate-100">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+        <div className="landing-ambient-drift absolute inset-x-[-18%] top-[-12rem] h-[34rem] bg-[radial-gradient(circle_at_center,rgba(56,189,248,0.18),transparent_55%)] blur-3xl" />
+        <div
+          className="landing-ambient-drift absolute right-[-20%] top-[18rem] h-[28rem] w-[48rem] bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.14),transparent_58%)] blur-3xl"
+          style={{ animationDelay: '-7s' }}
+        />
+        <div className="landing-streak-float absolute left-[-12%] top-28 h-40 w-[124%] rotate-[-8deg] bg-[linear-gradient(90deg,transparent,rgba(125,211,252,0.08),rgba(59,130,246,0.14),transparent)] blur-3xl" />
+        <div
+          className="landing-streak-float absolute left-[-10%] top-[34rem] h-48 w-[120%] rotate-[6deg] bg-[linear-gradient(90deg,transparent,rgba(14,165,233,0.05),rgba(96,165,250,0.12),transparent)] blur-[90px]"
+          style={{ animationDelay: '-11s' }}
+        />
+      </div>
       <AppHeader />
 
-      <main>
+      <main className="relative">
         <section
           aria-label="Hero"
-          className="bg-gradient-to-b from-white to-slate-50 px-4 py-16 text-center sm:py-20 lg:py-24"
+          className="relative px-4 py-16 text-center sm:py-20 lg:py-24"
         >
-          <div className="mx-auto max-w-3xl">
-            <span className="mb-5 inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-[11px] font-semibold text-blue-600 sm:mb-6 sm:text-xs">
-              <span className="h-1.5 w-1.5 rounded-full bg-blue-500" aria-hidden="true" />
+          <div className="mx-auto max-w-4xl">
+            <span className="mb-5 inline-flex items-center gap-1.5 rounded-full border border-sky-400/20 bg-white/8 px-3 py-1 text-[11px] font-semibold text-sky-200 backdrop-blur sm:mb-6 sm:text-xs">
+              <span className="h-1.5 w-1.5 rounded-full bg-sky-300" aria-hidden="true" />
               Built for business owners and visitors
             </span>
 
-            <h1 className="mb-4 text-3xl font-bold leading-tight tracking-tight text-gray-900 sm:mb-5 sm:text-4xl md:text-5xl lg:text-6xl">
-              Create your business profile. Get discovered faster.
+            <h1 className="mb-4 text-3xl font-bold leading-tight tracking-tight text-slate-50 sm:mb-5 sm:text-4xl md:text-5xl lg:text-6xl">
+              Create your business profile.{' '}
+              <span className="bg-[linear-gradient(90deg,#e2f3ff_0%,#7dd3fc_35%,#60a5fa_70%,#c4b5fd_100%)] bg-clip-text text-transparent">
+                Get discovered faster.
+              </span>
             </h1>
 
-            <p className="mx-auto mb-8 max-w-2xl text-base leading-relaxed text-gray-500 sm:mb-10 sm:text-lg lg:text-xl">
+            <p className="mx-auto mb-8 max-w-2xl text-base leading-relaxed text-slate-300 sm:mb-10 sm:text-lg lg:text-xl">
               Smart Business Profile helps owners publish professional digital profiles,
               while visitors can browse public businesses and contact them without signing up.
             </p>
@@ -109,7 +129,7 @@ function LandingPage() {
               <button
                 type="button"
                 onClick={() => navigate('/login')}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:scale-95 sm:w-auto sm:px-8 sm:py-3.5 sm:text-base"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-sky-400/30 bg-[linear-gradient(135deg,#2563eb_0%,#0284c7_55%,#0f172a_100%)] px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_-18px_rgba(37,99,235,0.55)] focus:outline-none focus:ring-2 focus:ring-sky-300/80 focus:ring-offset-2 focus:ring-offset-slate-950 sm:w-auto sm:px-8 sm:py-3.5 sm:text-base"
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -119,7 +139,7 @@ function LandingPage() {
               <button
                 type="button"
                 onClick={() => navigate('/directory')}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-6 py-3 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 active:scale-95 sm:w-auto sm:px-8 sm:py-3.5 sm:text-base"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/14 bg-white/6 px-6 py-3 text-sm font-medium text-slate-100 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950 sm:w-auto sm:px-8 sm:py-3.5 sm:text-base"
               >
                 Browse Businesses
               </button>
@@ -127,18 +147,18 @@ function LandingPage() {
           </div>
         </section>
 
-        <section className="px-4 py-16" aria-label="Audience paths">
+        <section className="relative px-4 py-16" aria-label="Audience paths">
           <div className="mx-auto grid max-w-5xl grid-cols-1 gap-5 md:grid-cols-2">
-            <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-blue-600">Business Owners</p>
-              <h2 className="mb-3 text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">Build a professional profile customers can trust</h2>
-              <p className="mb-6 text-sm leading-relaxed text-gray-500 sm:text-base">
+            <div className={darkCardClass}>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-sky-300">Business Owners</p>
+              <h2 className="mb-3 text-xl font-bold tracking-tight text-slate-50 sm:text-2xl">Build a professional profile customers can trust</h2>
+              <p className="mb-6 text-sm leading-relaxed text-slate-300 sm:text-base">
                 Create a public business profile, manage it from your dashboard, and share it through a link or QR code.
               </p>
               <ul className="space-y-3">
                 {ownerBenefits.map((benefit) => (
-                  <li key={benefit} className="flex gap-3 text-sm text-gray-600">
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                  <li key={benefit} className="flex gap-3 text-sm text-slate-300">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-sky-400/12 text-sky-300">
                       <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
@@ -149,16 +169,16 @@ function LandingPage() {
               </ul>
             </div>
 
-            <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-emerald-600">Visitors</p>
-              <h2 className="mb-3 text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">Find and contact businesses quickly</h2>
-              <p className="mb-6 text-sm leading-relaxed text-gray-500 sm:text-base">
+            <div className={darkCardClass}>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-cyan-300">Visitors</p>
+              <h2 className="mb-3 text-xl font-bold tracking-tight text-slate-50 sm:text-2xl">Find and contact businesses quickly</h2>
+              <p className="mb-6 text-sm leading-relaxed text-slate-300 sm:text-base">
                 Browse public business profiles, search the directory, and contact businesses without creating an account.
               </p>
               <ul className="space-y-3">
                 {visitorBenefits.map((benefit) => (
-                  <li key={benefit} className="flex gap-3 text-sm text-gray-600">
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                  <li key={benefit} className="flex gap-3 text-sm text-slate-300">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cyan-400/12 text-cyan-300">
                       <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
@@ -171,37 +191,37 @@ function LandingPage() {
           </div>
         </section>
 
-        <section className="bg-slate-50 px-4 py-16" aria-label="How it works">
+        <section className="relative border-y border-white/6 bg-white/[0.03] px-4 py-16 backdrop-blur-[2px]" aria-label="How it works">
           <div className="mx-auto max-w-5xl">
             <div className="mb-8 text-center">
-              <h2 className="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl md:text-3xl">How It Works</h2>
-              <p className="mt-2 text-sm text-gray-500">Two simple paths, depending on what you need today.</p>
+              <h2 className={sectionHeadingClass}>How It Works</h2>
+              <p className="mt-2 text-sm text-slate-400">Two simple paths, depending on what you need today.</p>
             </div>
 
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-              <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-                <h3 className="mb-5 text-base font-semibold text-gray-900">For business owners</h3>
+              <div className={darkCardClass}>
+                <h3 className="mb-5 text-base font-semibold text-slate-50">For business owners</h3>
                 <div className="space-y-4">
                   {ownerSteps.map((step, index) => (
                     <div key={step} className="flex items-center gap-3">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-400/15 text-sm font-semibold text-sky-200 ring-1 ring-sky-300/20">
                         {index + 1}
                       </span>
-                      <p className="text-sm font-medium text-gray-700">{step}</p>
+                      <p className="text-sm font-medium text-slate-200">{step}</p>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-                <h3 className="mb-5 text-base font-semibold text-gray-900">For visitors</h3>
+              <div className={darkCardClass}>
+                <h3 className="mb-5 text-base font-semibold text-slate-50">For visitors</h3>
                 <div className="space-y-4">
                   {visitorSteps.map((step, index) => (
                     <div key={step} className="flex items-center gap-3">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-sm font-semibold text-white">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cyan-400/15 text-sm font-semibold text-cyan-200 ring-1 ring-cyan-300/20">
                         {index + 1}
                       </span>
-                      <p className="text-sm font-medium text-gray-700">{step}</p>
+                      <p className="text-sm font-medium text-slate-200">{step}</p>
                     </div>
                   ))}
                 </div>
@@ -210,13 +230,13 @@ function LandingPage() {
           </div>
         </section>
 
-        <section className="px-4 py-16" aria-label="Who it is for">
+        <section className="relative px-4 py-16" aria-label="Who it is for">
           <div className="mx-auto max-w-5xl">
             <div className="mb-8 text-center">
-              <h2 className="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl md:text-3xl">
+              <h2 className={sectionHeadingClass}>
                 Built for local businesses of every type
               </h2>
-              <p className="mx-auto mt-2 max-w-2xl text-sm leading-relaxed text-gray-500">
+              <p className="mx-auto mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
                 From professionals to local service providers, Smart Business Profile gives businesses a simple public profile visitors can find and contact.
               </p>
             </div>
@@ -225,7 +245,7 @@ function LandingPage() {
               {businessCategories.map((category) => (
                 <span
                   key={category}
-                  className="inline-flex rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm sm:px-4 sm:py-2 sm:text-sm"
+                  className="inline-flex rounded-full border border-white/10 bg-white/6 px-3 py-1.5 text-xs font-medium text-slate-200 shadow-[0_14px_30px_-24px_rgba(2,12,27,0.95)] backdrop-blur-sm sm:px-4 sm:py-2 sm:text-sm"
                 >
                   {category}
                 </span>
@@ -234,11 +254,11 @@ function LandingPage() {
           </div>
         </section>
 
-        <section id="features" className="px-4 py-16" aria-label="Features">
+        <section id="features" className="relative px-4 py-16" aria-label="Features">
           <div className="mx-auto max-w-5xl">
             <div className="mb-8 text-center">
-              <h2 className="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl md:text-3xl">Everything needed for a clear business presence</h2>
-              <p className="mt-2 text-sm text-gray-500">
+              <h2 className={sectionHeadingClass}>Everything needed for a clear business presence</h2>
+              <p className="mt-2 text-sm text-slate-400">
                 Built for owners who manage profiles and visitors who need quick business information.
               </p>
             </div>
@@ -247,42 +267,44 @@ function LandingPage() {
               {features.map((feature) => (
                 <div
                   key={feature.title}
-                  className="rounded-2xl border border-gray-100 bg-white p-5 text-left shadow-sm"
+                  className="rounded-3xl border border-white/10 bg-white/6 p-5 text-left shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md"
                 >
-                  <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                  <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-sky-400/12 text-sky-300 ring-1 ring-sky-300/15">
                     {feature.icon}
                   </div>
-                  <p className="text-sm font-semibold text-gray-900">{feature.title}</p>
-                  <p className="mt-2 text-sm leading-relaxed text-gray-500">{feature.description}</p>
+                  <p className="text-sm font-semibold text-slate-50">{feature.title}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-300">{feature.description}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        <section className="bg-slate-950 px-4 py-16 text-center" aria-label="Final call to action">
+        <section className="relative px-4 py-16 text-center" aria-label="Final call to action">
           <div className="mx-auto max-w-3xl">
-            <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl md:text-4xl">
-              Ready to create your business profile?
-            </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-slate-300 sm:text-base">
-              Build a professional profile, share your link, and help customers contact you faster.
-            </p>
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <button
-                type="button"
-                onClick={() => navigate('/create-profile')}
-                className="inline-flex w-full items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-950 transition-all hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-slate-950 active:scale-95 sm:w-auto sm:px-8 sm:py-3.5 sm:text-base"
-              >
-                Get Started
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate('/directory')}
-                className="inline-flex w-full items-center justify-center rounded-full border border-white/20 px-6 py-3 text-sm font-medium text-white transition-all hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-slate-950 active:scale-95 sm:w-auto sm:px-8 sm:py-3.5 sm:text-base"
-              >
-                Browse Businesses
-              </button>
+            <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.88),rgba(2,6,23,0.94))] px-6 py-10 shadow-[0_30px_90px_-45px_rgba(2,12,27,0.96)] backdrop-blur-md sm:px-10">
+              <h2 className="text-2xl font-bold tracking-tight text-slate-50 sm:text-3xl md:text-4xl">
+                Ready to create your business profile?
+              </h2>
+              <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-slate-300 sm:text-base">
+                Build a professional profile, share your link, and help customers contact you faster.
+              </p>
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={() => navigate('/create-profile')}
+                  className="inline-flex w-full items-center justify-center rounded-full border border-sky-400/30 bg-[linear-gradient(135deg,#38bdf8_0%,#2563eb_55%,#0f172a_100%)] px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_-20px_rgba(56,189,248,0.45)] focus:outline-none focus:ring-2 focus:ring-sky-300/80 focus:ring-offset-2 focus:ring-offset-slate-950 sm:w-auto sm:px-8 sm:py-3.5 sm:text-base"
+                >
+                  Get Started
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate('/directory')}
+                  className="inline-flex w-full items-center justify-center rounded-full border border-white/15 bg-white/6 px-6 py-3 text-sm font-medium text-slate-100 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950 sm:w-auto sm:px-8 sm:py-3.5 sm:text-base"
+                >
+                  Browse Businesses
+                </button>
+              </div>
             </div>
           </div>
         </section>
