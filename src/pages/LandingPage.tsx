@@ -146,8 +146,8 @@ function LandingPage() {
 
         <section className="relative px-4 py-16" aria-label="Audience paths">
           <div className="mx-auto grid max-w-5xl grid-cols-1 gap-5 md:grid-cols-2">
-            <ScrollReveal delayMs={60}>
-              <div className={darkCardClass}>
+            <ScrollReveal delayMs={60} className="h-full">
+              <div className={`${darkCardClass} h-full`}>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-sky-300">Business Owners</p>
                 <h2 className="mb-3 text-xl font-bold tracking-tight text-slate-50 sm:text-2xl">Build a professional profile customers can trust</h2>
                 <p className="mb-6 text-sm leading-relaxed text-slate-300 sm:text-base">
@@ -168,8 +168,8 @@ function LandingPage() {
               </div>
             </ScrollReveal>
 
-            <ScrollReveal delayMs={140}>
-              <div className={darkCardClass}>
+            <ScrollReveal delayMs={140} className="h-full">
+              <div className={`${darkCardClass} h-full`}>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-cyan-300">Visitors</p>
                 <h2 className="mb-3 text-xl font-bold tracking-tight text-slate-50 sm:text-2xl">Find and contact businesses quickly</h2>
                 <p className="mb-6 text-sm leading-relaxed text-slate-300 sm:text-base">
@@ -247,12 +247,14 @@ function LandingPage() {
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {features.map((feature, index) => (
-                <ScrollReveal key={feature.title} delayMs={index * 70}>
-                  <div className="rounded-3xl border border-white/10 bg-white/6 p-5 text-left shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md">
-                    <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-sky-400/12 text-sky-300 ring-1 ring-sky-300/15">
-                      {feature.icon}
+                <ScrollReveal key={feature.title} delayMs={index * 70} className="h-full">
+                  <div className="flex h-full flex-col rounded-3xl border border-white/10 bg-white/6 p-5 text-left shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md">
+                    <div className="mb-4 flex items-center gap-4">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-400/12 text-sky-300 ring-1 ring-sky-300/15">
+                        {feature.icon}
+                      </div>
+                      <p className="text-sm font-semibold text-slate-50">{feature.title}</p>
                     </div>
-                    <p className="text-sm font-semibold text-slate-50">{feature.title}</p>
                     <p className="mt-2 text-sm leading-relaxed text-slate-300">{feature.description}</p>
                   </div>
                 </ScrollReveal>
