@@ -417,6 +417,18 @@ Status: Implemented
 
 ---
 
+## Version 4.4 - Landing Page Audience Expansion
+
+Status: Implemented
+
+- Added a `Who It Is For` landing page section.
+- Added static local business category chips.
+- Added a final landing page CTA section.
+- Preserved existing `Get Started` and `Browse Businesses` CTA routes.
+- Avoided unavailable feature claims and kept the update frontend-only.
+
+---
+
 ## Next Recommended Step
 
 Deploy to Vercel after owner approval, configure Vercel/Supabase settings, and verify production routes, auth redirects, storage URLs, and public sharing.

@@ -88,12 +88,13 @@ Completed major features:
 - Vercel deployment preparation
 - Vercel SPA route refresh configuration
 - landing page positioning for business owners and visitors
+- landing page audience expansion
 
 ---
 
 ## Most Recent Implementation
 
-Version 4.3 - Landing Page Positioning Update
+Version 4.4 - Landing Page Audience Expansion
 
 Status:
 
@@ -102,10 +103,10 @@ Status:
 
 Summary:
 
-- landing page now presents business-owner and visitor journeys
-- hero includes `Get Started` and `Browse Businesses`
-- visitor CTA routes to `/directory`
-- owner CTA preserves the existing protected create-profile flow
+- landing page now includes a `Who It Is For` section
+- local business category chips are static and non-clickable
+- landing page now includes a final CTA section
+- CTA routes preserve existing behavior
 
 ---
 

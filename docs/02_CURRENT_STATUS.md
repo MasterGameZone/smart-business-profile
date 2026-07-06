@@ -50,6 +50,7 @@ Completed:
 
 - landing page
 - business-owner and visitor landing page positioning
+- landing page audience expansion and final CTA
 - navigation links
 - create profile entry point
 - directory link

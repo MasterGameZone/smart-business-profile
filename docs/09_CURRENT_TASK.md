@@ -1,4 +1,4 @@
-# Current Task - Version 4.3
+# Current Task - Version 4.4
 
 Last Updated: 2026-07-06
 Status: Implemented / Awaiting Review
@@ -8,32 +8,24 @@ Planning & Review: ChatGPT
 
 ---
 
-# Version 4.3 - Landing Page Positioning Update
+# Version 4.4 - Landing Page Audience Expansion
 
 ## 1. Objective
 
-Update the landing page so it clearly supports two current journeys:
+Add a small amount of professional landing page content that helps visitors understand who Smart Business Profile is for and guides them toward action.
 
-- business owners who create and manage public business profiles
-- visitors who browse public businesses without signing up
-
-This is a UI/content/navigation positioning update only.
+This is a frontend-only content/layout update.
 
 ---
 
 ## 2. Implemented Scope
 
-- Updated hero copy to explain both profile creation and business discovery.
-- Added clear hero CTAs:
-  - `Get Started`
-  - `Browse Businesses`
-- Routed `Browse Businesses` to `/directory`.
-- Preserved the existing protected owner get-started flow through `/create-profile`.
-- Added concise business-owner value content.
-- Added concise visitor value content.
-- Added a two-path How It Works section.
-- Updated feature copy to cover both profile management and public discovery.
-- Updated the logged-out header primary CTA label to `Get Started` while preserving the `/signup` route.
+- Added a `Who It Is For` section.
+- Added static chips for local business and professional categories.
+- Added a final CTA section near the bottom of the landing page.
+- Preserved existing CTA behavior:
+  - `Get Started` opens the existing protected create-profile flow.
+  - `Browse Businesses` opens `/directory`.
 
 ---
 
@@ -43,7 +35,7 @@ No changes were made to:
 
 - authentication logic
 - visitor accounts
-- dashboard ownership behavior
+- dashboard logic
 - directory filtering logic
 - public profile behavior
 - QR/share logic
@@ -60,18 +52,18 @@ No changes were made to:
 Before approval, verify locally:
 
 - landing page loads cleanly
-- `Get Started` opens the existing owner creation/login path
-- `Browse Businesses` opens `/directory`
-- logged-out Login still opens `/login`
-- logged-out Get Started still opens `/signup` from the header
-- logged-in navigation still shows Home, Dashboard, Directory, Create Business, Logout
-- directory search/category/location filters still work
-- public profile pages still work
-- QR/share behavior still works
-- mobile landing layout remains clean
+- existing hero remains intact
+- `Who It Is For` section appears
+- category chips wrap cleanly on mobile
+- final CTA appears
+- final CTA `Get Started` works
+- final CTA `Browse Businesses` opens `/directory`
+- directory still loads
+- login and header Get Started still work
+- browser console has no red errors
 
 ---
 
 ## 5. Next Step
 
-Project owner should manually review the Version 4.3 landing page positioning update.
+Project owner should manually review the Version 4.4 landing page audience expansion.

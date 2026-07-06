@@ -55,6 +55,22 @@ const visitorBenefits = [
 
 const ownerSteps = ['Sign up', 'Create profile', 'Share link or QR']
 const visitorSteps = ['Browse directory', 'Open profile', 'Contact business']
+const businessCategories = [
+  'Doctors',
+  'Clinics',
+  'Dentists',
+  'Salons',
+  'Gyms',
+  'Tutors',
+  'Coaches',
+  'Restaurants',
+  'Freelancers',
+  'Lawyers',
+  'Photographers',
+  'Consultants',
+  'Real Estate Agents',
+  'Electricians',
+]
 
 function LandingPage() {
   const navigate = useNavigate()
@@ -72,19 +88,19 @@ function LandingPage() {
       <main>
         <section
           aria-label="Hero"
-          className="bg-gradient-to-b from-white to-slate-50 px-4 py-20 text-center sm:py-24"
+          className="bg-gradient-to-b from-white to-slate-50 px-4 py-16 text-center sm:py-20 lg:py-24"
         >
           <div className="mx-auto max-w-3xl">
-            <span className="mb-6 inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-600">
+            <span className="mb-5 inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-[11px] font-semibold text-blue-600 sm:mb-6 sm:text-xs">
               <span className="h-1.5 w-1.5 rounded-full bg-blue-500" aria-hidden="true" />
               Built for business owners and visitors
             </span>
 
-            <h1 className="mb-5 text-4xl font-bold leading-tight tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
+            <h1 className="mb-4 text-3xl font-bold leading-tight tracking-tight text-gray-900 sm:mb-5 sm:text-4xl md:text-5xl lg:text-6xl">
               Create your business profile. Get discovered faster.
             </h1>
 
-            <p className="mx-auto mb-10 max-w-2xl text-lg leading-relaxed text-gray-500 sm:text-xl">
+            <p className="mx-auto mb-8 max-w-2xl text-base leading-relaxed text-gray-500 sm:mb-10 sm:text-lg lg:text-xl">
               Smart Business Profile helps owners publish professional digital profiles,
               while visitors can browse public businesses and contact them without signing up.
             </p>
@@ -92,8 +108,8 @@ function LandingPage() {
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
               <button
                 type="button"
-                onClick={() => navigate('/create-profile')}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-blue-600 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:scale-95 sm:w-auto"
+                onClick={() => navigate('/login')}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:scale-95 sm:w-auto sm:px-8 sm:py-3.5 sm:text-base"
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -103,7 +119,7 @@ function LandingPage() {
               <button
                 type="button"
                 onClick={() => navigate('/directory')}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-8 py-3.5 text-base font-medium text-gray-700 transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 active:scale-95 sm:w-auto"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-6 py-3 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 active:scale-95 sm:w-auto sm:px-8 sm:py-3.5 sm:text-base"
               >
                 Browse Businesses
               </button>
@@ -115,8 +131,8 @@ function LandingPage() {
           <div className="mx-auto grid max-w-5xl grid-cols-1 gap-5 md:grid-cols-2">
             <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
               <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-blue-600">Business Owners</p>
-              <h2 className="mb-3 text-2xl font-bold tracking-tight text-gray-900">Build a professional profile customers can trust</h2>
-              <p className="mb-6 text-sm leading-relaxed text-gray-500">
+              <h2 className="mb-3 text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">Build a professional profile customers can trust</h2>
+              <p className="mb-6 text-sm leading-relaxed text-gray-500 sm:text-base">
                 Create a public business profile, manage it from your dashboard, and share it through a link or QR code.
               </p>
               <ul className="space-y-3">
@@ -135,8 +151,8 @@ function LandingPage() {
 
             <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
               <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-emerald-600">Visitors</p>
-              <h2 className="mb-3 text-2xl font-bold tracking-tight text-gray-900">Find and contact businesses quickly</h2>
-              <p className="mb-6 text-sm leading-relaxed text-gray-500">
+              <h2 className="mb-3 text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">Find and contact businesses quickly</h2>
+              <p className="mb-6 text-sm leading-relaxed text-gray-500 sm:text-base">
                 Browse public business profiles, search the directory, and contact businesses without creating an account.
               </p>
               <ul className="space-y-3">
@@ -158,7 +174,7 @@ function LandingPage() {
         <section className="bg-slate-50 px-4 py-16" aria-label="How it works">
           <div className="mx-auto max-w-5xl">
             <div className="mb-8 text-center">
-              <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">How It Works</h2>
+              <h2 className="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl md:text-3xl">How It Works</h2>
               <p className="mt-2 text-sm text-gray-500">Two simple paths, depending on what you need today.</p>
             </div>
 
@@ -194,10 +210,34 @@ function LandingPage() {
           </div>
         </section>
 
-        <section className="px-4 py-16" aria-label="Features">
+        <section className="px-4 py-16" aria-label="Who it is for">
           <div className="mx-auto max-w-5xl">
             <div className="mb-8 text-center">
-              <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Everything needed for a clear business presence</h2>
+              <h2 className="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl md:text-3xl">
+                Built for local businesses of every type
+              </h2>
+              <p className="mx-auto mt-2 max-w-2xl text-sm leading-relaxed text-gray-500">
+                From professionals to local service providers, Smart Business Profile gives businesses a simple public profile visitors can find and contact.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap justify-center gap-2.5">
+              {businessCategories.map((category) => (
+                <span
+                  key={category}
+                  className="inline-flex rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm sm:px-4 sm:py-2 sm:text-sm"
+                >
+                  {category}
+                </span>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="features" className="px-4 py-16" aria-label="Features">
+          <div className="mx-auto max-w-5xl">
+            <div className="mb-8 text-center">
+              <h2 className="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl md:text-3xl">Everything needed for a clear business presence</h2>
               <p className="mt-2 text-sm text-gray-500">
                 Built for owners who manage profiles and visitors who need quick business information.
               </p>
@@ -216,6 +256,33 @@ function LandingPage() {
                   <p className="mt-2 text-sm leading-relaxed text-gray-500">{feature.description}</p>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="bg-slate-950 px-4 py-16 text-center" aria-label="Final call to action">
+          <div className="mx-auto max-w-3xl">
+            <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl md:text-4xl">
+              Ready to create your business profile?
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-slate-300 sm:text-base">
+              Build a professional profile, share your link, and help customers contact you faster.
+            </p>
+            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={() => navigate('/create-profile')}
+                className="inline-flex w-full items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-950 transition-all hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-slate-950 active:scale-95 sm:w-auto sm:px-8 sm:py-3.5 sm:text-base"
+              >
+                Get Started
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/directory')}
+                className="inline-flex w-full items-center justify-center rounded-full border border-white/20 px-6 py-3 text-sm font-medium text-white transition-all hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-slate-950 active:scale-95 sm:w-auto sm:px-8 sm:py-3.5 sm:text-base"
+              >
+                Browse Businesses
+              </button>
             </div>
           </div>
         </section>
