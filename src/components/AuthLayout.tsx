@@ -33,24 +33,10 @@ function AuthLayout({ title, subtitle, children, footer, darkBackground = false 
     <div
       className={`relative min-h-screen flex flex-col ${
         darkBackground
-          ? 'overflow-x-clip bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.16),transparent_28%),linear-gradient(180deg,#020617_0%,#030712_34%,#020617_100%)] text-slate-100'
+          ? 'bg-[linear-gradient(180deg,#020617_0%,#030712_34%,#020617_100%)] text-slate-100'
           : 'bg-gradient-to-b from-white to-slate-50'
       }`}
     >
-      {darkBackground && (
-        <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-          <div className="landing-ambient-drift absolute inset-x-[-18%] top-[-12rem] h-[34rem] bg-[radial-gradient(circle_at_center,rgba(56,189,248,0.18),transparent_55%)] blur-3xl" />
-          <div
-            className="landing-ambient-drift absolute right-[-20%] top-[18rem] h-[28rem] w-[48rem] bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.14),transparent_58%)] blur-3xl"
-            style={{ animationDelay: '-7s' }}
-          />
-          <div className="landing-streak-float absolute left-[-12%] top-28 h-40 w-[124%] rotate-[-8deg] bg-[linear-gradient(90deg,transparent,rgba(125,211,252,0.08),rgba(59,130,246,0.14),transparent)] blur-3xl" />
-          <div
-            className="landing-streak-float absolute left-[-10%] top-[34rem] h-48 w-[120%] rotate-[6deg] bg-[linear-gradient(90deg,transparent,rgba(14,165,233,0.05),rgba(96,165,250,0.12),transparent)] blur-[90px]"
-            style={{ animationDelay: '-11s' }}
-          />
-        </div>
-      )}
       <AppHeader />
 
       <main className="relative flex-1 flex items-center justify-center px-4 py-8">
