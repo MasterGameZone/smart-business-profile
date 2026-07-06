@@ -60,6 +60,20 @@ const sectionHeadingClass = 'text-xl font-bold tracking-tight text-slate-50 sm:t
 
 function LandingPage() {
   const navigate = useNavigate()
+  const handleSectionScroll = (sectionId: string) => {
+    document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  const footerLinks = [
+    { label: 'Businesses', type: 'route' as const, value: '/directory' },
+    { label: 'Features', type: 'scroll' as const, value: 'features' },
+    { label: 'Pricing', type: 'hash' as const, value: '#pricing' },
+    { label: 'FAQ', type: 'hash' as const, value: '#faq' },
+    { label: 'Login', type: 'route' as const, value: '/login' },
+    { label: 'Create Profile', type: 'route' as const, value: '/create-profile' },
+    { label: 'Privacy', type: 'hash' as const, value: '#privacy' },
+    { label: 'Terms', type: 'hash' as const, value: '#terms' },
+  ]
 
   usePageMeta({
     title: 'Smart Business Profile | Create and Discover Local Business Profiles',
@@ -238,35 +252,83 @@ function LandingPage() {
           </div>
         </section>
 
-        <section className="relative px-4 py-16 text-center" aria-label="Final call to action">
-          <div className="mx-auto max-w-3xl">
-            <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.88),rgba(2,6,23,0.94))] px-6 py-10 shadow-[0_30px_90px_-45px_rgba(2,12,27,0.96)] backdrop-blur-md sm:px-10">
-              <h2 className="text-2xl font-bold tracking-tight text-slate-50 sm:text-3xl md:text-4xl">
-                Ready to create your business profile?
-              </h2>
-              <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-slate-300 sm:text-base">
-                Build a professional profile, share your link, and help customers contact you faster.
-              </p>
-              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <button
-                  type="button"
-                  onClick={() => navigate('/create-profile')}
-                  className="inline-flex w-full items-center justify-center rounded-full border border-sky-400/30 bg-[linear-gradient(135deg,#38bdf8_0%,#2563eb_55%,#0f172a_100%)] px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_-20px_rgba(56,189,248,0.45)] focus:outline-none focus:ring-2 focus:ring-sky-300/80 focus:ring-offset-2 focus:ring-offset-slate-950 sm:w-auto sm:px-8 sm:py-3.5 sm:text-base"
-                >
-                  Get Started
-                </button>
-                <button
-                  type="button"
-                  onClick={() => navigate('/directory')}
-                  className="inline-flex w-full items-center justify-center rounded-full border border-white/15 bg-white/6 px-6 py-3 text-sm font-medium text-slate-100 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950 sm:w-auto sm:px-8 sm:py-3.5 sm:text-base"
-                >
-                  Browse Businesses
-                </button>
-              </div>
+        <section className="relative px-4 py-12 text-center sm:py-14" aria-label="Final call to action">
+          <div className="mx-auto max-w-2xl">
+            <h2 className="text-2xl font-bold tracking-tight text-slate-50 sm:text-3xl">
+              Ready to create your business profile?
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-slate-300 sm:text-base">
+              Create a professional public profile, share it with a link or QR code, and help visitors contact you faster.
+            </p>
+            <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={() => navigate('/create-profile')}
+                className="inline-flex w-full items-center justify-center rounded-full border border-sky-400/30 bg-[linear-gradient(135deg,#38bdf8_0%,#2563eb_55%,#0f172a_100%)] px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_32px_-20px_rgba(56,189,248,0.42)] focus:outline-none focus:ring-2 focus:ring-sky-300/80 focus:ring-offset-2 focus:ring-offset-slate-950 sm:w-auto sm:min-w-[11rem] sm:px-7 sm:text-base"
+              >
+                Get Started
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/directory')}
+                className="inline-flex w-full items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-6 py-3 text-sm font-medium text-slate-100 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950 sm:w-auto sm:min-w-[11rem] sm:px-7 sm:text-base"
+              >
+                Browse Businesses
+              </button>
             </div>
           </div>
         </section>
       </main>
+
+      <footer className="relative border-t border-white/8 px-4 py-8 sm:py-10" aria-label="Footer">
+        <div className="mx-auto max-w-7xl">
+          <div className="flex flex-col gap-6 text-center md:flex-row md:items-start md:justify-between md:gap-10 md:text-left">
+            <div className="max-w-md">
+              <p className="text-sm font-semibold text-slate-100">Smart Business Profile</p>
+              <p className="mt-3 text-sm leading-relaxed text-slate-400">
+                Create a modern public business profile with a shareable link, QR code, and instant contact options.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-slate-400 sm:gap-x-5 md:max-w-xl md:justify-end">
+            {footerLinks.map((link) =>
+              link.type === 'route' ? (
+                <button
+                  key={link.label}
+                  type="button"
+                  onClick={() => navigate(link.value)}
+                  className="focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300/80 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                >
+                  {link.label}
+                </button>
+              ) : link.type === 'scroll' ? (
+                <button
+                  key={link.label}
+                  type="button"
+                  onClick={() => handleSectionScroll(link.value)}
+                  className="focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300/80 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                >
+                  {link.label}
+                </button>
+              ) : (
+                <a
+                  key={link.label}
+                  href={link.value}
+                  className="focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300/80 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                >
+                  {link.label}
+                </a>
+              )
+            )}
+          </div>
+
+          </div>
+
+          <p className="mt-6 text-center text-xs text-slate-500 md:mt-7 md:text-left">
+            © 2026 Smart Business Profile. All rights reserved.
+          </p>
+        </div>
+      </footer>
     </div>
   )
 }
