@@ -53,25 +53,6 @@ const visitorBenefits = [
   'Open profiles and contact businesses quickly',
 ]
 
-const ownerSteps = ['Sign up', 'Create profile', 'Share link or QR']
-const visitorSteps = ['Browse directory', 'Open profile', 'Contact business']
-const businessCategories = [
-  'Doctors',
-  'Clinics',
-  'Dentists',
-  'Salons',
-  'Gyms',
-  'Tutors',
-  'Coaches',
-  'Restaurants',
-  'Freelancers',
-  'Lawyers',
-  'Photographers',
-  'Consultants',
-  'Real Estate Agents',
-  'Electricians',
-]
-
 const darkCardClass =
   'rounded-3xl border border-white/10 bg-white/6 p-6 shadow-[0_28px_80px_-42px_rgba(2,12,27,0.95)] backdrop-blur-md sm:p-8'
 
@@ -191,45 +172,6 @@ function LandingPage() {
           </div>
         </section>
 
-        <section className="relative border-y border-white/6 bg-white/[0.03] px-4 py-16 backdrop-blur-[2px]" aria-label="How it works">
-          <div className="mx-auto max-w-5xl">
-            <div className="mb-8 text-center">
-              <h2 className={sectionHeadingClass}>How It Works</h2>
-              <p className="mt-2 text-sm text-slate-400">Two simple paths, depending on what you need today.</p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-              <div className={darkCardClass}>
-                <h3 className="mb-5 text-base font-semibold text-slate-50">For business owners</h3>
-                <div className="space-y-4">
-                  {ownerSteps.map((step, index) => (
-                    <div key={step} className="flex items-center gap-3">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-400/15 text-sm font-semibold text-sky-200 ring-1 ring-sky-300/20">
-                        {index + 1}
-                      </span>
-                      <p className="text-sm font-medium text-slate-200">{step}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className={darkCardClass}>
-                <h3 className="mb-5 text-base font-semibold text-slate-50">For visitors</h3>
-                <div className="space-y-4">
-                  {visitorSteps.map((step, index) => (
-                    <div key={step} className="flex items-center gap-3">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cyan-400/15 text-sm font-semibold text-cyan-200 ring-1 ring-cyan-300/20">
-                        {index + 1}
-                      </span>
-                      <p className="text-sm font-medium text-slate-200">{step}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         <section className="relative px-4 py-16" aria-label="Who it is for">
           <div className="mx-auto max-w-5xl">
             <div className="mb-8 text-center">
@@ -241,15 +183,31 @@ function LandingPage() {
               </p>
             </div>
 
-            <div className="flex flex-wrap justify-center gap-2.5">
-              {businessCategories.map((category) => (
-                <span
-                  key={category}
-                  className="inline-flex rounded-full border border-white/10 bg-white/6 px-3 py-1.5 text-xs font-medium text-slate-200 shadow-[0_14px_30px_-24px_rgba(2,12,27,0.95)] backdrop-blur-sm sm:px-4 sm:py-2 sm:text-sm"
-                >
-                  {category}
-                </span>
-              ))}
+            <div className="mx-auto grid max-w-6xl grid-cols-1 gap-4 md:grid-cols-[320px_minmax(0,1fr)] md:items-stretch md:gap-5">
+              <div className="mx-auto flex aspect-square w-full max-w-[19rem] items-center justify-center rounded-3xl border border-white/10 bg-white/5 px-6 py-6 text-center shadow-[0_14px_30px_-24px_rgba(2,12,27,0.95)] backdrop-blur-sm sm:max-w-[20rem] sm:px-8 md:mx-0 md:h-full md:max-w-none md:aspect-auto">
+                <div className="space-y-1 text-sm font-medium leading-relaxed text-slate-400 sm:text-base">
+                  <p>Business type preview</p>
+                  <p>Animation coming soon</p>
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-white/10 bg-white/5 px-6 py-6 shadow-[0_14px_30px_-24px_rgba(2,12,27,0.95)] backdrop-blur-sm sm:px-8">
+                <div className="space-y-4 text-sm leading-relaxed text-slate-300 sm:text-base md:text-left">
+                  <p>
+                    No matter what kind of local business you run, Smart Business Profile gives you{' '}
+                    <span className="font-medium text-slate-100">one clean public page</span> to
+                    present the <span className="font-medium text-slate-100">details customers look for first</span> -
+                    your contact options, services, location, working hours, business story,
+                    gallery, and social links.
+                  </p>
+                  <p>
+                    It helps visitors understand what you offer, trust your presence, and{' '}
+                    <span className="font-medium text-slate-100">contact you instantly</span>{' '}
+                    through call, WhatsApp, email, website, or maps without needing to install any
+                    app.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </section>
