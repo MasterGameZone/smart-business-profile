@@ -8,6 +8,8 @@ import { ToastContainer, type ToastItem, type ToastType } from '../components/To
 import BusinessProfileDisplay from '../components/BusinessProfileDisplay.tsx'
 import { svgContainerToBlob, triggerBlobDownload } from '../utils/qr.ts'
 import AppHeader from '../components/AppHeader.tsx'
+import { useAuth } from '../context/AuthContext.tsx'
+import { saveRecentlyViewedBusiness } from '../utils/recentlyViewed.ts'
 
 type LoadState = 'loading' | 'found' | 'not-found' | 'private' | 'error'
 
@@ -35,6 +37,7 @@ function buildProfileDescription(profile: BusinessProfileRow): string {
 function PublicBusinessProfilePage() {
   const navigate = useNavigate()
   const { slug } = useParams<{ slug: string }>()
+  const { user } = useAuth()
 
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const [loadState, setLoadState] = useState<LoadState>('loading')
@@ -107,6 +110,12 @@ function PublicBusinessProfilePage() {
       cancelled = true
     }
   }, [slug])
+
+  useEffect(() => {
+    if (!user || !profile || loadState !== 'found') return
+
+    saveRecentlyViewedBusiness(user.id, profile)
+  }, [loadState, profile, user])
 
   const handleShare = async () => {
     const title = profile?.business_name || 'Business Profile'

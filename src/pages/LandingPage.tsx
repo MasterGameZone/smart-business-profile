@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AppHeader from '../components/AppHeader.tsx'
 import ScrollReveal from '../components/ScrollReveal.tsx'
@@ -6,6 +6,8 @@ import { useAuth } from '../context/AuthContext.tsx'
 import { usePageMeta } from '../hooks/usePageMeta.ts'
 import { getPublicBusinessProfiles } from '../lib/businessProfileService.ts'
 import type { PublicBusinessProfileRow } from '../types/businessProfile.ts'
+import { getRecentlyViewedBusinesses, mapRecentlyViewedToPublicProfile } from '../utils/recentlyViewed.ts'
+import { getRankedBusinessSearchResults } from '../utils/businessSearch.ts'
 
 const features = [
   {
@@ -83,6 +85,8 @@ function LandingPage() {
   const { user, isLoading } = useAuth()
   const searchInputRef = useRef<HTMLInputElement | null>(null)
   const [homeSearchQuery, setHomeSearchQuery] = useState('')
+  const [publicBusinesses, setPublicBusinesses] = useState<PublicBusinessProfileRow[]>([])
+  const [recentlyViewedBusinesses, setRecentlyViewedBusinesses] = useState<PublicBusinessProfileRow[]>([])
   const [recommendationState, setRecommendationState] = useState<RecommendationState>('idle')
   const [recommendedBusinesses, setRecommendedBusinesses] = useState<PublicBusinessProfileRow[]>([])
 
@@ -106,6 +110,8 @@ function LandingPage() {
     searchInputRef.current?.focus()
   }
 
+
+
   usePageMeta(
     user
       ? {
@@ -121,6 +127,8 @@ function LandingPage() {
 
   useEffect(() => {
     if (!user) {
+      setPublicBusinesses([])
+      setRecentlyViewedBusinesses([])
       setRecommendedBusinesses([])
       setRecommendationState('idle')
       return
@@ -135,6 +143,7 @@ function LandingPage() {
         const result = await getPublicBusinessProfiles()
         if (!isActive) return
 
+        setPublicBusinesses(result)
         const limitedResults = result.slice(0, 4)
         setRecommendedBusinesses(limitedResults)
         setRecommendationState(limitedResults.length > 0 ? 'found' : 'empty')
@@ -142,6 +151,7 @@ function LandingPage() {
         if (!isActive) return
 
         console.error('Failed to load recommended businesses:', error)
+        setPublicBusinesses([])
         setRecommendedBusinesses([])
         setRecommendationState('error')
       }
@@ -153,6 +163,26 @@ function LandingPage() {
       isActive = false
     }
   }, [user])
+
+  useEffect(() => {
+    if (!user) return
+
+    const recentlyViewed = getRecentlyViewedBusinesses(user.id).map(mapRecentlyViewedToPublicProfile)
+    setRecentlyViewedBusinesses(recentlyViewed)
+  }, [user])
+
+  const activeSearchQuery = homeSearchQuery.trim().toLowerCase()
+  const hasActiveSearch = activeSearchQuery.length > 0
+
+  const liveSearchResults = useMemo(() => {
+    return getRankedBusinessSearchResults(publicBusinesses, activeSearchQuery)
+  }, [activeSearchQuery, publicBusinesses])
+
+  const clearHomeSearch = () => {
+    setHomeSearchQuery('')
+    focusHomeSearch()
+  }
+
 
   if (isLoading) {
     return (
@@ -212,6 +242,81 @@ function LandingPage() {
             </div>
           </section>
 
+          {hasActiveSearch && (
+            <section className="mb-8 sm:mb-10" aria-labelledby="search-results-heading">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <h2 id="search-results-heading" className="text-xl font-bold tracking-tight text-slate-50 sm:text-2xl">
+                    Search Results
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-400">
+                    {liveSearchResults.length > 0
+                      ? `Showing ${liveSearchResults.length} matches for "${homeSearchQuery.trim()}"`
+                      : 'No businesses found matching your search.'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={clearHomeSearch}
+                  className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-medium text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
+                >
+                  Clear Search
+                </button>
+              </div>
+
+              {liveSearchResults.length > 0 ? (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  {liveSearchResults.map((profile) => (
+                    <article
+                      key={`search-${profile.id}`}
+                      className="flex h-full flex-col rounded-3xl border border-white/10 bg-white/[0.05] p-5 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md"
+                    >
+                      <div className="mb-4 flex items-start gap-3">
+                        {profile.logo_url ? (
+                          <img
+                            src={profile.logo_url}
+                            alt={`${profile.business_name} logo`}
+                            className="h-12 w-12 rounded-2xl border border-white/10 object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-sky-400/10 text-sm font-semibold text-sky-200">
+                            {getInitials(profile.business_name)}
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <h3 className="truncate text-base font-semibold text-slate-50">{profile.business_name}</h3>
+                          <p className="truncate text-sm text-slate-300">{profile.business_category}</p>
+                          {profile.address && <p className="mt-1 truncate text-xs text-slate-500">{profile.address}</p>}
+                        </div>
+                      </div>
+
+                      <p className="flex-1 text-sm leading-relaxed text-slate-300">
+                        {profile.about_business
+                          ? truncate(profile.about_business, 120)
+                          : 'Open the full profile to view business details and contact options.'}
+                      </p>
+
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/business/${profile.slug}`)}
+                        className="mt-5 inline-flex items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
+                      >
+                        View Profile
+                      </button>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <div>
+                  <p className="text-sm leading-relaxed text-slate-300">
+                    Try a business name, category, or owner name that already appears in the directory.
+                  </p>
+                </div>
+              )}
+            </section>
+          )}
+
+
           <section className="mb-8 sm:mb-10" aria-labelledby="recently-viewed-heading">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
@@ -224,20 +329,62 @@ function LandingPage() {
               </div>
             </div>
 
-            <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm leading-relaxed text-slate-300">
-                  No recently viewed businesses yet. Start exploring businesses to see them here.
-                </p>
+            {recentlyViewedBusinesses.length > 0 ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {recentlyViewedBusinesses.map((profile) => (
+                  <article
+                    key={`recent-${profile.id}`}
+                    className="flex h-full flex-col rounded-3xl border border-white/10 bg-white/[0.05] p-5 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md"
+                  >
+                    <div className="mb-4 flex items-start gap-3">
+                      {profile.logo_url ? (
+                        <img
+                          src={profile.logo_url}
+                          alt={`${profile.business_name} logo`}
+                          className="h-12 w-12 rounded-2xl border border-white/10 object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-sky-400/10 text-sm font-semibold text-sky-200">
+                          {getInitials(profile.business_name)}
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <h3 className="truncate text-base font-semibold text-slate-50">{profile.business_name}</h3>
+                        <p className="truncate text-sm text-slate-300">{profile.business_category}</p>
+                        {profile.address && <p className="mt-1 truncate text-xs text-slate-500">{profile.address}</p>}
+                      </div>
+                    </div>
+
+                    <p className="flex-1 text-sm leading-relaxed text-slate-300">
+                      {profile.owner_name ? `Viewed from ${profile.owner_name}'s public profile.` : 'Recently opened public business profile.'}
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/business/${profile.slug}`)}
+                      className="mt-5 inline-flex items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
+                    >
+                      View Profile
+                    </button>
+                  </article>
+                ))}
               </div>
-              <button
-                type="button"
-                onClick={focusHomeSearch}
-                className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
-              >
-                Browse Businesses
-              </button>
-            </div>
+            ) : (
+              <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm leading-relaxed text-slate-300">
+                    No recently viewed businesses yet. Start exploring businesses to see them here.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={focusHomeSearch}
+                  className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
+                >
+                  Browse Businesses
+                </button>
+              </div>
+            )}
           </section>
 
           <section className="mb-8 sm:mb-10" aria-labelledby="recommended-businesses-heading">
@@ -358,27 +505,27 @@ function LandingPage() {
             )}
           </section>
 
-          <section aria-labelledby="create-business-cta-heading" className="border-t border-white/10 pt-6 sm:pt-8">
-            <div className="max-w-3xl">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <section aria-labelledby="create-business-cta-heading" className="border-t border-white/10 pt-5 sm:pt-6">
+            <div className="max-w-2xl">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wide text-sky-300">Own a business?</p>
-                  <h2 id="create-business-cta-heading" className="mt-1 text-lg font-semibold tracking-tight text-slate-50 sm:text-xl">
+                  <h2 id="create-business-cta-heading" className="mt-1 text-base font-semibold tracking-tight text-slate-50 sm:text-lg">
                     Create your digital business profile.
                   </h2>
-                  <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-slate-300">
+                  <p className="mt-1 max-w-lg text-xs leading-relaxed text-slate-300 sm:text-sm">
                     Publish your details, share a public link, and help customers contact you faster.
                   </p>
-              </div>
+                </div>
 
-              <button
-                type="button"
-                onClick={() => navigate('/create-profile')}
-                className="inline-flex items-center justify-center self-start rounded-full border border-sky-400/30 bg-[linear-gradient(135deg,#38bdf8_0%,#2563eb_55%,#0f172a_100%)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_16px_32px_-20px_rgba(56,189,248,0.42)] focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2 focus:ring-offset-slate-950"
-              >
-                Create Business Profile
-              </button>
-            </div>
+                <button
+                  type="button"
+                  onClick={() => navigate('/create-profile')}
+                  className="inline-flex items-center justify-center self-start rounded-full border border-sky-400/30 bg-[linear-gradient(135deg,#38bdf8_0%,#2563eb_55%,#0f172a_100%)] px-4 py-2 text-xs font-semibold text-white shadow-[0_16px_32px_-20px_rgba(56,189,248,0.42)] focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2 focus:ring-offset-slate-950 sm:text-sm"
+                >
+                  Create Business Profile
+                </button>
+              </div>
             </div>
           </section>
         </main>

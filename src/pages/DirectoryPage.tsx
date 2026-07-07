@@ -4,6 +4,7 @@ import AppHeader from '../components/AppHeader.tsx'
 import { usePageMeta } from '../hooks/usePageMeta.ts'
 import { getPublicBusinessProfiles } from '../lib/businessProfileService.ts'
 import type { PublicBusinessProfileRow } from '../types/businessProfile.ts'
+import { getRankedBusinessSearchResults } from '../utils/businessSearch.ts'
 
 type LoadState = 'loading' | 'found' | 'empty' | 'error'
 
@@ -55,21 +56,17 @@ function DirectoryPage() {
     const query = searchQuery.trim().toLowerCase()
     const location = locationQuery.trim().toLowerCase()
 
-    return profiles.filter((profile) => {
+    const matchingProfiles = profiles.filter((profile) => {
       const matchesCategory = selectedCategory === ALL_CATEGORIES || profile.business_category === selectedCategory
       if (!matchesCategory) return false
 
       const matchesLocation = !location || Boolean(profile.address?.toLowerCase().includes(location))
       if (!matchesLocation) return false
 
-      if (!query) return true
-
-      return (
-        profile.business_name.toLowerCase().includes(query) ||
-        profile.business_category.toLowerCase().includes(query) ||
-        profile.owner_name.toLowerCase().includes(query)
-      )
+      return true
     })
+
+    return getRankedBusinessSearchResults(matchingProfiles, query)
   }, [profiles, searchQuery, selectedCategory, locationQuery])
 
   const hasActiveFilters =
