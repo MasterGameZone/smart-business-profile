@@ -29,12 +29,15 @@ function AppHeader() {
   const [shouldAnimateEntrance] = useState(() => !hasPlayedNavbarEntrance)
   const homeMenuRef = useRef<HTMLDivElement | null>(null)
   const isLandingPage = location.pathname === '/'
+  const isStartBusinessPage = location.pathname === '/start-business'
   const isDirectoryPage = location.pathname === '/directory'
   const isAuthEntryPage = location.pathname === '/login' || location.pathname === '/signup'
   const isSimpleDarkNavbarPage = isAuthEntryPage || isDirectoryPage
-  const isDarkLandingNavbar = isLandingPage || isSimpleDarkNavbarPage
-  const hideAuthenticatedNavButtons = Boolean(user) && isLandingPage
-  const showLoggedInHomeIcons = Boolean(user) && isLandingPage
+  const showMinimalCustomerTopBar = Boolean(user) && (isLandingPage || isStartBusinessPage)
+  const showStartBusinessLogoOnly = Boolean(user) && isStartBusinessPage
+  const isDarkLandingNavbar = isLandingPage || isStartBusinessPage || isSimpleDarkNavbarPage
+  const hideAuthenticatedNavButtons = showMinimalCustomerTopBar
+  const showLoggedInHomeIcons = showMinimalCustomerTopBar && !showStartBusinessLogoOnly
   const navbarInteractionStyle: CSSProperties = {
     WebkitTapHighlightColor: 'transparent',
   }
@@ -138,7 +141,7 @@ function AppHeader() {
     { label: 'Favorites / Saved Businesses', disabled: true },
     { label: 'My Reviews', disabled: true },
     { label: 'Notifications', disabled: true },
-    { label: 'Switch to Business Owner', path: '/dashboard' },
+    { label: 'Switch to Business Owner', path: '/start-business' },
     { label: 'Help & Support', disabled: true },
   ]
 
@@ -221,7 +224,7 @@ function AppHeader() {
                 />
                 <span className="relative z-10">SB</span>
               </span>
-              {!isLandingPage && !isSimpleDarkNavbarPage && 'Smart Business Profile'}
+              {!isLandingPage && !isStartBusinessPage && !isSimpleDarkNavbarPage && 'Smart Business Profile'}
             </button>
 
             {!isLoading && !hideAuthenticatedNavButtons && (
