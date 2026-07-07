@@ -25,6 +25,7 @@ function AppHeader() {
   const isAuthEntryPage = location.pathname === '/login' || location.pathname === '/signup'
   const isSimpleDarkNavbarPage = isAuthEntryPage || isDirectoryPage
   const isDarkLandingNavbar = isLandingPage || isSimpleDarkNavbarPage
+  const hideAuthenticatedNavButtons = Boolean(user) && isLandingPage
   const navbarInteractionStyle: CSSProperties = {
     WebkitTapHighlightColor: 'transparent',
   }
@@ -165,7 +166,7 @@ function AppHeader() {
               {!((isLandingPage || isSimpleDarkNavbarPage) && !user) && 'Smart Business Profile'}
             </button>
 
-            {!isLoading && (
+            {!isLoading && !hideAuthenticatedNavButtons && (
               <nav
                 className={`flex items-center ${
                   (isLandingPage || isSimpleDarkNavbarPage) && !user
