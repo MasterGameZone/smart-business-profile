@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+﻿import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AppHeader from '../components/AppHeader.tsx'
 import ScrollReveal from '../components/ScrollReveal.tsx'
@@ -208,13 +208,7 @@ function LandingPage() {
                 />
               </div>
 
-              <button
-                type="button"
-                onClick={() => navigate('/directory')}
-                className="inline-flex items-center justify-center rounded-full border border-sky-400/30 bg-[linear-gradient(135deg,#38bdf8_0%,#2563eb_55%,#0f172a_100%)] px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_32px_-20px_rgba(56,189,248,0.42)] focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2 focus:ring-offset-slate-950"
-              >
-                Search Directory
-              </button>
+
             </div>
           </section>
 
