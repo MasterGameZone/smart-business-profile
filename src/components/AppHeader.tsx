@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.tsx'
 import { signOut } from '../lib/authService.ts'
@@ -11,6 +11,12 @@ interface NavItem {
   type?: 'route' | 'scroll'
 }
 
+interface HomeMenuItem {
+  label: string
+  path?: string
+  disabled?: boolean
+}
+
 let hasPlayedNavbarEntrance = false
 
 function AppHeader() {
@@ -18,14 +24,17 @@ function AppHeader() {
   const location = useLocation()
   const { user, isLoading } = useAuth()
   const [isSigningOut, setIsSigningOut] = useState(false)
+  const [isHomeMenuOpen, setIsHomeMenuOpen] = useState(false)
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const [shouldAnimateEntrance] = useState(() => !hasPlayedNavbarEntrance)
+  const homeMenuRef = useRef<HTMLDivElement | null>(null)
   const isLandingPage = location.pathname === '/'
   const isDirectoryPage = location.pathname === '/directory'
   const isAuthEntryPage = location.pathname === '/login' || location.pathname === '/signup'
   const isSimpleDarkNavbarPage = isAuthEntryPage || isDirectoryPage
   const isDarkLandingNavbar = isLandingPage || isSimpleDarkNavbarPage
   const hideAuthenticatedNavButtons = Boolean(user) && isLandingPage
+  const showLoggedInHomeIcons = Boolean(user) && isLandingPage
   const navbarInteractionStyle: CSSProperties = {
     WebkitTapHighlightColor: 'transparent',
   }
@@ -35,6 +44,36 @@ function AppHeader() {
       hasPlayedNavbarEntrance = true
     }
   }, [shouldAnimateEntrance])
+
+  useEffect(() => {
+    if (!showLoggedInHomeIcons || !isHomeMenuOpen) {
+      return undefined
+    }
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!homeMenuRef.current?.contains(event.target as Node)) {
+        setIsHomeMenuOpen(false)
+      }
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsHomeMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isHomeMenuOpen, showLoggedInHomeIcons])
+
+  useEffect(() => {
+    setIsHomeMenuOpen(false)
+  }, [location.pathname, location.hash])
 
   const showError = (message: string) => {
     const id = Date.now()
@@ -91,6 +130,25 @@ function AppHeader() {
       return
     }
 
+    navigate(item.path)
+  }
+
+  const homeMenuItems: HomeMenuItem[] = [
+    { label: 'Account Settings', disabled: true },
+    { label: 'Favorites / Saved Businesses', disabled: true },
+    { label: 'My Reviews', disabled: true },
+    { label: 'Notifications', disabled: true },
+    { label: 'Switch to Business Owner', path: '/dashboard' },
+    { label: 'Help & Support', disabled: true },
+  ]
+
+  const handleHomeMenuItemClick = (item: HomeMenuItem) => {
+    if (item.disabled || !item.path) {
+      setIsHomeMenuOpen(false)
+      return
+    }
+
+    setIsHomeMenuOpen(false)
     navigate(item.path)
   }
 
@@ -163,7 +221,7 @@ function AppHeader() {
                 />
                 <span className="relative z-10">SB</span>
               </span>
-              {!((isLandingPage || isSimpleDarkNavbarPage) && !user) && 'Smart Business Profile'}
+              {!isLandingPage && !isSimpleDarkNavbarPage && 'Smart Business Profile'}
             </button>
 
             {!isLoading && !hideAuthenticatedNavButtons && (
@@ -202,6 +260,104 @@ function AppHeader() {
                   </button>
                 )}
               </nav>
+            )}
+
+            {!isLoading && showLoggedInHomeIcons && (
+              <div ref={homeMenuRef} className="relative ml-auto flex items-center gap-2" aria-label="Home quick actions">
+                <button
+                  type="button"
+                  aria-label="Notifications"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/12 bg-white/5 text-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                  style={navbarInteractionStyle}
+                >
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-4.5 w-4.5"
+                  >
+                    <path d="M15 17h5l-1.4-1.4a2 2 0 0 1-.6-1.4V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5" />
+                    <path d="M10 20a2 2 0 0 0 4 0" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  aria-label="Open account menu"
+                  aria-expanded={isHomeMenuOpen}
+                  aria-haspopup="menu"
+                  onClick={() => setIsHomeMenuOpen((open) => !open)}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/12 bg-white/5 text-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                  style={navbarInteractionStyle}
+                >
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-4.5 w-4.5"
+                  >
+                    <path d="M4 7h16" />
+                    <path d="M4 12h16" />
+                    <path d="M4 17h16" />
+                  </svg>
+                </button>
+
+                {isHomeMenuOpen && (
+                  <div
+                    role="menu"
+                    aria-label="Account menu"
+                    className="absolute right-0 top-full z-40 mt-2 w-[18.5rem] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_48px_-28px_rgba(15,23,42,0.45)]"
+                  >
+                    <div className="border-b border-slate-100 px-4 py-3">
+                      <p className="text-sm font-semibold text-slate-900">Menu</p>
+                    </div>
+                    <div className="py-2">
+                      {homeMenuItems.map((item) => (
+                        <button
+                          key={item.label}
+                          type="button"
+                          role="menuitem"
+                          disabled={item.disabled}
+                          onClick={() => handleHomeMenuItemClick(item)}
+                          className={`flex w-full items-center justify-between px-4 py-2.5 text-left text-sm ${
+                            item.disabled
+                              ? 'cursor-default text-slate-400'
+                              : 'text-slate-700 hover:bg-slate-50 focus:bg-slate-50'
+                          } focus:outline-none`}
+                        >
+                          <span className="whitespace-nowrap">{item.label}</span>
+                          {item.disabled && (
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
+                              Coming soon
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="border-t border-slate-100 p-2">
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={async () => {
+                          setIsHomeMenuOpen(false)
+                          await handleLogout()
+                        }}
+                        disabled={isSigningOut}
+                        className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm font-medium text-rose-600 hover:bg-rose-50 focus:bg-rose-50 focus:outline-none disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        <span>{isSigningOut ? 'Logging out...' : 'Log Out'}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
