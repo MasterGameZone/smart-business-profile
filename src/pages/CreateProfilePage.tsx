@@ -12,6 +12,7 @@ import { updateBusinessProfile } from '../lib/businessProfileService.ts'
 import { validateImageFile } from '../lib/storageService.ts'
 import { usePageMeta } from '../hooks/usePageMeta.ts'
 import { ToastContainer, type ToastItem, type ToastType } from '../components/Toast.tsx'
+import { getActiveMode } from '../utils/activeMode.ts'
 import AppHeader from '../components/AppHeader.tsx'
 
 interface FormErrors {
@@ -83,6 +84,7 @@ function CreateProfilePage() {
   const navigate = useNavigate()
   const { profileData, setProfileData, clearProfile } = useProfile()
   const { user } = useAuth()
+  const activeMode = getActiveMode()
 
   usePageMeta({
     title: 'Create Business Profile | Smart Business Profile',
@@ -424,7 +426,9 @@ function CreateProfilePage() {
         galleryImages: [],
         existingGalleryImageUrls: Array.isArray(updated.gallery_images) ? updated.gallery_images : [],
       })
-      navigate('/dashboard', { state: { profileUpdated: true } })
+      navigate(activeMode === 'business' ? '/business-home' : '/dashboard', {
+        state: { profileUpdated: true },
+      })
     } catch (error) {
       console.error('Failed to update business profile:', error)
       showToast('Something went wrong while updating. Please try again.', 'error')

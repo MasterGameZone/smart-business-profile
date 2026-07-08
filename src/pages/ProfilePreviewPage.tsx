@@ -7,6 +7,7 @@ import { usePageMeta } from '../hooks/usePageMeta.ts'
 import { ToastContainer, type ToastItem, type ToastType } from '../components/Toast.tsx'
 import BusinessProfileDisplay from '../components/BusinessProfileDisplay.tsx'
 import { svgContainerToBlob, triggerBlobDownload } from '../utils/qr.ts'
+import { getActiveMode } from '../utils/activeMode.ts'
 import AppHeader from '../components/AppHeader.tsx'
 
 function parsePreviewServices(text: string): string[] {
@@ -36,6 +37,7 @@ function ProfilePreviewPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { profileData, setProfileData } = useProfile()
+  const activeMode = getActiveMode()
 
   usePageMeta({
     title: 'Preview Business Profile | Smart Business Profile',
@@ -158,7 +160,9 @@ function ProfilePreviewPage() {
         existingGalleryImageUrls: Array.isArray(saved.gallery_images) ? saved.gallery_images : [],
       })
       setHasSaved(true)
-      navigate('/dashboard', { state: { profileCreated: true } })
+      navigate(activeMode === 'business' ? '/business-home' : '/dashboard', {
+        state: { profileCreated: true },
+      })
     } catch (error) {
       console.error('Failed to save business profile:', error)
       showToast('Something went wrong while saving. Please try again.', 'error')
