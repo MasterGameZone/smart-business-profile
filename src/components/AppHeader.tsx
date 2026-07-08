@@ -152,7 +152,7 @@ function AppHeader() {
 
   const homeMenuItems: HomeMenuItem[] = [
     { label: 'Account Settings', disabled: true },
-    { label: 'Favorites / Saved Businesses', disabled: true },
+    { label: 'Favorites / Saved Businesses', path: '/favorites' },
     { label: 'My Reviews', disabled: true },
     { label: 'Notifications', disabled: true },
     { label: 'Switch to Business Owner', path: '/start-business' },

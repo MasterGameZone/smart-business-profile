@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { RefObject } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { getBusinessProfileBySlug } from '../lib/businessProfileService.ts'
+import {
+  getFavoriteBusiness,
+  removeFavoriteBusiness,
+  saveFavoriteBusiness,
+} from '../lib/favoriteBusinessService.ts'
 import { usePageMeta } from '../hooks/usePageMeta.ts'
 import type { BusinessProfileRow } from '../types/businessProfile.ts'
 import { ToastContainer, type ToastItem, type ToastType } from '../components/Toast.tsx'
@@ -36,12 +41,16 @@ function buildProfileDescription(profile: BusinessProfileRow): string {
 
 function PublicBusinessProfilePage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { slug } = useParams<{ slug: string }>()
   const { user } = useAuth()
 
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const [loadState, setLoadState] = useState<LoadState>('loading')
   const [profile, setProfile] = useState<BusinessProfileRow | null>(null)
+  const [isFavoriteSaved, setIsFavoriteSaved] = useState(false)
+  const [isFavoriteLoading, setIsFavoriteLoading] = useState(false)
+  const [hasCheckedFavorite, setHasCheckedFavorite] = useState(false)
   const qrSectionRef = useRef<HTMLElement>(null) as RefObject<HTMLElement>
   const qrCodeRef = useRef<HTMLDivElement>(null) as RefObject<HTMLDivElement>
 
@@ -117,6 +126,40 @@ function PublicBusinessProfilePage() {
     saveRecentlyViewedBusiness(user.id, profile)
   }, [loadState, profile, user])
 
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadFavoriteStatus() {
+      if (!user || !profile || loadState !== 'found') {
+        setIsFavoriteSaved(false)
+        setHasCheckedFavorite(false)
+        return
+      }
+
+      setHasCheckedFavorite(false)
+
+      try {
+        const favorite = await getFavoriteBusiness(user.id, profile.id)
+        if (cancelled) return
+
+        setIsFavoriteSaved(Boolean(favorite))
+      } catch (error) {
+        if (cancelled) return
+        console.error('Failed to load favorite business status:', error)
+      } finally {
+        if (!cancelled) {
+          setHasCheckedFavorite(true)
+        }
+      }
+    }
+
+    loadFavoriteStatus()
+
+    return () => {
+      cancelled = true
+    }
+  }, [loadState, profile, user])
+
   const handleShare = async () => {
     const title = profile?.business_name || 'Business Profile'
     if (navigator.share) {
@@ -162,6 +205,47 @@ function PublicBusinessProfilePage() {
       // User cancelled share.
     }
   }
+
+  const handleFavoriteToggle = useCallback(async () => {
+    if (!profile) return
+
+    if (!user) {
+      navigate('/login', { state: { from: location } })
+      return
+    }
+
+    setIsFavoriteLoading(true)
+
+    try {
+      if (isFavoriteSaved) {
+        await removeFavoriteBusiness(user.id, profile.id)
+        setIsFavoriteSaved(false)
+        showToast('Business removed from saved businesses.')
+      } else {
+        await saveFavoriteBusiness(user.id, profile.id)
+        setIsFavoriteSaved(true)
+        showToast('Business saved.')
+      }
+    } catch (error) {
+      console.error('Failed to update saved business:', error)
+      showToast('Unable to update this saved business right now.', 'error')
+    } finally {
+      setIsFavoriteLoading(false)
+      setHasCheckedFavorite(true)
+    }
+  }, [isFavoriteSaved, location, navigate, profile, showToast, user])
+
+  const favoriteButtonLabel = !user
+    ? 'Log in to Save'
+    : isFavoriteLoading || !hasCheckedFavorite
+      ? 'Loading...'
+      : isFavoriteSaved
+        ? 'Saved'
+        : 'Save'
+
+  const favoriteButtonClass = user && isFavoriteSaved
+    ? 'flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 py-3 text-sm font-semibold text-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70'
+    : 'flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3 text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70'
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-100 to-blue-50 pb-12">
@@ -235,6 +319,24 @@ function PublicBusinessProfilePage() {
             qrCodeRef={qrCodeRef}
             onDownloadQR={handleDownloadQR}
             onShareQR={handleShareQR}
+            saveButtonSlot={
+              <button
+                type="button"
+                onClick={handleFavoriteToggle}
+                disabled={isFavoriteLoading || (Boolean(user) && !hasCheckedFavorite)}
+                aria-label={favoriteButtonLabel}
+                className={favoriteButtonClass}
+              >
+                <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill={user && isFavoriteSaved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 4.75A1.75 1.75 0 0 1 7.75 3h8.5A1.75 1.75 0 0 1 18 4.75V21l-6-3.75L6 21V4.75z"
+                  />
+                </svg>
+                {favoriteButtonLabel}
+              </button>
+            }
           />
         )}
       </div>

@@ -11,6 +11,7 @@ import DashboardPage from './pages/DashboardPage.tsx'
 import DirectoryPage from './pages/DirectoryPage.tsx'
 import StartBusinessPage from './pages/StartBusinessPage.tsx'
 import BusinessHomePage from './pages/BusinessHomePage.tsx'
+import FavoritesPage from './pages/FavoritesPage.tsx'
 import ProtectedRoute from './components/ProtectedRoute.tsx'
 
 function App() {
@@ -56,6 +57,14 @@ function App() {
         element={
           <ProtectedRoute>
             <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/favorites"
+        element={
+          <ProtectedRoute>
+            <FavoritesPage />
           </ProtectedRoute>
         }
       />
