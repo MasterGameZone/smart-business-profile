@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import AppHeader from '../components/AppHeader.tsx'
@@ -6,12 +5,11 @@ import { usePageMeta } from '../hooks/usePageMeta.ts'
 
 function StartBusinessPage() {
   const navigate = useNavigate()
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false)
 
   usePageMeta({
     title: 'Start Your Business Profile | Smart Business Profile',
     description:
-      'Learn whether you should create a business profile and confirm before continuing to profile creation.',
+      'Learn whether you should create a business profile and continue to the temporary business owner home.',
   })
 
   return (
@@ -33,59 +31,28 @@ function StartBusinessPage() {
         </section>
 
         <section className="mt-14 w-full max-w-md text-center sm:mt-16">
-          <p className="text-base font-semibold tracking-tight text-slate-100">Are you ready?</p>
+          <p className="text-base font-semibold tracking-tight text-slate-100">
+            Ready to continue as a business owner?
+          </p>
 
           <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-center">
             <button
               type="button"
-              onClick={() => setIsConfirmOpen(true)}
+              onClick={() => navigate('/business-home')}
               className="inline-flex min-h-[42px] flex-1 items-center justify-center rounded-full border border-sky-400/30 bg-[linear-gradient(135deg,#38bdf8_0%,#2563eb_55%,#0f172a_100%)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_16px_32px_-20px_rgba(56,189,248,0.42)] focus:outline-none focus:ring-2 focus:ring-sky-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
             >
-              Create Business Profile
+              Yes, Continue
             </button>
             <button
               type="button"
               onClick={() => navigate('/')}
               className="inline-flex min-h-[42px] flex-1 items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
             >
-              Go Back
+              No, Go Back
             </button>
           </div>
         </section>
       </main>
-
-      {isConfirmOpen && (
-        <div
-          className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/70 px-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="start-business-confirm-title"
-        >
-          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-900 p-6 text-center shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)]">
-            <p id="start-business-confirm-title" className="text-base font-semibold leading-relaxed text-slate-50 sm:text-lg">
-              Are you creating this profile for a business, professional service, shop, freelancer work, or any
-              service you are authorised to represent?
-            </p>
-
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <button
-                type="button"
-                onClick={() => navigate('/create-profile')}
-                className="inline-flex flex-1 items-center justify-center rounded-full border border-sky-400/30 bg-[linear-gradient(135deg,#38bdf8_0%,#2563eb_55%,#0f172a_100%)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_16px_32px_-20px_rgba(56,189,248,0.42)] focus:outline-none focus:ring-2 focus:ring-sky-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
-              >
-                Yes, Continue
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate('/')}
-                className="inline-flex flex-1 items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
-              >
-                No, Go Back
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

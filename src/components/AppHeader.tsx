@@ -30,13 +30,15 @@ function AppHeader() {
   const homeMenuRef = useRef<HTMLDivElement | null>(null)
   const isLandingPage = location.pathname === '/'
   const isStartBusinessPage = location.pathname === '/start-business'
+  const isBusinessHomePage = location.pathname === '/business-home'
   const isDirectoryPage = location.pathname === '/directory'
   const isAuthEntryPage = location.pathname === '/login' || location.pathname === '/signup'
   const isSimpleDarkNavbarPage = isAuthEntryPage || isDirectoryPage
   const showMinimalCustomerTopBar = Boolean(user) && (isLandingPage || isStartBusinessPage)
   const showStartBusinessLogoOnly = Boolean(user) && isStartBusinessPage
-  const isDarkLandingNavbar = isLandingPage || isStartBusinessPage || isSimpleDarkNavbarPage
-  const hideAuthenticatedNavButtons = showMinimalCustomerTopBar
+  const showBusinessHomeTopBar = Boolean(user) && isBusinessHomePage
+  const isDarkLandingNavbar = isLandingPage || isStartBusinessPage || isBusinessHomePage || isSimpleDarkNavbarPage
+  const hideAuthenticatedNavButtons = showMinimalCustomerTopBar || showBusinessHomeTopBar
   const showLoggedInHomeIcons = showMinimalCustomerTopBar && !showStartBusinessLogoOnly
   const navbarInteractionStyle: CSSProperties = {
     WebkitTapHighlightColor: 'transparent',
@@ -224,8 +226,98 @@ function AppHeader() {
                 />
                 <span className="relative z-10">SB</span>
               </span>
-              {!isLandingPage && !isStartBusinessPage && !isSimpleDarkNavbarPage && 'Smart Business Profile'}
+              {!isLandingPage && !isStartBusinessPage && !isBusinessHomePage && !isSimpleDarkNavbarPage && 'Smart Business Profile'}
             </button>
+
+            {!isLoading && showBusinessHomeTopBar && (
+              <div
+                ref={homeMenuRef}
+                className="ml-auto flex items-center gap-2"
+                aria-label="Business home quick actions"
+              >
+                <button
+                  type="button"
+                  onClick={() => navigate('/create-profile')}
+                  className="inline-flex min-h-[36px] items-center justify-center rounded-full border border-sky-400/30 bg-[linear-gradient(135deg,#38bdf8_0%,#2563eb_55%,#0f172a_100%)] px-4 py-2 text-sm font-semibold text-white shadow-[0_16px_32px_-20px_rgba(56,189,248,0.42)] focus:outline-none focus:ring-2 focus:ring-sky-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
+                  style={navbarInteractionStyle}
+                >
+                  + Create Business Profile
+                </button>
+                <button
+                  type="button"
+                  aria-label="Open account menu"
+                  aria-expanded={isHomeMenuOpen}
+                  aria-haspopup="menu"
+                  onClick={() => setIsHomeMenuOpen((open) => !open)}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/12 bg-white/5 text-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                  style={navbarInteractionStyle}
+                >
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-4.5 w-4.5"
+                  >
+                    <path d="M4 7h16" />
+                    <path d="M4 12h16" />
+                    <path d="M4 17h16" />
+                  </svg>
+                </button>
+
+                {isHomeMenuOpen && (
+                  <div
+                    role="menu"
+                    aria-label="Account menu"
+                    className="absolute right-0 top-full z-40 mt-2 w-[18.5rem] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_48px_-28px_rgba(15,23,42,0.45)]"
+                  >
+                    <div className="border-b border-slate-100 px-4 py-3">
+                      <p className="text-sm font-semibold text-slate-900">Menu</p>
+                    </div>
+                    <div className="py-2">
+                      {homeMenuItems.map((item) => (
+                        <button
+                          key={item.label}
+                          type="button"
+                          role="menuitem"
+                          disabled={item.disabled}
+                          onClick={() => handleHomeMenuItemClick(item)}
+                          className={`flex w-full items-center justify-between px-4 py-2.5 text-left text-sm ${
+                            item.disabled
+                              ? 'cursor-default text-slate-400'
+                              : 'text-slate-700 hover:bg-slate-50 focus:bg-slate-50'
+                          } focus:outline-none`}
+                        >
+                          <span className="whitespace-nowrap">{item.label}</span>
+                          {item.disabled && (
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
+                              Coming soon
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="border-t border-slate-100 p-2">
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={async () => {
+                          setIsHomeMenuOpen(false)
+                          await handleLogout()
+                        }}
+                        disabled={isSigningOut}
+                        className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm font-medium text-rose-600 hover:bg-rose-50 focus:bg-rose-50 focus:outline-none disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        <span>{isSigningOut ? 'Logging out...' : 'Log Out'}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {!isLoading && !hideAuthenticatedNavButtons && (
               <nav
