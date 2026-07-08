@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 
 import AppHeader from '../components/AppHeader.tsx'
 import { usePageMeta } from '../hooks/usePageMeta.ts'
+import { setActiveMode } from '../utils/activeMode.ts'
 
 function StartBusinessPage() {
   const navigate = useNavigate()
@@ -38,14 +39,20 @@ function StartBusinessPage() {
           <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-center">
             <button
               type="button"
-              onClick={() => navigate('/business-home')}
+              onClick={() => {
+                setActiveMode('business')
+                navigate('/business-home')
+              }}
               className="inline-flex min-h-[42px] flex-1 items-center justify-center rounded-full border border-sky-400/30 bg-[linear-gradient(135deg,#38bdf8_0%,#2563eb_55%,#0f172a_100%)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_16px_32px_-20px_rgba(56,189,248,0.42)] focus:outline-none focus:ring-2 focus:ring-sky-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
             >
               Yes, Continue
             </button>
             <button
               type="button"
-              onClick={() => navigate('/')}
+              onClick={() => {
+                setActiveMode('customer')
+                navigate('/')
+              }}
               className="inline-flex min-h-[42px] flex-1 items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
             >
               No, Go Back

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.tsx'
 import { signOut } from '../lib/authService.ts'
+import { getActiveMode, setActiveMode } from '../utils/activeMode.ts'
 import { ToastContainer, type ToastItem } from './Toast.tsx'
 
 interface NavItem {
@@ -15,6 +16,7 @@ interface HomeMenuItem {
   label: string
   path?: string
   disabled?: boolean
+  onSelect?: () => void
 }
 
 let hasPlayedNavbarEntrance = false
@@ -40,6 +42,9 @@ function AppHeader() {
   const isDarkLandingNavbar = isLandingPage || isStartBusinessPage || isBusinessHomePage || isSimpleDarkNavbarPage
   const hideAuthenticatedNavButtons = showMinimalCustomerTopBar || showBusinessHomeTopBar
   const showLoggedInHomeIcons = showMinimalCustomerTopBar && !showStartBusinessLogoOnly
+  const hasTopBarMenu = showLoggedInHomeIcons || showBusinessHomeTopBar
+  const activeMode = getActiveMode()
+  const authenticatedHomePath = location.pathname === '/create-profile' && activeMode === 'business' ? '/business-home' : '/'
   const navbarInteractionStyle: CSSProperties = {
     WebkitTapHighlightColor: 'transparent',
   }
@@ -51,7 +56,7 @@ function AppHeader() {
   }, [shouldAnimateEntrance])
 
   useEffect(() => {
-    if (!showLoggedInHomeIcons || !isHomeMenuOpen) {
+    if (!hasTopBarMenu || !isHomeMenuOpen) {
       return undefined
     }
 
@@ -74,7 +79,7 @@ function AppHeader() {
       document.removeEventListener('mousedown', handlePointerDown)
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [isHomeMenuOpen, showLoggedInHomeIcons])
+  }, [hasTopBarMenu, isHomeMenuOpen])
 
   useEffect(() => {
     setIsHomeMenuOpen(false)
@@ -90,7 +95,7 @@ function AppHeader() {
     ? [{ label: 'Home', path: '/' }]
     : user
     ? [
-        { label: 'Home', path: '/' },
+        { label: 'Home', path: authenticatedHomePath },
         { label: 'Dashboard', path: '/dashboard' },
         { label: 'Directory', path: '/directory' },
         { label: 'Create Business', path: '/create-profile', emphasis: true },
@@ -147,14 +152,35 @@ function AppHeader() {
     { label: 'Help & Support', disabled: true },
   ]
 
+  const businessMenuItems: HomeMenuItem[] = [
+    { label: 'Dashboard', disabled: true },
+    { label: 'My Business Profiles', disabled: true },
+    { label: 'Create Business Profile', path: '/create-profile' },
+    {
+      label: 'Switch to Customer',
+      onSelect: () => {
+        setActiveMode('customer')
+        navigate('/')
+      },
+    },
+    { label: 'Help & Support', disabled: true },
+  ]
+
   const handleHomeMenuItemClick = (item: HomeMenuItem) => {
-    if (item.disabled || !item.path) {
+    if (item.disabled) {
       setIsHomeMenuOpen(false)
       return
     }
 
     setIsHomeMenuOpen(false)
-    navigate(item.path)
+    if (item.onSelect) {
+      item.onSelect()
+      return
+    }
+
+    if (item.path) {
+      navigate(item.path)
+    }
   }
 
   const navButtonClass = (item: NavItem) => {
@@ -278,7 +304,7 @@ function AppHeader() {
                       <p className="text-sm font-semibold text-slate-900">Menu</p>
                     </div>
                     <div className="py-2">
-                      {homeMenuItems.map((item) => (
+                      {businessMenuItems.map((item) => (
                         <button
                           key={item.label}
                           type="button"
