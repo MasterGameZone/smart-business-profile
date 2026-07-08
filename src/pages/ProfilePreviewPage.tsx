@@ -138,7 +138,8 @@ function ProfilePreviewPage() {
       !profileData.businessName.trim() ||
       !profileData.ownerName.trim() ||
       !profileData.businessCategory ||
-      !profileData.phoneNumber.trim()
+      !profileData.phoneNumber.trim() ||
+      !profileData.email.trim()
     ) {
       showToast('Please complete all required fields before saving.', 'error')
       return

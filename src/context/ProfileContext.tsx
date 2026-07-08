@@ -18,9 +18,7 @@ export interface WorkingHoursDay {
 
 export type WorkingHoursForm = Record<WorkingDayKey, WorkingHoursDay>
 
-export type SocialLinkKey = 'facebook' | 'instagram' | 'linkedin' | 'youtube' | 'x'
-
-export type SocialLinksForm = Record<SocialLinkKey, string>
+export type SocialLinksForm = Record<string, string>
 
 export const workingDays: Array<{ key: WorkingDayKey; label: string }> = [
   { key: 'monday', label: 'Monday' },
@@ -32,9 +30,9 @@ export const workingDays: Array<{ key: WorkingDayKey; label: string }> = [
   { key: 'sunday', label: 'Sunday' },
 ]
 
-export const socialLinkFields: Array<{ key: SocialLinkKey; label: string; placeholder: string }> = [
-  { key: 'facebook', label: 'Facebook', placeholder: 'https://facebook.com/yourbusiness' },
+export const socialLinkFields: Array<{ key: string; label: string; placeholder: string }> = [
   { key: 'instagram', label: 'Instagram', placeholder: 'https://instagram.com/yourbusiness' },
+  { key: 'facebook', label: 'Facebook', placeholder: 'https://facebook.com/yourbusiness' },
   { key: 'linkedin', label: 'LinkedIn', placeholder: 'https://linkedin.com/company/yourbusiness' },
   { key: 'youtube', label: 'YouTube', placeholder: 'https://youtube.com/@yourbusiness' },
   { key: 'x', label: 'X / Twitter', placeholder: 'https://x.com/yourbusiness' },
@@ -54,11 +52,8 @@ export function createDefaultWorkingHours(): WorkingHoursForm {
 
 export function createDefaultSocialLinks(): SocialLinksForm {
   return {
-    facebook: '',
     instagram: '',
-    linkedin: '',
-    youtube: '',
-    x: '',
+    facebook: '',
   }
 }
 
@@ -86,12 +81,15 @@ export function normalizeWorkingHours(value: JsonObject | null): WorkingHoursFor
 }
 
 export function normalizeSocialLinks(value: SocialLinks | null): SocialLinksForm {
-  const normalized = createDefaultSocialLinks()
+  const normalized: SocialLinksForm = createDefaultSocialLinks()
 
   if (!value) return normalized
 
-  for (const { key } of socialLinkFields) {
-    normalized[key] = value[key] || ''
+  for (const [key, entryValue] of Object.entries(value)) {
+    const trimmedKey = key.trim()
+    if (!trimmedKey || typeof entryValue !== 'string') continue
+
+    normalized[trimmedKey] = entryValue
   }
 
   return normalized

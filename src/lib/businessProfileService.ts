@@ -6,7 +6,7 @@ import type {
   PublicBusinessProfileRow,
 } from '../types/businessProfile'
 import type { ProfileData } from '../context/ProfileContext'
-import { workingDays, socialLinkFields } from '../context/ProfileContext'
+import { workingDays } from '../context/ProfileContext'
 import { slugify } from '../utils/slug'
 import { getCurrentUser } from './authService'
 import {
@@ -61,11 +61,14 @@ function mapWorkingHours(data: ProfileData): Record<string, { open: string; clos
 }
 
 function mapSocialLinks(data: ProfileData): Record<string, string> {
-  return socialLinkFields.reduce<Record<string, string>>((links, { key }) => {
-    const value = data.socialLinks[key].trim()
-    if (value) {
-      links[key] = value
+  return Object.entries(data.socialLinks).reduce<Record<string, string>>((links, [key, value]) => {
+    const trimmedKey = key.trim()
+    const trimmedValue = value.trim()
+
+    if (trimmedKey && trimmedValue) {
+      links[trimmedKey] = trimmedValue
     }
+
     return links
   }, {})
 }

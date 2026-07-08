@@ -46,14 +46,6 @@ const workingDayLabels = [
   { key: 'saturday', label: 'Saturday' },
   { key: 'sunday', label: 'Sunday' },
 ] as const
-const socialPlatformLabels = [
-  { keys: ['facebook'], label: 'Facebook' },
-  { keys: ['instagram'], label: 'Instagram' },
-  { keys: ['linkedin'], label: 'LinkedIn' },
-  { keys: ['youtube'], label: 'YouTube' },
-  { keys: ['x', 'twitter'], label: 'X / Twitter' },
-] as const
-
 function trimText(value: string | null | undefined): string {
   return typeof value === 'string' ? value.trim() : ''
 }
@@ -127,21 +119,39 @@ function normalizeWorkingHours(value: JsonObject | null | undefined): Array<{ da
   return hours
 }
 
+function toSocialPlatformLabel(value: string): string {
+  const trimmed = trimText(value)
+  if (!trimmed) return ''
+
+  switch (trimmed.toLowerCase()) {
+    case 'facebook':
+      return 'Facebook'
+    case 'instagram':
+      return 'Instagram'
+    case 'linkedin':
+      return 'LinkedIn'
+    case 'youtube':
+      return 'YouTube'
+    case 'x':
+    case 'twitter':
+    case 'x / twitter':
+      return 'X / Twitter'
+    default:
+      return trimmed
+  }
+}
+
 function normalizeSocialLinks(value: SocialLinks | null | undefined): Array<{ label: string; url: string }> {
   if (!isRecord(value)) return []
 
   const links: Array<{ label: string; url: string }> = []
 
-  for (const { keys, label } of socialPlatformLabels) {
-    const matchingUrl = keys
-      .map((key) => {
-        const candidate = value[key]
-        return typeof candidate === 'string' ? toValidUrl(candidate) : null
-      })
-      .find((candidate): candidate is string => Boolean(candidate))
+  for (const [key, entryValue] of Object.entries(value)) {
+    const label = toSocialPlatformLabel(key)
+    const url = typeof entryValue === 'string' ? toValidUrl(entryValue) : null
 
-    if (matchingUrl) {
-      links.push({ label, url: matchingUrl })
+    if (label && url) {
+      links.push({ label, url })
     }
   }
 

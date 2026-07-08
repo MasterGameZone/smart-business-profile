@@ -35,18 +35,21 @@ function AppHeader() {
   const isLandingPage = location.pathname === '/'
   const isStartBusinessPage = location.pathname === '/start-business'
   const isBusinessHomePage = location.pathname === '/business-home'
+  const isCreateProfilePage = location.pathname === '/create-profile'
   const isDirectoryPage = location.pathname === '/directory'
   const isAuthEntryPage = location.pathname === '/login' || location.pathname === '/signup'
   const isSimpleDarkNavbarPage = isAuthEntryPage || isDirectoryPage
+  const showCreateProfileTopBar = Boolean(user) && isCreateProfilePage
   const showMinimalCustomerTopBar = Boolean(user) && (isLandingPage || isStartBusinessPage)
   const showStartBusinessLogoOnly = Boolean(user) && isStartBusinessPage
   const showBusinessHomeTopBar = Boolean(user) && isBusinessHomePage
-  const isDarkLandingNavbar = isLandingPage || isStartBusinessPage || isBusinessHomePage || isSimpleDarkNavbarPage
-  const hideAuthenticatedNavButtons = showMinimalCustomerTopBar || showBusinessHomeTopBar
+  const isDarkLandingNavbar =
+    isLandingPage || isStartBusinessPage || isBusinessHomePage || isCreateProfilePage || isSimpleDarkNavbarPage
+  const hideAuthenticatedNavButtons = showMinimalCustomerTopBar || showBusinessHomeTopBar || showCreateProfileTopBar
   const showLoggedInHomeIcons = showMinimalCustomerTopBar && !showStartBusinessLogoOnly
   const hasTopBarMenu = showLoggedInHomeIcons || showBusinessHomeTopBar
   const activeMode = getActiveMode()
-  const authenticatedHomePath = location.pathname === '/create-profile' && activeMode === 'business' ? '/business-home' : '/'
+  const authenticatedHomePath = isCreateProfilePage && activeMode === 'business' ? '/business-home' : '/'
   const navbarInteractionStyle: CSSProperties = {
     WebkitTapHighlightColor: 'transparent',
   }
@@ -131,7 +134,18 @@ function AppHeader() {
   }
 
   const handleBrandClick = () => {
+    if (user && showCreateProfileTopBar) {
+      navigate(authenticatedHomePath)
+      return
+    }
+
     navigate(user ? '/dashboard' : '/')
+  }
+
+  const handleCreateProfileHelp = () => {
+    const id = Date.now()
+    setToasts((prev) => [...prev, { id, message: 'Help is coming soon.', type: 'info' }])
+    setTimeout(() => setToasts((prev) => prev.filter((toast) => toast.id !== id)), 4000)
   }
 
   const handleNavItemClick = (item: NavItem) => {
@@ -259,8 +273,43 @@ function AppHeader() {
                 />
                 <span className="relative z-10">SB</span>
               </span>
-              {!isLandingPage && !isStartBusinessPage && !isBusinessHomePage && !isSimpleDarkNavbarPage && 'Smart Business Profile'}
+              {!isLandingPage && !isStartBusinessPage && !isBusinessHomePage && !isCreateProfilePage && !isSimpleDarkNavbarPage && 'Smart Business Profile'}
             </button>
+
+            {!isLoading && showCreateProfileTopBar && (
+              <div className="ml-auto flex items-center gap-2" aria-label="Create profile quick actions">
+                <button
+                  type="button"
+                  onClick={() => navigate(authenticatedHomePath)}
+                  className="inline-flex min-h-[36px] items-center justify-center rounded-full border border-white/12 bg-white/5 px-4 py-2 text-sm font-medium text-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                  style={navbarInteractionStyle}
+                >
+                  Back to Home
+                </button>
+                <button
+                  type="button"
+                  aria-label="Help"
+                  onClick={handleCreateProfileHelp}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/12 bg-white/5 text-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                  style={navbarInteractionStyle}
+                >
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-4.5 w-4.5"
+                  >
+                    <path d="M9.09 9a3 3 0 1 1 5.82 1c0 2-3 3-3 3" />
+                    <path d="M12 17h.01" />
+                    <circle cx="12" cy="12" r="9" />
+                  </svg>
+                </button>
+              </div>
+            )}
 
             {!isLoading && showBusinessHomeTopBar && (
               <div

@@ -71,11 +71,16 @@ body {
   transform: translate3d(0, 0, 0);
 }
 
+.create-profile-heading-reveal {
+  animation: fadeSlideUp 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .landing-reveal,
   .landing-reveal-visible,
   .landing-ambient-drift,
-  .landing-streak-float {
+  .landing-streak-float,
+  .create-profile-heading-reveal {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
