@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import type { BusinessReviewRow } from '../types/review.ts'
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import type { BusinessReviewWithImages } from '../types/review.ts'
 import {
   createBusinessReview,
   deleteBusinessReview,
   getBusinessReviews,
+  getReviewImagePublicUrl,
   updateBusinessReview,
 } from '../lib/reviewService.ts'
+import { validateImageFile } from '../lib/storageService.ts'
 
 interface ReviewSectionProps {
   businessProfileId: string
@@ -14,6 +16,8 @@ interface ReviewSectionProps {
 }
 
 type ReviewAction = 'create' | 'update' | 'delete'
+const MAX_REVIEW_IMAGES = 3
+const imageAccept = 'image/jpeg,image/png,image/webp'
 
 function formatReviewDate(value: string): string {
   const date = new Date(value)
@@ -26,7 +30,7 @@ function formatReviewDate(value: string): string {
   }).format(date)
 }
 
-function getReviewSummary(reviews: BusinessReviewRow[]): { average: number; count: number } {
+function getReviewSummary(reviews: BusinessReviewWithImages[]): { average: number; count: number } {
   if (reviews.length === 0) {
     return { average: 0, count: 0 }
   }
@@ -89,8 +93,31 @@ function RatingSelector({
   )
 }
 
+function ReviewImageThumbnail({
+  imageUrl,
+  altText,
+  onRemove,
+}: {
+  imageUrl: string
+  altText: string
+  onRemove: () => void
+}) {
+  return (
+    <div className="relative overflow-hidden rounded-xl border border-gray-100 bg-gray-50">
+      <img src={imageUrl} alt={altText} className="aspect-square w-full object-cover" />
+      <button
+        type="button"
+        onClick={onRemove}
+        className="absolute right-1.5 top-1.5 rounded-full bg-white/95 px-2 py-1 text-xs font-medium text-red-600 shadow-sm transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-red-200"
+      >
+        Remove
+      </button>
+    </div>
+  )
+}
+
 function ReviewSection({ businessProfileId, userId, onLogin }: ReviewSectionProps) {
-  const [reviews, setReviews] = useState<BusinessReviewRow[]>([])
+  const [reviews, setReviews] = useState<BusinessReviewWithImages[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
@@ -98,6 +125,11 @@ function ReviewSection({ businessProfileId, userId, onLogin }: ReviewSectionProp
   const [isEditing, setIsEditing] = useState(false)
   const [rating, setRating] = useState(0)
   const [reviewText, setReviewText] = useState('')
+  const [selectedImageFiles, setSelectedImageFiles] = useState<File[]>([])
+  const [selectedImagePreviews, setSelectedImagePreviews] = useState<Array<{ key: string; url: string; name: string }>>([])
+  const [removedImageIds, setRemovedImageIds] = useState<string[]>([])
+  const imageInputRef = useRef<HTMLInputElement>(null)
+  const selectedImagePreviewsRef = useRef<Array<{ key: string; url: string; name: string }>>([])
 
   const ownReview = useMemo(
     () => reviews.find((review) => userId && review.user_id === userId) ?? null,
@@ -135,22 +167,111 @@ function ReviewSection({ businessProfileId, userId, onLogin }: ReviewSectionProp
     }
   }, [businessProfileId])
 
+  useEffect(() => {
+    selectedImagePreviewsRef.current = selectedImagePreviews
+  }, [selectedImagePreviews])
+
+  useEffect(() => {
+    return () => {
+      selectedImagePreviewsRef.current.forEach((preview) => URL.revokeObjectURL(preview.url))
+    }
+  }, [])
+
   const resetForm = () => {
     setRating(0)
     setReviewText('')
+    selectedImagePreviews.forEach((preview) => URL.revokeObjectURL(preview.url))
+    setSelectedImageFiles([])
+    setSelectedImagePreviews([])
+    setRemovedImageIds([])
     setActionError(null)
+    if (imageInputRef.current) {
+      imageInputRef.current.value = ''
+    }
   }
 
-  const startEditing = (review: BusinessReviewRow) => {
+  const startEditing = (review: BusinessReviewWithImages) => {
     setRating(review.rating)
     setReviewText(review.review_text ?? '')
+    selectedImagePreviews.forEach((preview) => URL.revokeObjectURL(preview.url))
+    setSelectedImageFiles([])
+    setSelectedImagePreviews([])
+    setRemovedImageIds([])
     setIsEditing(true)
     setActionError(null)
+    if (imageInputRef.current) {
+      imageInputRef.current.value = ''
+    }
   }
 
   const cancelEditing = () => {
     setIsEditing(false)
     resetForm()
+  }
+
+  const visibleExistingImages = ownReview && isEditing
+    ? ownReview.images.filter((image) => !removedImageIds.includes(image.id))
+    : []
+  const totalFormImages = visibleExistingImages.length + selectedImageFiles.length
+
+  const handleImageSelection = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? [])
+    if (files.length === 0) return
+
+    if (totalFormImages + files.length > MAX_REVIEW_IMAGES) {
+      setActionError('You can upload up to 3 images.')
+      if (imageInputRef.current) {
+        imageInputRef.current.value = ''
+      }
+      return
+    }
+
+    for (const file of files) {
+      const validation = validateImageFile(file)
+      if (!validation.valid) {
+        setActionError(validation.error || 'Invalid image file.')
+        if (imageInputRef.current) {
+          imageInputRef.current.value = ''
+        }
+        return
+      }
+    }
+
+    const nextPreviews = files.map((file) => ({
+      key: `${file.name}-${file.lastModified}-${file.size}`,
+      name: file.name,
+      url: URL.createObjectURL(file),
+    }))
+
+    setSelectedImageFiles((currentFiles) => [...currentFiles, ...files])
+    setSelectedImagePreviews((currentPreviews) => [...currentPreviews, ...nextPreviews])
+    setActionError(null)
+
+    if (imageInputRef.current) {
+      imageInputRef.current.value = ''
+    }
+  }
+
+  const handleRemoveSelectedImage = (index: number) => {
+    const preview = selectedImagePreviews[index]
+    if (preview) {
+      URL.revokeObjectURL(preview.url)
+    }
+
+    setSelectedImageFiles((currentFiles) =>
+      currentFiles.filter((_, fileIndex) => fileIndex !== index)
+    )
+    setSelectedImagePreviews((currentPreviews) =>
+      currentPreviews.filter((_, previewIndex) => previewIndex !== index)
+    )
+    setActionError(null)
+  }
+
+  const handleRemoveExistingImage = (imageId: string) => {
+    setRemovedImageIds((currentIds) =>
+      currentIds.includes(imageId) ? currentIds : [...currentIds, imageId]
+    )
+    setActionError(null)
   }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -163,6 +284,11 @@ function ReviewSection({ businessProfileId, userId, onLogin }: ReviewSectionProp
       return
     }
 
+    if (totalFormImages > MAX_REVIEW_IMAGES) {
+      setActionError('You can upload up to 3 images.')
+      return
+    }
+
     setActionError(null)
     setActiveAction(ownReview && isEditing ? 'update' : 'create')
 
@@ -171,7 +297,7 @@ function ReviewSection({ businessProfileId, userId, onLogin }: ReviewSectionProp
         const updatedReview = await updateBusinessReview(ownReview.id, userId, {
           rating,
           review_text: reviewText,
-        })
+        }, ownReview.images, removedImageIds, selectedImageFiles)
 
         setReviews((currentReviews) =>
           currentReviews.map((review) =>
@@ -187,7 +313,8 @@ function ReviewSection({ businessProfileId, userId, onLogin }: ReviewSectionProp
         userId,
         businessProfileId,
         rating,
-        reviewText
+        reviewText,
+        selectedImageFiles
       )
 
       setReviews((currentReviews) => {
@@ -209,7 +336,7 @@ function ReviewSection({ businessProfileId, userId, onLogin }: ReviewSectionProp
     }
   }
 
-  const handleDelete = async (review: BusinessReviewRow) => {
+  const handleDelete = async (review: BusinessReviewWithImages) => {
     if (!userId) return
 
     const confirmed = window.confirm('Delete your review?')
@@ -219,7 +346,7 @@ function ReviewSection({ businessProfileId, userId, onLogin }: ReviewSectionProp
     setActiveAction('delete')
 
     try {
-      await deleteBusinessReview(review.id, userId)
+      await deleteBusinessReview(review.id, userId, review.images)
       setReviews((currentReviews) =>
         currentReviews.filter((currentReview) => currentReview.id !== review.id)
       )
@@ -323,6 +450,45 @@ function ReviewSection({ businessProfileId, userId, onLogin }: ReviewSectionProp
                 className="mt-2 w-full resize-y rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
               />
 
+              <div className="mt-4">
+                <label htmlFor="reviewImages" className="block text-sm font-semibold text-gray-900">
+                  Add photos <span className="font-normal text-gray-400">Optional</span>
+                </label>
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  id="reviewImages"
+                  accept={imageAccept}
+                  multiple
+                  onChange={handleImageSelection}
+                  disabled={totalFormImages >= MAX_REVIEW_IMAGES}
+                  className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 file:mr-4 file:rounded-lg file:border-0 file:bg-gray-900 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
+                />
+                <p className="mt-2 text-xs text-gray-400">Upload up to 3 images.</p>
+              </div>
+
+              {(visibleExistingImages.length > 0 || selectedImagePreviews.length > 0) && (
+                <div className="mt-4 grid grid-cols-3 gap-3">
+                  {visibleExistingImages.map((image) => (
+                    <ReviewImageThumbnail
+                      key={image.id}
+                      imageUrl={getReviewImagePublicUrl(image.image_path)}
+                      altText="Saved review image"
+                      onRemove={() => handleRemoveExistingImage(image.id)}
+                    />
+                  ))}
+
+                  {selectedImagePreviews.map((preview, index) => (
+                    <ReviewImageThumbnail
+                      key={preview.key}
+                      imageUrl={preview.url}
+                      altText={preview.name}
+                      onRemove={() => handleRemoveSelectedImage(index)}
+                    />
+                  ))}
+                </div>
+              )}
+
               {actionError && (
                 <p role="alert" className="mt-3 text-sm text-red-600">
                   {actionError}
@@ -369,8 +535,22 @@ function ReviewSection({ businessProfileId, userId, onLogin }: ReviewSectionProp
                       <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-gray-700">
                         {review.review_text}
                       </p>
-                    ) : (
+                    ) : review.images.length === 0 ? (
                       <p className="mt-3 text-sm text-gray-500">Rating only.</p>
+                    ) : null}
+
+                    {review.images.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {review.images.map((image, index) => (
+                          <img
+                            key={image.id}
+                            src={getReviewImagePublicUrl(image.image_path)}
+                            alt={`Review image ${index + 1}`}
+                            className="h-20 w-20 rounded-xl border border-gray-100 object-cover"
+                            loading="lazy"
+                          />
+                        ))}
+                      </div>
                     )}
 
                     {isOwnReview && !isEditing && (
