@@ -6,6 +6,15 @@ import { signOut } from '../lib/authService.ts'
 import { getActiveMode, setActiveMode } from '../utils/activeMode.ts'
 import { ToastContainer, type ToastItem } from './Toast.tsx'
 
+interface AppHeaderPreviewConfig {
+  backPath: string
+  backLabel: string
+}
+
+interface AppHeaderProps {
+  previewConfig?: AppHeaderPreviewConfig | null
+}
+
 interface NavItem {
   label: string
   path: string
@@ -22,7 +31,7 @@ interface HomeMenuItem {
 
 let hasPlayedNavbarEntrance = false
 
-function AppHeader() {
+function AppHeader({ previewConfig = null }: AppHeaderProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, isLoading } = useAuth()
@@ -45,6 +54,8 @@ function AppHeader() {
   const showBusinessHomeTopBar = Boolean(user) && isBusinessHomePage
   const isDarkLandingNavbar =
     isLandingPage || isStartBusinessPage || isBusinessHomePage || isCreateProfilePage || isSimpleDarkNavbarPage
+  const showPreviewHeader = Boolean(previewConfig)
+  const useDarkHeaderStyle = isDarkLandingNavbar || showPreviewHeader
   const hideAuthenticatedNavButtons = showMinimalCustomerTopBar || showBusinessHomeTopBar || showCreateProfileTopBar
   const showLoggedInHomeIcons = showMinimalCustomerTopBar && !showStartBusinessLogoOnly
   const hasTopBarMenu = showLoggedInHomeIcons || showBusinessHomeTopBar
@@ -211,12 +222,12 @@ function AppHeader() {
         : location.pathname === item.path
     const baseClass =
       `relative inline-flex min-w-[4rem] items-center justify-center overflow-hidden rounded-full border px-3 py-1 text-xs font-semibold tracking-[0.01em] focus:outline-none focus-visible:ring-2 sm:min-w-[4.5rem] sm:px-3.5 sm:py-1.5 sm:text-sm ${
-        isDarkLandingNavbar
+        useDarkHeaderStyle
           ? 'focus-visible:ring-slate-300/80 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'
           : 'focus-visible:ring-slate-300/80 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50'
       }`
 
-    if (isDarkLandingNavbar) {
+    if (useDarkHeaderStyle) {
       return `${baseClass} ${
         isActive
           ? 'border-white/10 bg-white/10 text-white'
@@ -237,7 +248,7 @@ function AppHeader() {
       <div className={`mx-auto w-full max-w-[1440px] ${shouldAnimateEntrance ? 'animate-[navFloatIn_620ms_cubic-bezier(0.22,1,0.36,1)]' : ''}`}>
         <div
           className={`rounded-[2rem] px-3 py-1.5 backdrop-blur-xl sm:px-4 sm:py-2 md:px-5 ${
-            isDarkLandingNavbar
+            useDarkHeaderStyle
               ? 'border border-white/10 bg-[linear-gradient(180deg,rgba(2,6,23,0.76),rgba(15,23,42,0.58))] shadow-[0_18px_36px_-28px_rgba(2,6,23,0.75)]'
               : 'border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.94))] shadow-[0_22px_48px_-30px_rgba(15,23,42,0.34),0_14px_24px_-24px_rgba(15,23,42,0.22)]'
           }`}
@@ -251,7 +262,7 @@ function AppHeader() {
               type="button"
               onClick={handleBrandClick}
               className={`inline-flex shrink-0 items-center gap-2 text-xs font-semibold tracking-tight focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300/80 focus-visible:ring-offset-2 sm:text-sm ${
-                isDarkLandingNavbar
+                useDarkHeaderStyle
                   ? 'text-slate-100 focus-visible:ring-offset-slate-950'
                   : 'text-slate-900 focus-visible:ring-offset-slate-50'
               }`}
@@ -260,23 +271,58 @@ function AppHeader() {
             >
               <span
                 className={`relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border text-[10px] font-bold text-white sm:h-9 sm:w-9 sm:text-[11px] ${
-                  isDarkLandingNavbar
+                  useDarkHeaderStyle
                     ? 'border-sky-400/20 bg-[linear-gradient(145deg,#020617_0%,#0f172a_58%,#0b1120_100%)] shadow-[0_14px_30px_-20px_rgba(14,165,233,0.4)]'
                     : 'border-transparent bg-[linear-gradient(145deg,#020617_0%,#0f172a_65%,#111827_100%)] shadow-[0_14px_30px_-18px_rgba(15,23,42,0.72)]'
                 }`}
               >
                 <span
                   className={`pointer-events-none absolute inset-x-2 top-1 h-3 rounded-full blur-sm ${
-                    isDarkLandingNavbar ? 'bg-sky-300/20' : 'bg-white/20'
+                    useDarkHeaderStyle ? 'bg-sky-300/20' : 'bg-white/20'
                   }`}
                   aria-hidden="true"
                 />
                 <span className="relative z-10">SB</span>
               </span>
-              {!isLandingPage && !isStartBusinessPage && !isBusinessHomePage && !isCreateProfilePage && !isSimpleDarkNavbarPage && 'Smart Business Profile'}
+              {!showPreviewHeader && !isLandingPage && !isStartBusinessPage && !isBusinessHomePage && !isCreateProfilePage && !isSimpleDarkNavbarPage && 'Smart Business Profile'}
             </button>
 
-            {!isLoading && showCreateProfileTopBar && (
+            {!isLoading && showPreviewHeader && previewConfig && (
+              <div className="ml-auto flex items-center gap-2" aria-label="Preview quick actions">
+                <button
+                  type="button"
+                  onClick={() => navigate(previewConfig.backPath)}
+                  className="inline-flex min-h-[36px] items-center justify-center rounded-full border border-white/12 bg-white/5 px-4 py-2 text-sm font-medium text-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                  style={navbarInteractionStyle}
+                >
+                  {previewConfig.backLabel}
+                </button>
+                <button
+                  type="button"
+                  aria-label="Help"
+                  onClick={handleCreateProfileHelp}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/12 bg-white/5 text-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                  style={navbarInteractionStyle}
+                >
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-4.5 w-4.5"
+                  >
+                    <path d="M9.09 9a3 3 0 1 1 5.82 1c0 2-3 3-3 3" />
+                    <path d="M12 17h.01" />
+                    <circle cx="12" cy="12" r="9" />
+                  </svg>
+                </button>
+              </div>
+            )}
+
+            {!isLoading && !showPreviewHeader && showCreateProfileTopBar && (
               <div className="ml-auto flex items-center gap-2" aria-label="Create profile quick actions">
                 <button
                   type="button"
@@ -311,7 +357,7 @@ function AppHeader() {
               </div>
             )}
 
-            {!isLoading && showBusinessHomeTopBar && (
+            {!isLoading && !showPreviewHeader && showBusinessHomeTopBar && (
               <div
                 ref={homeMenuRef}
                 className="ml-auto flex items-center gap-2"
@@ -401,7 +447,7 @@ function AppHeader() {
               </div>
             )}
 
-            {!isLoading && !hideAuthenticatedNavButtons && (
+            {!isLoading && !showPreviewHeader && !hideAuthenticatedNavButtons && (
               <nav
                 className={`flex items-center ${
                   (isLandingPage || isSimpleDarkNavbarPage) && !user
@@ -439,7 +485,7 @@ function AppHeader() {
               </nav>
             )}
 
-            {!isLoading && showLoggedInHomeIcons && (
+            {!isLoading && !showPreviewHeader && showLoggedInHomeIcons && (
               <div ref={homeMenuRef} className="relative ml-auto flex items-center gap-2" aria-label="Home quick actions">
                 <button
                   type="button"

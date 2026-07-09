@@ -55,6 +55,7 @@ function PublicBusinessProfilePage() {
   const [hasCheckedFavorite, setHasCheckedFavorite] = useState(false)
   const qrSectionRef = useRef<HTMLElement>(null) as RefObject<HTMLElement>
   const qrCodeRef = useRef<HTMLDivElement>(null) as RefObject<HTMLDivElement>
+  const isOwnerPreview = Boolean(user && profile?.owner_id && user.id === profile.owner_id)
 
   const profileUrl = window.location.href
   const metaBusinessName = profile?.business_name.trim() || 'Business Profile'
@@ -249,10 +250,23 @@ function PublicBusinessProfilePage() {
     ? 'flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 py-3 text-sm font-semibold text-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70'
     : 'flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3 text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70'
 
+  const pageBackgroundClass = isOwnerPreview
+    ? 'min-h-screen bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.18),transparent_34%),linear-gradient(180deg,#020617_0%,#0f172a_32%,#0b1120_100%)] pb-12 text-slate-100'
+    : 'min-h-screen bg-gradient-to-b from-slate-100 to-blue-50 pb-12'
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-100 to-blue-50 pb-12">
+    <div className={pageBackgroundClass}>
       <ToastContainer toasts={toasts} />
-      <AppHeader />
+      <AppHeader
+        previewConfig={
+          isOwnerPreview
+            ? {
+                backPath: '/business-home',
+                backLabel: 'Back to Home',
+              }
+            : null
+        }
+      />
 
       <div className="mx-auto max-w-2xl px-4 pt-6">
         {loadState === 'loading' && (
@@ -282,7 +296,7 @@ function PublicBusinessProfilePage() {
             </p>
             <button
               type="button"
-              onClick={() => navigate('/')}
+              onClick={() => navigate(isOwnerPreview ? '/business-home' : '/')}
               className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-8 py-3 text-sm font-semibold text-white transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:scale-95"
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -294,67 +308,75 @@ function PublicBusinessProfilePage() {
         )}
 
         {loadState === 'found' && profile && (
-          <BusinessProfileDisplay
-            profile={{
-              businessName: profile.business_name,
-              ownerName: profile.owner_name,
-              businessCategory: profile.business_category,
-              phoneNumber: profile.phone_number,
-              whatsappNumber: profile.whatsapp_number || '',
-              email: profile.email || '',
-              website: profile.website || '',
-              address: profile.address || '',
-              aboutBusiness: profile.about_business || '',
-              logoUrl: profile.logo_url,
-              coverBannerUrl: profile.cover_banner_url,
-              tagline: profile.tagline,
-              services: profile.services,
-              workingHours: profile.working_hours,
-              googleMapsUrl: profile.google_maps_url,
-              socialLinks: profile.social_links,
-              keywords: profile.keywords,
-              galleryImages: profile.gallery_images,
-            }}
-            profileUrl={profileUrl}
-            onShare={handleShare}
-            qrSectionRef={qrSectionRef}
-            qrCodeRef={qrCodeRef}
-            onDownloadQR={handleDownloadQR}
-            onShareQR={handleShareQR}
-            saveButtonSlot={
-              <button
-                type="button"
-                onClick={handleFavoriteToggle}
-                disabled={isFavoriteLoading || (Boolean(user) && !hasCheckedFavorite)}
-                aria-label={favoriteButtonLabel}
-                className={favoriteButtonClass}
-              >
-                <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill={user && isFavoriteSaved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 4.75A1.75 1.75 0 0 1 7.75 3h8.5A1.75 1.75 0 0 1 18 4.75V21l-6-3.75L6 21V4.75z"
+          <div
+            className={
+              isOwnerPreview
+                ? 'rounded-[2rem] border border-white/12 bg-white/[0.05] p-1 shadow-[0_32px_80px_-38px_rgba(2,12,27,0.98)] backdrop-blur-xl'
+                : 'rounded-[2rem] border border-white/55 bg-white/28 p-1 shadow-[0_32px_80px_-38px_rgba(15,23,42,0.45)] backdrop-blur-xl'
+            }
+          >
+            <BusinessProfileDisplay
+              profile={{
+                businessName: profile.business_name,
+                ownerName: profile.owner_name,
+                businessCategory: profile.business_category,
+                phoneNumber: profile.phone_number,
+                whatsappNumber: profile.whatsapp_number || '',
+                email: profile.email || '',
+                website: profile.website || '',
+                address: profile.address || '',
+                aboutBusiness: profile.about_business || '',
+                logoUrl: profile.logo_url,
+                coverBannerUrl: profile.cover_banner_url,
+                tagline: profile.tagline,
+                services: profile.services,
+                workingHours: profile.working_hours,
+                googleMapsUrl: profile.google_maps_url,
+                socialLinks: profile.social_links,
+                keywords: profile.keywords,
+                galleryImages: profile.gallery_images,
+              }}
+              profileUrl={profileUrl}
+              onShare={handleShare}
+              qrSectionRef={qrSectionRef}
+              qrCodeRef={qrCodeRef}
+              onDownloadQR={handleDownloadQR}
+              onShareQR={handleShareQR}
+              saveButtonSlot={
+                <button
+                  type="button"
+                  onClick={handleFavoriteToggle}
+                  disabled={isFavoriteLoading || (Boolean(user) && !hasCheckedFavorite)}
+                  aria-label={favoriteButtonLabel}
+                  className={favoriteButtonClass}
+                >
+                  <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill={user && isFavoriteSaved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M6 4.75A1.75 1.75 0 0 1 7.75 3h8.5A1.75 1.75 0 0 1 18 4.75V21l-6-3.75L6 21V4.75z"
+                    />
+                  </svg>
+                  {favoriteButtonLabel}
+                </button>
+              }
+              footerSlot={
+                <>
+                  <ReviewSection
+                    businessProfileId={profile.id}
+                    businessOwnerId={profile.owner_id}
+                    userId={user?.id ?? null}
+                    onLogin={() => navigate('/login', { state: { from: location } })}
                   />
-                </svg>
-                {favoriteButtonLabel}
-              </button>
-            }
-            footerSlot={
-              <>
-                <ReviewSection
-                  businessProfileId={profile.id}
-                  businessOwnerId={profile.owner_id}
-                  userId={user?.id ?? null}
-                  onLogin={() => navigate('/login', { state: { from: location } })}
-                />
-                <ReportProfileAction
-                  businessProfileId={profile.id}
-                  userId={user?.id ?? null}
-                  onLogin={() => navigate('/login', { state: { from: location } })}
-                />
-              </>
-            }
-          />
+                  <ReportProfileAction
+                    businessProfileId={profile.id}
+                    userId={user?.id ?? null}
+                    onLogin={() => navigate('/login', { state: { from: location } })}
+                  />
+                </>
+              }
+            />
+          </div>
         )}
       </div>
     </div>
