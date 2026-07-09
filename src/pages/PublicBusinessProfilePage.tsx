@@ -11,6 +11,7 @@ import { usePageMeta } from '../hooks/usePageMeta.ts'
 import type { BusinessProfileRow } from '../types/businessProfile.ts'
 import { ToastContainer, type ToastItem, type ToastType } from '../components/Toast.tsx'
 import BusinessProfileDisplay from '../components/BusinessProfileDisplay.tsx'
+import ReviewSection from '../components/ReviewSection.tsx'
 import { svgContainerToBlob, triggerBlobDownload } from '../utils/qr.ts'
 import AppHeader from '../components/AppHeader.tsx'
 import { useAuth } from '../context/AuthContext.tsx'
@@ -336,6 +337,13 @@ function PublicBusinessProfilePage() {
                 </svg>
                 {favoriteButtonLabel}
               </button>
+            }
+            footerSlot={
+              <ReviewSection
+                businessProfileId={profile.id}
+                userId={user?.id ?? null}
+                onLogin={() => navigate('/login', { state: { from: location } })}
+              />
             }
           />
         )}
