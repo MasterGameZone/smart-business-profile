@@ -5,6 +5,9 @@ import type {
   BusinessReviewImageInsert,
   BusinessReviewImageRow,
   BusinessReviewInsert,
+  BusinessReviewReplyInsert,
+  BusinessReviewReplyRow,
+  BusinessReviewReplyUpdate,
   BusinessReviewRow,
   BusinessReviewUpdate,
   BusinessReviewWithImages,
@@ -18,6 +21,16 @@ function normalizeReviewText(value: string): string | null {
   return trimmed.length > 0 ? trimmed : null
 }
 
+function normalizeReplyText(value: string): string {
+  return value.trim()
+}
+
+function assertValidReplyText(value: string): void {
+  if (normalizeReplyText(value).length === 0) {
+    throw new Error('Please enter a reply before submitting.')
+  }
+}
+
 function isDuplicateReviewError(error: PostgrestError | null): boolean {
   return error?.code === '23505'
 }
@@ -29,6 +42,7 @@ function sortReviewImages(images: BusinessReviewImageRow[]): BusinessReviewImage
 function normalizeReviewWithImages(
   review: BusinessReviewRow & {
     business_review_images?: BusinessReviewImageRow[] | BusinessReviewImageRow | null
+    business_review_replies?: BusinessReviewReplyRow[] | BusinessReviewReplyRow | null
   }
 ): BusinessReviewWithImages {
   const rawImages = Array.isArray(review.business_review_images)
@@ -36,11 +50,17 @@ function normalizeReviewWithImages(
     : review.business_review_images
       ? [review.business_review_images]
       : []
-  const { business_review_images: _images, ...reviewFields } = review
+  const rawReplies = Array.isArray(review.business_review_replies)
+    ? review.business_review_replies
+    : review.business_review_replies
+      ? [review.business_review_replies]
+      : []
+  const { business_review_images: _images, business_review_replies: _replies, ...reviewFields } = review
 
   return {
     ...reviewFields,
     images: sortReviewImages(rawImages),
+    ownerReply: rawReplies[0] ?? null,
   }
 }
 
@@ -209,7 +229,7 @@ export async function getBusinessReviews(
 ): Promise<BusinessReviewWithImages[]> {
   const { data, error } = await supabase
     .from('business_reviews')
-    .select('*, business_review_images(*)')
+    .select('*, business_review_images(*), business_review_replies(*)')
     .eq('business_profile_id', businessProfileId)
     .order('created_at', { ascending: false })
 
@@ -218,7 +238,10 @@ export async function getBusinessReviews(
   }
 
   return ((data ?? []) as Array<
-    BusinessReviewRow & { business_review_images?: BusinessReviewImageRow[] | null }
+    BusinessReviewRow & {
+      business_review_images?: BusinessReviewImageRow[] | null
+      business_review_replies?: BusinessReviewReplyRow[] | null
+    }
   >).map(normalizeReviewWithImages)
 }
 
@@ -228,7 +251,7 @@ export async function getUserBusinessReview(
 ): Promise<BusinessReviewWithImages | null> {
   const { data, error } = await supabase
     .from('business_reviews')
-    .select('*, business_review_images(*)')
+    .select('*, business_review_images(*), business_review_replies(*)')
     .eq('user_id', userId)
     .eq('business_profile_id', businessProfileId)
     .maybeSingle()
@@ -239,7 +262,10 @@ export async function getUserBusinessReview(
 
   return data
     ? normalizeReviewWithImages(
-        data as BusinessReviewRow & { business_review_images?: BusinessReviewImageRow[] | null }
+        data as BusinessReviewRow & {
+          business_review_images?: BusinessReviewImageRow[] | null
+          business_review_replies?: BusinessReviewReplyRow[] | null
+        }
       )
     : null
 }
@@ -287,6 +313,7 @@ export async function createBusinessReview(
   return {
     ...createdReview,
     images: sortReviewImages(images),
+    ownerReply: null,
   }
 }
 
@@ -310,14 +337,18 @@ export async function updateBusinessReview(
     })
     .eq('id', reviewId)
     .eq('user_id', userId)
-    .select('*')
+    .select('*, business_review_replies(*)')
     .single()
 
   if (error) {
     throw error
   }
 
-  const updatedReview = data as BusinessReviewRow
+  const updatedReview = normalizeReviewWithImages(
+    data as BusinessReviewRow & {
+      business_review_replies?: BusinessReviewReplyRow[] | null
+    }
+  )
   const removedImages = existingImages.filter((image) => removedImageIds.includes(image.id))
 
   if (removedImages.length > 0) {
@@ -352,13 +383,88 @@ export async function deleteBusinessReview(
   userId: string,
   existingImages: BusinessReviewImageRow[] = []
 ): Promise<void> {
-  await removeReviewImagesFromStorage(existingImages)
-
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('business_reviews')
     .delete()
     .eq('id', reviewId)
     .eq('user_id', userId)
+    .select('id')
+    .maybeSingle()
+
+  if (error) {
+    throw error
+  }
+
+  if (!data) {
+    throw new Error('Review not found or not owned by current user.')
+  }
+
+  await removeReviewImagesFromStorage(existingImages)
+}
+
+export async function createBusinessReviewReply(
+  ownerUserId: string,
+  reviewId: string,
+  businessProfileId: string,
+  replyText: string
+): Promise<BusinessReviewReplyRow> {
+  assertValidReplyText(replyText)
+
+  const payload: BusinessReviewReplyInsert = {
+    review_id: reviewId,
+    business_profile_id: businessProfileId,
+    owner_user_id: ownerUserId,
+    reply_text: normalizeReplyText(replyText),
+  }
+
+  const { data, error } = await supabase
+    .from('business_review_replies')
+    .insert(payload)
+    .select('*')
+    .single()
+
+  if (error) {
+    throw error
+  }
+
+  return data as BusinessReviewReplyRow
+}
+
+export async function updateBusinessReviewReply(
+  replyId: string,
+  ownerUserId: string,
+  replyText: string
+): Promise<BusinessReviewReplyRow> {
+  assertValidReplyText(replyText)
+
+  const payload: BusinessReviewReplyUpdate = {
+    reply_text: normalizeReplyText(replyText),
+  }
+
+  const { data, error } = await supabase
+    .from('business_review_replies')
+    .update(payload)
+    .eq('id', replyId)
+    .eq('owner_user_id', ownerUserId)
+    .select('*')
+    .single()
+
+  if (error) {
+    throw error
+  }
+
+  return data as BusinessReviewReplyRow
+}
+
+export async function deleteBusinessReviewReply(
+  replyId: string,
+  ownerUserId: string
+): Promise<void> {
+  const { error } = await supabase
+    .from('business_review_replies')
+    .delete()
+    .eq('id', replyId)
+    .eq('owner_user_id', ownerUserId)
 
   if (error) {
     throw error

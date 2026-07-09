@@ -26,8 +26,30 @@ export interface BusinessReviewImageInsert {
   sort_order: number
 }
 
+export interface BusinessReviewReplyRow {
+  id: string
+  review_id: string
+  business_profile_id: string
+  owner_user_id: string
+  reply_text: string
+  created_at: string
+  updated_at: string
+}
+
+export interface BusinessReviewReplyInsert {
+  review_id: string
+  business_profile_id: string
+  owner_user_id: string
+  reply_text: string
+}
+
+export interface BusinessReviewReplyUpdate {
+  reply_text: string
+}
+
 export interface BusinessReviewWithImages extends BusinessReviewRow {
   images: BusinessReviewImageRow[]
+  ownerReply: BusinessReviewReplyRow | null
 }
 
 export interface BusinessReviewInsert {

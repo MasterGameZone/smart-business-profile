@@ -2,20 +2,25 @@ import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent 
 import type { BusinessReviewWithImages } from '../types/review.ts'
 import {
   createBusinessReview,
+  createBusinessReviewReply,
   deleteBusinessReview,
+  deleteBusinessReviewReply,
   getBusinessReviews,
   getReviewImagePublicUrl,
   updateBusinessReview,
+  updateBusinessReviewReply,
 } from '../lib/reviewService.ts'
 import { validateImageFile } from '../lib/storageService.ts'
 
 interface ReviewSectionProps {
   businessProfileId: string
+  businessOwnerId: string | null
   userId: string | null
   onLogin: () => void
 }
 
 type ReviewAction = 'create' | 'update' | 'delete'
+type ReplyAction = 'create' | 'update' | 'delete'
 const MAX_REVIEW_IMAGES = 3
 const imageAccept = 'image/jpeg,image/png,image/webp'
 
@@ -116,12 +121,16 @@ function ReviewImageThumbnail({
   )
 }
 
-function ReviewSection({ businessProfileId, userId, onLogin }: ReviewSectionProps) {
+function ReviewSection({ businessProfileId, businessOwnerId, userId, onLogin }: ReviewSectionProps) {
   const [reviews, setReviews] = useState<BusinessReviewWithImages[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
   const [activeAction, setActiveAction] = useState<ReviewAction | null>(null)
+  const [replyActionError, setReplyActionError] = useState<{ reviewId: string; message: string } | null>(null)
+  const [activeReplyAction, setActiveReplyAction] = useState<{ reviewId: string; action: ReplyAction } | null>(null)
+  const [activeReplyReviewId, setActiveReplyReviewId] = useState<string | null>(null)
+  const [replyText, setReplyText] = useState('')
   const [isEditing, setIsEditing] = useState(false)
   const [rating, setRating] = useState(0)
   const [reviewText, setReviewText] = useState('')
@@ -136,6 +145,7 @@ function ReviewSection({ businessProfileId, userId, onLogin }: ReviewSectionProp
     [reviews, userId]
   )
   const summary = useMemo(() => getReviewSummary(reviews), [reviews])
+  const canManageOwnerReplies = Boolean(userId && businessOwnerId && userId === businessOwnerId)
 
   useEffect(() => {
     let cancelled = false
@@ -207,6 +217,18 @@ function ReviewSection({ businessProfileId, userId, onLogin }: ReviewSectionProp
   const cancelEditing = () => {
     setIsEditing(false)
     resetForm()
+  }
+
+  const closeReplyForm = () => {
+    setActiveReplyReviewId(null)
+    setReplyText('')
+    setReplyActionError(null)
+  }
+
+  const startReply = (review: BusinessReviewWithImages) => {
+    setActiveReplyReviewId(review.id)
+    setReplyText(review.ownerReply?.reply_text ?? '')
+    setReplyActionError(null)
   }
 
   const visibleExistingImages = ownReview && isEditing
@@ -357,6 +379,86 @@ function ReviewSection({ businessProfileId, userId, onLogin }: ReviewSectionProp
       setActionError('Unable to delete review right now.')
     } finally {
       setActiveAction(null)
+    }
+  }
+
+  const handleReplySubmit = async (
+    event: FormEvent<HTMLFormElement>,
+    review: BusinessReviewWithImages
+  ) => {
+    event.preventDefault()
+
+    if (!canManageOwnerReplies || !userId) return
+
+    if (replyText.trim().length === 0) {
+      setReplyActionError({
+        reviewId: review.id,
+        message: 'Please enter a reply before submitting.',
+      })
+      return
+    }
+
+    setReplyActionError(null)
+    setActiveReplyAction({
+      reviewId: review.id,
+      action: review.ownerReply ? 'update' : 'create',
+    })
+
+    try {
+      const savedReply = review.ownerReply
+        ? await updateBusinessReviewReply(review.ownerReply.id, userId, replyText)
+        : await createBusinessReviewReply(userId, review.id, businessProfileId, replyText)
+
+      setReviews((currentReviews) =>
+        currentReviews.map((currentReview) =>
+          currentReview.id === review.id
+            ? { ...currentReview, ownerReply: savedReply }
+            : currentReview
+        )
+      )
+      closeReplyForm()
+    } catch (error) {
+      console.error('Failed to save owner review reply:', error)
+      setReplyActionError({
+        reviewId: review.id,
+        message: review.ownerReply
+          ? 'Unable to update reply right now.'
+          : 'Unable to submit reply right now.',
+      })
+    } finally {
+      setActiveReplyAction(null)
+    }
+  }
+
+  const handleDeleteReply = async (review: BusinessReviewWithImages) => {
+    if (!canManageOwnerReplies || !userId || !review.ownerReply) return
+
+    const confirmed = window.confirm('Delete this owner reply?')
+    if (!confirmed) return
+
+    setReplyActionError(null)
+    setActiveReplyAction({ reviewId: review.id, action: 'delete' })
+
+    try {
+      await deleteBusinessReviewReply(review.ownerReply.id, userId)
+      setReviews((currentReviews) =>
+        currentReviews.map((currentReview) =>
+          currentReview.id === review.id
+            ? { ...currentReview, ownerReply: null }
+            : currentReview
+        )
+      )
+      if (activeReplyReviewId === review.id) {
+        closeReplyForm()
+      }
+    } catch (error) {
+      console.error('Failed to delete owner review reply:', error)
+      setReplyActionError({
+        reviewId: review.id,
+        message: 'Unable to delete reply right now.',
+      })
+    } finally {
+      setActiveReplyAction(null)
     }
   }
 
@@ -516,6 +618,16 @@ function ReviewSection({ businessProfileId, userId, onLogin }: ReviewSectionProp
               {reviews.map((review) => {
                 const isOwnReview = Boolean(userId && review.user_id === userId)
                 const displayDate = formatReviewDate(review.updated_at || review.created_at)
+                const displayReplyDate = review.ownerReply
+                  ? formatReviewDate(review.ownerReply.updated_at || review.ownerReply.created_at)
+                  : ''
+                const isReplyFormOpen = activeReplyReviewId === review.id
+                const currentReplyAction = activeReplyAction?.reviewId === review.id
+                  ? activeReplyAction.action
+                  : null
+                const replyErrorMessage = replyActionError?.reviewId === review.id
+                  ? replyActionError.message
+                  : null
 
                 return (
                   <li key={review.id} className="border-t border-gray-100 pt-4 first:border-t-0 first:pt-0">
@@ -550,6 +662,109 @@ function ReviewSection({ businessProfileId, userId, onLogin }: ReviewSectionProp
                             loading="lazy"
                           />
                         ))}
+                      </div>
+                    )}
+
+                    {review.ownerReply && (
+                      <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-3">
+                        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                          <p className="text-xs font-semibold uppercase tracking-widest text-blue-900">
+                            Response from owner
+                          </p>
+                          {displayReplyDate && (
+                            <p className="text-xs text-blue-700/70">{displayReplyDate}</p>
+                          )}
+                        </div>
+                        <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-blue-950">
+                          {review.ownerReply.reply_text}
+                        </p>
+                      </div>
+                    )}
+
+                    {canManageOwnerReplies && isReplyFormOpen && (
+                      <form
+                        onSubmit={(event) => handleReplySubmit(event, review)}
+                        className="mt-4 rounded-2xl border border-gray-100 bg-slate-50 px-4 py-4"
+                      >
+                        <label
+                          htmlFor={`ownerReply-${review.id}`}
+                          className="block text-sm font-semibold text-gray-900"
+                        >
+                          Owner reply
+                        </label>
+                        <textarea
+                          id={`ownerReply-${review.id}`}
+                          value={replyText}
+                          onChange={(event) => setReplyText(event.target.value)}
+                          rows={3}
+                          placeholder="Write a public response to this review..."
+                          className="mt-2 w-full resize-y rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                        />
+
+                        {replyErrorMessage && (
+                          <p role="alert" className="mt-3 text-sm text-red-600">
+                            {replyErrorMessage}
+                          </p>
+                        )}
+
+                        <div className="mt-4 flex flex-wrap gap-3">
+                          <button
+                            type="submit"
+                            disabled={currentReplyAction === 'create' || currentReplyAction === 'update'}
+                            className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
+                          >
+                            {currentReplyAction === 'create' || currentReplyAction === 'update'
+                              ? 'Saving...'
+                              : review.ownerReply
+                                ? 'Save Reply'
+                                : 'Submit Reply'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={closeReplyForm}
+                            className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </form>
+                    )}
+
+                    {replyErrorMessage && !isReplyFormOpen && (
+                      <p role="alert" className="mt-3 text-sm text-red-600">
+                        {replyErrorMessage}
+                      </p>
+                    )}
+
+                    {canManageOwnerReplies && !isReplyFormOpen && (
+                      <div className="mt-3 flex flex-wrap gap-3">
+                        {review.ownerReply ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => startReply(review)}
+                              className="text-sm font-medium text-blue-600 hover:text-blue-700 focus:outline-none focus:underline"
+                            >
+                              Edit Reply
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteReply(review)}
+                              disabled={currentReplyAction === 'delete'}
+                              className="text-sm font-medium text-red-600 hover:text-red-700 focus:outline-none focus:underline disabled:cursor-not-allowed disabled:opacity-70"
+                            >
+                              {currentReplyAction === 'delete' ? 'Deleting...' : 'Delete Reply'}
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => startReply(review)}
+                            className="text-sm font-medium text-blue-600 hover:text-blue-700 focus:outline-none focus:underline"
+                          >
+                            Reply
+                          </button>
+                        )}
                       </div>
                     )}
 

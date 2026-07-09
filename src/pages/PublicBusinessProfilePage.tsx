@@ -343,6 +343,7 @@ function PublicBusinessProfilePage() {
               <>
                 <ReviewSection
                   businessProfileId={profile.id}
+                  businessOwnerId={profile.owner_id}
                   userId={user?.id ?? null}
                   onLogin={() => navigate('/login', { state: { from: location } })}
                 />
