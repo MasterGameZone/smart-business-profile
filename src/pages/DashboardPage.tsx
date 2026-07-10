@@ -127,6 +127,7 @@ function DashboardPage() {
       existingGalleryImageUrls: Array.isArray(profile.gallery_images)
         ? profile.gallery_images.filter((imageUrl): imageUrl is string => typeof imageUrl === 'string')
         : [],
+      documentName: '',
       documentFiles: [],
       existingDocuments: normalizeBusinessProfileDocuments(profile.business_profile_documents),
     })

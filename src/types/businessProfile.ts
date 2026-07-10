@@ -22,12 +22,16 @@ export interface BusinessProfileQualificationValue {
   issuingOrganization: string | null
   year: number | null
   description: string | null
+  documentFileName?: string | null
+  documentFilePath?: string | null
+  documentMimeType?: string | null
 }
 
 export interface BusinessProfileDocumentRow {
   id: string
   business_profile_id: string
   owner_id: string
+  document_name: string | null
   file_name: string
   file_path: string
   mime_type: string

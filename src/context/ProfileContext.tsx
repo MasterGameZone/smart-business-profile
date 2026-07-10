@@ -46,6 +46,10 @@ export interface ProfileQualificationItem {
   issuingOrganization: string
   year: string
   description: string
+  documentFile: File | null
+  documentFileName: string
+  documentFilePath: string
+  documentMimeType: string
 }
 
 let profileItemSequence = 0
@@ -219,7 +223,10 @@ export function createProfileQualificationItem(
   title = '',
   issuingOrganization = '',
   year = '',
-  description = ''
+  description = '',
+  documentFileName = '',
+  documentFilePath = '',
+  documentMimeType = ''
 ): ProfileQualificationItem {
   return {
     id: createProfileItemId('qualification'),
@@ -227,6 +234,10 @@ export function createProfileQualificationItem(
     issuingOrganization,
     year,
     description,
+    documentFile: null,
+    documentFileName,
+    documentFilePath,
+    documentMimeType,
   }
 }
 
@@ -242,7 +253,10 @@ export function normalizeQualificationItems(
         typeof item.title === 'string' ? item.title : '',
         typeof item.issuingOrganization === 'string' ? item.issuingOrganization : '',
         typeof item.year === 'number' && Number.isFinite(item.year) ? String(item.year) : '',
-        typeof item.description === 'string' ? item.description : ''
+        typeof item.description === 'string' ? item.description : '',
+        typeof item.documentFileName === 'string' ? item.documentFileName : '',
+        typeof item.documentFilePath === 'string' ? item.documentFilePath : '',
+        typeof item.documentMimeType === 'string' ? item.documentMimeType : ''
       )
     )
     .filter(
@@ -250,7 +264,9 @@ export function normalizeQualificationItems(
         item.title.trim() ||
         item.issuingOrganization.trim() ||
         item.year.trim() ||
-        item.description.trim()
+        item.description.trim() ||
+        item.documentFileName.trim() ||
+        item.documentFilePath.trim()
     )
 }
 
@@ -305,6 +321,7 @@ export interface ProfileData {
   existingCoverBannerUrl: string | null
   galleryImages: File[]
   existingGalleryImageUrls: string[]
+  documentName: string
   documentFiles: File[]
   existingDocuments: BusinessProfileDocumentRow[]
 }
@@ -343,6 +360,7 @@ function createDefaultProfileData(): ProfileData {
     existingCoverBannerUrl: null,
     galleryImages: [],
     existingGalleryImageUrls: [],
+    documentName: '',
     documentFiles: [],
     existingDocuments: [],
   }

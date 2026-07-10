@@ -5,6 +5,7 @@ import {
   createProfileFaqItem,
   createProfileProductItem,
   createProfileQualificationItem,
+  normalizeQualificationItems,
   useProfile,
   workingDays,
   type ProfileFaqItem,
@@ -30,13 +31,14 @@ interface FormErrors {
   businessSubcategories?: string
   establishedYear?: string
   yearsOfExperience?: string
-  highlights?: string
   faqs?: string
   productsMenuPackages?: string
   qualifications?: string
   documents?: string
   phoneNumber?: string
   email?: string
+  address?: string
+  aboutBusiness?: string
   tagline?: string
   workingHours?: string
   googleMapsUrl?: string
@@ -53,19 +55,52 @@ interface FormErrors {
 
 const MAX_GALLERY_IMAGES = 6
 const MAX_SUBCATEGORIES = 8
-const MAX_HIGHLIGHTS = 16
+const MAX_FAQS = 5
 const imageAccept = 'image/jpeg,image/png,image/webp'
 const documentAccept = 'application/pdf,image/jpeg,image/png,image/webp'
-const commonHighlights = [
-  'Parking Available',
-  'Home Service',
-  'Free Consultation',
-  '24/7 Available',
-  'Wheelchair Accessible',
-  'Online Service',
-  'Appointment Required',
-  'Delivery Available',
+const FORM_STEPS = [
+  'Basic Business Details',
+  'Contact & Location Details',
+  'Business Overview & Offerings',
+  'Branding & Business Media',
+  'Certificates & Documents',
 ] as const
+const CREATE_PROFILE_STEP_STORAGE_PREFIX = 'smart-business-profile:create-profile-step'
+
+function getCreateProfileStepStorageKey(profileId: string | null | undefined): string {
+  return `${CREATE_PROFILE_STEP_STORAGE_PREFIX}:${profileId ?? 'new'}`
+}
+
+function readCreateProfileStepIndex(storageKey: string): number {
+  try {
+    const savedStep = window.sessionStorage.getItem(storageKey)
+    const stepNumber = Number(savedStep)
+
+    if (Number.isInteger(stepNumber) && stepNumber >= 1 && stepNumber <= FORM_STEPS.length) {
+      return stepNumber - 1
+    }
+  } catch {
+    // If sessionStorage is unavailable, safely fall back to the first step.
+  }
+
+  return 0
+}
+
+function writeCreateProfileStepIndex(storageKey: string, stepIndex: number): void {
+  try {
+    window.sessionStorage.setItem(storageKey, String(stepIndex + 1))
+  } catch {
+    // Step persistence is best-effort and should never block form navigation.
+  }
+}
+
+function removeCreateProfileStepIndex(storageKey: string): void {
+  try {
+    window.sessionStorage.removeItem(storageKey)
+  } catch {
+    // Ignore unavailable sessionStorage during cleanup.
+  }
+}
 
 function isValidOptionalUrl(value: string): boolean {
   const trimmed = value.trim()
@@ -132,6 +167,23 @@ function getCurrentYear(): number {
   return new Date().getFullYear()
 }
 
+function hasWorkingHoursData(workingHours: Record<WorkingDayKey, { open: string; close: string; closed: boolean }>): boolean {
+  return workingDays.some(({ key }) => {
+    const day = workingHours[key]
+    return day.closed || day.open.trim().length > 0 || day.close.trim().length > 0
+  })
+}
+
+function hasIncompleteWorkingHours(workingHours: Record<WorkingDayKey, { open: string; close: string; closed: boolean }>): boolean {
+  return workingDays.some(({ key }) => {
+    const day = workingHours[key]
+    if (day.closed) return false
+    const hasOpen = day.open.trim().length > 0
+    const hasClose = day.close.trim().length > 0
+    return hasOpen !== hasClose
+  })
+}
+
 function isBlankFaqItem(item: ProfileFaqItem): boolean {
   return !item.question.trim() && !item.answer.trim()
 }
@@ -145,7 +197,10 @@ function isBlankQualificationItem(item: ProfileQualificationItem): boolean {
     !item.title.trim() &&
     !item.issuingOrganization.trim() &&
     !item.year.trim() &&
-    !item.description.trim()
+    !item.description.trim() &&
+    !item.documentFile &&
+    !item.documentFileName.trim() &&
+    !item.documentFilePath.trim()
   )
 }
 
@@ -227,7 +282,7 @@ function createSocialLinkRows(links: Record<string, string>): SocialLinkRow[] {
   const entries = Object.entries(links).filter(
     ([, value]) => typeof value === 'string' && value.trim().length > 0
   )
-  const defaultPlatforms = ['Instagram', 'Facebook']
+  const defaultPlatforms = ['Instagram']
   const usedEntryIndexes = new Set<number>()
 
   const rows = defaultPlatforms.map((platform) => {
@@ -300,20 +355,59 @@ function validateSocialLinkRows(rows: SocialLinkRow[]): Record<string, string> {
   return rowErrors
 }
 
+function formatBusinessExperienceValue(establishedYear: string, yearsOfExperience: string): string {
+  const parts: string[] = []
+
+  if (establishedYear.trim()) {
+    parts.push(`Established in ${establishedYear.trim()}`)
+  }
+
+  if (yearsOfExperience.trim()) {
+    parts.push(`${yearsOfExperience.trim()} years experience`)
+  }
+
+  return parts.join(' / ')
+}
+
+function parseBusinessExperienceValue(value: string): {
+  establishedYear: string
+  yearsOfExperience: string
+} {
+  const trimmed = value.trim()
+  const yearMatch = trimmed.match(/\b(\d{4})\b/)
+  const yearsWithLabelMatch = trimmed.match(/\b(\d{1,3})\s*(?:years?|yrs?)\b/i)
+  const slashYearsMatch = trimmed.match(/\/\s*(\d{1,3})\b/)
+  const standaloneYearsMatch = trimmed.match(/^\d{1,3}$/)
+
+  return {
+    establishedYear: yearMatch?.[1] ?? '',
+    yearsOfExperience: yearsWithLabelMatch?.[1] ?? slashYearsMatch?.[1] ?? standaloneYearsMatch?.[0] ?? '',
+  }
+}
+
 interface FormSectionHeadingProps {
   id: string
   title: string
   description: string
   action?: React.ReactNode
+  showAccent?: boolean
 }
 
-function FormSectionHeading({ id, title, description, action }: FormSectionHeadingProps) {
+function FormSectionHeading({
+  id,
+  title,
+  description,
+  action,
+  showAccent = true,
+}: FormSectionHeadingProps) {
   return (
     <div className="mb-6 border-b border-slate-200/80 pb-4">
-      <span
-        aria-hidden="true"
-        className="block h-1 w-14 rounded-full bg-[linear-gradient(90deg,#0f172a_0%,#2563eb_58%,#38bdf8_100%)]"
-      />
+      {showAccent && (
+        <span
+          aria-hidden="true"
+          className="block h-1 w-14 rounded-full bg-[linear-gradient(90deg,#0f172a_0%,#2563eb_58%,#38bdf8_100%)]"
+        />
+      )}
       <div className="mt-4 flex items-center justify-between gap-3">
         <h2 id={id} className="text-xl font-semibold tracking-tight text-slate-900 sm:text-[1.35rem]">
           {title}
@@ -321,6 +415,71 @@ function FormSectionHeading({ id, title, description, action }: FormSectionHeadi
         {action}
       </div>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">{description}</p>
+    </div>
+  )
+}
+
+interface FormSubsectionHeadingProps {
+  id: string
+  title: React.ReactNode
+  description: string
+  action?: React.ReactNode
+}
+
+function FormSubsectionHeading({ id, title, description, action }: FormSubsectionHeadingProps) {
+  return (
+    <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div>
+        <h3 id={id} className="text-sm font-medium text-slate-700">
+          {title}
+        </h3>
+        <p className="mt-2 text-xs leading-5 text-slate-500">{description}</p>
+      </div>
+      {action}
+    </div>
+  )
+}
+
+interface StepProgressIndicatorProps {
+  currentStepIndex: number
+  steps: readonly string[]
+}
+
+function StepProgressIndicator({ currentStepIndex, steps }: StepProgressIndicatorProps) {
+  const progressPercentage = ((currentStepIndex + 1) / steps.length) * 100
+  const circleSizes = ['h-1.5 w-1.5', 'h-2 w-2', 'h-2.5 w-2.5', 'h-2 w-2', 'h-1.5 w-1.5']
+
+  return (
+    <div className="mx-auto w-1/2 max-w-[360px] min-w-[190px] py-2">
+      <div className="relative h-5">
+        <div className="absolute left-0 right-0 top-1/2 h-px -translate-y-1/2 overflow-hidden rounded-full bg-slate-200/70">
+          <div
+            className="h-full rounded-full bg-[linear-gradient(135deg,#0f172a_0%,#1d4ed8_58%,#2563eb_100%)] transition-[width] duration-500 ease-out"
+            style={{ width: `${progressPercentage}%` }}
+          />
+        </div>
+        <div
+          className="absolute inset-0 flex items-center justify-between"
+          aria-label={`Profile form step ${currentStepIndex + 1} of ${steps.length}`}
+        >
+          {steps.map((step, index) => {
+            const stateClass =
+              index < currentStepIndex
+                ? 'bg-blue-600'
+                : index === currentStepIndex
+                  ? 'bg-blue-500/60'
+                  : 'bg-slate-300'
+
+            return (
+              <span
+                key={step}
+                aria-hidden="true"
+                className={`${circleSizes[index] ?? 'h-1.5 w-1.5'} rounded-full ${stateClass} transition-colors duration-300`}
+              />
+            )
+          })}
+        </div>
+      </div>
     </div>
   )
 }
@@ -338,6 +497,7 @@ function CreateProfilePage() {
   const isEditMode = Boolean(profileData.id)
   const isForbidden =
     isEditMode && Boolean(profileData.ownerId) && profileData.ownerId !== user?.id
+  const stepStorageKey = getCreateProfileStepStorageKey(profileData.id)
 
   const [errors, setErrors] = useState<FormErrors>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -351,14 +511,20 @@ function CreateProfilePage() {
     createSocialLinkRows(profileData.socialLinks)
   )
   const [socialLinkRowErrors, setSocialLinkRowErrors] = useState<Record<string, string>>({})
+  const [currentStepIndex, setCurrentStepIndex] = useState(() =>
+    readCreateProfileStepIndex(stepStorageKey)
+  )
+  const [businessExperienceValue, setBusinessExperienceValue] = useState(() =>
+    formatBusinessExperienceValue(profileData.establishedYear, profileData.yearsOfExperience)
+  )
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const [isSubcategoryDropdownOpen, setIsSubcategoryDropdownOpen] = useState(false)
-  const [customHighlightValue, setCustomHighlightValue] = useState('')
   const logoInputRef = useRef<HTMLInputElement>(null)
   const coverBannerInputRef = useRef<HTMLInputElement>(null)
   const galleryInputRef = useRef<HTMLInputElement>(null)
   const documentInputRef = useRef<HTMLInputElement>(null)
   const subcategoryDropdownRef = useRef<HTMLDivElement>(null)
+  const previousProfileIdRef = useRef(profileData.id)
 
   const coverBannerPreviewUrl = useMemo(() => {
     if (profileData.coverBanner) return URL.createObjectURL(profileData.coverBanner)
@@ -392,6 +558,21 @@ function CreateProfilePage() {
     profileData.businessSubcategories.length > 0
       ? `${profileData.businessSubcategories.length} subcategor${profileData.businessSubcategories.length === 1 ? 'y' : 'ies'} selected`
       : 'Select subcategories'
+  const isFirstStep = currentStepIndex === 0
+  const isLastStep = currentStepIndex === FORM_STEPS.length - 1
+
+  useEffect(() => {
+    setCurrentStepIndex(readCreateProfileStepIndex(stepStorageKey))
+  }, [stepStorageKey])
+
+  useEffect(() => {
+    if (previousProfileIdRef.current === profileData.id) return
+
+    previousProfileIdRef.current = profileData.id
+    setBusinessExperienceValue(
+      formatBusinessExperienceValue(profileData.establishedYear, profileData.yearsOfExperience)
+    )
+  }, [profileData.establishedYear, profileData.id, profileData.yearsOfExperience])
 
   useEffect(() => {
     return () => {
@@ -461,6 +642,25 @@ function CreateProfilePage() {
     setProfileData({ ...profileData, [name]: value })
     if (errors[name as keyof FormErrors]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }))
+    }
+  }
+
+  const handleBusinessExperienceChange = (value: string) => {
+    const parsed = parseBusinessExperienceValue(value)
+
+    setBusinessExperienceValue(value)
+    setProfileData({
+      ...profileData,
+      establishedYear: parsed.establishedYear,
+      yearsOfExperience: parsed.yearsOfExperience,
+    })
+
+    if (errors.establishedYear || errors.yearsOfExperience) {
+      setErrors((prev) => ({
+        ...prev,
+        establishedYear: undefined,
+        yearsOfExperience: undefined,
+      }))
     }
   }
 
@@ -708,78 +908,6 @@ function CreateProfilePage() {
     }
   }
 
-  const handleHighlightToggle = (highlight: string) => {
-    const normalizedHighlight = highlight.trim()
-    if (!normalizedHighlight) return
-
-    const alreadySelected = profileData.highlights.some(
-      (item) => item.toLowerCase() === normalizedHighlight.toLowerCase()
-    )
-
-    if (alreadySelected) {
-      setProfileData({
-        ...profileData,
-        highlights: profileData.highlights.filter(
-          (item) => item.toLowerCase() !== normalizedHighlight.toLowerCase()
-        ),
-      })
-      if (errors.highlights) {
-        setErrors((prev) => ({ ...prev, highlights: undefined }))
-      }
-      return
-    }
-
-    if (profileData.highlights.length >= MAX_HIGHLIGHTS) {
-      setErrors((prev) => ({
-        ...prev,
-        highlights: `Select up to ${MAX_HIGHLIGHTS} highlights.`,
-      }))
-      return
-    }
-
-    setProfileData({
-      ...profileData,
-      highlights: [...profileData.highlights, normalizedHighlight],
-    })
-    if (errors.highlights) {
-      setErrors((prev) => ({ ...prev, highlights: undefined }))
-    }
-  }
-
-  const handleAddCustomHighlight = () => {
-    const trimmedValue = customHighlightValue.trim()
-    if (!trimmedValue) return
-
-    const alreadySelected = profileData.highlights.some(
-      (item) => item.toLowerCase() === trimmedValue.toLowerCase()
-    )
-
-    if (alreadySelected) {
-      setCustomHighlightValue('')
-      if (errors.highlights) {
-        setErrors((prev) => ({ ...prev, highlights: undefined }))
-      }
-      return
-    }
-
-    if (profileData.highlights.length >= MAX_HIGHLIGHTS) {
-      setErrors((prev) => ({
-        ...prev,
-        highlights: `Select up to ${MAX_HIGHLIGHTS} highlights.`,
-      }))
-      return
-    }
-
-    setProfileData({
-      ...profileData,
-      highlights: [...profileData.highlights, trimmedValue],
-    })
-    if (errors.highlights) {
-      setErrors((prev) => ({ ...prev, highlights: undefined }))
-    }
-    setCustomHighlightValue('')
-  }
-
   const updateFaqs = (faqs: ProfileFaqItem[]) => {
     setProfileData({
       ...profileData,
@@ -821,6 +949,8 @@ function CreateProfilePage() {
   }
 
   const handleAddFaq = () => {
+    if (profileData.faqs.length >= MAX_FAQS) return
+
     updateFaqs([...profileData.faqs, createProfileFaqItem()])
   }
 
@@ -856,6 +986,51 @@ function CreateProfilePage() {
     updateQualifications(
       profileData.qualifications.map((item) =>
         item.id === itemId ? { ...item, [field]: value } : item
+      )
+    )
+  }
+
+  const handleQualificationDocumentChange = (
+    itemId: string,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const validationError = validateSelectedDocument(file)
+    if (validationError) {
+      setErrors((prev) => ({ ...prev, qualifications: validationError }))
+      e.target.value = ''
+      return
+    }
+
+    updateQualifications(
+      profileData.qualifications.map((item) =>
+        item.id === itemId
+          ? {
+              ...item,
+              documentFile: file,
+              documentFileName: file.name,
+              documentMimeType: file.type,
+            }
+          : item
+      )
+    )
+    e.target.value = ''
+  }
+
+  const handleRemoveQualificationDocument = (itemId: string) => {
+    updateQualifications(
+      profileData.qualifications.map((item) =>
+        item.id === itemId
+          ? {
+              ...item,
+              documentFile: null,
+              documentFileName: '',
+              documentFilePath: '',
+              documentMimeType: '',
+            }
+          : item
       )
     )
   }
@@ -955,6 +1130,15 @@ function CreateProfilePage() {
     if (profileData.tagline.trim().length > 120) {
       newErrors.tagline = 'Tagline must be 120 characters or fewer.'
     }
+    if (!businessExperienceValue.trim()) {
+      newErrors.establishedYear = 'Established year or years of experience is required.'
+    } else if (
+      businessExperienceValue.trim() &&
+      !profileData.establishedYear.trim() &&
+      !profileData.yearsOfExperience.trim()
+    ) {
+      newErrors.establishedYear = 'Enter an established year, years of experience, or both.'
+    }
     if (profileData.establishedYear.trim()) {
       if (!isValidFourDigitYear(profileData.establishedYear.trim())) {
         newErrors.establishedYear = 'Enter a valid four-digit year.'
@@ -967,9 +1151,6 @@ function CreateProfilePage() {
       if (!Number.isInteger(yearsOfExperience) || yearsOfExperience < 0) {
         newErrors.yearsOfExperience = 'Years of experience must be 0 or more.'
       }
-    }
-    if (profileData.highlights.length > MAX_HIGHLIGHTS) {
-      newErrors.highlights = `Select up to ${MAX_HIGHLIGHTS} highlights.`
     }
     if (
       profileData.faqs.some(
@@ -1000,8 +1181,16 @@ function CreateProfilePage() {
       newErrors.qualifications =
         'Each qualification needs a title. Optional years must be valid four-digit years that are not in the future.'
     }
-    if (!isValidOptionalUrl(profileData.googleMapsUrl)) {
+    if (!profileData.address.trim()) {
+      newErrors.address = 'Address is required.'
+    }
+    if (!profileData.googleMapsUrl.trim()) {
+      newErrors.googleMapsUrl = 'Google Maps link is required.'
+    } else if (!isValidOptionalUrl(profileData.googleMapsUrl)) {
       newErrors.googleMapsUrl = 'Enter a valid Google Maps URL.'
+    }
+    if (!profileData.aboutBusiness.trim()) {
+      newErrors.aboutBusiness = 'About business is required.'
     }
     const keywords = parseKeywords(profileData.keywordsText)
     if (keywords.length > 20) {
@@ -1009,15 +1198,13 @@ function CreateProfilePage() {
     } else if (keywords.some((keyword) => keyword.length > 40)) {
       newErrors.keywordsText = 'Each keyword must be 40 characters or fewer.'
     }
-    const hasIncompleteHours = workingDays.some(({ key }) => {
-      const day = profileData.workingHours[key]
-      if (day.closed) return false
-      const hasOpen = day.open.trim().length > 0
-      const hasClose = day.close.trim().length > 0
-      return hasOpen !== hasClose
-    })
-    if (hasIncompleteHours) {
+    if (!hasWorkingHoursData(profileData.workingHours)) {
+      newErrors.workingHours = 'Working hours are required.'
+    } else if (hasIncompleteWorkingHours(profileData.workingHours)) {
       newErrors.workingHours = 'Provide both open and close times, or mark the day closed.'
+    }
+    if (profileData.existingGalleryImageUrls.length + profileData.galleryImages.length === 0) {
+      newErrors.galleryImages = 'Business gallery requires at least one image.'
     }
 
     const nextSocialLinkRowErrors = validateSocialLinkRows(socialLinkRows)
@@ -1028,14 +1215,125 @@ function CreateProfilePage() {
     return Object.keys(newErrors).length === 0 && Object.keys(nextSocialLinkRowErrors).length === 0
   }
 
+  const focusFirstErrorField = () => {
+    const firstErrorField = document.querySelector('[aria-invalid="true"]') as HTMLElement | null
+    firstErrorField?.focus()
+  }
+
+  const validateCurrentStep = (): boolean => {
+    const stepErrors: FormErrors = {}
+    const currentYear = getCurrentYear()
+
+    if (currentStepIndex === 0) {
+      if (!profileData.businessName.trim()) {
+        stepErrors.businessName = 'Business name is required.'
+      }
+      if (!profileData.ownerName.trim()) {
+        stepErrors.ownerName = 'Owner name is required.'
+      }
+      if (!profileData.businessCategory) {
+        stepErrors.businessCategory = 'Please select a category.'
+      }
+      if (!businessExperienceValue.trim()) {
+        stepErrors.establishedYear = 'Established year or years of experience is required.'
+      } else if (!profileData.establishedYear.trim() && !profileData.yearsOfExperience.trim()) {
+        stepErrors.establishedYear = 'Enter an established year, years of experience, or both.'
+      } else if (profileData.establishedYear.trim()) {
+        if (!isValidFourDigitYear(profileData.establishedYear.trim())) {
+          stepErrors.establishedYear = 'Enter a valid four-digit year.'
+        } else if (Number(profileData.establishedYear) > currentYear) {
+          stepErrors.establishedYear = 'Established year cannot be in the future.'
+        }
+      }
+      if (profileData.yearsOfExperience.trim()) {
+        const yearsOfExperience = Number(profileData.yearsOfExperience)
+        if (!Number.isInteger(yearsOfExperience) || yearsOfExperience < 0) {
+          stepErrors.yearsOfExperience = 'Years of experience must be 0 or more.'
+        }
+      }
+    }
+
+    if (currentStepIndex === 1) {
+      if (!profileData.phoneNumber.trim()) {
+        stepErrors.phoneNumber = 'Phone number is required.'
+      }
+      if (!profileData.email.trim()) {
+        stepErrors.email = 'Email address is required.'
+      }
+      if (!profileData.address.trim()) {
+        stepErrors.address = 'Address is required.'
+      }
+      if (!profileData.googleMapsUrl.trim()) {
+        stepErrors.googleMapsUrl = 'Google Maps link is required.'
+      } else if (!isValidOptionalUrl(profileData.googleMapsUrl)) {
+        stepErrors.googleMapsUrl = 'Enter a valid Google Maps URL.'
+      }
+    }
+
+    if (currentStepIndex === 2) {
+      if (!profileData.aboutBusiness.trim()) {
+        stepErrors.aboutBusiness = 'About business is required.'
+      }
+      if (!hasWorkingHoursData(profileData.workingHours)) {
+        stepErrors.workingHours = 'Working hours are required.'
+      } else if (hasIncompleteWorkingHours(profileData.workingHours)) {
+        stepErrors.workingHours = 'Provide both open and close times, or mark the day closed.'
+      }
+    }
+
+    if (currentStepIndex === 3) {
+      if (profileData.existingGalleryImageUrls.length + profileData.galleryImages.length === 0) {
+        stepErrors.galleryImages = 'Business gallery requires at least one image.'
+      }
+    }
+
+    setErrors((prev) => ({
+      ...prev,
+      businessName: currentStepIndex === 0 ? stepErrors.businessName : prev.businessName,
+      ownerName: currentStepIndex === 0 ? stepErrors.ownerName : prev.ownerName,
+      businessCategory: currentStepIndex === 0 ? stepErrors.businessCategory : prev.businessCategory,
+      establishedYear: currentStepIndex === 0 ? stepErrors.establishedYear : prev.establishedYear,
+      yearsOfExperience: currentStepIndex === 0 ? stepErrors.yearsOfExperience : prev.yearsOfExperience,
+      phoneNumber: currentStepIndex === 1 ? stepErrors.phoneNumber : prev.phoneNumber,
+      email: currentStepIndex === 1 ? stepErrors.email : prev.email,
+      address: currentStepIndex === 1 ? stepErrors.address : prev.address,
+      googleMapsUrl: currentStepIndex === 1 ? stepErrors.googleMapsUrl : prev.googleMapsUrl,
+      aboutBusiness: currentStepIndex === 2 ? stepErrors.aboutBusiness : prev.aboutBusiness,
+      workingHours: currentStepIndex === 2 ? stepErrors.workingHours : prev.workingHours,
+      galleryImages: currentStepIndex === 3 ? stepErrors.galleryImages : prev.galleryImages,
+    }))
+
+    return Object.keys(stepErrors).length === 0
+  }
+
+  const handleNextStep = () => {
+    if (!validateCurrentStep()) {
+      window.setTimeout(focusFirstErrorField, 0)
+      return
+    }
+
+    setCurrentStepIndex((step) => {
+      const nextStep = Math.min(step + 1, FORM_STEPS.length - 1)
+      writeCreateProfileStepIndex(stepStorageKey, nextStep)
+      return nextStep
+    })
+  }
+
+  const handlePreviousStep = () => {
+    setCurrentStepIndex((step) => {
+      const nextStep = Math.max(step - 1, 0)
+      writeCreateProfileStepIndex(stepStorageKey, nextStep)
+      return nextStep
+    })
+  }
+
   const handleContinue = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
     const isValid = validate()
     if (!isValid) {
       setIsSubmitting(false)
-      const firstErrorField = document.querySelector('[aria-invalid="true"]') as HTMLElement | null
-      firstErrorField?.focus()
+      focusFirstErrorField()
       return
     }
 
@@ -1046,6 +1344,7 @@ function CreateProfilePage() {
 
     try {
       const updated = await updateBusinessProfile(profileData.id as string, profileData)
+      removeCreateProfileStepIndex(stepStorageKey)
       setProfileData({
         ...profileData,
         businessName: updated.business_name,
@@ -1059,9 +1358,7 @@ function CreateProfilePage() {
         productsMenuPackages: profileData.productsMenuPackages.filter(
           (item) => !isBlankProductItem(item)
         ),
-        qualifications: profileData.qualifications.filter(
-          (item) => !isBlankQualificationItem(item)
-        ),
+        qualifications: normalizeQualificationItems(updated.qualifications),
         phoneNumber: updated.phone_number,
         whatsappNumber: updated.whatsapp_number || '',
         email: updated.email || '',
@@ -1085,6 +1382,7 @@ function CreateProfilePage() {
         existingCoverBannerUrl: updated.cover_banner_url,
         galleryImages: [],
         existingGalleryImageUrls: Array.isArray(updated.gallery_images) ? updated.gallery_images : [],
+        documentName: '',
         documentFiles: [],
         existingDocuments: profileData.existingDocuments,
       })
@@ -1103,13 +1401,16 @@ function CreateProfilePage() {
       'Are you sure you want to clear all form data? This cannot be undone.'
     )
     if (!confirmed) return
+    removeCreateProfileStepIndex(stepStorageKey)
+    removeCreateProfileStepIndex(getCreateProfileStepStorageKey(null))
     clearProfile()
+    setCurrentStepIndex(0)
     setErrors({})
     setSocialLinkRowErrors({})
     setSocialLinkRows(createSocialLinkRows(createDefaultSocialLinks()))
     setLogoFileName('')
     setCoverBannerFileName('')
-    setCustomHighlightValue('')
+    setBusinessExperienceValue('')
     if (logoInputRef.current) {
       logoInputRef.current.value = ''
     }
@@ -1213,12 +1514,14 @@ function CreateProfilePage() {
               </div>
 
               <form onSubmit={handleContinue} noValidate className="space-y-6 sm:space-y-7">
+          <StepProgressIndicator currentStepIndex={currentStepIndex} steps={FORM_STEPS} />
 
-          {/* ── Basic Information ── */}
+          {/* -- Basic Information -- */}
+          {currentStepIndex === 0 && (
           <section className={sectionCardClass} aria-labelledby="section-basic">
             <FormSectionHeading
               id="section-basic"
-              title="Basic Business Information"
+              title="Basic Business Details"
               description="Add the core details customers will see first."
             />
             <div className="grid gap-5 md:grid-cols-2">
@@ -1419,14 +1722,70 @@ function CreateProfilePage() {
                   </div>
                 </div>
               )}
+
+              <div>
+                <label htmlFor="tagline" className={labelClass}>
+                  Business Tagline
+                  <span className={optionalTextClass}>Optional</span>
+                </label>
+                <input
+                  type="text"
+                  id="tagline"
+                  name="tagline"
+                  value={profileData.tagline}
+                  onChange={handleChange}
+                  maxLength={120}
+                  placeholder="Example: Trusted local dental care for your family"
+                  aria-invalid={!!errors.tagline}
+                  aria-describedby={errors.tagline ? 'tagline-error' : 'tagline-help'}
+                  className={`${inputBase} ${errors.tagline ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
+                />
+                {fieldError('tagline')}
+                <p id="tagline-help" className="mt-2 text-xs text-slate-400">
+                  This appears under the business name on the public profile.
+                </p>
+              </div>
+
+            <div>
+              <label htmlFor="businessExperience" className={labelClass}>
+                Established Year / Years of Experience <span className="text-red-500" aria-hidden="true">*</span>
+              </label>
+              <input
+                type="text"
+                id="businessExperience"
+                value={businessExperienceValue}
+                onChange={(e) => handleBusinessExperienceChange(e.target.value)}
+                placeholder="Established in 2018 / 7 years experience"
+                aria-required="true"
+                aria-invalid={!!errors.establishedYear || !!errors.yearsOfExperience}
+                aria-describedby={
+                  errors.establishedYear
+                    ? 'establishedYear-error'
+                    : errors.yearsOfExperience
+                      ? 'yearsOfExperience-error'
+                      : 'businessExperience-help'
+                }
+                className={`${inputBase} ${
+                  errors.establishedYear || errors.yearsOfExperience
+                    ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100'
+                    : ''
+                }`}
+              />
+              {fieldError('establishedYear')}
+              {fieldError('yearsOfExperience')}
+              <p id="businessExperience-help" className="mt-2 text-xs text-slate-400">
+                Use a four-digit established year, years of experience, or both.
+              </p>
+            </div>
             </div>
           </section>
+          )}
 
-          {/* ── Contact Information ── */}
+          {currentStepIndex === 1 && (
           <section className={sectionCardClass} aria-labelledby="section-contact">
             <FormSectionHeading
               id="section-contact"
-              title="Contact Information"
+              title="Contact & Location Details"
               description="Add contact options customers can use to reach you."
             />
             <div className="grid gap-5 md:grid-cols-2">
@@ -1489,6 +1848,44 @@ function CreateProfilePage() {
                 {fieldError('email')}
               </div>
 
+                <div>
+                  <label htmlFor="address" className={labelClass}>
+                    Address <span className="text-red-500" aria-hidden="true">*</span>
+                  </label>
+                  <textarea
+                    id="address"
+                    name="address"
+                    rows={3}
+                    value={profileData.address}
+                    onChange={handleChange}
+                    placeholder="e.g. 123 Main Street, Suite 4&#10;New York, NY 10001"
+                    aria-required="true"
+                    aria-invalid={!!errors.address}
+                    aria-describedby={errors.address ? 'address-error' : undefined}
+                    className={`${textareaBase} ${errors.address ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
+                  />
+                  {fieldError('address')}
+                </div>
+
+                <div>
+                  <label htmlFor="googleMapsUrl" className={labelClass}>
+                    Google Maps Link <span className="text-red-500" aria-hidden="true">*</span>
+                  </label>
+                  <input
+                    type="url"
+                    id="googleMapsUrl"
+                    name="googleMapsUrl"
+                    value={profileData.googleMapsUrl}
+                    onChange={handleChange}
+                    placeholder="https://maps.google.com/..."
+                    aria-required="true"
+                    aria-invalid={!!errors.googleMapsUrl}
+                    aria-describedby={errors.googleMapsUrl ? 'googleMapsUrl-error' : undefined}
+                    className={`${inputBase} ${errors.googleMapsUrl ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
+                  />
+                  {fieldError('googleMapsUrl')}
+                </div>
+
               <div>
                 <label htmlFor="website" className={labelClass}>
                   Website
@@ -1506,57 +1903,109 @@ function CreateProfilePage() {
                 />
               </div>
             </div>
-          </section>
 
-          {/* ── Business Information ── */}
+            <div className="mt-5">
+              <FormSubsectionHeading
+                id="section-online"
+                title="Social Links"
+                description="Add your official social profiles. Use the + button to add more platforms if needed."
+                action={
+                  <button
+                    type="button"
+                    onClick={handleAddSocialLinkRow}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                    aria-label="Add social link"
+                  >
+                    +
+                  </button>
+                }
+              />
+              <div className="space-y-4">
+              {socialLinkRows.map((row, index) => {
+                const rowError = socialLinkRowErrors[row.id]
+
+                return (
+                  <div
+                    key={row.id}
+                    className="rounded-2xl border border-slate-200 bg-white/85 p-4"
+                  >
+                    <div className="grid gap-3 md:grid-cols-[minmax(0,210px)_minmax(0,1fr)_auto] md:items-start">
+                      <div>
+                        <label htmlFor={`social-platform-${row.id}`} className={compactFieldLabelClass}>
+                          Platform Name
+                        </label>
+                        <input
+                          type="text"
+                          id={`social-platform-${row.id}`}
+                          value={row.platform}
+                          onChange={(e) => handleSocialLinkChange(row.id, 'platform', e.target.value)}
+                          placeholder={index === 0 ? 'Instagram' : index === 1 ? 'Facebook' : 'LinkedIn'}
+                          aria-invalid={!!rowError}
+                          aria-describedby={rowError ? `social-link-${row.id}-error` : undefined}
+                          className={`${inputBase} ${rowError ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
+                        />
+                      </div>
+
+                      <div>
+                        <label htmlFor={`social-url-${row.id}`} className={compactFieldLabelClass}>
+                          Profile Link
+                        </label>
+                        <input
+                          type="url"
+                          id={`social-url-${row.id}`}
+                          value={row.url}
+                          onChange={(e) => handleSocialLinkChange(row.id, 'url', e.target.value)}
+                          placeholder={getSocialLinkPlaceholder(row.platform)}
+                          aria-invalid={!!rowError}
+                          aria-describedby={rowError ? `social-link-${row.id}-error` : undefined}
+                          className={`${inputBase} ${rowError ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
+                        />
+                      </div>
+
+                      <div className="md:pt-[1.85rem]">
+                        {index >= 2 ? (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveSocialLinkRow(row.id)}
+                            className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-200"
+                          >
+                            Remove
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    {rowError ? (
+                      <p
+                        id={`social-link-${row.id}-error`}
+                        role="alert"
+                        className="mt-3 flex items-center gap-1 text-xs text-red-600"
+                      >
+                        <svg className="h-3 w-3 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        {rowError}
+                      </p>
+                    ) : null}
+                  </div>
+                )
+              })}
+              </div>
+            </div>
+          </section>
+          )}
+
+          {currentStepIndex === 2 && (
           <section className={sectionCardClass} aria-labelledby="section-business">
             <FormSectionHeading
               id="section-business"
-              title="Business Information"
-              description="Describe your business in a clear, professional way."
+              title="Business Overview & Offerings"
+              description="Describe your business, offerings, keywords, availability, and common customer questions."
             />
-            <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
-              <div className="space-y-5">
-                <div>
-                  <label htmlFor="address" className={labelClass}>
-                    Address
-                    <span className={optionalTextClass}>Optional</span>
-                  </label>
-                  <textarea
-                    id="address"
-                    name="address"
-                    rows={3}
-                    value={profileData.address}
-                    onChange={handleChange}
-                    placeholder="e.g. 123 Main Street, Suite 4&#10;New York, NY 10001"
-                    className={textareaBase}
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="googleMapsUrl" className={labelClass}>
-                    Google Maps Link
-                    <span className={optionalTextClass}>Optional</span>
-                  </label>
-                  <input
-                    type="url"
-                    id="googleMapsUrl"
-                    name="googleMapsUrl"
-                    value={profileData.googleMapsUrl}
-                    onChange={handleChange}
-                    placeholder="https://maps.google.com/..."
-                    aria-invalid={!!errors.googleMapsUrl}
-                    aria-describedby={errors.googleMapsUrl ? 'googleMapsUrl-error' : undefined}
-                    className={`${inputBase} ${errors.googleMapsUrl ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
-                  />
-                  {fieldError('googleMapsUrl')}
-                </div>
-              </div>
-
+            <div className="space-y-5">
               <div>
                 <label htmlFor="aboutBusiness" className={labelClass}>
-                  About Business
-                  <span className={optionalTextClass}>Optional</span>
+                  About Business <span className="text-red-500" aria-hidden="true">*</span>
                 </label>
                 <textarea
                   id="aboutBusiness"
@@ -1565,59 +2014,117 @@ function CreateProfilePage() {
                   value={profileData.aboutBusiness}
                   onChange={handleChange}
                   placeholder="A short description of your business, what you offer, and what makes you unique..."
-                  className={`${textareaBase} min-h-[124px]`}
+                  aria-required="true"
+                  aria-invalid={!!errors.aboutBusiness}
+                  aria-describedby={errors.aboutBusiness ? 'aboutBusiness-error' : undefined}
+                  className={`${textareaBase} min-h-[124px] ${errors.aboutBusiness ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
                 />
+                {fieldError('aboutBusiness')}
               </div>
-            </div>
-          </section>
 
-          <section className={sectionCardClass} aria-labelledby="section-enrichment">
-            <FormSectionHeading
-              id="section-enrichment"
-              title="Services & Keywords"
-              description="Show what you offer and improve how customers discover your profile."
+            <FormSubsectionHeading
+              id="section-products"
+              title="Products / Menu / Packages / Services"
+              description="Add optional offerings such as products, menu items, or service packages."
+              action={
+                <button
+                  type="button"
+                  onClick={handleAddProduct}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                  aria-label="Add product, menu item, or package"
+                >
+                  +
+                </button>
+              }
             />
-            <div className="space-y-5">
-              <div>
-                <label htmlFor="tagline" className={labelClass}>
-                  Business Tagline
-                  <span className={optionalTextClass}>Optional</span>
-                </label>
-                <input
-                  type="text"
-                  id="tagline"
-                  name="tagline"
-                  value={profileData.tagline}
-                  onChange={handleChange}
-                  maxLength={120}
-                  placeholder="Example: Trusted local dental care for your family"
-                  aria-invalid={!!errors.tagline}
-                  aria-describedby={errors.tagline ? 'tagline-error' : 'tagline-help'}
-                  className={`${inputBase} ${errors.tagline ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
-                />
-                {fieldError('tagline')}
-                <p id="tagline-help" className="mt-2 text-xs text-slate-400">
-                  This appears under the business name on the public profile.
-                </p>
-              </div>
 
-              <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-                <div>
-                  <label htmlFor="servicesText" className={labelClass}>
-                    Services
-                    <span className={optionalTextClass}>Optional</span>
-                  </label>
-                  <textarea
-                    id="servicesText"
-                    name="servicesText"
-                    rows={4}
-                    value={profileData.servicesText}
-                    onChange={handleChange}
-                    placeholder={'Dental Checkup\nTeeth Cleaning\nRoot Canal Treatment'}
-                    className={`${textareaBase} min-h-[148px]`}
-                  />
-                  <p className="mt-2 text-xs text-slate-400">Enter one service per line.</p>
+            <div>
+              <textarea
+                id="servicesText"
+                name="servicesText"
+                rows={4}
+                value={profileData.servicesText}
+                onChange={handleChange}
+                aria-label="Products / Menu / Packages / Services"
+                placeholder={'Dental Checkup\nTeeth Cleaning\nRoot Canal Treatment'}
+                className={`${textareaBase} min-h-[148px]`}
+              />
+              <p className="mt-2 text-xs text-slate-400">Enter one service per line.</p>
+            </div>
+
+            <div className="space-y-4">
+              {profileData.productsMenuPackages.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 px-4 py-5 text-sm text-slate-500">
+                  No product, menu, or package items added yet.
                 </div>
+              ) : (
+                profileData.productsMenuPackages.map((item, index) => (
+                  <div key={item.id} className="rounded-2xl border border-slate-200 bg-white/85 p-4 sm:p-5">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold text-slate-800">Item {index + 1}</p>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveProduct(item.id)}
+                        className="inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 transition hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                      >
+                        Remove
+                      </button>
+                    </div>
+
+                    <div className="grid gap-4">
+                      <div>
+                        <label htmlFor={`product-name-${item.id}`} className={compactFieldLabelClass}>
+                          Name
+                        </label>
+                        <input
+                          type="text"
+                          id={`product-name-${item.id}`}
+                          value={item.name}
+                          onChange={(e) => handleProductChange(item.id, 'name', e.target.value)}
+                          placeholder="e.g. Premium Haircut"
+                          aria-invalid={!!errors.productsMenuPackages}
+                          aria-describedby={errors.productsMenuPackages ? 'productsMenuPackages-error' : undefined}
+                          className={`${inputBase} ${errors.productsMenuPackages ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
+                        />
+                      </div>
+
+                      <div>
+                        <label htmlFor={`product-description-${item.id}`} className={compactFieldLabelClass}>
+                          Description
+                        </label>
+                        <textarea
+                          id={`product-description-${item.id}`}
+                          value={item.description}
+                          onChange={(e) => handleProductChange(item.id, 'description', e.target.value)}
+                          placeholder="Describe what is included."
+                          aria-invalid={!!errors.productsMenuPackages}
+                          aria-describedby={errors.productsMenuPackages ? 'productsMenuPackages-error' : undefined}
+                          className={`${textareaBase} ${errors.productsMenuPackages ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
+                        />
+                      </div>
+
+                      <div>
+                        <label htmlFor={`product-price-${item.id}`} className={compactFieldLabelClass}>
+                          Price
+                          <span className={optionalTextClass}>Optional</span>
+                        </label>
+                        <input
+                          type="text"
+                          id={`product-price-${item.id}`}
+                          value={item.price}
+                          onChange={(e) => handleProductChange(item.id, 'price', e.target.value)}
+                          placeholder="e.g. $49"
+                          aria-invalid={!!errors.productsMenuPackages}
+                          aria-describedby={errors.productsMenuPackages ? 'productsMenuPackages-error' : undefined}
+                          className={`${inputBase} ${errors.productsMenuPackages ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            {fieldError('productsMenuPackages')}
 
                 <div>
                   <label htmlFor="keywordsText" className={labelClass}>
@@ -1640,14 +2147,10 @@ function CreateProfilePage() {
                     Separate keywords with commas. Use up to 20 keywords, 40 characters each.
                   </p>
                 </div>
-              </div>
-            </div>
-          </section>
 
-          <section className={sectionCardClass} aria-labelledby="section-hours">
-            <FormSectionHeading
+            <FormSubsectionHeading
               id="section-hours"
-              title="Working Hours"
+              title={<>Working Hours <span className="text-red-500" aria-hidden="true">*</span></>}
               description="Show when your business is open so customers know when to reach you."
             />
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white/85">
@@ -1718,126 +2221,90 @@ function CreateProfilePage() {
               })}
               {fieldError('workingHours')}
             </div>
-          </section>
 
-          <section className={sectionCardClass} aria-labelledby="section-online">
-            <FormSectionHeading
-              id="section-online"
-              title="Social Links"
-              description="Add your official social profiles. Start with Instagram and Facebook, then add more platforms if needed."
+            <FormSubsectionHeading
+              id="section-faqs"
+              title="FAQs"
+              description="Add optional question-and-answer pairs for common customer concerns."
               action={
-                <button
-                  type="button"
-                  onClick={handleAddSocialLinkRow}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-200"
-                  aria-label="Add social link"
-                >
-                  +
-                </button>
+                profileData.faqs.length < MAX_FAQS ? (
+                  <button
+                    type="button"
+                    onClick={handleAddFaq}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                    aria-label="Add FAQ item"
+                  >
+                    +
+                  </button>
+                ) : undefined
               }
             />
-            <div className="space-y-4">
-              {socialLinkRows.map((row, index) => {
-                const rowError = socialLinkRowErrors[row.id]
 
-                return (
-                  <div
-                    key={row.id}
-                    className="rounded-2xl border border-slate-200 bg-white/85 p-4"
-                  >
-                    <div className="grid gap-3 md:grid-cols-[minmax(0,210px)_minmax(0,1fr)_auto] md:items-start">
+            <div className="space-y-4">
+              {profileData.faqs.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 px-4 py-5 text-sm text-slate-500">
+                  No FAQs added yet.
+                </div>
+              ) : (
+                profileData.faqs.map((faq, index) => (
+                  <div key={faq.id} className="rounded-2xl border border-slate-200 bg-white/85 p-4 sm:p-5">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold text-slate-800">FAQ {index + 1}</p>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveFaq(faq.id)}
+                        className="inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 transition hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                      >
+                        Remove
+                      </button>
+                    </div>
+
+                    <div className="grid gap-4">
                       <div>
-                        <label htmlFor={`social-platform-${row.id}`} className={compactFieldLabelClass}>
-                          Platform Name
+                        <label htmlFor={`faq-question-${faq.id}`} className={compactFieldLabelClass}>
+                          Question
                         </label>
                         <input
                           type="text"
-                          id={`social-platform-${row.id}`}
-                          value={row.platform}
-                          onChange={(e) => handleSocialLinkChange(row.id, 'platform', e.target.value)}
-                          placeholder={index === 0 ? 'Instagram' : index === 1 ? 'Facebook' : 'LinkedIn'}
-                          aria-invalid={!!rowError}
-                          aria-describedby={rowError ? `social-link-${row.id}-error` : undefined}
-                          className={`${inputBase} ${rowError ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
+                          id={`faq-question-${faq.id}`}
+                          value={faq.question}
+                          onChange={(e) => handleFaqChange(faq.id, 'question', e.target.value)}
+                          placeholder="e.g. Do you offer home visits?"
+                          aria-invalid={!!errors.faqs}
+                          aria-describedby={errors.faqs ? 'faqs-error' : undefined}
+                          className={`${inputBase} ${errors.faqs ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
                         />
                       </div>
 
                       <div>
-                        <label htmlFor={`social-url-${row.id}`} className={compactFieldLabelClass}>
-                          Profile Link
+                        <label htmlFor={`faq-answer-${faq.id}`} className={compactFieldLabelClass}>
+                          Answer
                         </label>
-                        <input
-                          type="url"
-                          id={`social-url-${row.id}`}
-                          value={row.url}
-                          onChange={(e) => handleSocialLinkChange(row.id, 'url', e.target.value)}
-                          placeholder={getSocialLinkPlaceholder(row.platform)}
-                          aria-invalid={!!rowError}
-                          aria-describedby={rowError ? `social-link-${row.id}-error` : undefined}
-                          className={`${inputBase} ${rowError ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
+                        <textarea
+                          id={`faq-answer-${faq.id}`}
+                          value={faq.answer}
+                          onChange={(e) => handleFaqChange(faq.id, 'answer', e.target.value)}
+                          placeholder="Add the answer customers should see."
+                          aria-invalid={!!errors.faqs}
+                          aria-describedby={errors.faqs ? 'faqs-error' : undefined}
+                          className={`${textareaBase} ${errors.faqs ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
                         />
                       </div>
-
-                      <div className="md:pt-[1.85rem]">
-                        {index >= 2 ? (
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveSocialLinkRow(row.id)}
-                            className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-200"
-                          >
-                            Remove
-                          </button>
-                        ) : null}
-                      </div>
                     </div>
-
-                    {rowError ? (
-                      <p
-                        id={`social-link-${row.id}-error`}
-                        role="alert"
-                        className="mt-3 flex items-center gap-1 text-xs text-red-600"
-                      >
-                        <svg className="h-3 w-3 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                        </svg>
-                        {rowError}
-                      </p>
-                    ) : null}
                   </div>
-                )
-              })}
+                ))
+              )}
+            </div>
+            {fieldError('faqs')}
             </div>
           </section>
+          )}
 
-          <section className={sectionCardClass} aria-labelledby="section-visibility">
-            <FormSectionHeading
-              id="section-visibility"
-              title="Visibility"
-              description="Control whether your profile appears publicly in the directory."
-            />
-            <div className="rounded-2xl border border-slate-200 bg-white/85 p-4 sm:p-5">
-              <label htmlFor="isPublic" className={labelClass}>
-                Profile Visibility
-              </label>
-              <select
-                id="isPublic"
-                value={profileData.isPublic ? 'public' : 'private'}
-                onChange={(e) => setProfileData({ ...profileData, isPublic: e.target.value === 'public' })}
-                className={`${inputBase} bg-white`}
-              >
-                <option value="public">Public</option>
-                <option value="private">Private</option>
-              </select>
-              <p className="mt-2 text-sm leading-6 text-slate-500">
-                Public profiles can appear in the directory. Private profiles stay hidden from public visitors.
-              </p>
-            </div>
-          </section>
-
+          {currentStepIndex === 3 && (
           <section className={sectionCardClass} aria-labelledby="section-branding">
             <FormSectionHeading
               id="section-branding"
-              title="Profile Images & Gallery"
+              title="Branding & Business Media"
               description="Upload the logo, banner, and gallery images that make your profile look trustworthy and complete."
             />
             <div className="space-y-5">
@@ -1917,8 +2384,7 @@ function CreateProfilePage() {
 
               <div className="rounded-2xl border border-slate-200 bg-white/85 p-4 sm:p-5">
                 <label htmlFor="galleryImages" className={labelClass}>
-                  Business Gallery
-                  <span className={optionalTextClass}>Optional</span>
+                  Business Gallery <span className="text-red-500" aria-hidden="true">*</span>
                 </label>
                 <input
                   ref={galleryInputRef}
@@ -1928,6 +2394,7 @@ function CreateProfilePage() {
                   accept={imageAccept}
                   multiple
                   onChange={handleGalleryImagesChange}
+                  aria-required="true"
                   aria-invalid={!!errors.galleryImages}
                   aria-describedby={errors.galleryImages ? 'galleryImages-error' : 'galleryImages-help'}
                   className={`${fileInputBase} ${errors.galleryImages ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
@@ -1977,316 +2444,17 @@ function CreateProfilePage() {
               </div>
             </div>
           </section>
+          )}
 
-          <section className={sectionCardClass} aria-labelledby="section-details">
+          {currentStepIndex === 4 && (
+          <section className={sectionCardClass} aria-labelledby="section-certificates-documents">
             <FormSectionHeading
-              id="section-details"
-              title="Additional Business Details"
-              description="Add optional details that help customers understand your experience, services, and practical conveniences."
+              id="section-certificates-documents"
+              title="Certificates & Documents"
+              description="Add credentials and supporting files for your business profile."
             />
-
-            <div className="grid gap-5 md:grid-cols-2">
-              <div className="rounded-2xl border border-slate-200 bg-white/85 p-4 sm:p-5">
-                <label htmlFor="establishedYear" className={labelClass}>
-                  Established Year
-                  <span className={optionalTextClass}>Optional</span>
-                </label>
-                <input
-                  type="number"
-                  id="establishedYear"
-                  name="establishedYear"
-                  min="1000"
-                  max={getCurrentYear()}
-                  inputMode="numeric"
-                  value={profileData.establishedYear}
-                  onChange={handleChange}
-                  placeholder="e.g. 2016"
-                  aria-invalid={!!errors.establishedYear}
-                  aria-describedby={errors.establishedYear ? 'establishedYear-error' : 'establishedYear-help'}
-                  className={`${inputBase} ${errors.establishedYear ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
-                />
-                {fieldError('establishedYear')}
-                <p id="establishedYear-help" className="mt-2 text-xs text-slate-400">
-                  Four digits only. Future years are not allowed.
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-white/85 p-4 sm:p-5">
-                <label htmlFor="yearsOfExperience" className={labelClass}>
-                  Years of Experience
-                  <span className={optionalTextClass}>Optional</span>
-                </label>
-                <input
-                  type="number"
-                  id="yearsOfExperience"
-                  name="yearsOfExperience"
-                  min="0"
-                  step="1"
-                  inputMode="numeric"
-                  value={profileData.yearsOfExperience}
-                  onChange={handleChange}
-                  placeholder="e.g. 8"
-                  aria-invalid={!!errors.yearsOfExperience}
-                  aria-describedby={errors.yearsOfExperience ? 'yearsOfExperience-error' : 'yearsOfExperience-help'}
-                  className={`${inputBase} ${errors.yearsOfExperience ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
-                />
-                {fieldError('yearsOfExperience')}
-                <p id="yearsOfExperience-help" className="mt-2 text-xs text-slate-400">
-                  Enter a whole number. Minimum 0.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-5 rounded-2xl border border-slate-200 bg-white/85 p-4 sm:p-5">
-              <label className={labelClass}>
-                Highlights / Specifications
-                <span className={optionalTextClass}>Optional</span>
-              </label>
-              <p className="mb-4 text-sm leading-6 text-slate-500">
-                Choose the highlights that best describe your business. Custom highlights are also supported.
-              </p>
-
-              <div className="flex flex-wrap gap-2">
-                {commonHighlights.map((highlight) => {
-                  const isSelected = profileData.highlights.some(
-                    (item) => item.toLowerCase() === highlight.toLowerCase()
-                  )
-
-                  return (
-                    <button
-                      key={highlight}
-                      type="button"
-                      onClick={() => handleHighlightToggle(highlight)}
-                      className={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-sky-200 ${
-                        isSelected
-                          ? 'border-sky-200 bg-sky-50 text-sky-700'
-                          : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-100'
-                      }`}
-                    >
-                      {highlight}
-                    </button>
-                  )
-                })}
-              </div>
-
-              <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                <input
-                  type="text"
-                  value={customHighlightValue}
-                  onChange={(e) => setCustomHighlightValue(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      handleAddCustomHighlight()
-                    }
-                  }}
-                  placeholder="Add a custom highlight"
-                  aria-invalid={!!errors.highlights}
-                  aria-describedby={errors.highlights ? 'highlights-error' : 'highlights-help'}
-                  className={`${inputBase} ${errors.highlights ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
-                />
-                <button
-                  type="button"
-                  onClick={handleAddCustomHighlight}
-                  className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-200"
-                >
-                  Add Highlight
-                </button>
-              </div>
-              {fieldError('highlights')}
-              <p id="highlights-help" className="mt-2 text-xs text-slate-400">
-                Selected highlights stay unique. Up to {MAX_HIGHLIGHTS} highlights.
-              </p>
-
-              {profileData.highlights.length > 0 && (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {profileData.highlights.map((highlight) => (
-                    <button
-                      key={highlight}
-                      type="button"
-                      onClick={() => handleHighlightToggle(highlight)}
-                      className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-200"
-                    >
-                      <span>{highlight}</span>
-                      <span aria-hidden="true" className="text-slate-400">
-                        ×
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </section>
-
-          <section className={sectionCardClass} aria-labelledby="section-faqs">
-            <FormSectionHeading
-              id="section-faqs"
-              title="FAQs"
-              description="Add optional question-and-answer pairs for common customer concerns."
-              action={
-                <button
-                  type="button"
-                  onClick={handleAddFaq}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-200"
-                  aria-label="Add FAQ item"
-                >
-                  +
-                </button>
-              }
-            />
-
-            <div className="space-y-4">
-              {profileData.faqs.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 px-4 py-5 text-sm text-slate-500">
-                  No FAQs added yet.
-                </div>
-              ) : (
-                profileData.faqs.map((faq, index) => (
-                  <div key={faq.id} className="rounded-2xl border border-slate-200 bg-white/85 p-4 sm:p-5">
-                    <div className="mb-4 flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold text-slate-800">FAQ {index + 1}</p>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveFaq(faq.id)}
-                        className="inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 transition hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-rose-200"
-                      >
-                        Remove
-                      </button>
-                    </div>
-
-                    <div className="grid gap-4">
-                      <div>
-                        <label htmlFor={`faq-question-${faq.id}`} className={compactFieldLabelClass}>
-                          Question
-                        </label>
-                        <input
-                          type="text"
-                          id={`faq-question-${faq.id}`}
-                          value={faq.question}
-                          onChange={(e) => handleFaqChange(faq.id, 'question', e.target.value)}
-                          placeholder="e.g. Do you offer home visits?"
-                          aria-invalid={!!errors.faqs}
-                          aria-describedby={errors.faqs ? 'faqs-error' : undefined}
-                          className={`${inputBase} ${errors.faqs ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
-                        />
-                      </div>
-
-                      <div>
-                        <label htmlFor={`faq-answer-${faq.id}`} className={compactFieldLabelClass}>
-                          Answer
-                        </label>
-                        <textarea
-                          id={`faq-answer-${faq.id}`}
-                          value={faq.answer}
-                          onChange={(e) => handleFaqChange(faq.id, 'answer', e.target.value)}
-                          placeholder="Add the answer customers should see."
-                          aria-invalid={!!errors.faqs}
-                          aria-describedby={errors.faqs ? 'faqs-error' : undefined}
-                          className={`${textareaBase} ${errors.faqs ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-            {fieldError('faqs')}
-          </section>
-
-          <section className={sectionCardClass} aria-labelledby="section-products">
-            <FormSectionHeading
-              id="section-products"
-              title="Products / Menu / Packages"
-              description="Add optional offerings such as products, menu items, or service packages."
-              action={
-                <button
-                  type="button"
-                  onClick={handleAddProduct}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-200"
-                  aria-label="Add product, menu item, or package"
-                >
-                  +
-                </button>
-              }
-            />
-
-            <div className="space-y-4">
-              {profileData.productsMenuPackages.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 px-4 py-5 text-sm text-slate-500">
-                  No product, menu, or package items added yet.
-                </div>
-              ) : (
-                profileData.productsMenuPackages.map((item, index) => (
-                  <div key={item.id} className="rounded-2xl border border-slate-200 bg-white/85 p-4 sm:p-5">
-                    <div className="mb-4 flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold text-slate-800">Item {index + 1}</p>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveProduct(item.id)}
-                        className="inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 transition hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-rose-200"
-                      >
-                        Remove
-                      </button>
-                    </div>
-
-                    <div className="grid gap-4">
-                      <div>
-                        <label htmlFor={`product-name-${item.id}`} className={compactFieldLabelClass}>
-                          Name
-                        </label>
-                        <input
-                          type="text"
-                          id={`product-name-${item.id}`}
-                          value={item.name}
-                          onChange={(e) => handleProductChange(item.id, 'name', e.target.value)}
-                          placeholder="e.g. Premium Haircut"
-                          aria-invalid={!!errors.productsMenuPackages}
-                          aria-describedby={errors.productsMenuPackages ? 'productsMenuPackages-error' : undefined}
-                          className={`${inputBase} ${errors.productsMenuPackages ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
-                        />
-                      </div>
-
-                      <div>
-                        <label htmlFor={`product-description-${item.id}`} className={compactFieldLabelClass}>
-                          Description
-                        </label>
-                        <textarea
-                          id={`product-description-${item.id}`}
-                          value={item.description}
-                          onChange={(e) => handleProductChange(item.id, 'description', e.target.value)}
-                          placeholder="Describe what is included."
-                          aria-invalid={!!errors.productsMenuPackages}
-                          aria-describedby={errors.productsMenuPackages ? 'productsMenuPackages-error' : undefined}
-                          className={`${textareaBase} ${errors.productsMenuPackages ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
-                        />
-                      </div>
-
-                      <div>
-                        <label htmlFor={`product-price-${item.id}`} className={compactFieldLabelClass}>
-                          Price
-                          <span className={optionalTextClass}>Optional</span>
-                        </label>
-                        <input
-                          type="text"
-                          id={`product-price-${item.id}`}
-                          value={item.price}
-                          onChange={(e) => handleProductChange(item.id, 'price', e.target.value)}
-                          placeholder="e.g. $49"
-                          aria-invalid={!!errors.productsMenuPackages}
-                          aria-describedby={errors.productsMenuPackages ? 'productsMenuPackages-error' : undefined}
-                          className={`${inputBase} ${errors.productsMenuPackages ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-            {fieldError('productsMenuPackages')}
-          </section>
-
-          <section className={sectionCardClass} aria-labelledby="section-qualifications">
-            <FormSectionHeading
+            <div className="space-y-5">
+            <FormSubsectionHeading
               id="section-qualifications"
               title="Certificates / Licenses / Qualifications"
               description="Add optional credentials that strengthen trust in your business."
@@ -2324,14 +2492,14 @@ function CreateProfilePage() {
                     <div className="grid gap-4 md:grid-cols-2">
                       <div className="md:col-span-2">
                         <label htmlFor={`qualification-title-${item.id}`} className={compactFieldLabelClass}>
-                          Title
+                          Certificate / License / Qualification Name
                         </label>
                         <input
                           type="text"
                           id={`qualification-title-${item.id}`}
                           value={item.title}
                           onChange={(e) => handleQualificationChange(item.id, 'title', e.target.value)}
-                          placeholder="e.g. Licensed Electrical Contractor"
+                          placeholder="e.g. Medical License, ISO Certificate, Professional Qualification"
                           aria-invalid={!!errors.qualifications}
                           aria-describedby={errors.qualifications ? 'qualifications-error' : undefined}
                           className={`${inputBase} ${errors.qualifications ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
@@ -2389,22 +2557,75 @@ function CreateProfilePage() {
                           className={`${textareaBase} ${errors.qualifications ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
                         />
                       </div>
+
+                      <div className="md:col-span-2">
+                        <label htmlFor={`qualification-document-${item.id}`} className={compactFieldLabelClass}>
+                          Upload Document
+                          <span className={optionalTextClass}>Optional</span>
+                        </label>
+                        <input
+                          type="file"
+                          id={`qualification-document-${item.id}`}
+                          accept={documentAccept}
+                          onChange={(e) => handleQualificationDocumentChange(item.id, e)}
+                          aria-invalid={!!errors.qualifications}
+                          aria-describedby={errors.qualifications ? 'qualifications-error' : undefined}
+                          className={`${fileInputBase} ${errors.qualifications ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
+                        />
+                        <p className="mt-2 text-xs text-slate-400">
+                          Supported formats: PDF, JPG, PNG, and WebP. Maximum file size is 10 MB.
+                        </p>
+
+                        {(item.documentFile || item.documentFileName.trim()) && (
+                          <div className="mt-3 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-medium text-slate-800">
+                                {item.documentFile?.name || item.documentFileName}
+                              </p>
+                              <p className="mt-1 text-xs text-slate-500">
+                                {formatMimeTypeLabel(item.documentFile?.type || item.documentMimeType)}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveQualificationDocument(item.id)}
+                              className="inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 transition hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))
               )}
             </div>
             {fieldError('qualifications')}
-          </section>
 
-          <section className={sectionCardClass} aria-labelledby="section-documents">
-            <FormSectionHeading
+            <FormSubsectionHeading
               id="section-documents"
               title="Optional Documents"
               description="Upload brochures, menus, certificates, licenses, rate cards, or similar supporting documents."
             />
 
             <div className="rounded-2xl border border-slate-200 bg-white/85 p-4 sm:p-5">
+              <div className="mb-5">
+                <label htmlFor="documentName" className={labelClass}>
+                  Document Name
+                  <span className={optionalTextClass}>Optional</span>
+                </label>
+                <input
+                  type="text"
+                  id="documentName"
+                  name="documentName"
+                  value={profileData.documentName}
+                  onChange={handleChange}
+                  placeholder="e.g. Business Brochure, Menu, Rate Card, Registration Certificate"
+                  className={inputBase}
+                />
+              </div>
+
               <label htmlFor="documents" className={labelClass}>
                 Upload Documents
                 <span className={optionalTextClass}>Optional</span>
@@ -2434,7 +2655,9 @@ function CreateProfilePage() {
                       className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
                     >
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-slate-800">{document.file_name}</p>
+                        <p className="truncate text-sm font-medium text-slate-800">
+                          {document.document_name || document.file_name}
+                        </p>
                         <p className="mt-1 text-xs text-slate-500">{formatMimeTypeLabel(document.mime_type)}</p>
                       </div>
                       <button
@@ -2453,7 +2676,9 @@ function CreateProfilePage() {
                       className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
                     >
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-slate-800">{file.name}</p>
+                        <p className="truncate text-sm font-medium text-slate-800">
+                          {profileData.documentName.trim() || file.name}
+                        </p>
                         <p className="mt-1 text-xs text-slate-500">{formatMimeTypeLabel(file.type)}</p>
                       </div>
                       <button
@@ -2468,21 +2693,58 @@ function CreateProfilePage() {
                 </div>
               )}
             </div>
-          </section>
 
-          {/* ── Buttons ── */}
-          <div className="rounded-[26px] border border-slate-200/90 bg-slate-50/90 p-4 sm:p-5">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <p className="text-sm font-semibold text-slate-900">
-                  {isEditMode ? 'Review your updates before saving.' : 'Review your details before continuing.'}
-                </p>
-                <p className="mt-1 text-sm leading-6 text-slate-500">
-                  {isEditMode
-                    ? 'Your existing business profile will be updated with these changes.'
-                    : 'You can preview the public profile before creating it.'}
-                </p>
+            </div>
+          </section>
+          )}
+
+          {/* -- Buttons -- */}
+          {!isLastStep && (
+            <div className="rounded-[26px] border border-slate-200/90 bg-slate-50/90 p-4 sm:p-5">
+              <div className={`flex items-center ${isFirstStep ? 'justify-end' : 'justify-between'}`}>
+                {!isFirstStep && (
+                  <button
+                    type="button"
+                    onClick={handlePreviousStep}
+                    className="inline-flex items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#0f172a_0%,#1d4ed8_58%,#2563eb_100%)] px-8 py-3 text-sm font-semibold text-white shadow-[0_20px_40px_-24px_rgba(37,99,235,0.75)] transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:ring-offset-2 focus:ring-offset-slate-50"
+                  >
+                    Previous
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleNextStep}
+                  className="inline-flex items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#0f172a_0%,#1d4ed8_58%,#2563eb_100%)] px-8 py-3 text-sm font-semibold text-white shadow-[0_20px_40px_-24px_rgba(37,99,235,0.75)] transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:ring-offset-2 focus:ring-offset-slate-50"
+                >
+                  Next
+                </button>
               </div>
+            </div>
+          )}
+
+          {isLastStep && (
+            <div className="rounded-[26px] border border-slate-200/90 bg-slate-50/90 p-4 sm:p-5">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                  <button
+                    type="button"
+                    onClick={handlePreviousStep}
+                    className="inline-flex w-full items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#0f172a_0%,#1d4ed8_58%,#2563eb_100%)] px-8 py-3 text-sm font-semibold text-white shadow-[0_20px_40px_-24px_rgba(37,99,235,0.75)] transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:ring-offset-2 focus:ring-offset-slate-50 sm:w-auto"
+                  >
+                    Previous
+                  </button>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">
+                      {isEditMode ? 'Review your updates before saving.' : 'Review your details before continuing.'}
+                    </p>
+                    <p className="mt-1 text-sm leading-6 text-slate-500">
+                      {isEditMode
+                        ? 'Your existing business profile will be updated with these changes.'
+                        : 'You can preview the public profile before creating it.'}
+                    </p>
+                  </div>
+                </div>
 
               <div className="flex flex-col gap-3 sm:flex-row lg:shrink-0">
                 <button
@@ -2522,6 +2784,7 @@ function CreateProfilePage() {
               </div>
             </div>
           </div>
+          )}
 
               </form>
             </div>

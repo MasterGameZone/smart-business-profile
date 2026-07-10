@@ -236,6 +236,29 @@ Access is restricted by RLS to the authenticated owner of each row. Missing rows
 
 ---
 
+## Table: business_profile_documents
+
+Purpose
+
+Stores metadata for optional documents uploaded for a business profile. File bytes are stored in Supabase Storage.
+
+### Columns
+
+| Column | Type | Nullable | Description |
+|----------|------|----------|-------------|
+| id | UUID | No | Primary key |
+| business_profile_id | UUID | No | Reference to `business_profiles.id` |
+| owner_id | UUID | No | Reference to `auth.users.id` |
+| document_name | TEXT | Yes | Optional display name for the uploaded document |
+| file_name | TEXT | No | Original uploaded file name |
+| file_path | TEXT | No | Supabase Storage object path |
+| mime_type | TEXT | No | Uploaded document MIME type |
+| created_at | TIMESTAMP WITH TIME ZONE | No | Record creation timestamp |
+
+Access is restricted by RLS to the owner of the connected business profile.
+
+---
+
 ## Bucket: business-assets
 
 Purpose
@@ -286,6 +309,7 @@ Version 3.8 added helper functions for logo, cover, and gallery uploads. Version
 | 3.5 | Profile enrichment schema foundation | Pending |
 | 3.8 | Supabase Storage foundation for business-assets bucket | Pending manual review |
 | 4.21 | Persistent user account-mode preferences | Migration created; apply to Supabase |
+| 4.22 | Optional business document display names | Migration created; apply to Supabase |
 | Future | Additional modules | Planned |
 
 Detailed migration SQL should remain inside the `/supabase/migrations` directory.

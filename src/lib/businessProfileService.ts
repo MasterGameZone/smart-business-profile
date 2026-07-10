@@ -9,7 +9,7 @@ import type {
   BusinessProfileUpdate,
   PublicBusinessProfileRow,
 } from '../types/businessProfile'
-import type { ProfileData } from '../context/ProfileContext'
+import type { ProfileData, ProfileQualificationItem } from '../context/ProfileContext'
 import { workingDays } from '../context/ProfileContext'
 import { slugify } from '../utils/slug'
 import { getCurrentUser } from './authService'
@@ -110,13 +110,17 @@ function parseQualifications(data: ProfileData): BusinessProfileQualificationVal
       issuingOrganization: item.issuingOrganization.trim() || null,
       year: parseOptionalYear(item.year),
       description: item.description.trim() || null,
+      documentFileName: item.documentFilePath.trim() ? item.documentFileName.trim() || null : null,
+      documentFilePath: item.documentFilePath.trim() || null,
+      documentMimeType: item.documentFilePath.trim() ? item.documentMimeType.trim() || null : null,
     }))
     .filter(
       (item) =>
         item.title ||
         item.issuingOrganization ||
         item.year !== null ||
-        item.description
+        item.description ||
+        item.documentFilePath
     )
     .filter((item) => item.title)
 }
@@ -204,10 +208,50 @@ function validateImagesBeforeProfileWrite(data: ProfileData): void {
   validateImageBeforeProfileWrite(data.coverBanner)
   data.galleryImages.forEach((file) => validateImageBeforeProfileWrite(file))
   data.documentFiles.forEach((file) => validateDocumentBeforeProfileWrite(file))
+  data.qualifications.forEach((item) => {
+    if (item.documentFile) {
+      validateDocumentBeforeProfileWrite(item.documentFile)
+    }
+  })
 
   if (data.existingGalleryImageUrls.length + data.galleryImages.length > MAX_GALLERY_IMAGES) {
     throw new Error(`You can upload up to ${MAX_GALLERY_IMAGES} gallery images.`)
   }
+}
+
+async function uploadPendingQualificationDocuments(
+  ownerId: string,
+  businessProfileId: string,
+  data: ProfileData
+): Promise<ProfileQualificationItem[] | null> {
+  if (!data.qualifications.some((item) => item.documentFile)) {
+    return null
+  }
+
+  const qualifications: ProfileQualificationItem[] = []
+
+  for (const item of data.qualifications) {
+    if (!item.documentFile) {
+      qualifications.push(item)
+      continue
+    }
+
+    const uploadedDocument = await uploadBusinessDocument({
+      file: item.documentFile,
+      ownerId,
+      businessProfileId,
+    })
+
+    qualifications.push({
+      ...item,
+      documentFile: null,
+      documentFileName: item.documentFile.name,
+      documentFilePath: uploadedDocument.path,
+      documentMimeType: item.documentFile.type,
+    })
+  }
+
+  return qualifications
 }
 
 export async function getBusinessProfileDocuments(
@@ -272,6 +316,7 @@ async function syncBusinessProfileDocuments(
     insertedDocuments.push({
       business_profile_id: businessProfileId,
       owner_id: ownerId,
+      document_name: data.documentName.trim() || null,
       file_name: file.name,
       file_path: uploadedDocument.path,
       mime_type: file.type,
@@ -403,13 +448,22 @@ export async function insertBusinessProfile(
   }
 
   const imageUpdates = await uploadPendingProfileImages(user.id, inserted.id, data)
+  const uploadedQualifications = await uploadPendingQualificationDocuments(user.id, inserted.id, data)
 
   await syncBusinessProfileDocuments(user.id, inserted.id, data)
 
-  if (Object.keys(imageUpdates).length > 0) {
+  const postInsertUpdates: BusinessProfileUpdate = { ...imageUpdates }
+  if (uploadedQualifications) {
+    postInsertUpdates.qualifications = parseQualifications({
+      ...data,
+      qualifications: uploadedQualifications,
+    })
+  }
+
+  if (Object.keys(postInsertUpdates).length > 0) {
     const { data: updatedWithImages, error: imageUpdateError } = await supabase
       .from('business_profiles')
-      .update(imageUpdates)
+      .update(postInsertUpdates)
       .eq('id', inserted.id)
       .select()
       .single()
@@ -419,7 +473,7 @@ export async function insertBusinessProfile(
     }
 
     if (!updatedWithImages) {
-      throw new Error('Image upload succeeded but the profile row was not returned.')
+      throw new Error('Asset upload succeeded but the profile row was not returned.')
     }
 
     return updatedWithImages
@@ -443,6 +497,14 @@ export async function updateBusinessProfile(
 
   if (data.logo || data.coverBanner || data.galleryImages.length > 0) {
     Object.assign(payload, await uploadPendingProfileImages(user.id, id, data))
+  }
+
+  const uploadedQualifications = await uploadPendingQualificationDocuments(user.id, id, data)
+  if (uploadedQualifications) {
+    payload.qualifications = parseQualifications({
+      ...data,
+      qualifications: uploadedQualifications,
+    })
   }
 
   const { data: updated, error } = await supabase

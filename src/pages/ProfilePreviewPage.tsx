@@ -10,6 +10,20 @@ import BusinessProfileDisplay from '../components/BusinessProfileDisplay.tsx'
 import { svgContainerToBlob, triggerBlobDownload } from '../utils/qr.ts'
 import AppHeader from '../components/AppHeader.tsx'
 
+const CREATE_PROFILE_STEP_STORAGE_PREFIX = 'smart-business-profile:create-profile-step'
+
+function getCreateProfileStepStorageKey(profileId: string | null | undefined): string {
+  return `${CREATE_PROFILE_STEP_STORAGE_PREFIX}:${profileId ?? 'new'}`
+}
+
+function removeCreateProfileStepIndex(storageKey: string): void {
+  try {
+    window.sessionStorage.removeItem(storageKey)
+  } catch {
+    // Step persistence cleanup is best-effort.
+  }
+}
+
 function parsePreviewServices(text: string): string[] {
   return text
     .split('\n')
@@ -139,7 +153,21 @@ function ProfilePreviewPage() {
       !profileData.ownerName.trim() ||
       !profileData.businessCategory ||
       !profileData.phoneNumber.trim() ||
-      !profileData.email.trim()
+      !profileData.email.trim() ||
+      (!profileData.establishedYear.trim() && !profileData.yearsOfExperience.trim()) ||
+      !profileData.address.trim() ||
+      !profileData.googleMapsUrl.trim() ||
+      !profileData.aboutBusiness.trim() ||
+      profileData.existingGalleryImageUrls.length + profileData.galleryImages.length === 0 ||
+      !Object.values(profileData.workingHours).some(
+        (day) => day.closed || day.open.trim().length > 0 || day.close.trim().length > 0
+      ) ||
+      Object.values(profileData.workingHours).some((day) => {
+        if (day.closed) return false
+        const hasOpen = day.open.trim().length > 0
+        const hasClose = day.close.trim().length > 0
+        return hasOpen !== hasClose
+      })
     ) {
       showToast('Please complete all required fields before saving.', 'error')
       return
@@ -148,6 +176,8 @@ function ProfilePreviewPage() {
     setIsSaving(true)
     try {
       const saved = await insertBusinessProfile(profileData)
+      removeCreateProfileStepIndex(getCreateProfileStepStorageKey(profileData.id))
+      removeCreateProfileStepIndex(getCreateProfileStepStorageKey(null))
       setProfileData({
         ...profileData,
         id: saved.id,
@@ -159,6 +189,7 @@ function ProfilePreviewPage() {
         existingCoverBannerUrl: saved.cover_banner_url,
         galleryImages: [],
         existingGalleryImageUrls: Array.isArray(saved.gallery_images) ? saved.gallery_images : [],
+        documentName: '',
         documentFiles: [],
       })
       setHasSaved(true)
