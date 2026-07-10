@@ -78,6 +78,7 @@ function mapProfileDataToFields(data: ProfileData) {
     business_name: data.businessName.trim(),
     owner_name: data.ownerName.trim(),
     business_category: data.businessCategory,
+    business_subcategories: data.businessSubcategories.length > 0 ? data.businessSubcategories : null,
     phone_number: data.phoneNumber.trim(),
     whatsapp_number: data.whatsappNumber.trim() || null,
     email: data.email.trim() || null,

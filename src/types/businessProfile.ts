@@ -11,6 +11,7 @@ export interface BusinessProfileRow {
   business_name: string
   owner_name: string
   business_category: string
+  business_subcategories: string[] | null
   phone_number: string
   whatsapp_number: string | null
   email: string | null
@@ -38,6 +39,7 @@ export interface BusinessProfileInsert {
   business_name: string
   owner_name: string
   business_category: string
+  business_subcategories?: string[] | null
   phone_number: string
   whatsapp_number?: string | null
   email?: string | null
@@ -64,6 +66,7 @@ export interface BusinessProfileUpdate {
   business_name?: string
   owner_name?: string
   business_category?: string
+  business_subcategories?: string[] | null
   phone_number?: string
   whatsapp_number?: string | null
   email?: string | null

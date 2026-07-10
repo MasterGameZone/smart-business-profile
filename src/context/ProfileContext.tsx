@@ -115,6 +115,7 @@ export interface ProfileData {
   businessName: string
   ownerName: string
   businessCategory: string
+  businessSubcategories: string[]
   phoneNumber: string
   whatsappNumber: string
   email: string
@@ -144,6 +145,7 @@ function createDefaultProfileData(): ProfileData {
     businessName: '',
     ownerName: '',
     businessCategory: '',
+    businessSubcategories: [],
     phoneNumber: '',
     whatsappNumber: '',
     email: '',

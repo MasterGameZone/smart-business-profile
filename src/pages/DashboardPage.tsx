@@ -93,6 +93,7 @@ function DashboardPage() {
       businessName: profile.business_name,
       ownerName: profile.owner_name,
       businessCategory: profile.business_category,
+      businessSubcategories: Array.isArray(profile.business_subcategories) ? profile.business_subcategories : [],
       phoneNumber: profile.phone_number,
       whatsappNumber: profile.whatsapp_number || '',
       email: profile.email || '',

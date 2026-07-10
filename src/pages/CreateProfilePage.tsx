@@ -13,11 +13,16 @@ import { usePageMeta } from '../hooks/usePageMeta.ts'
 import { ToastContainer, type ToastItem, type ToastType } from '../components/Toast.tsx'
 import { getActiveMode } from '../utils/activeMode.ts'
 import AppHeader from '../components/AppHeader.tsx'
+import {
+  BUSINESS_CATEGORY_OPTIONS,
+  getSubcategoriesForCategory,
+} from '../constants/businessCategories.ts'
 
 interface FormErrors {
   businessName?: string
   ownerName?: string
   businessCategory?: string
+  businessSubcategories?: string
   phoneNumber?: string
   email?: string
   tagline?: string
@@ -35,17 +40,8 @@ interface FormErrors {
 }
 
 const MAX_GALLERY_IMAGES = 6
+const MAX_SUBCATEGORIES = 8
 const imageAccept = 'image/jpeg,image/png,image/webp'
-
-const categories = [
-  'Retail',
-  'Food & Beverage',
-  'Technology',
-  'Health & Wellness',
-  'Education',
-  'Professional Services',
-  'Other',
-]
 
 function isValidOptionalUrl(value: string): boolean {
   const trimmed = value.trim()
@@ -78,6 +74,25 @@ function parseKeywords(text: string): string[] {
 function validateSelectedImage(file: File): string | null {
   const validation = validateImageFile(file)
   return validation.valid ? null : validation.error || 'Invalid image file.'
+}
+
+function normalizeSubcategoryValues(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+
+  const seen = new Set<string>()
+  const subcategories: string[] = []
+
+  for (const item of value) {
+    if (typeof item !== 'string') continue
+
+    const trimmed = item.trim()
+    if (!trimmed || seen.has(trimmed)) continue
+
+    seen.add(trimmed)
+    subcategories.push(trimmed)
+  }
+
+  return subcategories
 }
 
 interface SocialLinkRow {
@@ -269,9 +284,11 @@ function CreateProfilePage() {
   )
   const [socialLinkRowErrors, setSocialLinkRowErrors] = useState<Record<string, string>>({})
   const [toasts, setToasts] = useState<ToastItem[]>([])
+  const [isSubcategoryDropdownOpen, setIsSubcategoryDropdownOpen] = useState(false)
   const logoInputRef = useRef<HTMLInputElement>(null)
   const coverBannerInputRef = useRef<HTMLInputElement>(null)
   const galleryInputRef = useRef<HTMLInputElement>(null)
+  const subcategoryDropdownRef = useRef<HTMLDivElement>(null)
 
   const coverBannerPreviewUrl = useMemo(() => {
     if (profileData.coverBanner) return URL.createObjectURL(profileData.coverBanner)
@@ -287,6 +304,24 @@ function CreateProfilePage() {
       })),
     [profileData.galleryImages]
   )
+  const availableSubcategories = useMemo(
+    () => getSubcategoriesForCategory(profileData.businessCategory),
+    [profileData.businessCategory]
+  )
+  const categoryOptions = useMemo(() => {
+    if (
+      profileData.businessCategory &&
+      !BUSINESS_CATEGORY_OPTIONS.includes(profileData.businessCategory)
+    ) {
+      return [profileData.businessCategory, ...BUSINESS_CATEGORY_OPTIONS]
+    }
+
+    return BUSINESS_CATEGORY_OPTIONS
+  }, [profileData.businessCategory])
+  const selectedSubcategorySummary =
+    profileData.businessSubcategories.length > 0
+      ? `${profileData.businessSubcategories.length} subcategor${profileData.businessSubcategories.length === 1 ? 'y' : 'ies'} selected`
+      : 'Select subcategories'
 
   useEffect(() => {
     return () => {
@@ -302,6 +337,30 @@ function CreateProfilePage() {
     }
   }, [selectedGalleryPreviews])
 
+  useEffect(() => {
+    if (!isSubcategoryDropdownOpen) return undefined
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!subcategoryDropdownRef.current?.contains(event.target as Node)) {
+        setIsSubcategoryDropdownOpen(false)
+      }
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsSubcategoryDropdownOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isSubcategoryDropdownOpen])
+
   const showToast = (message: string, type: ToastType = 'success') => {
     const id = Date.now()
     setToasts((prev) => [...prev, { id, message, type }])
@@ -314,9 +373,65 @@ function CreateProfilePage() {
     >
   ) => {
     const { name, value } = e.target
+    if (name === 'businessCategory') {
+      setProfileData({
+        ...profileData,
+        businessCategory: value,
+        businessSubcategories: [],
+      })
+      setIsSubcategoryDropdownOpen(false)
+      setErrors((prev) => ({
+        ...prev,
+        businessCategory: undefined,
+        businessSubcategories: undefined,
+      }))
+      return
+    }
+
     setProfileData({ ...profileData, [name]: value })
     if (errors[name as keyof FormErrors]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }))
+    }
+  }
+
+  const handleSubcategoryToggle = (subcategory: string) => {
+    const isSelected = profileData.businessSubcategories.includes(subcategory)
+
+    if (isSelected) {
+      setProfileData({
+        ...profileData,
+        businessSubcategories: profileData.businessSubcategories.filter((item) => item !== subcategory),
+      })
+      if (errors.businessSubcategories) {
+        setErrors((prev) => ({ ...prev, businessSubcategories: undefined }))
+      }
+      return
+    }
+
+    if (profileData.businessSubcategories.length >= MAX_SUBCATEGORIES) {
+      setErrors((prev) => ({
+        ...prev,
+        businessSubcategories: `Select up to ${MAX_SUBCATEGORIES} subcategories.`,
+      }))
+      return
+    }
+
+    setProfileData({
+      ...profileData,
+      businessSubcategories: [...profileData.businessSubcategories, subcategory],
+    })
+    if (errors.businessSubcategories) {
+      setErrors((prev) => ({ ...prev, businessSubcategories: undefined }))
+    }
+  }
+
+  const handleRemoveSubcategory = (subcategory: string) => {
+    setProfileData({
+      ...profileData,
+      businessSubcategories: profileData.businessSubcategories.filter((item) => item !== subcategory),
+    })
+    if (errors.businessSubcategories) {
+      setErrors((prev) => ({ ...prev, businessSubcategories: undefined }))
     }
   }
 
@@ -534,6 +649,9 @@ function CreateProfilePage() {
     if (!profileData.businessCategory) {
       newErrors.businessCategory = 'Please select a category.'
     }
+    if (profileData.businessSubcategories.length > MAX_SUBCATEGORIES) {
+      newErrors.businessSubcategories = `Select up to ${MAX_SUBCATEGORIES} subcategories.`
+    }
     if (!profileData.phoneNumber.trim()) {
       newErrors.phoneNumber = 'Phone number is required.'
     }
@@ -594,6 +712,7 @@ function CreateProfilePage() {
         businessName: updated.business_name,
         ownerName: updated.owner_name,
         businessCategory: updated.business_category,
+        businessSubcategories: normalizeSubcategoryValues(updated.business_subcategories),
         phoneNumber: updated.phone_number,
         whatsappNumber: updated.whatsapp_number || '',
         email: updated.email || '',
@@ -804,7 +923,7 @@ function CreateProfilePage() {
                   className={`${inputBase} bg-white ${errors.businessCategory ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
                 >
                   <option value="">Select a category</option>
-                  {categories.map((cat) => (
+                  {categoryOptions.map((cat) => (
                     <option key={cat} value={cat}>
                       {cat}
                     </option>
@@ -812,6 +931,139 @@ function CreateProfilePage() {
                 </select>
                 {fieldError('businessCategory')}
               </div>
+
+              {profileData.businessCategory && (
+                <div className="md:col-span-2">
+                  <div className="rounded-2xl border border-slate-200 bg-white/85 p-4 sm:p-5">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                      <div>
+                        <label htmlFor="businessSubcategories" className={labelClass}>
+                          Subcategories
+                          <span className={optionalTextClass}>Optional</span>
+                        </label>
+                        <p className="mt-2 text-xs text-slate-400">
+                          Select up to 8 subcategories.
+                        </p>
+                      </div>
+                      <p className="text-xs font-medium text-slate-500">
+                        {profileData.businessSubcategories.length} / {MAX_SUBCATEGORIES} selected
+                      </p>
+                    </div>
+
+                    <div ref={subcategoryDropdownRef} className="relative mt-4">
+                      <button
+                        type="button"
+                        id="businessSubcategories"
+                        aria-haspopup="listbox"
+                        aria-expanded={isSubcategoryDropdownOpen}
+                        aria-describedby={
+                          errors.businessSubcategories
+                            ? 'businessSubcategories-error'
+                            : 'businessSubcategories-help'
+                        }
+                        onClick={() => setIsSubcategoryDropdownOpen((open) => !open)}
+                        className={`${inputBase} flex items-center justify-between text-left ${
+                          errors.businessSubcategories
+                            ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100'
+                            : ''
+                        }`}
+                      >
+                        <span
+                          className={
+                            profileData.businessSubcategories.length > 0
+                              ? 'text-slate-900'
+                              : 'text-slate-400'
+                          }
+                        >
+                          {selectedSubcategorySummary}
+                        </span>
+                        <svg
+                          className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${
+                            isSubcategoryDropdownOpen ? 'rotate-180' : ''
+                          }`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+
+                      {isSubcategoryDropdownOpen && (
+                        <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-20 rounded-2xl border border-slate-200 bg-white shadow-[0_18px_40px_-24px_rgba(15,23,42,0.24)]">
+                          {profileData.businessSubcategories.length > 0 && (
+                            <div className="border-b border-slate-100 px-4 py-3">
+                              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                                Selected
+                              </p>
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                {profileData.businessSubcategories.map((subcategory) => (
+                                  <button
+                                    key={subcategory}
+                                    type="button"
+                                    onClick={() => handleRemoveSubcategory(subcategory)}
+                                    className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-700 transition hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                                  >
+                                    {subcategory}
+                                    <svg
+                                      className="h-3 w-3 shrink-0"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                      aria-hidden="true"
+                                    >
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          <div
+                            role="listbox"
+                            aria-multiselectable="true"
+                            className="max-h-72 overflow-y-auto px-2 py-2"
+                          >
+                            {availableSubcategories.map((subcategory) => {
+                              const isSelected = profileData.businessSubcategories.includes(subcategory)
+                              const limitReached =
+                                !isSelected &&
+                                profileData.businessSubcategories.length >= MAX_SUBCATEGORIES
+
+                              return (
+                                <label
+                                  key={subcategory}
+                                  className={`flex cursor-pointer items-start gap-3 rounded-xl px-3 py-2.5 text-sm transition ${
+                                    limitReached
+                                      ? 'cursor-not-allowed opacity-60'
+                                      : 'hover:bg-slate-50'
+                                  }`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    disabled={limitReached}
+                                    onChange={() => handleSubcategoryToggle(subcategory)}
+                                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-2 focus:ring-sky-200"
+                                  />
+                                  <span className="text-slate-700">{subcategory}</span>
+                                </label>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <p id="businessSubcategories-help" className="mt-2 text-xs text-slate-400">
+                      {selectedSubcategorySummary}
+                    </p>
+                    {fieldError('businessSubcategories')}
+                  </div>
+                </div>
+              )}
             </div>
           </section>
 
