@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useState } from 'react'
-import type { Session, User } from '@supabase/supabase-js'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
+import type { AuthChangeEvent, Session, User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import { enableBusinessOwnerMode, getAccountMode, setPreferredAccountMode } from '../lib/accountModeService.ts'
 import type { AccountModeState, PreferredAccountMode } from '../types/accountMode.ts'
@@ -25,47 +25,104 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [accountModeState, setAccountModeState] = useState<AccountModeState>(defaultAccountMode)
+  const loadedAccountModeUserIdRef = useRef<string | null>(null)
+  const loadingAccountModeRef = useRef<{
+    userId: string
+    promise: Promise<AccountModeState>
+  } | null>(null)
+  const currentUserIdRef = useRef<string | null>(null)
+  const authRequestIdRef = useRef(0)
+  const initialHydrationCompleteRef = useRef(false)
 
   useEffect(() => {
     let isMounted = true
-    let hydrationRequest = 0
+
+    const clearSession = () => {
+      authRequestIdRef.current += 1
+      currentUserIdRef.current = null
+      loadedAccountModeUserIdRef.current = null
+      loadingAccountModeRef.current = null
+      setSession(null)
+      setAccountModeState(defaultAccountMode)
+      initialHydrationCompleteRef.current = true
+      setIsLoading(false)
+    }
 
     const hydrateSession = async (nextSession: Session | null) => {
-      const requestId = ++hydrationRequest
       if (!isMounted) return
 
-      setSession(nextSession)
-
       if (!nextSession) {
-        setAccountModeState(defaultAccountMode)
-        setIsLoading(false)
+        clearSession()
         return
       }
 
-      setIsLoading(true)
+      const userId = nextSession.user.id
+      if (loadedAccountModeUserIdRef.current === userId) {
+        currentUserIdRef.current = userId
+        setSession(nextSession)
+        return
+      }
+
+      if (loadingAccountModeRef.current?.userId === userId) {
+        return
+      }
+
+      currentUserIdRef.current = userId
+      const requestId = ++authRequestIdRef.current
+      const blocksRoute = !initialHydrationCompleteRef.current
+      if (blocksRoute) {
+        setIsLoading(true)
+      }
+
+      const accountModePromise = getAccountMode(userId)
+      loadingAccountModeRef.current = {
+        userId,
+        promise: accountModePromise,
+      }
+
       try {
-        const nextAccountMode = await getAccountMode(nextSession.user.id)
-        if (!isMounted || requestId !== hydrationRequest) return
+        const nextAccountMode = await accountModePromise
+        if (
+          !isMounted ||
+          requestId !== authRequestIdRef.current ||
+          currentUserIdRef.current !== userId
+        ) {
+          return
+        }
+
+        loadedAccountModeUserIdRef.current = userId
+        setSession(nextSession)
         setAccountModeState(nextAccountMode)
       } catch (error) {
         console.error('Failed to restore account mode:', error)
-        if (!isMounted || requestId !== hydrationRequest) return
+        if (
+          !isMounted ||
+          requestId !== authRequestIdRef.current ||
+          currentUserIdRef.current !== userId
+        ) {
+          return
+        }
+
+        setSession(nextSession)
         setAccountModeState(defaultAccountMode)
       } finally {
-        if (isMounted && requestId === hydrationRequest) {
-          setIsLoading(false)
+        if (loadingAccountModeRef.current?.promise === accountModePromise) {
+          loadingAccountModeRef.current = null
+        }
+
+        if (isMounted && requestId === authRequestIdRef.current) {
+          initialHydrationCompleteRef.current = true
+          if (blocksRoute) {
+            setIsLoading(false)
+          }
         }
       }
     }
 
-    supabase.auth.getSession().then(({ data }) => {
-      void hydrateSession(data.session)
-    })
-
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      // Defer the database read until the auth callback has returned.
+    const { data: listener } = supabase.auth.onAuthStateChange((event: AuthChangeEvent, newSession) => {
+      // INITIAL_SESSION is the single source for initial auth hydration.
       setTimeout(() => {
-        void hydrateSession(newSession)
+        void hydrateSession(event === 'SIGNED_OUT' ? null : newSession)
       }, 0)
     })
 
