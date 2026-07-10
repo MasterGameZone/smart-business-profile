@@ -4,6 +4,11 @@ import { useNavigate } from 'react-router-dom'
 import AppHeader from '../components/AppHeader.tsx'
 import { ToastContainer, type ToastItem, type ToastType } from '../components/Toast.tsx'
 import {
+  normalizeBusinessProfileDocuments,
+  normalizeFaqItems,
+  normalizeProductItems,
+  normalizeQualificationItems,
+  normalizeStringArray,
   formatKeywordsForForm,
   formatServicesForForm,
   normalizeSocialLinks,
@@ -76,6 +81,13 @@ function BusinessHomePage() {
       ownerName: profile.owner_name,
       businessCategory: profile.business_category,
       businessSubcategories: Array.isArray(profile.business_subcategories) ? profile.business_subcategories : [],
+      establishedYear: typeof profile.established_year === 'number' ? String(profile.established_year) : '',
+      yearsOfExperience:
+        typeof profile.years_of_experience === 'number' ? String(profile.years_of_experience) : '',
+      highlights: normalizeStringArray(profile.highlights),
+      faqs: normalizeFaqItems(profile.faqs),
+      productsMenuPackages: normalizeProductItems(profile.products_menu_packages),
+      qualifications: normalizeQualificationItems(profile.qualifications),
       phoneNumber: profile.phone_number,
       whatsappNumber: profile.whatsapp_number || '',
       email: profile.email || '',
@@ -97,6 +109,8 @@ function BusinessHomePage() {
       existingGalleryImageUrls: Array.isArray(profile.gallery_images)
         ? profile.gallery_images.filter((imageUrl): imageUrl is string => typeof imageUrl === 'string')
         : [],
+      documentFiles: [],
+      existingDocuments: normalizeBusinessProfileDocuments(profile.business_profile_documents),
     })
     navigate('/create-profile')
   }

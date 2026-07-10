@@ -1,5 +1,12 @@
 import { createContext, useContext, useState } from 'react'
-import type { JsonObject, SocialLinks } from '../types/businessProfile'
+import type {
+  BusinessProfileDocumentRow,
+  BusinessProfileFaqValue,
+  BusinessProfileProductValue,
+  BusinessProfileQualificationValue,
+  JsonObject,
+  SocialLinks,
+} from '../types/businessProfile'
 
 export type WorkingDayKey =
   | 'monday'
@@ -19,6 +26,34 @@ export interface WorkingHoursDay {
 export type WorkingHoursForm = Record<WorkingDayKey, WorkingHoursDay>
 
 export type SocialLinksForm = Record<string, string>
+
+export interface ProfileFaqItem {
+  id: string
+  question: string
+  answer: string
+}
+
+export interface ProfileProductItem {
+  id: string
+  name: string
+  description: string
+  price: string
+}
+
+export interface ProfileQualificationItem {
+  id: string
+  title: string
+  issuingOrganization: string
+  year: string
+  description: string
+}
+
+let profileItemSequence = 0
+
+function createProfileItemId(prefix: string): string {
+  profileItemSequence += 1
+  return `${prefix}-${profileItemSequence}`
+}
 
 export const workingDays: Array<{ key: WorkingDayKey; label: string }> = [
   { key: 'monday', label: 'Monday' },
@@ -108,6 +143,135 @@ export function formatKeywordsForForm(value: string[] | null): string {
   return value.join(', ')
 }
 
+export function normalizeStringArray(value: string[] | null | undefined): string[] {
+  if (!Array.isArray(value)) return []
+
+  const seen = new Set<string>()
+  const normalized: string[] = []
+
+  value.forEach((item) => {
+    if (typeof item !== 'string') return
+
+    const trimmed = item.trim()
+    const key = trimmed.toLowerCase()
+    if (!trimmed || seen.has(key)) return
+
+    seen.add(key)
+    normalized.push(trimmed)
+  })
+
+  return normalized
+}
+
+export function createProfileFaqItem(question = '', answer = ''): ProfileFaqItem {
+  return {
+    id: createProfileItemId('faq'),
+    question,
+    answer,
+  }
+}
+
+export function normalizeFaqItems(value: BusinessProfileFaqValue[] | null | undefined): ProfileFaqItem[] {
+  if (!Array.isArray(value)) return []
+
+  return value
+    .filter((item): item is BusinessProfileFaqValue => Boolean(item) && typeof item === 'object')
+    .map((item) =>
+      createProfileFaqItem(
+        typeof item.question === 'string' ? item.question : '',
+        typeof item.answer === 'string' ? item.answer : ''
+      )
+    )
+    .filter((item) => item.question.trim() || item.answer.trim())
+}
+
+export function createProfileProductItem(
+  name = '',
+  description = '',
+  price = ''
+): ProfileProductItem {
+  return {
+    id: createProfileItemId('product'),
+    name,
+    description,
+    price,
+  }
+}
+
+export function normalizeProductItems(
+  value: BusinessProfileProductValue[] | null | undefined
+): ProfileProductItem[] {
+  if (!Array.isArray(value)) return []
+
+  return value
+    .filter((item): item is BusinessProfileProductValue => Boolean(item) && typeof item === 'object')
+    .map((item) =>
+      createProfileProductItem(
+        typeof item.name === 'string' ? item.name : '',
+        typeof item.description === 'string' ? item.description : '',
+        typeof item.price === 'string' ? item.price : ''
+      )
+    )
+    .filter((item) => item.name.trim() || item.description.trim() || item.price.trim())
+}
+
+export function createProfileQualificationItem(
+  title = '',
+  issuingOrganization = '',
+  year = '',
+  description = ''
+): ProfileQualificationItem {
+  return {
+    id: createProfileItemId('qualification'),
+    title,
+    issuingOrganization,
+    year,
+    description,
+  }
+}
+
+export function normalizeQualificationItems(
+  value: BusinessProfileQualificationValue[] | null | undefined
+): ProfileQualificationItem[] {
+  if (!Array.isArray(value)) return []
+
+  return value
+    .filter((item): item is BusinessProfileQualificationValue => Boolean(item) && typeof item === 'object')
+    .map((item) =>
+      createProfileQualificationItem(
+        typeof item.title === 'string' ? item.title : '',
+        typeof item.issuingOrganization === 'string' ? item.issuingOrganization : '',
+        typeof item.year === 'number' && Number.isFinite(item.year) ? String(item.year) : '',
+        typeof item.description === 'string' ? item.description : ''
+      )
+    )
+    .filter(
+      (item) =>
+        item.title.trim() ||
+        item.issuingOrganization.trim() ||
+        item.year.trim() ||
+        item.description.trim()
+    )
+}
+
+export function normalizeBusinessProfileDocuments(
+  value: BusinessProfileDocumentRow[] | null | undefined
+): BusinessProfileDocumentRow[] {
+  if (!Array.isArray(value)) return []
+
+  return value.filter(
+    (item): item is BusinessProfileDocumentRow =>
+      Boolean(item) &&
+      typeof item.id === 'string' &&
+      typeof item.business_profile_id === 'string' &&
+      typeof item.owner_id === 'string' &&
+      typeof item.file_name === 'string' &&
+      typeof item.file_path === 'string' &&
+      typeof item.mime_type === 'string' &&
+      typeof item.created_at === 'string'
+  )
+}
+
 export interface ProfileData {
   id: string | null
   slug: string | null
@@ -116,6 +280,12 @@ export interface ProfileData {
   ownerName: string
   businessCategory: string
   businessSubcategories: string[]
+  establishedYear: string
+  yearsOfExperience: string
+  highlights: string[]
+  faqs: ProfileFaqItem[]
+  productsMenuPackages: ProfileProductItem[]
+  qualifications: ProfileQualificationItem[]
   phoneNumber: string
   whatsappNumber: string
   email: string
@@ -135,6 +305,8 @@ export interface ProfileData {
   existingCoverBannerUrl: string | null
   galleryImages: File[]
   existingGalleryImageUrls: string[]
+  documentFiles: File[]
+  existingDocuments: BusinessProfileDocumentRow[]
 }
 
 function createDefaultProfileData(): ProfileData {
@@ -146,6 +318,12 @@ function createDefaultProfileData(): ProfileData {
     ownerName: '',
     businessCategory: '',
     businessSubcategories: [],
+    establishedYear: '',
+    yearsOfExperience: '',
+    highlights: [],
+    faqs: [],
+    productsMenuPackages: [],
+    qualifications: [],
     phoneNumber: '',
     whatsappNumber: '',
     email: '',
@@ -165,6 +343,8 @@ function createDefaultProfileData(): ProfileData {
     existingCoverBannerUrl: null,
     galleryImages: [],
     existingGalleryImageUrls: [],
+    documentFiles: [],
+    existingDocuments: [],
   }
 }
 

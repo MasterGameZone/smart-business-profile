@@ -1,6 +1,10 @@
 import { supabase } from './supabase'
 import type {
+  BusinessProfileDocumentRow,
+  BusinessProfileFaqValue,
   BusinessProfileInsert,
+  BusinessProfileProductValue,
+  BusinessProfileQualificationValue,
   BusinessProfileRow,
   BusinessProfileUpdate,
   PublicBusinessProfileRow,
@@ -10,9 +14,12 @@ import { workingDays } from '../context/ProfileContext'
 import { slugify } from '../utils/slug'
 import { getCurrentUser } from './authService'
 import {
+  removeBusinessDocument,
   uploadBusinessCover,
+  uploadBusinessDocument,
   uploadBusinessGalleryImage,
   uploadBusinessLogo,
+  validateDocumentFile,
   validateImageFile,
 } from './storageService'
 
@@ -39,6 +46,79 @@ function parseKeywords(text: string): string[] {
   }
 
   return keywords
+}
+
+function parseOptionalYear(value: string): number | null {
+  const trimmed = value.trim()
+  if (!trimmed) return null
+
+  const year = Number(trimmed)
+  if (!Number.isInteger(year)) return null
+
+  return year
+}
+
+function parseOptionalNonNegativeInteger(value: string): number | null {
+  const trimmed = value.trim()
+  if (!trimmed) return null
+
+  const numericValue = Number(trimmed)
+  if (!Number.isInteger(numericValue) || numericValue < 0) return null
+
+  return numericValue
+}
+
+function parseHighlights(values: string[]): string[] {
+  const seen = new Set<string>()
+  const highlights: string[] = []
+
+  values.forEach((value) => {
+    const trimmed = value.trim()
+    const key = trimmed.toLowerCase()
+    if (!trimmed || seen.has(key)) return
+
+    seen.add(key)
+    highlights.push(trimmed)
+  })
+
+  return highlights
+}
+
+function parseFaqs(data: ProfileData): BusinessProfileFaqValue[] {
+  return data.faqs
+    .map((item) => ({
+      question: item.question.trim(),
+      answer: item.answer.trim(),
+    }))
+    .filter((item) => item.question && item.answer)
+}
+
+function parseProductsMenuPackages(data: ProfileData): BusinessProfileProductValue[] {
+  return data.productsMenuPackages
+    .map((item) => ({
+      name: item.name.trim(),
+      description: item.description.trim(),
+      price: item.price.trim() || null,
+    }))
+    .filter((item) => item.name && item.description)
+}
+
+function parseQualifications(data: ProfileData): BusinessProfileQualificationValue[] {
+  return data.qualifications
+    .map((item) => ({
+      title: item.title.trim(),
+      issuingOrganization: item.issuingOrganization.trim() || null,
+      year: parseOptionalYear(item.year),
+      description: item.description.trim() || null,
+    }))
+    .filter(
+      (item) =>
+        item.title ||
+        item.issuingOrganization ||
+        item.year !== null ||
+        item.description
+    )
+    .filter((item) => item.title)
 }
 
 function mapWorkingHours(data: ProfileData): Record<string, { open: string; close: string; closed: boolean }> | Record<string, never> {
@@ -79,6 +159,12 @@ function mapProfileDataToFields(data: ProfileData) {
     owner_name: data.ownerName.trim(),
     business_category: data.businessCategory,
     business_subcategories: data.businessSubcategories.length > 0 ? data.businessSubcategories : null,
+    established_year: parseOptionalYear(data.establishedYear),
+    years_of_experience: parseOptionalNonNegativeInteger(data.yearsOfExperience),
+    highlights: parseHighlights(data.highlights),
+    faqs: parseFaqs(data),
+    products_menu_packages: parseProductsMenuPackages(data),
+    qualifications: parseQualifications(data),
     phone_number: data.phoneNumber.trim(),
     whatsapp_number: data.whatsappNumber.trim() || null,
     email: data.email.trim() || null,
@@ -106,13 +192,98 @@ function validateImageBeforeProfileWrite(file: File | null): void {
   }
 }
 
+function validateDocumentBeforeProfileWrite(file: File): void {
+  const validation = validateDocumentFile(file)
+  if (!validation.valid) {
+    throw new Error(validation.error || 'Invalid document file.')
+  }
+}
+
 function validateImagesBeforeProfileWrite(data: ProfileData): void {
   validateImageBeforeProfileWrite(data.logo)
   validateImageBeforeProfileWrite(data.coverBanner)
   data.galleryImages.forEach((file) => validateImageBeforeProfileWrite(file))
+  data.documentFiles.forEach((file) => validateDocumentBeforeProfileWrite(file))
 
   if (data.existingGalleryImageUrls.length + data.galleryImages.length > MAX_GALLERY_IMAGES) {
     throw new Error(`You can upload up to ${MAX_GALLERY_IMAGES} gallery images.`)
+  }
+}
+
+export async function getBusinessProfileDocuments(
+  businessProfileId: string
+): Promise<BusinessProfileDocumentRow[]> {
+  const { data, error } = await supabase
+    .from('business_profile_documents')
+    .select('*')
+    .eq('business_profile_id', businessProfileId)
+    .order('created_at', { ascending: true })
+
+  if (error) {
+    throw error
+  }
+
+  return data ?? []
+}
+
+async function syncBusinessProfileDocuments(
+  ownerId: string,
+  businessProfileId: string,
+  data: ProfileData
+): Promise<void> {
+  const existingDocuments = await getBusinessProfileDocuments(businessProfileId)
+  const retainedDocumentIds = new Set(data.existingDocuments.map((document) => document.id))
+  const removedDocuments = existingDocuments.filter((document) => !retainedDocumentIds.has(document.id))
+
+  if (removedDocuments.length > 0) {
+    const { error: deleteMetadataError } = await supabase
+      .from('business_profile_documents')
+      .delete()
+      .in('id', removedDocuments.map((document) => document.id))
+
+    if (deleteMetadataError) {
+      throw deleteMetadataError
+    }
+
+    await Promise.all(
+      removedDocuments.map(async (document) => {
+        try {
+          await removeBusinessDocument(document.file_path)
+        } catch (error) {
+          console.error('Failed to remove business document file:', error)
+        }
+      })
+    )
+  }
+
+  if (data.documentFiles.length === 0) {
+    return
+  }
+
+  const insertedDocuments = []
+
+  for (const file of data.documentFiles) {
+    const uploadedDocument = await uploadBusinessDocument({
+      file,
+      ownerId,
+      businessProfileId,
+    })
+
+    insertedDocuments.push({
+      business_profile_id: businessProfileId,
+      owner_id: ownerId,
+      file_name: file.name,
+      file_path: uploadedDocument.path,
+      mime_type: file.type,
+    })
+  }
+
+  const { error: insertMetadataError } = await supabase
+    .from('business_profile_documents')
+    .insert(insertedDocuments)
+
+  if (insertMetadataError) {
+    throw insertMetadataError
   }
 }
 
@@ -233,6 +404,8 @@ export async function insertBusinessProfile(
 
   const imageUpdates = await uploadPendingProfileImages(user.id, inserted.id, data)
 
+  await syncBusinessProfileDocuments(user.id, inserted.id, data)
+
   if (Object.keys(imageUpdates).length > 0) {
     const { data: updatedWithImages, error: imageUpdateError } = await supabase
       .from('business_profiles')
@@ -263,12 +436,12 @@ export async function updateBusinessProfile(
 
   validateImagesBeforeProfileWrite(data)
 
-  if (data.logo || data.coverBanner || data.galleryImages.length > 0) {
-    const user = await getCurrentUser()
-    if (!user) {
-      throw new Error('You must be logged in to update business profile images.')
-    }
+  const user = await getCurrentUser()
+  if (!user) {
+    throw new Error('You must be logged in to update a business profile.')
+  }
 
+  if (data.logo || data.coverBanner || data.galleryImages.length > 0) {
     Object.assign(payload, await uploadPendingProfileImages(user.id, id, data))
   }
 
@@ -286,6 +459,8 @@ export async function updateBusinessProfile(
   if (!updated) {
     throw new Error('Update succeeded but no row was returned.')
   }
+
+  await syncBusinessProfileDocuments(user.id, id, data)
 
   return updated
 }
@@ -311,7 +486,7 @@ export async function getBusinessProfilesByOwner(
 ): Promise<BusinessProfileRow[]> {
   const { data, error } = await supabase
     .from('business_profiles')
-    .select('*')
+    .select('*, business_profile_documents(*)')
     .eq('owner_id', ownerId)
     .order('created_at', { ascending: false })
 

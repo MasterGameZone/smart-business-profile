@@ -6,12 +6,46 @@
 export type JsonObject = Record<string, unknown>
 export type SocialLinks = Record<string, string>
 
+export interface BusinessProfileFaqValue {
+  question: string
+  answer: string
+}
+
+export interface BusinessProfileProductValue {
+  name: string
+  description: string
+  price: string | null
+}
+
+export interface BusinessProfileQualificationValue {
+  title: string
+  issuingOrganization: string | null
+  year: number | null
+  description: string | null
+}
+
+export interface BusinessProfileDocumentRow {
+  id: string
+  business_profile_id: string
+  owner_id: string
+  file_name: string
+  file_path: string
+  mime_type: string
+  created_at: string
+}
+
 export interface BusinessProfileRow {
   id: string
   business_name: string
   owner_name: string
   business_category: string
   business_subcategories: string[] | null
+  established_year: number | null
+  years_of_experience: number | null
+  highlights: string[] | null
+  faqs: BusinessProfileFaqValue[] | null
+  products_menu_packages: BusinessProfileProductValue[] | null
+  qualifications: BusinessProfileQualificationValue[] | null
   phone_number: string
   whatsapp_number: string | null
   email: string | null
@@ -32,6 +66,7 @@ export interface BusinessProfileRow {
   owner_id: string | null
   created_at: string
   updated_at: string
+  business_profile_documents?: BusinessProfileDocumentRow[] | null
 }
 
 export interface BusinessProfileInsert {
@@ -40,6 +75,12 @@ export interface BusinessProfileInsert {
   owner_name: string
   business_category: string
   business_subcategories?: string[] | null
+  established_year?: number | null
+  years_of_experience?: number | null
+  highlights?: string[] | null
+  faqs?: BusinessProfileFaqValue[] | null
+  products_menu_packages?: BusinessProfileProductValue[] | null
+  qualifications?: BusinessProfileQualificationValue[] | null
   phone_number: string
   whatsapp_number?: string | null
   email?: string | null
@@ -67,6 +108,12 @@ export interface BusinessProfileUpdate {
   owner_name?: string
   business_category?: string
   business_subcategories?: string[] | null
+  established_year?: number | null
+  years_of_experience?: number | null
+  highlights?: string[] | null
+  faqs?: BusinessProfileFaqValue[] | null
+  products_menu_packages?: BusinessProfileProductValue[] | null
+  qualifications?: BusinessProfileQualificationValue[] | null
   phone_number?: string
   whatsapp_number?: string | null
   email?: string | null
@@ -110,6 +157,11 @@ export interface Database {
         Row: BusinessProfileRow
         Insert: BusinessProfileInsert
         Update: BusinessProfileUpdate
+      }
+      business_profile_documents: {
+        Row: BusinessProfileDocumentRow
+        Insert: Omit<BusinessProfileDocumentRow, 'id' | 'created_at'>
+        Update: Partial<Omit<BusinessProfileDocumentRow, 'id' | 'created_at'>>
       }
     }
   }

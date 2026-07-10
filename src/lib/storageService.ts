@@ -1,10 +1,18 @@
 import { supabase } from './supabase'
 
 const BUSINESS_ASSETS_BUCKET = 'business-assets'
+const BUSINESS_DOCUMENTS_BUCKET = 'business-documents'
 const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024
+const MAX_DOCUMENT_SIZE_BYTES = 10 * 1024 * 1024
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const
+const ALLOWED_DOCUMENT_TYPES = [
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+] as const
 
-type BusinessAssetFolder = 'logo' | 'cover' | 'gallery'
+type BusinessAssetFolder = 'logo' | 'cover' | 'gallery' | 'documents'
 
 interface BusinessAssetUploadParams {
   file: File
@@ -27,6 +35,10 @@ export interface StorageUploadResult {
   publicUrl: string
 }
 
+export interface StoragePathResult {
+  path: string
+}
+
 export function validateImageFile(file: File): ImageValidationResult {
   if (!ALLOWED_IMAGE_TYPES.includes(file.type as (typeof ALLOWED_IMAGE_TYPES)[number])) {
     return {
@@ -45,6 +57,24 @@ export function validateImageFile(file: File): ImageValidationResult {
   return { valid: true }
 }
 
+export function validateDocumentFile(file: File): ImageValidationResult {
+  if (!ALLOWED_DOCUMENT_TYPES.includes(file.type as (typeof ALLOWED_DOCUMENT_TYPES)[number])) {
+    return {
+      valid: false,
+      error: 'Please upload a PDF, JPG, PNG, or WebP document.',
+    }
+  }
+
+  if (file.size > MAX_DOCUMENT_SIZE_BYTES) {
+    return {
+      valid: false,
+      error: 'Document must be 10 MB or smaller.',
+    }
+  }
+
+  return { valid: true }
+}
+
 function assertValidImageFile(file: File): void {
   const validation = validateImageFile(file)
   if (!validation.valid) {
@@ -52,8 +82,17 @@ function assertValidImageFile(file: File): void {
   }
 }
 
+function assertValidDocumentFile(file: File): void {
+  const validation = validateDocumentFile(file)
+  if (!validation.valid) {
+    throw new Error(validation.error || 'Invalid document file.')
+  }
+}
+
 function fileExtensionForMimeType(mimeType: string): string {
   switch (mimeType) {
+    case 'application/pdf':
+      return 'pdf'
     case 'image/jpeg':
       return 'jpg'
     case 'image/png':
@@ -149,6 +188,37 @@ export function uploadBusinessGalleryImage(params: BusinessAssetUploadParams): P
 
 export async function removeBusinessAsset(path: string): Promise<void> {
   const { error } = await supabase.storage.from(BUSINESS_ASSETS_BUCKET).remove([path])
+
+  if (error) {
+    throw error
+  }
+}
+
+export async function uploadBusinessDocument(params: BusinessAssetUploadParams): Promise<StoragePathResult> {
+  assertValidDocumentFile(params.file)
+
+  const path = buildBusinessAssetPath({
+    ...params,
+    folder: 'documents',
+    filePrefix: 'document',
+  })
+  const { error } = await supabase.storage
+    .from(BUSINESS_DOCUMENTS_BUCKET)
+    .upload(path, params.file, {
+      cacheControl: '3600',
+      contentType: params.file.type,
+      upsert: false,
+    })
+
+  if (error) {
+    throw error
+  }
+
+  return { path }
+}
+
+export async function removeBusinessDocument(path: string): Promise<void> {
+  const { error } = await supabase.storage.from(BUSINESS_DOCUMENTS_BUCKET).remove([path])
 
   if (error) {
     throw error

@@ -159,6 +159,7 @@ function ProfilePreviewPage() {
         existingCoverBannerUrl: saved.cover_banner_url,
         galleryImages: [],
         existingGalleryImageUrls: Array.isArray(saved.gallery_images) ? saved.gallery_images : [],
+        documentFiles: [],
       })
       setHasSaved(true)
       navigate(activeMode === 'business' ? '/business-home' : '/dashboard', {

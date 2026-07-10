@@ -2,6 +2,11 @@ import { useCallback, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.tsx'
 import {
+  normalizeBusinessProfileDocuments,
+  normalizeFaqItems,
+  normalizeProductItems,
+  normalizeQualificationItems,
+  normalizeStringArray,
   formatKeywordsForForm,
   formatServicesForForm,
   normalizeSocialLinks,
@@ -94,6 +99,13 @@ function DashboardPage() {
       ownerName: profile.owner_name,
       businessCategory: profile.business_category,
       businessSubcategories: Array.isArray(profile.business_subcategories) ? profile.business_subcategories : [],
+      establishedYear: typeof profile.established_year === 'number' ? String(profile.established_year) : '',
+      yearsOfExperience:
+        typeof profile.years_of_experience === 'number' ? String(profile.years_of_experience) : '',
+      highlights: normalizeStringArray(profile.highlights),
+      faqs: normalizeFaqItems(profile.faqs),
+      productsMenuPackages: normalizeProductItems(profile.products_menu_packages),
+      qualifications: normalizeQualificationItems(profile.qualifications),
       phoneNumber: profile.phone_number,
       whatsappNumber: profile.whatsapp_number || '',
       email: profile.email || '',
@@ -115,6 +127,8 @@ function DashboardPage() {
       existingGalleryImageUrls: Array.isArray(profile.gallery_images)
         ? profile.gallery_images.filter((imageUrl): imageUrl is string => typeof imageUrl === 'string')
         : [],
+      documentFiles: [],
+      existingDocuments: normalizeBusinessProfileDocuments(profile.business_profile_documents),
     })
     navigate('/create-profile')
   }

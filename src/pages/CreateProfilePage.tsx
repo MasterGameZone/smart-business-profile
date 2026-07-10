@@ -2,13 +2,19 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   createDefaultSocialLinks,
+  createProfileFaqItem,
+  createProfileProductItem,
+  createProfileQualificationItem,
   useProfile,
   workingDays,
+  type ProfileFaqItem,
+  type ProfileProductItem,
+  type ProfileQualificationItem,
   type WorkingDayKey,
 } from '../context/ProfileContext.tsx'
 import { useAuth } from '../context/AuthContext.tsx'
 import { updateBusinessProfile } from '../lib/businessProfileService.ts'
-import { validateImageFile } from '../lib/storageService.ts'
+import { validateDocumentFile, validateImageFile } from '../lib/storageService.ts'
 import { usePageMeta } from '../hooks/usePageMeta.ts'
 import { ToastContainer, type ToastItem, type ToastType } from '../components/Toast.tsx'
 import { getActiveMode } from '../utils/activeMode.ts'
@@ -23,6 +29,13 @@ interface FormErrors {
   ownerName?: string
   businessCategory?: string
   businessSubcategories?: string
+  establishedYear?: string
+  yearsOfExperience?: string
+  highlights?: string
+  faqs?: string
+  productsMenuPackages?: string
+  qualifications?: string
+  documents?: string
   phoneNumber?: string
   email?: string
   tagline?: string
@@ -41,7 +54,19 @@ interface FormErrors {
 
 const MAX_GALLERY_IMAGES = 6
 const MAX_SUBCATEGORIES = 8
+const MAX_HIGHLIGHTS = 16
 const imageAccept = 'image/jpeg,image/png,image/webp'
+const documentAccept = 'application/pdf,image/jpeg,image/png,image/webp'
+const commonHighlights = [
+  'Parking Available',
+  'Home Service',
+  'Free Consultation',
+  '24/7 Available',
+  'Wheelchair Accessible',
+  'Online Service',
+  'Appointment Required',
+  'Delivery Available',
+] as const
 
 function isValidOptionalUrl(value: string): boolean {
   const trimmed = value.trim()
@@ -76,6 +101,11 @@ function validateSelectedImage(file: File): string | null {
   return validation.valid ? null : validation.error || 'Invalid image file.'
 }
 
+function validateSelectedDocument(file: File): string | null {
+  const validation = validateDocumentFile(file)
+  return validation.valid ? null : validation.error || 'Invalid document file.'
+}
+
 function normalizeSubcategoryValues(value: unknown): string[] {
   if (!Array.isArray(value)) return []
 
@@ -93,6 +123,46 @@ function normalizeSubcategoryValues(value: unknown): string[] {
   }
 
   return subcategories
+}
+
+function isValidFourDigitYear(value: string): boolean {
+  return /^\d{4}$/.test(value)
+}
+
+function getCurrentYear(): number {
+  return new Date().getFullYear()
+}
+
+function isBlankFaqItem(item: ProfileFaqItem): boolean {
+  return !item.question.trim() && !item.answer.trim()
+}
+
+function isBlankProductItem(item: ProfileProductItem): boolean {
+  return !item.name.trim() && !item.description.trim() && !item.price.trim()
+}
+
+function isBlankQualificationItem(item: ProfileQualificationItem): boolean {
+  return (
+    !item.title.trim() &&
+    !item.issuingOrganization.trim() &&
+    !item.year.trim() &&
+    !item.description.trim()
+  )
+}
+
+function formatMimeTypeLabel(mimeType: string): string {
+  switch (mimeType) {
+    case 'application/pdf':
+      return 'PDF'
+    case 'image/jpeg':
+      return 'JPG'
+    case 'image/png':
+      return 'PNG'
+    case 'image/webp':
+      return 'WebP'
+    default:
+      return mimeType || 'Document'
+  }
 }
 
 interface SocialLinkRow {
@@ -285,9 +355,11 @@ function CreateProfilePage() {
   const [socialLinkRowErrors, setSocialLinkRowErrors] = useState<Record<string, string>>({})
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const [isSubcategoryDropdownOpen, setIsSubcategoryDropdownOpen] = useState(false)
+  const [customHighlightValue, setCustomHighlightValue] = useState('')
   const logoInputRef = useRef<HTMLInputElement>(null)
   const coverBannerInputRef = useRef<HTMLInputElement>(null)
   const galleryInputRef = useRef<HTMLInputElement>(null)
+  const documentInputRef = useRef<HTMLInputElement>(null)
   const subcategoryDropdownRef = useRef<HTMLDivElement>(null)
 
   const coverBannerPreviewUrl = useMemo(() => {
@@ -638,8 +710,232 @@ function CreateProfilePage() {
     }
   }
 
+  const handleHighlightToggle = (highlight: string) => {
+    const normalizedHighlight = highlight.trim()
+    if (!normalizedHighlight) return
+
+    const alreadySelected = profileData.highlights.some(
+      (item) => item.toLowerCase() === normalizedHighlight.toLowerCase()
+    )
+
+    if (alreadySelected) {
+      setProfileData({
+        ...profileData,
+        highlights: profileData.highlights.filter(
+          (item) => item.toLowerCase() !== normalizedHighlight.toLowerCase()
+        ),
+      })
+      if (errors.highlights) {
+        setErrors((prev) => ({ ...prev, highlights: undefined }))
+      }
+      return
+    }
+
+    if (profileData.highlights.length >= MAX_HIGHLIGHTS) {
+      setErrors((prev) => ({
+        ...prev,
+        highlights: `Select up to ${MAX_HIGHLIGHTS} highlights.`,
+      }))
+      return
+    }
+
+    setProfileData({
+      ...profileData,
+      highlights: [...profileData.highlights, normalizedHighlight],
+    })
+    if (errors.highlights) {
+      setErrors((prev) => ({ ...prev, highlights: undefined }))
+    }
+  }
+
+  const handleAddCustomHighlight = () => {
+    const trimmedValue = customHighlightValue.trim()
+    if (!trimmedValue) return
+
+    const alreadySelected = profileData.highlights.some(
+      (item) => item.toLowerCase() === trimmedValue.toLowerCase()
+    )
+
+    if (alreadySelected) {
+      setCustomHighlightValue('')
+      if (errors.highlights) {
+        setErrors((prev) => ({ ...prev, highlights: undefined }))
+      }
+      return
+    }
+
+    if (profileData.highlights.length >= MAX_HIGHLIGHTS) {
+      setErrors((prev) => ({
+        ...prev,
+        highlights: `Select up to ${MAX_HIGHLIGHTS} highlights.`,
+      }))
+      return
+    }
+
+    setProfileData({
+      ...profileData,
+      highlights: [...profileData.highlights, trimmedValue],
+    })
+    if (errors.highlights) {
+      setErrors((prev) => ({ ...prev, highlights: undefined }))
+    }
+    setCustomHighlightValue('')
+  }
+
+  const updateFaqs = (faqs: ProfileFaqItem[]) => {
+    setProfileData({
+      ...profileData,
+      faqs,
+    })
+    if (errors.faqs) {
+      setErrors((prev) => ({ ...prev, faqs: undefined }))
+    }
+  }
+
+  const updateProductsMenuPackages = (productsMenuPackages: ProfileProductItem[]) => {
+    setProfileData({
+      ...profileData,
+      productsMenuPackages,
+    })
+    if (errors.productsMenuPackages) {
+      setErrors((prev) => ({ ...prev, productsMenuPackages: undefined }))
+    }
+  }
+
+  const updateQualifications = (qualifications: ProfileQualificationItem[]) => {
+    setProfileData({
+      ...profileData,
+      qualifications,
+    })
+    if (errors.qualifications) {
+      setErrors((prev) => ({ ...prev, qualifications: undefined }))
+    }
+  }
+
+  const handleFaqChange = (
+    faqId: string,
+    field: 'question' | 'answer',
+    value: string
+  ) => {
+    updateFaqs(
+      profileData.faqs.map((item) => (item.id === faqId ? { ...item, [field]: value } : item))
+    )
+  }
+
+  const handleAddFaq = () => {
+    updateFaqs([...profileData.faqs, createProfileFaqItem()])
+  }
+
+  const handleRemoveFaq = (faqId: string) => {
+    updateFaqs(profileData.faqs.filter((item) => item.id !== faqId))
+  }
+
+  const handleProductChange = (
+    itemId: string,
+    field: 'name' | 'description' | 'price',
+    value: string
+  ) => {
+    updateProductsMenuPackages(
+      profileData.productsMenuPackages.map((item) =>
+        item.id === itemId ? { ...item, [field]: value } : item
+      )
+    )
+  }
+
+  const handleAddProduct = () => {
+    updateProductsMenuPackages([...profileData.productsMenuPackages, createProfileProductItem()])
+  }
+
+  const handleRemoveProduct = (itemId: string) => {
+    updateProductsMenuPackages(profileData.productsMenuPackages.filter((item) => item.id !== itemId))
+  }
+
+  const handleQualificationChange = (
+    itemId: string,
+    field: 'title' | 'issuingOrganization' | 'year' | 'description',
+    value: string
+  ) => {
+    updateQualifications(
+      profileData.qualifications.map((item) =>
+        item.id === itemId ? { ...item, [field]: value } : item
+      )
+    )
+  }
+
+  const handleAddQualification = () => {
+    updateQualifications([...profileData.qualifications, createProfileQualificationItem()])
+  }
+
+  const handleRemoveQualification = (itemId: string) => {
+    updateQualifications(profileData.qualifications.filter((item) => item.id !== itemId))
+  }
+
+  const handleDocumentFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(e.target.files ?? [])
+    if (selectedFiles.length === 0) return
+
+    const existingKeys = new Set(
+      [
+        ...profileData.existingDocuments.map((document) => document.file_name.toLowerCase()),
+        ...profileData.documentFiles.map((file) => file.name.toLowerCase()),
+      ]
+    )
+    const nextDocumentFiles = [...profileData.documentFiles]
+
+    for (const file of selectedFiles) {
+      const validationError = validateSelectedDocument(file)
+      if (validationError) {
+        setErrors((prev) => ({ ...prev, documents: validationError }))
+        if (documentInputRef.current) {
+          documentInputRef.current.value = ''
+        }
+        return
+      }
+
+      const key = file.name.toLowerCase()
+      if (existingKeys.has(key)) {
+        continue
+      }
+
+      existingKeys.add(key)
+      nextDocumentFiles.push(file)
+    }
+
+    setProfileData({
+      ...profileData,
+      documentFiles: nextDocumentFiles,
+    })
+    setErrors((prev) => ({ ...prev, documents: undefined }))
+
+    if (documentInputRef.current) {
+      documentInputRef.current.value = ''
+    }
+  }
+
+  const handleRemovePendingDocument = (index: number) => {
+    setProfileData({
+      ...profileData,
+      documentFiles: profileData.documentFiles.filter((_, documentIndex) => documentIndex !== index),
+    })
+    if (errors.documents) {
+      setErrors((prev) => ({ ...prev, documents: undefined }))
+    }
+  }
+
+  const handleRemoveExistingDocument = (documentId: string) => {
+    setProfileData({
+      ...profileData,
+      existingDocuments: profileData.existingDocuments.filter((document) => document.id !== documentId),
+    })
+    if (errors.documents) {
+      setErrors((prev) => ({ ...prev, documents: undefined }))
+    }
+  }
+
   const validate = (): boolean => {
     const newErrors: FormErrors = {}
+    const currentYear = getCurrentYear()
+
     if (!profileData.businessName.trim()) {
       newErrors.businessName = 'Business name is required.'
     }
@@ -660,6 +956,51 @@ function CreateProfilePage() {
     }
     if (profileData.tagline.trim().length > 120) {
       newErrors.tagline = 'Tagline must be 120 characters or fewer.'
+    }
+    if (profileData.establishedYear.trim()) {
+      if (!isValidFourDigitYear(profileData.establishedYear.trim())) {
+        newErrors.establishedYear = 'Enter a valid four-digit year.'
+      } else if (Number(profileData.establishedYear) > currentYear) {
+        newErrors.establishedYear = 'Established year cannot be in the future.'
+      }
+    }
+    if (profileData.yearsOfExperience.trim()) {
+      const yearsOfExperience = Number(profileData.yearsOfExperience)
+      if (!Number.isInteger(yearsOfExperience) || yearsOfExperience < 0) {
+        newErrors.yearsOfExperience = 'Years of experience must be 0 or more.'
+      }
+    }
+    if (profileData.highlights.length > MAX_HIGHLIGHTS) {
+      newErrors.highlights = `Select up to ${MAX_HIGHLIGHTS} highlights.`
+    }
+    if (
+      profileData.faqs.some(
+        (item) => !isBlankFaqItem(item) && (!item.question.trim() || !item.answer.trim())
+      )
+    ) {
+      newErrors.faqs = 'Complete both the question and answer, or remove the FAQ item.'
+    }
+    if (
+      profileData.productsMenuPackages.some(
+        (item) =>
+          !isBlankProductItem(item) &&
+          (!item.name.trim() || !item.description.trim())
+      )
+    ) {
+      newErrors.productsMenuPackages =
+        'Complete both the name and description, or remove the product/menu/package item.'
+    }
+    if (
+      profileData.qualifications.some((item) => {
+        if (isBlankQualificationItem(item)) return false
+        if (!item.title.trim()) return true
+        if (!item.year.trim()) return false
+        if (!isValidFourDigitYear(item.year.trim())) return true
+        return Number(item.year) > currentYear
+      })
+    ) {
+      newErrors.qualifications =
+        'Each qualification needs a title. Optional years must be valid four-digit years that are not in the future.'
     }
     if (!isValidOptionalUrl(profileData.googleMapsUrl)) {
       newErrors.googleMapsUrl = 'Enter a valid Google Maps URL.'
@@ -713,6 +1054,16 @@ function CreateProfilePage() {
         ownerName: updated.owner_name,
         businessCategory: updated.business_category,
         businessSubcategories: normalizeSubcategoryValues(updated.business_subcategories),
+        establishedYear: profileData.establishedYear,
+        yearsOfExperience: profileData.yearsOfExperience,
+        highlights: profileData.highlights,
+        faqs: profileData.faqs.filter((item) => !isBlankFaqItem(item)),
+        productsMenuPackages: profileData.productsMenuPackages.filter(
+          (item) => !isBlankProductItem(item)
+        ),
+        qualifications: profileData.qualifications.filter(
+          (item) => !isBlankQualificationItem(item)
+        ),
         phoneNumber: updated.phone_number,
         whatsappNumber: updated.whatsapp_number || '',
         email: updated.email || '',
@@ -736,6 +1087,8 @@ function CreateProfilePage() {
         existingCoverBannerUrl: updated.cover_banner_url,
         galleryImages: [],
         existingGalleryImageUrls: Array.isArray(updated.gallery_images) ? updated.gallery_images : [],
+        documentFiles: [],
+        existingDocuments: profileData.existingDocuments,
       })
       navigate(activeMode === 'business' ? '/business-home' : '/dashboard', {
         state: { profileUpdated: true },
@@ -758,6 +1111,7 @@ function CreateProfilePage() {
     setSocialLinkRows(createSocialLinkRows(createDefaultSocialLinks()))
     setLogoFileName('')
     setCoverBannerFileName('')
+    setCustomHighlightValue('')
     if (logoInputRef.current) {
       logoInputRef.current.value = ''
     }
@@ -766,6 +1120,9 @@ function CreateProfilePage() {
     }
     if (galleryInputRef.current) {
       galleryInputRef.current.value = ''
+    }
+    if (documentInputRef.current) {
+      documentInputRef.current.value = ''
     }
   }
 
@@ -1620,6 +1977,498 @@ function CreateProfilePage() {
                   </div>
                 )}
               </div>
+            </div>
+          </section>
+
+          <section className={sectionCardClass} aria-labelledby="section-details">
+            <FormSectionHeading
+              id="section-details"
+              title="Additional Business Details"
+              description="Add optional details that help customers understand your experience, services, and practical conveniences."
+            />
+
+            <div className="grid gap-5 md:grid-cols-2">
+              <div className="rounded-2xl border border-slate-200 bg-white/85 p-4 sm:p-5">
+                <label htmlFor="establishedYear" className={labelClass}>
+                  Established Year
+                  <span className={optionalTextClass}>Optional</span>
+                </label>
+                <input
+                  type="number"
+                  id="establishedYear"
+                  name="establishedYear"
+                  min="1000"
+                  max={getCurrentYear()}
+                  inputMode="numeric"
+                  value={profileData.establishedYear}
+                  onChange={handleChange}
+                  placeholder="e.g. 2016"
+                  aria-invalid={!!errors.establishedYear}
+                  aria-describedby={errors.establishedYear ? 'establishedYear-error' : 'establishedYear-help'}
+                  className={`${inputBase} ${errors.establishedYear ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
+                />
+                {fieldError('establishedYear')}
+                <p id="establishedYear-help" className="mt-2 text-xs text-slate-400">
+                  Four digits only. Future years are not allowed.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-white/85 p-4 sm:p-5">
+                <label htmlFor="yearsOfExperience" className={labelClass}>
+                  Years of Experience
+                  <span className={optionalTextClass}>Optional</span>
+                </label>
+                <input
+                  type="number"
+                  id="yearsOfExperience"
+                  name="yearsOfExperience"
+                  min="0"
+                  step="1"
+                  inputMode="numeric"
+                  value={profileData.yearsOfExperience}
+                  onChange={handleChange}
+                  placeholder="e.g. 8"
+                  aria-invalid={!!errors.yearsOfExperience}
+                  aria-describedby={errors.yearsOfExperience ? 'yearsOfExperience-error' : 'yearsOfExperience-help'}
+                  className={`${inputBase} ${errors.yearsOfExperience ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
+                />
+                {fieldError('yearsOfExperience')}
+                <p id="yearsOfExperience-help" className="mt-2 text-xs text-slate-400">
+                  Enter a whole number. Minimum 0.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-slate-200 bg-white/85 p-4 sm:p-5">
+              <label className={labelClass}>
+                Highlights / Specifications
+                <span className={optionalTextClass}>Optional</span>
+              </label>
+              <p className="mb-4 text-sm leading-6 text-slate-500">
+                Choose the highlights that best describe your business. Custom highlights are also supported.
+              </p>
+
+              <div className="flex flex-wrap gap-2">
+                {commonHighlights.map((highlight) => {
+                  const isSelected = profileData.highlights.some(
+                    (item) => item.toLowerCase() === highlight.toLowerCase()
+                  )
+
+                  return (
+                    <button
+                      key={highlight}
+                      type="button"
+                      onClick={() => handleHighlightToggle(highlight)}
+                      className={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-sky-200 ${
+                        isSelected
+                          ? 'border-sky-200 bg-sky-50 text-sky-700'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-100'
+                      }`}
+                    >
+                      {highlight}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                <input
+                  type="text"
+                  value={customHighlightValue}
+                  onChange={(e) => setCustomHighlightValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleAddCustomHighlight()
+                    }
+                  }}
+                  placeholder="Add a custom highlight"
+                  aria-invalid={!!errors.highlights}
+                  aria-describedby={errors.highlights ? 'highlights-error' : 'highlights-help'}
+                  className={`${inputBase} ${errors.highlights ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
+                />
+                <button
+                  type="button"
+                  onClick={handleAddCustomHighlight}
+                  className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-200"
+                >
+                  Add Highlight
+                </button>
+              </div>
+              {fieldError('highlights')}
+              <p id="highlights-help" className="mt-2 text-xs text-slate-400">
+                Selected highlights stay unique. Up to {MAX_HIGHLIGHTS} highlights.
+              </p>
+
+              {profileData.highlights.length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {profileData.highlights.map((highlight) => (
+                    <button
+                      key={highlight}
+                      type="button"
+                      onClick={() => handleHighlightToggle(highlight)}
+                      className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-200"
+                    >
+                      <span>{highlight}</span>
+                      <span aria-hidden="true" className="text-slate-400">
+                        ×
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+
+          <section className={sectionCardClass} aria-labelledby="section-faqs">
+            <FormSectionHeading
+              id="section-faqs"
+              title="FAQs"
+              description="Add optional question-and-answer pairs for common customer concerns."
+              action={
+                <button
+                  type="button"
+                  onClick={handleAddFaq}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                  aria-label="Add FAQ item"
+                >
+                  +
+                </button>
+              }
+            />
+
+            <div className="space-y-4">
+              {profileData.faqs.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 px-4 py-5 text-sm text-slate-500">
+                  No FAQs added yet.
+                </div>
+              ) : (
+                profileData.faqs.map((faq, index) => (
+                  <div key={faq.id} className="rounded-2xl border border-slate-200 bg-white/85 p-4 sm:p-5">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold text-slate-800">FAQ {index + 1}</p>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveFaq(faq.id)}
+                        className="inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 transition hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                      >
+                        Remove
+                      </button>
+                    </div>
+
+                    <div className="grid gap-4">
+                      <div>
+                        <label htmlFor={`faq-question-${faq.id}`} className={compactFieldLabelClass}>
+                          Question
+                        </label>
+                        <input
+                          type="text"
+                          id={`faq-question-${faq.id}`}
+                          value={faq.question}
+                          onChange={(e) => handleFaqChange(faq.id, 'question', e.target.value)}
+                          placeholder="e.g. Do you offer home visits?"
+                          aria-invalid={!!errors.faqs}
+                          aria-describedby={errors.faqs ? 'faqs-error' : undefined}
+                          className={`${inputBase} ${errors.faqs ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
+                        />
+                      </div>
+
+                      <div>
+                        <label htmlFor={`faq-answer-${faq.id}`} className={compactFieldLabelClass}>
+                          Answer
+                        </label>
+                        <textarea
+                          id={`faq-answer-${faq.id}`}
+                          value={faq.answer}
+                          onChange={(e) => handleFaqChange(faq.id, 'answer', e.target.value)}
+                          placeholder="Add the answer customers should see."
+                          aria-invalid={!!errors.faqs}
+                          aria-describedby={errors.faqs ? 'faqs-error' : undefined}
+                          className={`${textareaBase} ${errors.faqs ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            {fieldError('faqs')}
+          </section>
+
+          <section className={sectionCardClass} aria-labelledby="section-products">
+            <FormSectionHeading
+              id="section-products"
+              title="Products / Menu / Packages"
+              description="Add optional offerings such as products, menu items, or service packages."
+              action={
+                <button
+                  type="button"
+                  onClick={handleAddProduct}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                  aria-label="Add product, menu item, or package"
+                >
+                  +
+                </button>
+              }
+            />
+
+            <div className="space-y-4">
+              {profileData.productsMenuPackages.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 px-4 py-5 text-sm text-slate-500">
+                  No product, menu, or package items added yet.
+                </div>
+              ) : (
+                profileData.productsMenuPackages.map((item, index) => (
+                  <div key={item.id} className="rounded-2xl border border-slate-200 bg-white/85 p-4 sm:p-5">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold text-slate-800">Item {index + 1}</p>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveProduct(item.id)}
+                        className="inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 transition hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                      >
+                        Remove
+                      </button>
+                    </div>
+
+                    <div className="grid gap-4">
+                      <div>
+                        <label htmlFor={`product-name-${item.id}`} className={compactFieldLabelClass}>
+                          Name
+                        </label>
+                        <input
+                          type="text"
+                          id={`product-name-${item.id}`}
+                          value={item.name}
+                          onChange={(e) => handleProductChange(item.id, 'name', e.target.value)}
+                          placeholder="e.g. Premium Haircut"
+                          aria-invalid={!!errors.productsMenuPackages}
+                          aria-describedby={errors.productsMenuPackages ? 'productsMenuPackages-error' : undefined}
+                          className={`${inputBase} ${errors.productsMenuPackages ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
+                        />
+                      </div>
+
+                      <div>
+                        <label htmlFor={`product-description-${item.id}`} className={compactFieldLabelClass}>
+                          Description
+                        </label>
+                        <textarea
+                          id={`product-description-${item.id}`}
+                          value={item.description}
+                          onChange={(e) => handleProductChange(item.id, 'description', e.target.value)}
+                          placeholder="Describe what is included."
+                          aria-invalid={!!errors.productsMenuPackages}
+                          aria-describedby={errors.productsMenuPackages ? 'productsMenuPackages-error' : undefined}
+                          className={`${textareaBase} ${errors.productsMenuPackages ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
+                        />
+                      </div>
+
+                      <div>
+                        <label htmlFor={`product-price-${item.id}`} className={compactFieldLabelClass}>
+                          Price
+                          <span className={optionalTextClass}>Optional</span>
+                        </label>
+                        <input
+                          type="text"
+                          id={`product-price-${item.id}`}
+                          value={item.price}
+                          onChange={(e) => handleProductChange(item.id, 'price', e.target.value)}
+                          placeholder="e.g. $49"
+                          aria-invalid={!!errors.productsMenuPackages}
+                          aria-describedby={errors.productsMenuPackages ? 'productsMenuPackages-error' : undefined}
+                          className={`${inputBase} ${errors.productsMenuPackages ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            {fieldError('productsMenuPackages')}
+          </section>
+
+          <section className={sectionCardClass} aria-labelledby="section-qualifications">
+            <FormSectionHeading
+              id="section-qualifications"
+              title="Certificates / Licenses / Qualifications"
+              description="Add optional credentials that strengthen trust in your business."
+              action={
+                <button
+                  type="button"
+                  onClick={handleAddQualification}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                  aria-label="Add certificate, license, or qualification"
+                >
+                  +
+                </button>
+              }
+            />
+
+            <div className="space-y-4">
+              {profileData.qualifications.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 px-4 py-5 text-sm text-slate-500">
+                  No credentials added yet.
+                </div>
+              ) : (
+                profileData.qualifications.map((item, index) => (
+                  <div key={item.id} className="rounded-2xl border border-slate-200 bg-white/85 p-4 sm:p-5">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold text-slate-800">Credential {index + 1}</p>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveQualification(item.id)}
+                        className="inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 transition hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                      >
+                        Remove
+                      </button>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="md:col-span-2">
+                        <label htmlFor={`qualification-title-${item.id}`} className={compactFieldLabelClass}>
+                          Title
+                        </label>
+                        <input
+                          type="text"
+                          id={`qualification-title-${item.id}`}
+                          value={item.title}
+                          onChange={(e) => handleQualificationChange(item.id, 'title', e.target.value)}
+                          placeholder="e.g. Licensed Electrical Contractor"
+                          aria-invalid={!!errors.qualifications}
+                          aria-describedby={errors.qualifications ? 'qualifications-error' : undefined}
+                          className={`${inputBase} ${errors.qualifications ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
+                        />
+                      </div>
+
+                      <div>
+                        <label htmlFor={`qualification-organization-${item.id}`} className={compactFieldLabelClass}>
+                          Issuing Organization
+                          <span className={optionalTextClass}>Optional</span>
+                        </label>
+                        <input
+                          type="text"
+                          id={`qualification-organization-${item.id}`}
+                          value={item.issuingOrganization}
+                          onChange={(e) => handleQualificationChange(item.id, 'issuingOrganization', e.target.value)}
+                          placeholder="e.g. State Licensing Board"
+                          aria-invalid={!!errors.qualifications}
+                          aria-describedby={errors.qualifications ? 'qualifications-error' : undefined}
+                          className={`${inputBase} ${errors.qualifications ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
+                        />
+                      </div>
+
+                      <div>
+                        <label htmlFor={`qualification-year-${item.id}`} className={compactFieldLabelClass}>
+                          Year
+                          <span className={optionalTextClass}>Optional</span>
+                        </label>
+                        <input
+                          type="number"
+                          id={`qualification-year-${item.id}`}
+                          value={item.year}
+                          onChange={(e) => handleQualificationChange(item.id, 'year', e.target.value)}
+                          placeholder="e.g. 2022"
+                          min="1000"
+                          max={getCurrentYear()}
+                          aria-invalid={!!errors.qualifications}
+                          aria-describedby={errors.qualifications ? 'qualifications-error' : undefined}
+                          className={`${inputBase} ${errors.qualifications ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
+                        />
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label htmlFor={`qualification-description-${item.id}`} className={compactFieldLabelClass}>
+                          Description
+                          <span className={optionalTextClass}>Optional</span>
+                        </label>
+                        <textarea
+                          id={`qualification-description-${item.id}`}
+                          value={item.description}
+                          onChange={(e) => handleQualificationChange(item.id, 'description', e.target.value)}
+                          placeholder="Add any supporting detail customers should know."
+                          aria-invalid={!!errors.qualifications}
+                          aria-describedby={errors.qualifications ? 'qualifications-error' : undefined}
+                          className={`${textareaBase} ${errors.qualifications ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            {fieldError('qualifications')}
+          </section>
+
+          <section className={sectionCardClass} aria-labelledby="section-documents">
+            <FormSectionHeading
+              id="section-documents"
+              title="Optional Documents"
+              description="Upload brochures, menus, certificates, licenses, rate cards, or similar supporting documents."
+            />
+
+            <div className="rounded-2xl border border-slate-200 bg-white/85 p-4 sm:p-5">
+              <label htmlFor="documents" className={labelClass}>
+                Upload Documents
+                <span className={optionalTextClass}>Optional</span>
+              </label>
+              <input
+                ref={documentInputRef}
+                type="file"
+                id="documents"
+                name="documents"
+                accept={documentAccept}
+                multiple
+                onChange={handleDocumentFilesChange}
+                aria-invalid={!!errors.documents}
+                aria-describedby={errors.documents ? 'documents-error' : 'documents-help'}
+                className={`${fileInputBase} ${errors.documents ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
+              />
+              {fieldError('documents')}
+              <p id="documents-help" className="mt-2 text-xs text-slate-400">
+                Supported formats: PDF, JPG, PNG, and WebP. Maximum file size is 10 MB per file.
+              </p>
+
+              {(profileData.existingDocuments.length > 0 || profileData.documentFiles.length > 0) && (
+                <div className="mt-4 space-y-3">
+                  {profileData.existingDocuments.map((document) => (
+                    <div
+                      key={document.id}
+                      className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-slate-800">{document.file_name}</p>
+                        <p className="mt-1 text-xs text-slate-500">{formatMimeTypeLabel(document.mime_type)}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveExistingDocument(document.id)}
+                        className="inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 transition hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+
+                  {profileData.documentFiles.map((file, index) => (
+                    <div
+                      key={`${file.name}-${file.lastModified}-${index}`}
+                      className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-slate-800">{file.name}</p>
+                        <p className="mt-1 text-xs text-slate-500">{formatMimeTypeLabel(file.type)}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePendingDocument(index)}
+                        className="inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 transition hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </section>
 
