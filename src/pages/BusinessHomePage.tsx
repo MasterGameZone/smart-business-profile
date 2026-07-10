@@ -29,7 +29,7 @@ function truncate(text: string, length: number): string {
 
 function BusinessHomePage() {
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, accountMode, isLoading } = useAuth()
   const { profileData, setProfileData, clearProfile } = useProfile()
 
   usePageMeta({
@@ -41,6 +41,12 @@ function BusinessHomePage() {
   const [profiles, setProfiles] = useState<BusinessProfileRow[]>([])
   const [toasts, setToasts] = useState<ToastItem[]>([])
 
+  useEffect(() => {
+    if (!isLoading && user && accountMode !== 'business_owner') {
+      navigate('/', { replace: true })
+    }
+  }, [accountMode, isLoading, navigate, user])
+
   const showToast = useCallback((message: string, type: ToastType = 'success') => {
     const id = Date.now()
     setToasts((prev) => [...prev, { id, message, type }])
@@ -48,7 +54,7 @@ function BusinessHomePage() {
   }, [])
 
   const loadProfiles = useCallback(async () => {
-    if (!user) return
+    if (!user || isLoading || accountMode !== 'business_owner') return
 
     setLoadState('loading')
     try {
@@ -60,7 +66,7 @@ function BusinessHomePage() {
       setProfiles([])
       setLoadState('error')
     }
-  }, [user])
+  }, [accountMode, isLoading, user])
 
   useEffect(() => {
     loadProfiles()

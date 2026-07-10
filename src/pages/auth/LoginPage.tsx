@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import AuthLayout, { authInputBase, authLabel, authError } from '../../components/AuthLayout.tsx'
 import PasswordField from '../../components/PasswordField.tsx'
 import { ToastContainer, type ToastItem, type ToastType } from '../../components/Toast.tsx'
+import { useAuth } from '../../context/AuthContext.tsx'
 import { usePageMeta } from '../../hooks/usePageMeta.ts'
 import { signIn } from '../../lib/authService.ts'
 
@@ -16,6 +17,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { user, isLoading: isAuthLoading, accountMode } = useAuth()
   const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname || '/'
 
   usePageMeta({
@@ -29,6 +31,13 @@ function LoginPage() {
   const [errors, setErrors] = useState<FormErrors>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [toasts, setToasts] = useState<ToastItem[]>([])
+
+  useEffect(() => {
+    if (!user || isAuthLoading || isSubmitting) return
+
+    const destination = accountMode === 'business_owner' ? '/business-home' : from === '/business-home' ? '/' : from
+    navigate(destination, { replace: true })
+  }, [accountMode, from, isAuthLoading, isSubmitting, navigate, user])
 
   const showToast = (message: string, type: ToastType = 'success') => {
     const id = Date.now()
@@ -72,7 +81,6 @@ function LoginPage() {
       return
     }
 
-    navigate(from, { replace: true })
   }
 
   return (

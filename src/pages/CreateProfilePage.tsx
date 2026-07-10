@@ -17,7 +17,6 @@ import { updateBusinessProfile } from '../lib/businessProfileService.ts'
 import { validateDocumentFile, validateImageFile } from '../lib/storageService.ts'
 import { usePageMeta } from '../hooks/usePageMeta.ts'
 import { ToastContainer, type ToastItem, type ToastType } from '../components/Toast.tsx'
-import { getActiveMode } from '../utils/activeMode.ts'
 import AppHeader from '../components/AppHeader.tsx'
 import {
   BUSINESS_CATEGORY_OPTIONS,
@@ -329,8 +328,7 @@ function FormSectionHeading({ id, title, description, action }: FormSectionHeadi
 function CreateProfilePage() {
   const navigate = useNavigate()
   const { profileData, setProfileData, clearProfile } = useProfile()
-  const { user } = useAuth()
-  const activeMode = getActiveMode()
+  const { user, accountMode } = useAuth()
 
   usePageMeta({
     title: 'Create Business Profile | Smart Business Profile',
@@ -1090,7 +1088,7 @@ function CreateProfilePage() {
         documentFiles: [],
         existingDocuments: profileData.existingDocuments,
       })
-      navigate(activeMode === 'business' ? '/business-home' : '/dashboard', {
+      navigate(accountMode === 'business_owner' ? '/business-home' : '/dashboard', {
         state: { profileUpdated: true },
       })
     } catch (error) {

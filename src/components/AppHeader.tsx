@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useProfile } from '../context/ProfileContext.tsx'
 import { useAuth } from '../context/AuthContext.tsx'
 import { signOut } from '../lib/authService.ts'
-import { getActiveMode, setActiveMode } from '../utils/activeMode.ts'
 import { ToastContainer, type ToastItem } from './Toast.tsx'
 
 interface AppHeaderPreviewConfig {
@@ -26,7 +25,7 @@ interface HomeMenuItem {
   label: string
   path?: string
   disabled?: boolean
-  onSelect?: () => void
+  onSelect?: () => void | Promise<void>
 }
 
 let hasPlayedNavbarEntrance = false
@@ -34,7 +33,7 @@ let hasPlayedNavbarEntrance = false
 function AppHeader({ previewConfig = null }: AppHeaderProps) {
   const navigate = useNavigate()
   const location = useLocation()
-  const { user, isLoading } = useAuth()
+  const { user, isLoading, accountMode, isBusinessOwnerEnabled, setPreferredAccountMode } = useAuth()
   const { clearProfile } = useProfile()
   const [isSigningOut, setIsSigningOut] = useState(false)
   const [isHomeMenuOpen, setIsHomeMenuOpen] = useState(false)
@@ -59,8 +58,7 @@ function AppHeader({ previewConfig = null }: AppHeaderProps) {
   const hideAuthenticatedNavButtons = showMinimalCustomerTopBar || showBusinessHomeTopBar || showCreateProfileTopBar
   const showLoggedInHomeIcons = showMinimalCustomerTopBar && !showStartBusinessLogoOnly
   const hasTopBarMenu = showLoggedInHomeIcons || showBusinessHomeTopBar
-  const activeMode = getActiveMode()
-  const authenticatedHomePath = isCreateProfilePage && activeMode === 'business' ? '/business-home' : '/'
+  const authenticatedHomePath = isCreateProfilePage && accountMode === 'business_owner' ? '/business-home' : '/'
   const navbarInteractionStyle: CSSProperties = {
     WebkitTapHighlightColor: 'transparent',
   }
@@ -180,7 +178,20 @@ function AppHeader({ previewConfig = null }: AppHeaderProps) {
     { label: 'Favorites / Saved Businesses', path: '/favorites' },
     { label: 'My Reviews', disabled: true },
     { label: 'Notifications', disabled: true },
-    { label: 'Switch to Business Owner', path: '/start-business' },
+    isBusinessOwnerEnabled
+      ? {
+          label: 'Switch to Business Owner',
+          onSelect: async () => {
+            try {
+              await setPreferredAccountMode('business_owner')
+              navigate('/business-home')
+            } catch (error) {
+              console.error('Failed to switch to Business Owner mode:', error)
+              showError('Unable to switch to Business Owner mode. Please try again.')
+            }
+          },
+        }
+      : { label: 'Switch to Business Owner', path: '/start-business' },
     { label: 'Help & Support', disabled: true },
   ]
 
@@ -190,15 +201,20 @@ function AppHeader({ previewConfig = null }: AppHeaderProps) {
     { label: 'Create Business Profile', onSelect: handleCreateBusinessProfile },
     {
       label: 'Switch to Customer',
-      onSelect: () => {
-        setActiveMode('customer')
-        navigate('/')
+      onSelect: async () => {
+        try {
+          await setPreferredAccountMode('customer')
+          navigate('/')
+        } catch (error) {
+          console.error('Failed to switch to Customer mode:', error)
+          showError('Unable to switch to Customer mode. Please try again.')
+        }
       },
     },
     { label: 'Help & Support', disabled: true },
   ]
 
-  const handleHomeMenuItemClick = (item: HomeMenuItem) => {
+  const handleHomeMenuItemClick = async (item: HomeMenuItem) => {
     if (item.disabled) {
       setIsHomeMenuOpen(false)
       return
@@ -206,7 +222,7 @@ function AppHeader({ previewConfig = null }: AppHeaderProps) {
 
     setIsHomeMenuOpen(false)
     if (item.onSelect) {
-      item.onSelect()
+      await item.onSelect()
       return
     }
 
@@ -412,7 +428,7 @@ function AppHeader({ previewConfig = null }: AppHeaderProps) {
                           type="button"
                           role="menuitem"
                           disabled={item.disabled}
-                          onClick={() => handleHomeMenuItemClick(item)}
+                          onClick={() => void handleHomeMenuItemClick(item)}
                           className={`flex w-full items-center justify-between px-4 py-2.5 text-left text-sm ${
                             item.disabled
                               ? 'cursor-default text-slate-400'
@@ -548,7 +564,7 @@ function AppHeader({ previewConfig = null }: AppHeaderProps) {
                           type="button"
                           role="menuitem"
                           disabled={item.disabled}
-                          onClick={() => handleHomeMenuItemClick(item)}
+                          onClick={() => void handleHomeMenuItemClick(item)}
                           className={`flex w-full items-center justify-between px-4 py-2.5 text-left text-sm ${
                             item.disabled
                               ? 'cursor-default text-slate-400'

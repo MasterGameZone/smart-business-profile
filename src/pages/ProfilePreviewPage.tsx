@@ -2,12 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { RefObject } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useProfile } from '../context/ProfileContext.tsx'
+import { useAuth } from '../context/AuthContext.tsx'
 import { insertBusinessProfile } from '../lib/businessProfileService.ts'
 import { usePageMeta } from '../hooks/usePageMeta.ts'
 import { ToastContainer, type ToastItem, type ToastType } from '../components/Toast.tsx'
 import BusinessProfileDisplay from '../components/BusinessProfileDisplay.tsx'
 import { svgContainerToBlob, triggerBlobDownload } from '../utils/qr.ts'
-import { getActiveMode } from '../utils/activeMode.ts'
 import AppHeader from '../components/AppHeader.tsx'
 
 function parsePreviewServices(text: string): string[] {
@@ -37,7 +37,7 @@ function ProfilePreviewPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { profileData, setProfileData } = useProfile()
-  const activeMode = getActiveMode()
+  const { accountMode } = useAuth()
 
   usePageMeta({
     title: 'Preview Business Profile | Smart Business Profile',
@@ -162,7 +162,7 @@ function ProfilePreviewPage() {
         documentFiles: [],
       })
       setHasSaved(true)
-      navigate(activeMode === 'business' ? '/business-home' : '/dashboard', {
+      navigate(accountMode === 'business_owner' ? '/business-home' : '/dashboard', {
         state: { profileCreated: true },
       })
     } catch (error) {

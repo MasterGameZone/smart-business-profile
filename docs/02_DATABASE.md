@@ -216,6 +216,26 @@ Future buckets may include:
 
 ---
 
+## Table: user_account_preferences
+
+Purpose
+
+Stores the authenticated user's Business Owner access state and preferred account mode. Customer capability remains available for every authenticated user.
+
+### Columns
+
+| Column | Type | Nullable | Description |
+|----------|------|----------|-------------|
+| user_id | UUID | No | Primary key and reference to `auth.users.id` |
+| owner_enabled | BOOLEAN | No | Whether Business Owner onboarding has been completed |
+| preferred_account_mode | TEXT | No | `customer` or `business_owner` |
+| created_at | TIMESTAMP WITH TIME ZONE | No | Record creation timestamp |
+| updated_at | TIMESTAMP WITH TIME ZONE | No | Last update timestamp |
+
+Access is restricted by RLS to the authenticated owner of each row. Missing rows are interpreted by the application as customer mode with Business Owner access disabled.
+
+---
+
 ## Bucket: business-assets
 
 Purpose
@@ -265,6 +285,7 @@ Version 3.8 added helper functions for logo, cover, and gallery uploads. Version
 | 2.3 | Public slug support | Completed |
 | 3.5 | Profile enrichment schema foundation | Pending |
 | 3.8 | Supabase Storage foundation for business-assets bucket | Pending manual review |
+| 4.21 | Persistent user account-mode preferences | Migration created; apply to Supabase |
 | Future | Additional modules | Planned |
 
 Detailed migration SQL should remain inside the `/supabase/migrations` directory.

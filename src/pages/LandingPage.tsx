@@ -82,7 +82,7 @@ function getInitials(name: string): string {
 
 function LandingPage() {
   const navigate = useNavigate()
-  const { user, isLoading } = useAuth()
+  const { user, isLoading, accountMode } = useAuth()
   const searchInputRef = useRef<HTMLInputElement | null>(null)
   const [homeSearchQuery, setHomeSearchQuery] = useState('')
   const [publicBusinesses, setPublicBusinesses] = useState<PublicBusinessProfileRow[]>([])
@@ -170,6 +170,12 @@ function LandingPage() {
     const recentlyViewed = getRecentlyViewedBusinesses(user.id).map(mapRecentlyViewedToPublicProfile)
     setRecentlyViewedBusinesses(recentlyViewed)
   }, [user])
+
+  useEffect(() => {
+    if (!isLoading && user && accountMode === 'business_owner') {
+      navigate('/business-home', { replace: true })
+    }
+  }, [accountMode, isLoading, navigate, user])
 
   const activeSearchQuery = homeSearchQuery.trim().toLowerCase()
   const hasActiveSearch = activeSearchQuery.length > 0
