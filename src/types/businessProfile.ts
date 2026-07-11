@@ -15,6 +15,7 @@ export interface BusinessProfileProductValue {
   name: string
   description: string
   price: string | null
+  imageUrl?: string | null
 }
 
 export interface BusinessProfileQualificationValue {

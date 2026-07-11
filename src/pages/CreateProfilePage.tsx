@@ -189,7 +189,13 @@ function isBlankFaqItem(item: ProfileFaqItem): boolean {
 }
 
 function isBlankProductItem(item: ProfileProductItem): boolean {
-  return !item.name.trim() && !item.description.trim() && !item.price.trim()
+  return (
+    !item.name.trim() &&
+    !item.description.trim() &&
+    !item.price.trim() &&
+    !item.imageFile &&
+    !item.imageUrl
+  )
 }
 
 function isBlankQualificationItem(item: ProfileQualificationItem): boolean {
@@ -542,6 +548,19 @@ function CreateProfilePage() {
       })),
     [profileData.galleryImages]
   )
+  const productImagePreviews = useMemo(() => {
+    const previews: Record<string, string> = {}
+
+    profileData.productsMenuPackages.forEach((item) => {
+      if (item.imageFile) {
+        previews[item.id] = URL.createObjectURL(item.imageFile)
+      } else if (item.imageUrl) {
+        previews[item.id] = item.imageUrl
+      }
+    })
+
+    return previews
+  }, [profileData.productsMenuPackages])
   const availableSubcategories = useMemo(
     () => getSubcategoriesForCategory(profileData.businessCategory),
     [profileData.businessCategory]
@@ -608,6 +627,16 @@ function CreateProfilePage() {
       selectedGalleryPreviews.forEach((preview) => URL.revokeObjectURL(preview.url))
     }
   }, [selectedGalleryPreviews])
+
+  useEffect(() => {
+    return () => {
+      profileData.productsMenuPackages.forEach((item) => {
+        if (item.imageFile && productImagePreviews[item.id]) {
+          URL.revokeObjectURL(productImagePreviews[item.id])
+        }
+      })
+    }
+  }, [productImagePreviews, profileData.productsMenuPackages])
 
   useEffect(() => {
     if (!isSubcategoryDropdownOpen) return undefined
@@ -991,6 +1020,36 @@ function CreateProfilePage() {
     )
   }
 
+  const handleProductImageChange = (
+    itemId: string,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0] || null
+    e.target.value = ''
+
+    if (!file) return
+
+    const validationError = validateSelectedImage(file)
+    if (validationError) {
+      setErrors((prev) => ({ ...prev, productsMenuPackages: validationError }))
+      return
+    }
+
+    updateProductsMenuPackages(
+      profileData.productsMenuPackages.map((item) =>
+        item.id === itemId ? { ...item, imageFile: file } : item
+      )
+    )
+  }
+
+  const handleRemoveProductImage = (itemId: string) => {
+    updateProductsMenuPackages(
+      profileData.productsMenuPackages.map((item) =>
+        item.id === itemId ? { ...item, imageFile: null, imageUrl: null } : item
+      )
+    )
+  }
+
   const handleAddProduct = () => {
     updateProductsMenuPackages([...profileData.productsMenuPackages, createProfileProductItem()])
   }
@@ -1184,11 +1243,11 @@ function CreateProfilePage() {
       profileData.productsMenuPackages.some(
         (item) =>
           !isBlankProductItem(item) &&
-          (!item.name.trim() || !item.description.trim())
+          (!item.name.trim() || !item.price.trim())
       )
     ) {
       newErrors.productsMenuPackages =
-        'Complete both the name and description, or remove the product/menu/package item.'
+        'Complete the item name and price, or remove the product/menu/package item.'
     }
     if (
       profileData.qualifications.some((item) => {
@@ -2061,20 +2120,6 @@ function CreateProfilePage() {
               }
             />
 
-            <div>
-              <textarea
-                id="servicesText"
-                name="servicesText"
-                rows={4}
-                value={profileData.servicesText}
-                onChange={handleChange}
-                aria-label="Products / Menu / Packages / Services"
-                placeholder={'Dental Checkup\nTeeth Cleaning\nRoot Canal Treatment'}
-                className={`${textareaBase} min-h-[148px]`}
-              />
-              <p className="mt-2 text-xs text-slate-400">Enter one service per line.</p>
-            </div>
-
             <div className="space-y-4">
               {profileData.productsMenuPackages.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 px-4 py-5 text-sm text-slate-500">
@@ -2097,14 +2142,15 @@ function CreateProfilePage() {
                     <div className="grid gap-4">
                       <div>
                         <label htmlFor={`product-name-${item.id}`} className={compactFieldLabelClass}>
-                          Name
+                          Item Name <span className="text-red-500" aria-hidden="true">*</span>
                         </label>
                         <input
                           type="text"
                           id={`product-name-${item.id}`}
                           value={item.name}
                           onChange={(e) => handleProductChange(item.id, 'name', e.target.value)}
-                          placeholder="e.g. Premium Haircut"
+                          placeholder="e.g. Dental Checkup, Haircut Package, Veg Thali, Website Design"
+                          aria-required="true"
                           aria-invalid={!!errors.productsMenuPackages}
                           aria-describedby={errors.productsMenuPackages ? 'productsMenuPackages-error' : undefined}
                           className={`${inputBase} ${errors.productsMenuPackages ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
@@ -2113,13 +2159,13 @@ function CreateProfilePage() {
 
                       <div>
                         <label htmlFor={`product-description-${item.id}`} className={compactFieldLabelClass}>
-                          Description
+                          Description <span className={optionalTextClass}>Optional</span>
                         </label>
                         <textarea
                           id={`product-description-${item.id}`}
                           value={item.description}
                           onChange={(e) => handleProductChange(item.id, 'description', e.target.value)}
-                          placeholder="Describe what is included."
+                          placeholder="Short details about this product, menu item, package, or service."
                           aria-invalid={!!errors.productsMenuPackages}
                           aria-describedby={errors.productsMenuPackages ? 'productsMenuPackages-error' : undefined}
                           className={`${textareaBase} ${errors.productsMenuPackages ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
@@ -2128,19 +2174,58 @@ function CreateProfilePage() {
 
                       <div>
                         <label htmlFor={`product-price-${item.id}`} className={compactFieldLabelClass}>
-                          Price
-                          <span className={optionalTextClass}>Optional</span>
+                          Price or Price Range <span className="text-red-500" aria-hidden="true">*</span>
                         </label>
                         <input
                           type="text"
                           id={`product-price-${item.id}`}
                           value={item.price}
                           onChange={(e) => handleProductChange(item.id, 'price', e.target.value)}
-                          placeholder="e.g. $49"
+                          placeholder="e.g. ₹499, ₹500 - ₹1500, Starting from ₹999"
+                          aria-required="true"
                           aria-invalid={!!errors.productsMenuPackages}
                           aria-describedby={errors.productsMenuPackages ? 'productsMenuPackages-error' : undefined}
                           className={`${inputBase} ${errors.productsMenuPackages ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
                         />
+                      </div>
+
+                      <div>
+                        <span className={compactFieldLabelClass}>
+                          Image <span className={optionalTextClass}>Optional</span>
+                        </span>
+                        <div className="flex flex-wrap items-start gap-4">
+                          {productImagePreviews[item.id] && (
+                            <img
+                              src={productImagePreviews[item.id]}
+                              alt={`${item.name || 'Item'} preview`}
+                              className="h-24 w-24 rounded-xl border border-slate-200 object-cover"
+                            />
+                          )}
+                          <div className="flex flex-wrap items-center gap-2">
+                            <input
+                              type="file"
+                              id={`product-image-${item.id}`}
+                              accept={imageAccept}
+                              onChange={(e) => handleProductImageChange(item.id, e)}
+                              className="sr-only"
+                            />
+                            <label
+                              htmlFor={`product-image-${item.id}`}
+                              className="inline-flex cursor-pointer items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 focus-within:ring-2 focus-within:ring-sky-200"
+                            >
+                              {item.imageFile || item.imageUrl ? 'Replace image' : 'Upload image'}
+                            </label>
+                            {(item.imageFile || item.imageUrl) && (
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveProductImage(item.id)}
+                                className="inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 transition hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                              >
+                                Remove image
+                              </button>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>

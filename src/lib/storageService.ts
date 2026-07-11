@@ -12,7 +12,7 @@ const ALLOWED_DOCUMENT_TYPES = [
   'image/webp',
 ] as const
 
-type BusinessAssetFolder = 'logo' | 'cover' | 'gallery' | 'documents'
+type BusinessAssetFolder = 'logo' | 'cover' | 'gallery' | 'products' | 'documents'
 
 interface BusinessAssetUploadParams {
   file: File
@@ -183,6 +183,14 @@ export function uploadBusinessGalleryImage(params: BusinessAssetUploadParams): P
     ...params,
     folder: 'gallery',
     filePrefix: 'gallery',
+  })
+}
+
+export function uploadBusinessProductImage(params: BusinessAssetUploadParams): Promise<StorageUploadResult> {
+  return uploadBusinessAsset({
+    ...params,
+    folder: 'products',
+    filePrefix: 'product',
   })
 }
 

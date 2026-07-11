@@ -9,7 +9,7 @@ import type {
   BusinessProfileUpdate,
   PublicBusinessProfileRow,
 } from '../types/businessProfile'
-import type { ProfileData, ProfileQualificationItem } from '../context/ProfileContext'
+import type { ProfileData, ProfileProductItem, ProfileQualificationItem } from '../context/ProfileContext'
 import { workingDays } from '../context/ProfileContext'
 import { slugify } from '../utils/slug'
 import { getCurrentUser } from './authService'
@@ -19,6 +19,7 @@ import {
   uploadBusinessDocument,
   uploadBusinessGalleryImage,
   uploadBusinessLogo,
+  uploadBusinessProductImage,
   validateDocumentFile,
   validateImageFile,
 } from './storageService'
@@ -129,8 +130,9 @@ function parseProductsMenuPackages(data: ProfileData): BusinessProfileProductVal
       name: item.name.trim(),
       description: item.description.trim(),
       price: item.price.trim() || null,
+      imageUrl: item.imageUrl?.trim() || null,
     }))
-    .filter((item) => item.name && item.description)
+    .filter((item) => item.name && item.price)
 }
 
 function parseQualifications(data: ProfileData): BusinessProfileQualificationValue[] {
@@ -246,6 +248,11 @@ function validateImagesBeforeProfileWrite(data: ProfileData): void {
   validateImageBeforeProfileWrite(data.logo)
   validateImageBeforeProfileWrite(data.coverBanner)
   data.galleryImages.forEach((file) => validateImageBeforeProfileWrite(file))
+  data.productsMenuPackages.forEach((item) => {
+    if (item.imageFile) {
+      validateImageBeforeProfileWrite(item.imageFile)
+    }
+  })
   data.documentFiles.forEach((file) => validateDocumentBeforeProfileWrite(file))
   data.qualifications.forEach((item) => {
     if (item.documentFile) {
@@ -417,6 +424,39 @@ async function uploadPendingProfileImages(
   return updates
 }
 
+async function uploadPendingProductImages(
+  ownerId: string,
+  businessProfileId: string,
+  data: ProfileData
+): Promise<ProfileProductItem[] | null> {
+  if (!data.productsMenuPackages.some((item) => item.imageFile)) {
+    return null
+  }
+
+  const products: ProfileProductItem[] = []
+
+  for (const item of data.productsMenuPackages) {
+    if (!item.imageFile) {
+      products.push(item)
+      continue
+    }
+
+    const uploadedImage = await uploadBusinessProductImage({
+      file: item.imageFile,
+      ownerId,
+      businessProfileId,
+    })
+
+    products.push({
+      ...item,
+      imageFile: null,
+      imageUrl: uploadedImage.publicUrl,
+    })
+  }
+
+  return products
+}
+
 export async function mapProfileDataToInsert(
   data: ProfileData
 ): Promise<Omit<BusinessProfileInsert, 'slug'>> {
@@ -487,11 +527,18 @@ export async function insertBusinessProfile(
   }
 
   const imageUpdates = await uploadPendingProfileImages(user.id, inserted.id, data)
+  const uploadedProductItems = await uploadPendingProductImages(user.id, inserted.id, data)
   const uploadedQualifications = await uploadPendingQualificationDocuments(user.id, inserted.id, data)
 
   await syncBusinessProfileDocuments(user.id, inserted.id, data)
 
   const postInsertUpdates: BusinessProfileUpdate = { ...imageUpdates }
+  if (uploadedProductItems) {
+    postInsertUpdates.products_menu_packages = parseProductsMenuPackages({
+      ...data,
+      productsMenuPackages: uploadedProductItems,
+    })
+  }
   if (uploadedQualifications) {
     postInsertUpdates.qualifications = parseQualifications({
       ...data,
@@ -532,6 +579,14 @@ export async function updateBusinessProfile(
   const user = await getCurrentUser()
   if (!user) {
     throw new Error('You must be logged in to update a business profile.')
+  }
+
+  const uploadedProductItems = await uploadPendingProductImages(user.id, id, data)
+  if (uploadedProductItems) {
+    payload.products_menu_packages = parseProductsMenuPackages({
+      ...data,
+      productsMenuPackages: uploadedProductItems,
+    })
   }
 
   if (data.logo || data.coverBanner || data.galleryImages.length > 0) {

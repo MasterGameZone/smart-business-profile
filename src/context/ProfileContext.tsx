@@ -38,6 +38,8 @@ export interface ProfileProductItem {
   name: string
   description: string
   price: string
+  imageFile: File | null
+  imageUrl: string | null
 }
 
 export interface ProfileQualificationItem {
@@ -192,31 +194,43 @@ export function normalizeFaqItems(value: BusinessProfileFaqValue[] | null | unde
 export function createProfileProductItem(
   name = '',
   description = '',
-  price = ''
+  price = '',
+  imageUrl: string | null = null
 ): ProfileProductItem {
   return {
     id: createProfileItemId('product'),
     name,
     description,
     price,
+    imageFile: null,
+    imageUrl,
   }
 }
 
 export function normalizeProductItems(
   value: BusinessProfileProductValue[] | null | undefined
 ): ProfileProductItem[] {
-  if (!Array.isArray(value)) return []
+  if (!Array.isArray(value)) return [createProfileProductItem()]
 
-  return value
+  const normalized = value
     .filter((item): item is BusinessProfileProductValue => Boolean(item) && typeof item === 'object')
     .map((item) =>
       createProfileProductItem(
         typeof item.name === 'string' ? item.name : '',
         typeof item.description === 'string' ? item.description : '',
-        typeof item.price === 'string' ? item.price : ''
+        typeof item.price === 'string' ? item.price : '',
+        typeof item.imageUrl === 'string' ? item.imageUrl : null
       )
     )
-    .filter((item) => item.name.trim() || item.description.trim() || item.price.trim())
+    .filter(
+      (item) =>
+        item.name.trim() ||
+        item.description.trim() ||
+        item.price.trim() ||
+        item.imageUrl
+    )
+
+  return normalized.length > 0 ? normalized : [createProfileProductItem()]
 }
 
 export function createProfileQualificationItem(
@@ -339,7 +353,7 @@ function createDefaultProfileData(): ProfileData {
     yearsOfExperience: '',
     highlights: [],
     faqs: [],
-    productsMenuPackages: [],
+    productsMenuPackages: [createProfileProductItem()],
     qualifications: [],
     phoneNumber: '',
     whatsappNumber: '',
