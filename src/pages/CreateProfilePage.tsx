@@ -524,6 +524,8 @@ function CreateProfilePage() {
   const galleryInputRef = useRef<HTMLInputElement>(null)
   const documentInputRef = useRef<HTMLInputElement>(null)
   const subcategoryDropdownRef = useRef<HTMLDivElement>(null)
+  const stepContentRef = useRef<HTMLDivElement>(null)
+  const shouldScrollStepIntoViewRef = useRef(false)
   const previousProfileIdRef = useRef(profileData.id)
 
   const coverBannerPreviewUrl = useMemo(() => {
@@ -564,6 +566,25 @@ function CreateProfilePage() {
   useEffect(() => {
     setCurrentStepIndex(readCreateProfileStepIndex(stepStorageKey))
   }, [stepStorageKey])
+
+  useEffect(() => {
+    if (!shouldScrollStepIntoViewRef.current) return undefined
+
+    shouldScrollStepIntoViewRef.current = false
+
+    const animationFrame = window.requestAnimationFrame(() => {
+      const stepContent = stepContentRef.current
+      if (!stepContent) return
+
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      stepContent.scrollIntoView({
+        behavior: prefersReducedMotion ? 'auto' : 'smooth',
+        block: 'start',
+      })
+    })
+
+    return () => window.cancelAnimationFrame(animationFrame)
+  }, [currentStepIndex])
 
   useEffect(() => {
     if (previousProfileIdRef.current === profileData.id) return
@@ -1312,19 +1333,17 @@ function CreateProfilePage() {
       return
     }
 
-    setCurrentStepIndex((step) => {
-      const nextStep = Math.min(step + 1, FORM_STEPS.length - 1)
-      writeCreateProfileStepIndex(stepStorageKey, nextStep)
-      return nextStep
-    })
+    const nextStep = Math.min(currentStepIndex + 1, FORM_STEPS.length - 1)
+    shouldScrollStepIntoViewRef.current = true
+    writeCreateProfileStepIndex(stepStorageKey, nextStep)
+    setCurrentStepIndex(nextStep)
   }
 
   const handlePreviousStep = () => {
-    setCurrentStepIndex((step) => {
-      const nextStep = Math.max(step - 1, 0)
-      writeCreateProfileStepIndex(stepStorageKey, nextStep)
-      return nextStep
-    })
+    const nextStep = Math.max(currentStepIndex - 1, 0)
+    shouldScrollStepIntoViewRef.current = true
+    writeCreateProfileStepIndex(stepStorageKey, nextStep)
+    setCurrentStepIndex(nextStep)
   }
 
   const handleContinue = async (e: React.FormEvent) => {
@@ -1514,6 +1533,7 @@ function CreateProfilePage() {
               </div>
 
               <form onSubmit={handleContinue} noValidate className="space-y-6 sm:space-y-7">
+          <div ref={stepContentRef} className="space-y-6 sm:space-y-7">
           <StepProgressIndicator currentStepIndex={currentStepIndex} steps={FORM_STEPS} />
 
           {/* -- Basic Information -- */}
@@ -2697,6 +2717,8 @@ function CreateProfilePage() {
             </div>
           </section>
           )}
+
+          </div>
 
           {/* -- Buttons -- */}
           {!isLastStep && (
