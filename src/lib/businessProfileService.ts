@@ -99,6 +99,17 @@ function parseOptionalNonNegativeInteger(value: string): number | null {
   return numericValue
 }
 
+function normalizeIndianMobileForStorage(value: string): string {
+  const digits = value.replace(/\D/g, '')
+
+  if (!digits) return ''
+  if (digits.startsWith('91') && digits.length === 12) {
+    return `+${digits}`
+  }
+
+  return `+91${digits.slice(-10)}`
+}
+
 function parseHighlights(values: string[]): string[] {
   const seen = new Set<string>()
   const highlights: string[] = []
@@ -200,8 +211,10 @@ function mapProfileDataToBaseFields(data: ProfileData): Omit<BusinessProfileInse
     faqs: parseFaqs(data),
     products_menu_packages: parseProductsMenuPackages(data),
     qualifications: parseQualifications(data),
-    phone_number: data.phoneNumber.trim(),
-    whatsapp_number: data.whatsappNumber.trim() || null,
+    phone_number: normalizeIndianMobileForStorage(data.phoneNumber),
+    whatsapp_number: data.whatsappNumber.trim()
+      ? normalizeIndianMobileForStorage(data.whatsappNumber)
+      : null,
     email: data.email.trim() || null,
     website: data.website.trim() || null,
     address: data.address.trim() || null,

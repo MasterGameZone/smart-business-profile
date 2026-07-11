@@ -35,7 +35,9 @@ interface FormErrors {
   productsMenuPackages?: string
   qualifications?: string
   documents?: string
+  documentName?: string
   phoneNumber?: string
+  whatsappNumber?: string
   email?: string
   address?: string
   aboutBusiness?: string
@@ -56,6 +58,26 @@ interface FormErrors {
 const MAX_GALLERY_IMAGES = 6
 const MAX_SUBCATEGORIES = 8
 const MAX_FAQS = 5
+const MAX_PRODUCTS_MENU_PACKAGES = 20
+const ABOUT_BUSINESS_MAX_LENGTH = 600
+const PRODUCT_ITEM_NAME_MAX_LENGTH = 30
+const PRODUCT_DESCRIPTION_MAX_LENGTH = 120
+const PRODUCT_PRICE_MAX_LENGTH = 30
+const KEYWORDS_TEXT_MAX_LENGTH = 300
+const FAQ_QUESTION_MAX_LENGTH = 100
+const FAQ_ANSWER_MAX_LENGTH = 300
+const MAX_SOCIAL_LINKS = 4
+const MAX_QUALIFICATIONS = 10
+const QUALIFICATION_TITLE_MAX_LENGTH = 60
+const QUALIFICATION_ISSUING_ORGANIZATION_MAX_LENGTH = 60
+const QUALIFICATION_DESCRIPTION_MAX_LENGTH = 200
+const DOCUMENT_NAME_MAX_LENGTH = 60
+const BUSINESS_NAME_MAX_LENGTH = 40
+const OWNER_NAME_MAX_LENGTH = 30
+const TAGLINE_MAX_LENGTH = 80
+const BUSINESS_EXPERIENCE_MAX_LENGTH = 25
+const INDIA_COUNTRY_CODE = '+91'
+const INDIAN_MOBILE_NUMBER_LENGTH = 10
 const imageAccept = 'image/jpeg,image/png,image/webp'
 const documentAccept = 'application/pdf,image/jpeg,image/png,image/webp'
 const FORM_STEPS = [
@@ -114,20 +136,22 @@ function isValidOptionalUrl(value: string): boolean {
   }
 }
 
-function parseKeywords(text: string): string[] {
-  const seen = new Set<string>()
-  const keywords: string[] = []
+function normalizeIndianMobileInput(value: string): string {
+  return value.replace(/\D/g, '').slice(0, INDIAN_MOBILE_NUMBER_LENGTH)
+}
 
-  for (const value of text.split(',')) {
-    const keyword = value.trim()
-    const key = keyword.toLowerCase()
-    if (!keyword || seen.has(key)) continue
+function toIndianMobileDisplayValue(value: string): string {
+  const digits = value.replace(/\D/g, '')
 
-    seen.add(key)
-    keywords.push(keyword)
+  if (digits.startsWith('91') && digits.length >= 12) {
+    return digits.slice(2, 12)
   }
 
-  return keywords
+  return digits.slice(0, INDIAN_MOBILE_NUMBER_LENGTH)
+}
+
+function isValidIndianMobileNumber(value: string): boolean {
+  return /^[6-9]\d{9}$/.test(value)
 }
 
 function validateSelectedImage(file: File): string | null {
@@ -615,6 +639,24 @@ function CreateProfilePage() {
   }, [profileData.establishedYear, profileData.id, profileData.yearsOfExperience])
 
   useEffect(() => {
+    const normalizedPhoneNumber = toIndianMobileDisplayValue(profileData.phoneNumber)
+    const normalizedWhatsappNumber = toIndianMobileDisplayValue(profileData.whatsappNumber)
+
+    if (
+      normalizedPhoneNumber === profileData.phoneNumber &&
+      normalizedWhatsappNumber === profileData.whatsappNumber
+    ) {
+      return
+    }
+
+    setProfileData({
+      ...profileData,
+      phoneNumber: normalizedPhoneNumber,
+      whatsappNumber: normalizedWhatsappNumber,
+    })
+  }, [profileData, setProfileData])
+
+  useEffect(() => {
     return () => {
       if (profileData.coverBanner && coverBannerPreviewUrl) {
         URL.revokeObjectURL(coverBannerPreviewUrl)
@@ -711,6 +753,22 @@ function CreateProfilePage() {
         establishedYear: undefined,
         yearsOfExperience: undefined,
       }))
+    }
+  }
+
+  const handleIndianMobileChange = (
+    field: 'phoneNumber' | 'whatsappNumber',
+    value: string
+  ) => {
+    const normalizedValue = normalizeIndianMobileInput(value)
+
+    setProfileData({
+      ...profileData,
+      [field]: normalizedValue,
+    })
+
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: undefined }))
     }
   }
 
@@ -907,6 +965,10 @@ function CreateProfilePage() {
   }
 
   const handleAddSocialLinkRow = () => {
+    if (socialLinkRows.length >= MAX_SOCIAL_LINKS) {
+      return
+    }
+
     updateSocialLinksFromRows([...socialLinkRows, createSocialLinkRow('', '')])
     if (Object.keys(socialLinkRowErrors).length > 0) {
       setSocialLinkRowErrors({})
@@ -1051,6 +1113,10 @@ function CreateProfilePage() {
   }
 
   const handleAddProduct = () => {
+    if (profileData.productsMenuPackages.length >= MAX_PRODUCTS_MENU_PACKAGES) {
+      return
+    }
+
     updateProductsMenuPackages([...profileData.productsMenuPackages, createProfileProductItem()])
   }
 
@@ -1116,6 +1182,10 @@ function CreateProfilePage() {
   }
 
   const handleAddQualification = () => {
+    if (profileData.qualifications.length >= MAX_QUALIFICATIONS) {
+      return
+    }
+
     updateQualifications([...profileData.qualifications, createProfileQualificationItem()])
   }
 
@@ -1191,9 +1261,13 @@ function CreateProfilePage() {
 
     if (!profileData.businessName.trim()) {
       newErrors.businessName = 'Business name is required.'
+    } else if (profileData.businessName.length > BUSINESS_NAME_MAX_LENGTH) {
+      newErrors.businessName = `Business name must be ${BUSINESS_NAME_MAX_LENGTH} characters or fewer.`
     }
     if (!profileData.ownerName.trim()) {
       newErrors.ownerName = 'Owner name is required.'
+    } else if (profileData.ownerName.length > OWNER_NAME_MAX_LENGTH) {
+      newErrors.ownerName = `Owner name must be ${OWNER_NAME_MAX_LENGTH} characters or fewer.`
     }
     if (!profileData.businessCategory) {
       newErrors.businessCategory = 'Please select a category.'
@@ -1203,15 +1277,22 @@ function CreateProfilePage() {
     }
     if (!profileData.phoneNumber.trim()) {
       newErrors.phoneNumber = 'Phone number is required.'
+    } else if (!isValidIndianMobileNumber(profileData.phoneNumber)) {
+      newErrors.phoneNumber = 'Enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.'
+    }
+    if (profileData.whatsappNumber.trim() && !isValidIndianMobileNumber(profileData.whatsappNumber)) {
+      newErrors.whatsappNumber = 'Enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.'
     }
     if (!profileData.email.trim()) {
       newErrors.email = 'Email address is required.'
     }
-    if (profileData.tagline.trim().length > 120) {
-      newErrors.tagline = 'Tagline must be 120 characters or fewer.'
+    if (profileData.tagline.length > TAGLINE_MAX_LENGTH) {
+      newErrors.tagline = `Tagline must be ${TAGLINE_MAX_LENGTH} characters or fewer.`
     }
     if (!businessExperienceValue.trim()) {
       newErrors.establishedYear = 'Established year or years of experience is required.'
+    } else if (businessExperienceValue.length > BUSINESS_EXPERIENCE_MAX_LENGTH) {
+      newErrors.establishedYear = `Established year or years of experience must be ${BUSINESS_EXPERIENCE_MAX_LENGTH} characters or fewer.`
     } else if (
       businessExperienceValue.trim() &&
       !profileData.establishedYear.trim() &&
@@ -1238,6 +1319,16 @@ function CreateProfilePage() {
       )
     ) {
       newErrors.faqs = 'Complete both the question and answer, or remove the FAQ item.'
+    } else if (profileData.faqs.length > MAX_FAQS) {
+      newErrors.faqs = `Add up to ${MAX_FAQS} FAQs only.`
+    } else if (
+      profileData.faqs.some(
+        (item) =>
+          item.question.length > FAQ_QUESTION_MAX_LENGTH ||
+          item.answer.length > FAQ_ANSWER_MAX_LENGTH
+      )
+    ) {
+      newErrors.faqs = `Keep FAQ questions within ${FAQ_QUESTION_MAX_LENGTH} characters and answers within ${FAQ_ANSWER_MAX_LENGTH} characters.`
     }
     if (
       profileData.productsMenuPackages.some(
@@ -1248,6 +1339,18 @@ function CreateProfilePage() {
     ) {
       newErrors.productsMenuPackages =
         'Complete the item name and price, or remove the product/menu/package item.'
+    } else if (profileData.productsMenuPackages.length > MAX_PRODUCTS_MENU_PACKAGES) {
+      newErrors.productsMenuPackages = `Add up to ${MAX_PRODUCTS_MENU_PACKAGES} items only.`
+    } else if (
+      profileData.productsMenuPackages.some(
+        (item) =>
+          item.name.length > PRODUCT_ITEM_NAME_MAX_LENGTH ||
+          item.description.length > PRODUCT_DESCRIPTION_MAX_LENGTH ||
+          item.price.length > PRODUCT_PRICE_MAX_LENGTH
+      )
+    ) {
+      newErrors.productsMenuPackages =
+        `Keep item name within ${PRODUCT_ITEM_NAME_MAX_LENGTH} characters, description within ${PRODUCT_DESCRIPTION_MAX_LENGTH} characters, and price within ${PRODUCT_PRICE_MAX_LENGTH} characters.`
     }
     if (
       profileData.qualifications.some((item) => {
@@ -1260,6 +1363,21 @@ function CreateProfilePage() {
     ) {
       newErrors.qualifications =
         'Each qualification needs a title. Optional years must be valid four-digit years that are not in the future.'
+    } else if (profileData.qualifications.length > MAX_QUALIFICATIONS) {
+      newErrors.qualifications = `Add up to ${MAX_QUALIFICATIONS} credentials only.`
+    } else if (
+      profileData.qualifications.some(
+        (item) =>
+          item.title.length > QUALIFICATION_TITLE_MAX_LENGTH ||
+          item.issuingOrganization.length > QUALIFICATION_ISSUING_ORGANIZATION_MAX_LENGTH ||
+          item.description.length > QUALIFICATION_DESCRIPTION_MAX_LENGTH
+      )
+    ) {
+      newErrors.qualifications =
+        `Keep qualification name within ${QUALIFICATION_TITLE_MAX_LENGTH} characters, issuing organization within ${QUALIFICATION_ISSUING_ORGANIZATION_MAX_LENGTH} characters, and description within ${QUALIFICATION_DESCRIPTION_MAX_LENGTH} characters.`
+    }
+    if (profileData.documentName.length > DOCUMENT_NAME_MAX_LENGTH) {
+      newErrors.documentName = `Document name must be ${DOCUMENT_NAME_MAX_LENGTH} characters or fewer.`
     }
     if (!profileData.address.trim()) {
       newErrors.address = 'Address is required.'
@@ -1271,12 +1389,11 @@ function CreateProfilePage() {
     }
     if (!profileData.aboutBusiness.trim()) {
       newErrors.aboutBusiness = 'About business is required.'
+    } else if (profileData.aboutBusiness.length > ABOUT_BUSINESS_MAX_LENGTH) {
+      newErrors.aboutBusiness = `About business must be ${ABOUT_BUSINESS_MAX_LENGTH} characters or fewer.`
     }
-    const keywords = parseKeywords(profileData.keywordsText)
-    if (keywords.length > 20) {
-      newErrors.keywordsText = 'Use 20 keywords or fewer.'
-    } else if (keywords.some((keyword) => keyword.length > 40)) {
-      newErrors.keywordsText = 'Each keyword must be 40 characters or fewer.'
+    if (profileData.keywordsText.length > KEYWORDS_TEXT_MAX_LENGTH) {
+      newErrors.keywordsText = `Business keywords / tags must be ${KEYWORDS_TEXT_MAX_LENGTH} characters or fewer.`
     }
     if (!hasWorkingHoursData(profileData.workingHours)) {
       newErrors.workingHours = 'Working hours are required.'
@@ -1307,15 +1424,24 @@ function CreateProfilePage() {
     if (currentStepIndex === 0) {
       if (!profileData.businessName.trim()) {
         stepErrors.businessName = 'Business name is required.'
+      } else if (profileData.businessName.length > BUSINESS_NAME_MAX_LENGTH) {
+        stepErrors.businessName = `Business name must be ${BUSINESS_NAME_MAX_LENGTH} characters or fewer.`
       }
       if (!profileData.ownerName.trim()) {
         stepErrors.ownerName = 'Owner name is required.'
+      } else if (profileData.ownerName.length > OWNER_NAME_MAX_LENGTH) {
+        stepErrors.ownerName = `Owner name must be ${OWNER_NAME_MAX_LENGTH} characters or fewer.`
       }
       if (!profileData.businessCategory) {
         stepErrors.businessCategory = 'Please select a category.'
       }
+      if (profileData.tagline.length > TAGLINE_MAX_LENGTH) {
+        stepErrors.tagline = `Tagline must be ${TAGLINE_MAX_LENGTH} characters or fewer.`
+      }
       if (!businessExperienceValue.trim()) {
         stepErrors.establishedYear = 'Established year or years of experience is required.'
+      } else if (businessExperienceValue.length > BUSINESS_EXPERIENCE_MAX_LENGTH) {
+        stepErrors.establishedYear = `Established year or years of experience must be ${BUSINESS_EXPERIENCE_MAX_LENGTH} characters or fewer.`
       } else if (!profileData.establishedYear.trim() && !profileData.yearsOfExperience.trim()) {
         stepErrors.establishedYear = 'Enter an established year, years of experience, or both.'
       } else if (profileData.establishedYear.trim()) {
@@ -1336,6 +1462,11 @@ function CreateProfilePage() {
     if (currentStepIndex === 1) {
       if (!profileData.phoneNumber.trim()) {
         stepErrors.phoneNumber = 'Phone number is required.'
+      } else if (!isValidIndianMobileNumber(profileData.phoneNumber)) {
+        stepErrors.phoneNumber = 'Enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.'
+      }
+      if (profileData.whatsappNumber.trim() && !isValidIndianMobileNumber(profileData.whatsappNumber)) {
+        stepErrors.whatsappNumber = 'Enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.'
       }
       if (!profileData.email.trim()) {
         stepErrors.email = 'Email address is required.'
@@ -1353,6 +1484,38 @@ function CreateProfilePage() {
     if (currentStepIndex === 2) {
       if (!profileData.aboutBusiness.trim()) {
         stepErrors.aboutBusiness = 'About business is required.'
+      } else if (profileData.aboutBusiness.length > ABOUT_BUSINESS_MAX_LENGTH) {
+        stepErrors.aboutBusiness = `About business must be ${ABOUT_BUSINESS_MAX_LENGTH} characters or fewer.`
+      }
+      if (
+        profileData.productsMenuPackages.length > MAX_PRODUCTS_MENU_PACKAGES ||
+        profileData.productsMenuPackages.some(
+          (item) =>
+            item.name.length > PRODUCT_ITEM_NAME_MAX_LENGTH ||
+            item.description.length > PRODUCT_DESCRIPTION_MAX_LENGTH ||
+            item.price.length > PRODUCT_PRICE_MAX_LENGTH
+        )
+      ) {
+        stepErrors.productsMenuPackages =
+          profileData.productsMenuPackages.length > MAX_PRODUCTS_MENU_PACKAGES
+            ? `Add up to ${MAX_PRODUCTS_MENU_PACKAGES} items only.`
+            : `Keep item name within ${PRODUCT_ITEM_NAME_MAX_LENGTH} characters, description within ${PRODUCT_DESCRIPTION_MAX_LENGTH} characters, and price within ${PRODUCT_PRICE_MAX_LENGTH} characters.`
+      }
+      if (profileData.keywordsText.length > KEYWORDS_TEXT_MAX_LENGTH) {
+        stepErrors.keywordsText = `Business keywords / tags must be ${KEYWORDS_TEXT_MAX_LENGTH} characters or fewer.`
+      }
+      if (
+        profileData.faqs.length > MAX_FAQS ||
+        profileData.faqs.some(
+          (item) =>
+            item.question.length > FAQ_QUESTION_MAX_LENGTH ||
+            item.answer.length > FAQ_ANSWER_MAX_LENGTH
+        )
+      ) {
+        stepErrors.faqs =
+          profileData.faqs.length > MAX_FAQS
+            ? `Add up to ${MAX_FAQS} FAQs only.`
+            : `Keep FAQ questions within ${FAQ_QUESTION_MAX_LENGTH} characters and answers within ${FAQ_ANSWER_MAX_LENGTH} characters.`
       }
       if (!hasWorkingHoursData(profileData.workingHours)) {
         stepErrors.workingHours = 'Working hours are required.'
@@ -1367,6 +1530,26 @@ function CreateProfilePage() {
       }
     }
 
+    if (currentStepIndex === 4) {
+      if (
+        profileData.qualifications.length > MAX_QUALIFICATIONS ||
+        profileData.qualifications.some(
+          (item) =>
+            item.title.length > QUALIFICATION_TITLE_MAX_LENGTH ||
+            item.issuingOrganization.length > QUALIFICATION_ISSUING_ORGANIZATION_MAX_LENGTH ||
+            item.description.length > QUALIFICATION_DESCRIPTION_MAX_LENGTH
+        )
+      ) {
+        stepErrors.qualifications =
+          profileData.qualifications.length > MAX_QUALIFICATIONS
+            ? `Add up to ${MAX_QUALIFICATIONS} credentials only.`
+            : `Keep qualification name within ${QUALIFICATION_TITLE_MAX_LENGTH} characters, issuing organization within ${QUALIFICATION_ISSUING_ORGANIZATION_MAX_LENGTH} characters, and description within ${QUALIFICATION_DESCRIPTION_MAX_LENGTH} characters.`
+      }
+      if (profileData.documentName.length > DOCUMENT_NAME_MAX_LENGTH) {
+        stepErrors.documentName = `Document name must be ${DOCUMENT_NAME_MAX_LENGTH} characters or fewer.`
+      }
+    }
+
     setErrors((prev) => ({
       ...prev,
       businessName: currentStepIndex === 0 ? stepErrors.businessName : prev.businessName,
@@ -1375,12 +1558,19 @@ function CreateProfilePage() {
       establishedYear: currentStepIndex === 0 ? stepErrors.establishedYear : prev.establishedYear,
       yearsOfExperience: currentStepIndex === 0 ? stepErrors.yearsOfExperience : prev.yearsOfExperience,
       phoneNumber: currentStepIndex === 1 ? stepErrors.phoneNumber : prev.phoneNumber,
+      whatsappNumber: currentStepIndex === 1 ? stepErrors.whatsappNumber : prev.whatsappNumber,
       email: currentStepIndex === 1 ? stepErrors.email : prev.email,
       address: currentStepIndex === 1 ? stepErrors.address : prev.address,
       googleMapsUrl: currentStepIndex === 1 ? stepErrors.googleMapsUrl : prev.googleMapsUrl,
       aboutBusiness: currentStepIndex === 2 ? stepErrors.aboutBusiness : prev.aboutBusiness,
+      productsMenuPackages:
+        currentStepIndex === 2 ? stepErrors.productsMenuPackages : prev.productsMenuPackages,
+      keywordsText: currentStepIndex === 2 ? stepErrors.keywordsText : prev.keywordsText,
+      faqs: currentStepIndex === 2 ? stepErrors.faqs : prev.faqs,
       workingHours: currentStepIndex === 2 ? stepErrors.workingHours : prev.workingHours,
       galleryImages: currentStepIndex === 3 ? stepErrors.galleryImages : prev.galleryImages,
+      qualifications: currentStepIndex === 4 ? stepErrors.qualifications : prev.qualifications,
+      documentName: currentStepIndex === 4 ? stepErrors.documentName : prev.documentName,
     }))
 
     return Object.keys(stepErrors).length === 0
@@ -1440,8 +1630,8 @@ function CreateProfilePage() {
           (item) => !isBlankProductItem(item)
         ),
         qualifications: normalizeQualificationItems(updated.qualifications),
-        phoneNumber: updated.phone_number,
-        whatsappNumber: updated.whatsapp_number || '',
+        phoneNumber: toIndianMobileDisplayValue(updated.phone_number),
+        whatsappNumber: toIndianMobileDisplayValue(updated.whatsapp_number || ''),
         email: updated.email || '',
         website: updated.website || '',
         address: updated.address || '',
@@ -1531,6 +1721,12 @@ function CreateProfilePage() {
       </p>
     ) : null
 
+  const characterCounter = (id: string, value: string, maxLength: number) => (
+    <p id={id} className="mt-2 text-xs text-slate-400">
+      {value.length} / {maxLength}
+    </p>
+  )
+
   if (isForbidden) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-white to-slate-50 flex items-center justify-center px-4">
@@ -1618,14 +1814,20 @@ function CreateProfilePage() {
                   name="businessName"
                   value={profileData.businessName}
                   onChange={handleChange}
+                  maxLength={BUSINESS_NAME_MAX_LENGTH}
                   placeholder="e.g. Sunrise Bakery"
                   autoComplete="organization"
                   aria-required="true"
                   aria-invalid={!!errors.businessName}
-                  aria-describedby={errors.businessName ? 'businessName-error' : undefined}
+                  aria-describedby={
+                    errors.businessName
+                      ? 'businessName-error businessName-counter'
+                      : 'businessName-counter'
+                  }
                   className={`${inputBase} ${errors.businessName ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
                 />
                 {fieldError('businessName')}
+                {characterCounter('businessName-counter', profileData.businessName, BUSINESS_NAME_MAX_LENGTH)}
               </div>
 
               <div>
@@ -1638,14 +1840,20 @@ function CreateProfilePage() {
                   name="ownerName"
                   value={profileData.ownerName}
                   onChange={handleChange}
+                  maxLength={OWNER_NAME_MAX_LENGTH}
                   placeholder="e.g. Sarah Johnson"
                   autoComplete="name"
                   aria-required="true"
                   aria-invalid={!!errors.ownerName}
-                  aria-describedby={errors.ownerName ? 'ownerName-error' : undefined}
+                  aria-describedby={
+                    errors.ownerName
+                      ? 'ownerName-error ownerName-counter'
+                      : 'ownerName-counter'
+                  }
                   className={`${inputBase} ${errors.ownerName ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
                 />
                 {fieldError('ownerName')}
+                {characterCounter('ownerName-counter', profileData.ownerName, OWNER_NAME_MAX_LENGTH)}
               </div>
 
               <div>
@@ -1816,13 +2024,18 @@ function CreateProfilePage() {
                   name="tagline"
                   value={profileData.tagline}
                   onChange={handleChange}
-                  maxLength={120}
+                  maxLength={TAGLINE_MAX_LENGTH}
                   placeholder="Example: Trusted local dental care for your family"
                   aria-invalid={!!errors.tagline}
-                  aria-describedby={errors.tagline ? 'tagline-error' : 'tagline-help'}
+                  aria-describedby={
+                    errors.tagline
+                      ? 'tagline-error tagline-counter tagline-help'
+                      : 'tagline-counter tagline-help'
+                  }
                   className={`${inputBase} ${errors.tagline ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
                 />
                 {fieldError('tagline')}
+                {characterCounter('tagline-counter', profileData.tagline, TAGLINE_MAX_LENGTH)}
                 <p id="tagline-help" className="mt-2 text-xs text-slate-400">
                   This appears under the business name on the public profile.
                 </p>
@@ -1837,15 +2050,16 @@ function CreateProfilePage() {
                 id="businessExperience"
                 value={businessExperienceValue}
                 onChange={(e) => handleBusinessExperienceChange(e.target.value)}
+                maxLength={BUSINESS_EXPERIENCE_MAX_LENGTH}
                 placeholder="Established in 2018 / 7 years experience"
                 aria-required="true"
                 aria-invalid={!!errors.establishedYear || !!errors.yearsOfExperience}
                 aria-describedby={
                   errors.establishedYear
-                    ? 'establishedYear-error'
+                    ? 'establishedYear-error businessExperience-counter businessExperience-help'
                     : errors.yearsOfExperience
-                      ? 'yearsOfExperience-error'
-                      : 'businessExperience-help'
+                      ? 'yearsOfExperience-error businessExperience-counter businessExperience-help'
+                      : 'businessExperience-counter businessExperience-help'
                 }
                 className={`${inputBase} ${
                   errors.establishedYear || errors.yearsOfExperience
@@ -1855,6 +2069,7 @@ function CreateProfilePage() {
               />
               {fieldError('establishedYear')}
               {fieldError('yearsOfExperience')}
+              {characterCounter('businessExperience-counter', businessExperienceValue, BUSINESS_EXPERIENCE_MAX_LENGTH)}
               <p id="businessExperience-help" className="mt-2 text-xs text-slate-400">
                 Use a four-digit established year, years of experience, or both.
               </p>
@@ -1876,20 +2091,35 @@ function CreateProfilePage() {
                 <label htmlFor="phoneNumber" className={labelClass}>
                   Phone Number <span className="text-red-500" aria-hidden="true">*</span>
                 </label>
-                <input
-                  type="tel"
-                  id="phoneNumber"
-                  name="phoneNumber"
-                  value={profileData.phoneNumber}
-                  onChange={handleChange}
-                  placeholder="e.g. +1 555 000 1234"
-                  autoComplete="tel"
-                  aria-required="true"
-                  aria-invalid={!!errors.phoneNumber}
-                  aria-describedby={errors.phoneNumber ? 'phoneNumber-error' : undefined}
-                  className={`${inputBase} ${errors.phoneNumber ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
-                />
+                <div
+                  className={`flex overflow-hidden rounded-2xl border bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),inset_0_1px_0_rgba(255,255,255,0.7)] transition duration-200 focus-within:border-sky-500 focus-within:ring-4 focus-within:ring-sky-100 ${
+                    errors.phoneNumber ? 'border-red-400 bg-red-50/60 focus-within:border-red-400 focus-within:ring-red-100' : 'border-slate-200'
+                  }`}
+                >
+                  <span className="flex items-center border-r border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-600">
+                    {INDIA_COUNTRY_CODE}
+                  </span>
+                  <input
+                    type="tel"
+                    id="phoneNumber"
+                    name="phoneNumber"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={INDIAN_MOBILE_NUMBER_LENGTH}
+                    value={profileData.phoneNumber}
+                    onChange={(e) => handleIndianMobileChange('phoneNumber', e.target.value)}
+                    placeholder="9876543210"
+                    autoComplete="tel-national"
+                    aria-required="true"
+                    aria-invalid={!!errors.phoneNumber}
+                    aria-describedby={errors.phoneNumber ? 'phoneNumber-error' : 'phoneNumber-help'}
+                    className="w-full bg-transparent px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                  />
+                </div>
                 {fieldError('phoneNumber')}
+                <p id="phoneNumber-help" className="mt-2 text-xs text-slate-400">
+                  Enter a 10-digit Indian mobile number starting with 6, 7, 8, or 9.
+                </p>
               </div>
 
               <div>
@@ -1897,17 +2127,34 @@ function CreateProfilePage() {
                   WhatsApp Number
                   <span className={optionalTextClass}>Optional</span>
                 </label>
-                <input
-                  type="tel"
-                  id="whatsappNumber"
-                  name="whatsappNumber"
-                  value={profileData.whatsappNumber}
-                  onChange={handleChange}
-                  placeholder="e.g. +1 555 000 5678"
-                  autoComplete="tel"
-                  className={inputBase}
-                />
-                <p className="mt-2 text-xs text-slate-400">Leave blank to use your phone number for WhatsApp.</p>
+                <div
+                  className={`flex overflow-hidden rounded-2xl border bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),inset_0_1px_0_rgba(255,255,255,0.7)] transition duration-200 focus-within:border-sky-500 focus-within:ring-4 focus-within:ring-sky-100 ${
+                    errors.whatsappNumber ? 'border-red-400 bg-red-50/60 focus-within:border-red-400 focus-within:ring-red-100' : 'border-slate-200'
+                  }`}
+                >
+                  <span className="flex items-center border-r border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-600">
+                    {INDIA_COUNTRY_CODE}
+                  </span>
+                  <input
+                    type="tel"
+                    id="whatsappNumber"
+                    name="whatsappNumber"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={INDIAN_MOBILE_NUMBER_LENGTH}
+                    value={profileData.whatsappNumber}
+                    onChange={(e) => handleIndianMobileChange('whatsappNumber', e.target.value)}
+                    placeholder="9876543210"
+                    autoComplete="tel-national"
+                    aria-invalid={!!errors.whatsappNumber}
+                    aria-describedby={errors.whatsappNumber ? 'whatsappNumber-error' : 'whatsappNumber-help'}
+                    className="w-full bg-transparent px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                  />
+                </div>
+                {fieldError('whatsappNumber')}
+                <p id="whatsappNumber-help" className="mt-2 text-xs text-slate-400">
+                  Leave blank to use your phone number for WhatsApp.
+                </p>
               </div>
 
               <div>
@@ -1992,14 +2239,16 @@ function CreateProfilePage() {
                 title="Social Links"
                 description="Add your official social profiles. Use the + button to add more platforms if needed."
                 action={
-                  <button
-                    type="button"
-                    onClick={handleAddSocialLinkRow}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-200"
-                    aria-label="Add social link"
-                  >
-                    +
-                  </button>
+                  socialLinkRows.length < MAX_SOCIAL_LINKS ? (
+                    <button
+                      type="button"
+                      onClick={handleAddSocialLinkRow}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                      aria-label="Add social link"
+                    >
+                      +
+                    </button>
+                  ) : null
                 }
               />
               <div className="space-y-4">
@@ -2095,13 +2344,19 @@ function CreateProfilePage() {
                   rows={4}
                   value={profileData.aboutBusiness}
                   onChange={handleChange}
+                  maxLength={ABOUT_BUSINESS_MAX_LENGTH}
                   placeholder="A short description of your business, what you offer, and what makes you unique..."
                   aria-required="true"
                   aria-invalid={!!errors.aboutBusiness}
-                  aria-describedby={errors.aboutBusiness ? 'aboutBusiness-error' : undefined}
+                  aria-describedby={
+                    errors.aboutBusiness
+                      ? 'aboutBusiness-error aboutBusiness-counter'
+                      : 'aboutBusiness-counter'
+                  }
                   className={`${textareaBase} min-h-[124px] ${errors.aboutBusiness ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
                 />
                 {fieldError('aboutBusiness')}
+                {characterCounter('aboutBusiness-counter', profileData.aboutBusiness, ABOUT_BUSINESS_MAX_LENGTH)}
               </div>
 
             <FormSubsectionHeading
@@ -2109,14 +2364,16 @@ function CreateProfilePage() {
               title="Products / Menu / Packages / Services"
               description="Add optional offerings such as products, menu items, or service packages."
               action={
-                <button
-                  type="button"
-                  onClick={handleAddProduct}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-200"
-                  aria-label="Add product, menu item, or package"
-                >
-                  +
-                </button>
+                profileData.productsMenuPackages.length < MAX_PRODUCTS_MENU_PACKAGES ? (
+                  <button
+                    type="button"
+                    onClick={handleAddProduct}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                    aria-label="Add product, menu item, or package"
+                  >
+                    +
+                  </button>
+                ) : undefined
               }
             />
 
@@ -2149,12 +2406,18 @@ function CreateProfilePage() {
                           id={`product-name-${item.id}`}
                           value={item.name}
                           onChange={(e) => handleProductChange(item.id, 'name', e.target.value)}
+                          maxLength={PRODUCT_ITEM_NAME_MAX_LENGTH}
                           placeholder="e.g. Dental Checkup, Haircut Package, Veg Thali, Website Design"
                           aria-required="true"
                           aria-invalid={!!errors.productsMenuPackages}
-                          aria-describedby={errors.productsMenuPackages ? 'productsMenuPackages-error' : undefined}
+                          aria-describedby={
+                            errors.productsMenuPackages
+                              ? `productsMenuPackages-error product-name-counter-${item.id}`
+                              : `product-name-counter-${item.id}`
+                          }
                           className={`${inputBase} ${errors.productsMenuPackages ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
                         />
+                        {characterCounter(`product-name-counter-${item.id}`, item.name, PRODUCT_ITEM_NAME_MAX_LENGTH)}
                       </div>
 
                       <div>
@@ -2165,11 +2428,21 @@ function CreateProfilePage() {
                           id={`product-description-${item.id}`}
                           value={item.description}
                           onChange={(e) => handleProductChange(item.id, 'description', e.target.value)}
+                          maxLength={PRODUCT_DESCRIPTION_MAX_LENGTH}
                           placeholder="Short details about this product, menu item, package, or service."
                           aria-invalid={!!errors.productsMenuPackages}
-                          aria-describedby={errors.productsMenuPackages ? 'productsMenuPackages-error' : undefined}
+                          aria-describedby={
+                            errors.productsMenuPackages
+                              ? `productsMenuPackages-error product-description-counter-${item.id}`
+                              : `product-description-counter-${item.id}`
+                          }
                           className={`${textareaBase} ${errors.productsMenuPackages ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
                         />
+                        {characterCounter(
+                          `product-description-counter-${item.id}`,
+                          item.description,
+                          PRODUCT_DESCRIPTION_MAX_LENGTH
+                        )}
                       </div>
 
                       <div>
@@ -2181,12 +2454,18 @@ function CreateProfilePage() {
                           id={`product-price-${item.id}`}
                           value={item.price}
                           onChange={(e) => handleProductChange(item.id, 'price', e.target.value)}
+                          maxLength={PRODUCT_PRICE_MAX_LENGTH}
                           placeholder="e.g. ₹499, ₹500 - ₹1500, Starting from ₹999"
                           aria-required="true"
                           aria-invalid={!!errors.productsMenuPackages}
-                          aria-describedby={errors.productsMenuPackages ? 'productsMenuPackages-error' : undefined}
+                          aria-describedby={
+                            errors.productsMenuPackages
+                              ? `productsMenuPackages-error product-price-counter-${item.id}`
+                              : `product-price-counter-${item.id}`
+                          }
                           className={`${inputBase} ${errors.productsMenuPackages ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
                         />
+                        {characterCounter(`product-price-counter-${item.id}`, item.price, PRODUCT_PRICE_MAX_LENGTH)}
                       </div>
 
                       <div>
@@ -2245,14 +2524,20 @@ function CreateProfilePage() {
                     rows={4}
                     value={profileData.keywordsText}
                     onChange={handleChange}
+                    maxLength={KEYWORDS_TEXT_MAX_LENGTH}
                     placeholder="dentist, root canal, dental clinic, teeth cleaning"
                     aria-invalid={!!errors.keywordsText}
-                    aria-describedby={errors.keywordsText ? 'keywordsText-error' : 'keywordsText-help'}
+                    aria-describedby={
+                      errors.keywordsText
+                        ? 'keywordsText-error keywordsText-counter keywordsText-help'
+                        : 'keywordsText-counter keywordsText-help'
+                    }
                     className={`${textareaBase} min-h-[132px] ${errors.keywordsText ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
                   />
                   {fieldError('keywordsText')}
+                  {characterCounter('keywordsText-counter', profileData.keywordsText, KEYWORDS_TEXT_MAX_LENGTH)}
                   <p id="keywordsText-help" className="mt-2 text-xs text-slate-400">
-                    Separate keywords with commas. Use up to 20 keywords, 40 characters each.
+                    Separate keywords with commas. Use up to 300 characters total.
                   </p>
                 </div>
 
@@ -2377,11 +2662,17 @@ function CreateProfilePage() {
                           id={`faq-question-${faq.id}`}
                           value={faq.question}
                           onChange={(e) => handleFaqChange(faq.id, 'question', e.target.value)}
+                          maxLength={FAQ_QUESTION_MAX_LENGTH}
                           placeholder="e.g. Do you offer home visits?"
                           aria-invalid={!!errors.faqs}
-                          aria-describedby={errors.faqs ? 'faqs-error' : undefined}
+                          aria-describedby={
+                            errors.faqs
+                              ? `faqs-error faq-question-counter-${faq.id}`
+                              : `faq-question-counter-${faq.id}`
+                          }
                           className={`${inputBase} ${errors.faqs ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
                         />
+                        {characterCounter(`faq-question-counter-${faq.id}`, faq.question, FAQ_QUESTION_MAX_LENGTH)}
                       </div>
 
                       <div>
@@ -2392,11 +2683,17 @@ function CreateProfilePage() {
                           id={`faq-answer-${faq.id}`}
                           value={faq.answer}
                           onChange={(e) => handleFaqChange(faq.id, 'answer', e.target.value)}
+                          maxLength={FAQ_ANSWER_MAX_LENGTH}
                           placeholder="Add the answer customers should see."
                           aria-invalid={!!errors.faqs}
-                          aria-describedby={errors.faqs ? 'faqs-error' : undefined}
+                          aria-describedby={
+                            errors.faqs
+                              ? `faqs-error faq-answer-counter-${faq.id}`
+                              : `faq-answer-counter-${faq.id}`
+                          }
                           className={`${textareaBase} ${errors.faqs ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
                         />
+                        {characterCounter(`faq-answer-counter-${faq.id}`, faq.answer, FAQ_ANSWER_MAX_LENGTH)}
                       </div>
                     </div>
                   </div>
@@ -2567,14 +2864,16 @@ function CreateProfilePage() {
               title="Certificates / Licenses / Qualifications"
               description="Add optional credentials that strengthen trust in your business."
               action={
-                <button
-                  type="button"
-                  onClick={handleAddQualification}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-200"
-                  aria-label="Add certificate, license, or qualification"
-                >
-                  +
-                </button>
+                profileData.qualifications.length < MAX_QUALIFICATIONS ? (
+                  <button
+                    type="button"
+                    onClick={handleAddQualification}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                    aria-label="Add certificate, license, or qualification"
+                  >
+                    +
+                  </button>
+                ) : undefined
               }
             />
 
@@ -2607,11 +2906,17 @@ function CreateProfilePage() {
                           id={`qualification-title-${item.id}`}
                           value={item.title}
                           onChange={(e) => handleQualificationChange(item.id, 'title', e.target.value)}
+                          maxLength={QUALIFICATION_TITLE_MAX_LENGTH}
                           placeholder="e.g. Medical License, ISO Certificate, Professional Qualification"
                           aria-invalid={!!errors.qualifications}
-                          aria-describedby={errors.qualifications ? 'qualifications-error' : undefined}
+                          aria-describedby={
+                            errors.qualifications
+                              ? `qualifications-error qualification-title-counter-${item.id}`
+                              : `qualification-title-counter-${item.id}`
+                          }
                           className={`${inputBase} ${errors.qualifications ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
                         />
+                        {characterCounter(`qualification-title-counter-${item.id}`, item.title, QUALIFICATION_TITLE_MAX_LENGTH)}
                       </div>
 
                       <div>
@@ -2624,11 +2929,21 @@ function CreateProfilePage() {
                           id={`qualification-organization-${item.id}`}
                           value={item.issuingOrganization}
                           onChange={(e) => handleQualificationChange(item.id, 'issuingOrganization', e.target.value)}
+                          maxLength={QUALIFICATION_ISSUING_ORGANIZATION_MAX_LENGTH}
                           placeholder="e.g. State Licensing Board"
                           aria-invalid={!!errors.qualifications}
-                          aria-describedby={errors.qualifications ? 'qualifications-error' : undefined}
+                          aria-describedby={
+                            errors.qualifications
+                              ? `qualifications-error qualification-organization-counter-${item.id}`
+                              : `qualification-organization-counter-${item.id}`
+                          }
                           className={`${inputBase} ${errors.qualifications ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
                         />
+                        {characterCounter(
+                          `qualification-organization-counter-${item.id}`,
+                          item.issuingOrganization,
+                          QUALIFICATION_ISSUING_ORGANIZATION_MAX_LENGTH
+                        )}
                       </div>
 
                       <div>
@@ -2659,11 +2974,21 @@ function CreateProfilePage() {
                           id={`qualification-description-${item.id}`}
                           value={item.description}
                           onChange={(e) => handleQualificationChange(item.id, 'description', e.target.value)}
+                          maxLength={QUALIFICATION_DESCRIPTION_MAX_LENGTH}
                           placeholder="Add any supporting detail customers should know."
                           aria-invalid={!!errors.qualifications}
-                          aria-describedby={errors.qualifications ? 'qualifications-error' : undefined}
+                          aria-describedby={
+                            errors.qualifications
+                              ? `qualifications-error qualification-description-counter-${item.id}`
+                              : `qualification-description-counter-${item.id}`
+                          }
                           className={`${textareaBase} ${errors.qualifications ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
                         />
+                        {characterCounter(
+                          `qualification-description-counter-${item.id}`,
+                          item.description,
+                          QUALIFICATION_DESCRIPTION_MAX_LENGTH
+                        )}
                       </div>
 
                       <div className="md:col-span-2">
@@ -2729,9 +3054,18 @@ function CreateProfilePage() {
                   name="documentName"
                   value={profileData.documentName}
                   onChange={handleChange}
+                  maxLength={DOCUMENT_NAME_MAX_LENGTH}
                   placeholder="e.g. Business Brochure, Menu, Rate Card, Registration Certificate"
-                  className={inputBase}
+                  aria-invalid={!!errors.documentName}
+                  aria-describedby={
+                    errors.documentName
+                      ? 'documentName-error documentName-counter'
+                      : 'documentName-counter'
+                  }
+                  className={`${inputBase} ${errors.documentName ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
                 />
+                {fieldError('documentName')}
+                {characterCounter('documentName-counter', profileData.documentName, DOCUMENT_NAME_MAX_LENGTH)}
               </div>
 
               <label htmlFor="documents" className={labelClass}>
