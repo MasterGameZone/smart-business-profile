@@ -17,10 +17,15 @@ interface ReviewSectionProps {
   businessOwnerId: string | null
   userId: string | null
   onLogin: () => void
+  onSummaryChange?: (summary: ReviewSummary) => void
 }
 
 type ReviewAction = 'create' | 'update' | 'delete'
 type ReplyAction = 'create' | 'update' | 'delete'
+export interface ReviewSummary {
+  average: number
+  count: number
+}
 const MAX_REVIEW_IMAGES = 3
 const imageAccept = 'image/jpeg,image/png,image/webp'
 
@@ -35,7 +40,7 @@ function formatReviewDate(value: string): string {
   }).format(date)
 }
 
-function getReviewSummary(reviews: BusinessReviewWithImages[]): { average: number; count: number } {
+function getReviewSummary(reviews: BusinessReviewWithImages[]): ReviewSummary {
   if (reviews.length === 0) {
     return { average: 0, count: 0 }
   }
@@ -121,7 +126,7 @@ function ReviewImageThumbnail({
   )
 }
 
-function ReviewSection({ businessProfileId, businessOwnerId, userId, onLogin }: ReviewSectionProps) {
+function ReviewSection({ businessProfileId, businessOwnerId, userId, onLogin, onSummaryChange }: ReviewSectionProps) {
   const [reviews, setReviews] = useState<BusinessReviewWithImages[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
@@ -146,6 +151,10 @@ function ReviewSection({ businessProfileId, businessOwnerId, userId, onLogin }: 
   )
   const summary = useMemo(() => getReviewSummary(reviews), [reviews])
   const canManageOwnerReplies = Boolean(userId && businessOwnerId && userId === businessOwnerId)
+
+  useEffect(() => {
+    onSummaryChange?.(summary)
+  }, [onSummaryChange, summary])
 
   useEffect(() => {
     let cancelled = false

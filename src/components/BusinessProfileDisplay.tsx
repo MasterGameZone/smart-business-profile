@@ -1,4 +1,4 @@
-import type { ReactNode, RefObject } from 'react'
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
 import QRCode from 'react-qr-code'
 import type { BusinessProfileRow, JsonObject, SocialLinks } from '../types/businessProfile.ts'
 
@@ -11,6 +11,8 @@ export interface BusinessProfileDisplayData {
   products_menu_packages?: BusinessProfileRow['products_menu_packages']
   faqs?: BusinessProfileRow['faqs']
   qualifications?: BusinessProfileRow['qualifications']
+  ratingAverage?: number | null
+  ratingCount?: number | null
   phoneNumber: string
   whatsappNumber: string
   email: string
@@ -124,6 +126,161 @@ function normalizeWorkingHours(value: JsonObject | null | undefined): Array<{ da
   return hours
 }
 
+interface CompactWorkingStatus {
+  label: string
+  detail: string
+  tone: 'open' | 'closed' | 'unknown'
+}
+
+function getBusinessInitials(value: string): string {
+  const words = value
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+
+  if (words.length === 0) return '?'
+
+  return words
+    .slice(0, 2)
+    .map((word) => word.charAt(0).toUpperCase())
+    .join('')
+}
+
+function formatClockTime(value: string): string {
+  const trimmed = value.trim()
+  const match = /^(\d{1,2}):(\d{2})$/.exec(trimmed)
+  if (!match) return trimmed
+
+  const hour = Number(match[1])
+  const minute = Number(match[2])
+  if (!Number.isInteger(hour) || !Number.isInteger(minute)) return trimmed
+
+  const period = hour >= 12 ? 'PM' : 'AM'
+  const displayHour = hour % 12 || 12
+  return `${displayHour}:${String(minute).padStart(2, '0')} ${period}`
+}
+
+function timeToMinutes(value: string): number | null {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(value.trim())
+  if (!match) return null
+
+  const hour = Number(match[1])
+  const minute = Number(match[2])
+  if (!Number.isInteger(hour) || !Number.isInteger(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+    return null
+  }
+
+  return hour * 60 + minute
+}
+
+function isWithinWorkingWindow(now: number, open: number, close: number): boolean {
+  if (open === close) return false
+  if (open < close) return now >= open && now < close
+
+  return now >= open || now < close
+}
+
+function getNextOpenDetail(value: JsonObject, startIndex: number): string {
+  for (let offset = 1; offset <= workingDayLabels.length; offset += 1) {
+    const dayIndex = (startIndex + offset) % workingDayLabels.length
+    const day = workingDayLabels[dayIndex]
+    const dayValue = value[day.key]
+    if (!isRecord(dayValue) || dayValue.closed === true) continue
+
+    const open = trimText(typeof dayValue.open === 'string' ? dayValue.open : '')
+    if (open) {
+      return `Opens ${day.label.slice(0, 3)} ${formatClockTime(open)}`
+    }
+  }
+
+  return ''
+}
+
+function getCompactWorkingStatus(value: JsonObject | null | undefined): CompactWorkingStatus {
+  if (!isRecord(value)) {
+    return { label: 'Hours unavailable', detail: '', tone: 'unknown' }
+  }
+
+  const now = new Date()
+  const todayIndex = now.getDay() === 0 ? 6 : now.getDay() - 1
+  const today = workingDayLabels[todayIndex]
+  const todayValue = value[today.key]
+
+  if (!isRecord(todayValue)) {
+    return { label: 'Hours unavailable', detail: '', tone: 'unknown' }
+  }
+
+  const open = trimText(typeof todayValue.open === 'string' ? todayValue.open : '')
+  const close = trimText(typeof todayValue.close === 'string' ? todayValue.close : '')
+
+  if (todayValue.closed === true) {
+    return {
+      label: 'Closed',
+      detail: getNextOpenDetail(value, todayIndex),
+      tone: 'closed',
+    }
+  }
+
+  if (!open || !close) {
+    return { label: 'Hours unavailable', detail: '', tone: 'unknown' }
+  }
+
+  const openMinutes = timeToMinutes(open)
+  const closeMinutes = timeToMinutes(close)
+  const nowMinutes = now.getHours() * 60 + now.getMinutes()
+
+  if (openMinutes === null || closeMinutes === null) {
+    return { label: 'Open today', detail: `${formatClockTime(open)} - ${formatClockTime(close)}`, tone: 'unknown' }
+  }
+
+  if (isWithinWorkingWindow(nowMinutes, openMinutes, closeMinutes)) {
+    return { label: 'Open', detail: `Closes at ${formatClockTime(close)}`, tone: 'open' }
+  }
+
+  if (nowMinutes < openMinutes) {
+    return { label: 'Closed', detail: `Opens at ${formatClockTime(open)}`, tone: 'closed' }
+  }
+
+  return {
+    label: 'Closed',
+    detail: getNextOpenDetail(value, todayIndex),
+    tone: 'closed',
+  }
+}
+
+function formatBusinessExperience(profile: BusinessProfileDisplayData): string {
+  if (typeof profile.established_year === 'number' && Number.isFinite(profile.established_year)) {
+    return `Established ${profile.established_year}`
+  }
+
+  if (typeof profile.years_of_experience === 'number' && Number.isFinite(profile.years_of_experience)) {
+    return `${profile.years_of_experience}+ years experience`
+  }
+
+  return ''
+}
+
+function formatCompactLocation(value: string): string {
+  const firstLine = trimText(value).split(/\r?\n/).find(Boolean) ?? ''
+  if (!firstLine) return ''
+
+  const parts = firstLine
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean)
+
+  return parts.length > 1 ? parts.slice(0, 2).join(', ') : firstLine
+}
+
+function toDirectionsUrl(googleMapsUrl: string | null, address: string): string | null {
+  if (googleMapsUrl) return googleMapsUrl
+
+  const trimmedAddress = trimText(address)
+  if (!trimmedAddress) return null
+
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(trimmedAddress)}`
+}
+
 function toSocialPlatformLabel(value: string): string {
   const trimmed = trimText(value)
   if (!trimmed) return ''
@@ -174,6 +331,9 @@ function BusinessProfileDisplay({
   saveButtonSlot,
   footerSlot,
 }: BusinessProfileDisplayProps) {
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [logoFailed, setLogoFailed] = useState(false)
+  const compactCardRef = useRef<HTMLElement>(null)
   const displayPhone = trimText(profile.phoneNumber)
   const displayWhatsApp = trimText(profile.whatsappNumber) || displayPhone
   const displayRawWhatsApp = trimText(profile.whatsappNumber)
@@ -182,22 +342,254 @@ function BusinessProfileDisplay({
   const displayAddress = trimText(profile.address)
   const displayTagline = trimText(profile.tagline)
   const coverBannerUrl = toDisplayImageUrl(profile.coverBannerUrl)
-  const firstLetter = profile.businessName.trim().charAt(0).toUpperCase()
+  const displayLogoUrl = logoFailed ? null : toDisplayImageUrl(profile.logoUrl)
+  const businessInitials = getBusinessInitials(profile.businessName)
   const serviceItems = normalizeStringArray(profile.services)
   const workingHours = normalizeWorkingHours(profile.workingHours)
   const googleMapsUrl = toValidUrl(profile.googleMapsUrl)
+  const directionsUrl = toDirectionsUrl(googleMapsUrl, displayAddress)
   const socialLinks = normalizeSocialLinks(profile.socialLinks)
   const keywordItems = normalizeStringArray(profile.keywords)
   const galleryItems = normalizeStringArray(profile.galleryImages)
     .map(toDisplayImageUrl)
     .filter((url): url is string => Boolean(url))
+  const compactLocation = formatCompactLocation(displayAddress)
+  const workingStatus = getCompactWorkingStatus(profile.workingHours)
+  const experienceText = formatBusinessExperience(profile)
+  const whatsappDigits = displayWhatsApp.replace(/\D/g, '')
+  const whatsappUrl = whatsappDigits ? `https://wa.me/${whatsappDigits}` : null
+  const hasRating = typeof profile.ratingAverage === 'number' && Number.isFinite(profile.ratingAverage) && Boolean(profile.ratingCount)
+
+  useEffect(() => {
+    setLogoFailed(false)
+  }, [profile.logoUrl])
 
   const scrollToQR = () => {
     qrSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
+  const handleHideFullProfile = () => {
+    setIsExpanded(false)
+    requestAnimationFrame(() => {
+      compactCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }
+
   return (
     <div className="space-y-4">
+      <article
+        ref={compactCardRef}
+        className="overflow-hidden rounded-[1.75rem] border border-white/80 bg-white shadow-[0_24px_70px_-36px_rgba(15,23,42,0.55)]"
+      >
+        <div className="relative h-40 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700">
+          {coverBannerUrl ? (
+            <img
+              src={coverBannerUrl}
+              alt={`${profile.businessName} cover banner`}
+              className="h-full w-full object-cover"
+              onError={(event) => {
+                event.currentTarget.style.display = 'none'
+              }}
+            />
+          ) : (
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 opacity-10"
+              style={{
+                backgroundImage:
+                  'radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)',
+                backgroundSize: '40px 40px',
+              }}
+            />
+          )}
+          <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/25 to-transparent" />
+        </div>
+
+        <div className="px-4 pb-4 sm:px-5">
+          <div className="-mt-11 flex items-end justify-between gap-3">
+            <div
+              className="relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-white shadow-xl ring-1 ring-slate-100"
+              aria-label={displayLogoUrl ? 'Business logo' : `${businessInitials} logo placeholder`}
+            >
+              {displayLogoUrl ? (
+                <img
+                  src={displayLogoUrl}
+                  alt={`${profile.businessName} logo`}
+                  className="h-full w-full object-cover"
+                  onError={() => setLogoFailed(true)}
+                />
+              ) : (
+                <span className="select-none text-2xl font-bold text-blue-700">{businessInitials}</span>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-3 flex min-w-0 items-center gap-2">
+            <h1 className="min-w-0 flex-1 truncate text-2xl font-bold leading-tight tracking-tight text-slate-950">
+              {profile.businessName}
+            </h1>
+            {hasRating && (
+              <span
+                className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 ring-1 ring-amber-100"
+                aria-label={`${profile.ratingAverage?.toFixed(1)} out of 5 average rating`}
+              >
+                <svg className="h-3.5 w-3.5 fill-current" viewBox="0 0 20 20" aria-hidden="true">
+                  <path d="M9.05 2.93c.3-.92 1.6-.92 1.9 0l1.18 3.63a1 1 0 0 0 .95.69h3.82c.97 0 1.37 1.24.59 1.81l-3.09 2.24a1 1 0 0 0-.36 1.12l1.18 3.63c.3.92-.76 1.69-1.54 1.12l-3.09-2.24a1 1 0 0 0-1.18 0l-3.09 2.24c-.78.57-1.84-.2-1.54-1.12l1.18-3.63a1 1 0 0 0-.36-1.12L2.51 9.06c-.78-.57-.38-1.81.59-1.81h3.82a1 1 0 0 0 .95-.69l1.18-3.63z" />
+                </svg>
+                {profile.ratingAverage?.toFixed(1)}
+              </span>
+            )}
+          </div>
+
+          {profile.businessCategory && (
+            <div className="mt-2">
+              <span className="inline-flex max-w-full items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">
+                <span className="truncate">{profile.businessCategory}</span>
+              </span>
+            </div>
+          )}
+
+          {displayTagline && (
+            <p className="mt-2 text-sm italic leading-relaxed text-slate-500">{displayTagline}</p>
+          )}
+
+          {experienceText && (
+            <p className="mt-2 flex items-center gap-1.5 text-sm font-medium text-slate-700">
+              <svg className="h-4 w-4 shrink-0 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 3l1.88 5.77h6.07l-4.91 3.57 1.88 5.77L12 14.54l-4.91 3.57 1.88-5.77-4.91-3.57h6.07L12 3z" />
+              </svg>
+              <span className="truncate">{experienceText}</span>
+            </p>
+          )}
+
+          <div className="mt-3 flex min-w-0 items-center overflow-hidden whitespace-nowrap rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2 text-[11px] text-slate-600 sm:text-xs">
+            <span className="flex min-w-0 flex-1 items-center gap-1.5">
+              <svg className="h-3.5 w-3.5 shrink-0 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span className="min-w-0 truncate">{compactLocation || 'Location not added'}</span>
+            </span>
+            <span className="mx-2 h-3 w-px shrink-0 bg-slate-200" aria-hidden="true" />
+            <span
+              className={`flex shrink-0 items-center gap-1 font-semibold ${
+                workingStatus.tone === 'open'
+                  ? 'text-emerald-600'
+                  : workingStatus.tone === 'closed'
+                    ? 'text-rose-600'
+                    : 'text-slate-500'
+              }`}
+            >
+              <span
+                className={`h-2 w-2 shrink-0 rounded-full ${
+                  workingStatus.tone === 'open'
+                    ? 'bg-emerald-500'
+                    : workingStatus.tone === 'closed'
+                      ? 'bg-rose-500'
+                      : 'bg-slate-400'
+                }`}
+                aria-hidden="true"
+              />
+              {workingStatus.label}
+            </span>
+            {workingStatus.detail && (
+              <>
+                <span className="mx-2 h-3 w-px shrink-0 bg-slate-200" aria-hidden="true" />
+                <span className="min-w-0 truncate text-slate-500">{workingStatus.detail}</span>
+              </>
+            )}
+          </div>
+
+          <div className="mt-4 grid grid-cols-4 gap-2" role="group" aria-label="Primary profile actions">
+            <a
+              href={displayPhone ? `tel:${displayPhone}` : undefined}
+              aria-label="Call business"
+              aria-disabled={!displayPhone}
+              className={`flex min-w-0 flex-col items-center justify-center gap-1.5 rounded-2xl border px-1 py-3 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                displayPhone
+                  ? 'border-blue-100 bg-blue-50 text-blue-700 hover:bg-blue-100 active:scale-95'
+                  : 'pointer-events-none cursor-not-allowed border-slate-100 bg-slate-50 text-slate-300'
+              }`}
+            >
+              <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+              </svg>
+              <span className="max-w-full truncate">Call</span>
+            </a>
+
+            <a
+              href={whatsappUrl ?? undefined}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Open WhatsApp"
+              aria-disabled={!whatsappUrl}
+              className={`flex min-w-0 flex-col items-center justify-center gap-1.5 rounded-2xl border px-1 py-3 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+                whatsappUrl
+                  ? 'border-emerald-100 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 active:scale-95'
+                  : 'pointer-events-none cursor-not-allowed border-slate-100 bg-slate-50 text-slate-300'
+              }`}
+            >
+              <svg className="h-5 w-5 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+              </svg>
+              <span className="max-w-full truncate">WhatsApp</span>
+            </a>
+
+            <a
+              href={directionsUrl ?? undefined}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Open directions"
+              aria-disabled={!directionsUrl}
+              className={`flex min-w-0 flex-col items-center justify-center gap-1.5 rounded-2xl border px-1 py-3 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                directionsUrl
+                  ? 'border-indigo-100 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 active:scale-95'
+                  : 'pointer-events-none cursor-not-allowed border-slate-100 bg-slate-50 text-slate-300'
+              }`}
+            >
+              <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 21l7-18-18 7 8 4 3 7z" />
+              </svg>
+              <span className="max-w-full truncate">Directions</span>
+            </a>
+
+            <button
+              type="button"
+              onClick={onShare}
+              aria-label="Share profile link"
+              className="flex min-w-0 flex-col items-center justify-center gap-1.5 rounded-2xl border border-amber-100 bg-amber-50 px-1 py-3 text-xs font-semibold text-amber-700 transition hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 active:scale-95"
+            >
+              <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+              </svg>
+              <span className="max-w-full truncate">Share</span>
+            </button>
+          </div>
+
+          {!isExpanded && (
+            <button
+              type="button"
+              onClick={() => setIsExpanded(true)}
+              aria-expanded={isExpanded}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-700 focus:ring-offset-2 active:scale-[0.99]"
+            >
+              View Full Profile
+              <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          )}
+        </div>
+      </article>
+
+      <div
+        className={`grid transition-[grid-template-rows,opacity,visibility] duration-500 ease-in-out ${
+          isExpanded ? 'visible grid-rows-[1fr] opacity-100' : 'invisible grid-rows-[0fr] opacity-0'
+        }`}
+        aria-hidden={!isExpanded}
+      >
+        <div className="overflow-hidden">
+          <div className="space-y-4 pt-4">
       <article className={cardBase}>
         <div className="relative h-36 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700">
           {coverBannerUrl ? (
@@ -226,16 +618,17 @@ function BusinessProfileDisplay({
           <div className="-mt-12 mb-4 flex items-end justify-between">
             <div
               className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-white shadow-lg ring-4 ring-blue-50"
-              aria-label={profile.logoUrl ? 'Business logo' : `${firstLetter || '?'} placeholder`}
+              aria-label={displayLogoUrl ? 'Business logo' : `${businessInitials} placeholder`}
             >
-              {profile.logoUrl ? (
+              {displayLogoUrl ? (
                 <img
-                  src={profile.logoUrl}
+                  src={displayLogoUrl}
                   alt={`${profile.businessName} logo`}
                   className="h-full w-full object-cover"
+                  onError={() => setLogoFailed(true)}
                 />
               ) : (
-                <span className="select-none text-3xl font-bold text-blue-600">{firstLetter || '?'}</span>
+                <span className="select-none text-3xl font-bold text-blue-600">{businessInitials}</span>
               )}
             </div>
 
@@ -570,6 +963,23 @@ function BusinessProfileDisplay({
       </section>
 
       {footerSlot}
+
+            <div className="pb-2 pt-2 text-center">
+              <button
+                type="button"
+                onClick={handleHideFullProfile}
+                aria-expanded={isExpanded}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 active:scale-[0.99]"
+              >
+                Hide Full Profile
+                <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
