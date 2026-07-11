@@ -43,7 +43,6 @@ interface BusinessProfileDisplayProps {
 }
 
 const cardBase = 'bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden'
-const sectionHeading = 'text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4'
 const workingDayLabels = [
   { key: 'monday', label: 'Monday' },
   { key: 'tuesday', label: 'Tuesday' },
@@ -152,28 +151,65 @@ function getOfferingEnquiryUrl(itemName: string, whatsappNumber: string, phoneNu
   return phone ? `tel:${phone}` : null
 }
 
-function normalizeWorkingHours(value: JsonObject | null | undefined): Array<{ day: string; hours: string }> {
+interface WorkingHourRow {
+  key: string
+  day: string
+  hours: string
+  closed: boolean
+  isToday: boolean
+}
+
+interface SocialLinkItem {
+  label: string
+  url: string
+  platform: string
+}
+
+type ContactInfoIconName = 'phone' | 'whatsapp' | 'email' | 'website'
+
+interface ContactInfoItem {
+  key: string
+  label: string
+  value: string
+  href: string
+  icon: ContactInfoIconName
+  external?: boolean
+}
+
+function getTodayWorkingDayIndex(): number {
+  const day = new Date().getDay()
+  return day === 0 ? 6 : day - 1
+}
+
+function normalizeWorkingHours(value: JsonObject | null | undefined): WorkingHourRow[] {
   if (!isRecord(value)) return []
 
-  const hours: Array<{ day: string; hours: string }> = []
+  const todayIndex = getTodayWorkingDayIndex()
+  const hours: WorkingHourRow[] = []
 
-  for (const { key, label } of workingDayLabels) {
+  workingDayLabels.forEach(({ key, label }, index) => {
     const dayValue = value[key]
-    if (!isRecord(dayValue)) continue
+    if (!isRecord(dayValue)) return
 
     const closed = dayValue.closed === true
     const open = trimText(typeof dayValue.open === 'string' ? dayValue.open : '')
     const close = trimText(typeof dayValue.close === 'string' ? dayValue.close : '')
 
     if (closed) {
-      hours.push({ day: label, hours: 'Closed' })
-      continue
+      hours.push({ key, day: label, hours: 'Closed', closed: true, isToday: index === todayIndex })
+      return
     }
 
     if (open && close) {
-      hours.push({ day: label, hours: `${open} - ${close}` })
+      hours.push({
+        key,
+        day: label,
+        hours: `${formatClockTime(open)} - ${formatClockTime(close)}`,
+        closed: false,
+        isToday: index === todayIndex,
+      })
     }
-  }
+  })
 
   return hours
 }
@@ -342,6 +378,50 @@ function toDirectionsUrl(googleMapsUrl: string | null, address: string): string 
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(trimmedAddress)}`
 }
 
+function toWhatsappUrl(value: string): string | null {
+  const digits = value.replace(/\D/g, '')
+  return digits ? `https://wa.me/${digits}` : null
+}
+
+function formatWebsiteDisplay(value: string): string {
+  try {
+    const url = new URL(value)
+    const path = url.pathname === '/' ? '' : url.pathname.replace(/\/$/, '')
+    return `${url.hostname}${path}`
+  } catch {
+    return value.replace(/^https?:\/\//, '')
+  }
+}
+
+async function copyTextToClipboard(value: string): Promise<boolean> {
+  if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(value)
+      return true
+    } catch {
+      // Fall back to the legacy copy path below.
+    }
+  }
+
+  if (typeof document === 'undefined') return false
+
+  const textarea = document.createElement('textarea')
+  textarea.value = value
+  textarea.setAttribute('readonly', '')
+  textarea.style.position = 'fixed'
+  textarea.style.top = '-9999px'
+  document.body.appendChild(textarea)
+  textarea.select()
+
+  try {
+    return document.execCommand('copy')
+  } catch {
+    return false
+  } finally {
+    document.body.removeChild(textarea)
+  }
+}
+
 function toSocialPlatformLabel(value: string): string {
   const trimmed = trimText(value)
   if (!trimmed) return ''
@@ -364,21 +444,105 @@ function toSocialPlatformLabel(value: string): string {
   }
 }
 
-function normalizeSocialLinks(value: SocialLinks | null | undefined): Array<{ label: string; url: string }> {
+function normalizeSocialLinks(value: SocialLinks | null | undefined): SocialLinkItem[] {
   if (!isRecord(value)) return []
 
-  const links: Array<{ label: string; url: string }> = []
+  const links: SocialLinkItem[] = []
 
   for (const [key, entryValue] of Object.entries(value)) {
     const label = toSocialPlatformLabel(key)
     const url = typeof entryValue === 'string' ? toValidUrl(entryValue) : null
 
     if (label && url) {
-      links.push({ label, url })
+      links.push({ label, url, platform: key.toLowerCase() })
     }
   }
 
   return links
+}
+
+function ContactInfoIcon({ icon }: { icon: ContactInfoIconName }) {
+  if (icon === 'whatsapp') {
+    return (
+      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+      </svg>
+    )
+  }
+
+  if (icon === 'email') {
+    return (
+      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+      </svg>
+    )
+  }
+
+  if (icon === 'website') {
+    return (
+      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+      </svg>
+    )
+  }
+
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+    </svg>
+  )
+}
+
+function SocialLinkIcon({ platform }: { platform: string }) {
+  const normalized = platform.toLowerCase()
+
+  if (normalized === 'facebook') {
+    return (
+      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M14 8h2.5V4.2A23.7 23.7 0 0012.86 4C9.25 4 6.78 6.2 6.78 10.25V14H3v4.25h3.78V24h4.65v-5.75h3.64L15.65 14h-4.22v-3.33C11.43 9.44 11.78 8 14 8z" />
+      </svg>
+    )
+  }
+
+  if (normalized === 'instagram') {
+    return (
+      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <rect width="16" height="16" x="4" y="4" rx="5" strokeWidth={2} />
+        <path strokeLinecap="round" strokeWidth={2} d="M16.5 7.5h.01" />
+        <circle cx="12" cy="12" r="3.5" strokeWidth={2} />
+      </svg>
+    )
+  }
+
+  if (normalized === 'linkedin') {
+    return (
+      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M6.94 8.88H3.12V21h3.82V8.88zM5.03 3A2.2 2.2 0 002.8 5.2a2.2 2.2 0 002.18 2.21h.03A2.2 2.2 0 007.25 5.2 2.2 2.2 0 005.03 3zM21.2 14.05c0-3.7-1.98-5.42-4.62-5.42a3.98 3.98 0 00-3.62 2h.02V8.88H9.16c.05 1.14 0 12.12 0 12.12h3.82v-6.77c0-.36.03-.72.13-.98.28-.72.93-1.47 2.02-1.47 1.43 0 2 1.1 2 2.68V21h3.82l.25-6.95z" />
+      </svg>
+    )
+  }
+
+  if (normalized === 'youtube') {
+    return (
+      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M21.58 7.2a2.75 2.75 0 00-1.94-1.95C17.93 4.8 12 4.8 12 4.8s-5.93 0-7.64.45A2.75 2.75 0 002.42 7.2C2 8.92 2 12.5 2 12.5s0 3.58.42 5.3a2.75 2.75 0 001.94 1.95c1.71.45 7.64.45 7.64.45s5.93 0 7.64-.45a2.75 2.75 0 001.94-1.95c.42-1.72.42-5.3.42-5.3s0-3.58-.42-5.3zM10 15.7V9.3l5.2 3.2L10 15.7z" />
+      </svg>
+    )
+  }
+
+  if (normalized === 'x' || normalized === 'twitter' || normalized === 'x / twitter') {
+    return (
+      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M13.8 10.47L21.24 2h-1.76l-6.46 7.35L7.86 2H1.91l7.8 11.12L1.9 22h1.76l6.83-7.77L15.94 22h5.95l-8.09-11.53zm-2.42 2.75l-.79-1.1-6.29-8.8h2.72l5.08 7.1.79 1.1 6.6 9.24h-2.72l-5.39-7.54z" />
+      </svg>
+    )
+  }
+
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.5 10.5L21 3m0 0h-5.5M21 3v5.5M10 4H7a3 3 0 00-3 3v10a3 3 0 003 3h10a3 3 0 003-3v-3" />
+    </svg>
+  )
 }
 
 function BusinessProfileDisplay({
@@ -393,8 +557,11 @@ function BusinessProfileDisplay({
   footerSlot,
 }: BusinessProfileDisplayProps) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const [isWorkingHoursExpanded, setIsWorkingHoursExpanded] = useState(false)
+  const [addressCopied, setAddressCopied] = useState(false)
   const [logoFailed, setLogoFailed] = useState(false)
   const compactCardRef = useRef<HTMLElement>(null)
+  const copyAddressTimeoutRef = useRef<number | null>(null)
   const displayPhone = trimText(profile.phoneNumber)
   const displayWhatsApp = trimText(profile.whatsappNumber) || displayPhone
   const displayRawWhatsApp = trimText(profile.whatsappNumber)
@@ -407,6 +574,7 @@ function BusinessProfileDisplay({
   const businessInitials = getBusinessInitials(profile.businessName)
   const offeringItems = normalizeOfferingItems(profile.products_menu_packages, profile.services)
   const workingHours = normalizeWorkingHours(profile.workingHours)
+  const todayWorkingHours = workingHours.find((item) => item.isToday)?.hours ?? 'Hours unavailable'
   const googleMapsUrl = toValidUrl(profile.googleMapsUrl)
   const directionsUrl = toDirectionsUrl(googleMapsUrl, displayAddress)
   const socialLinks = normalizeSocialLinks(profile.socialLinks)
@@ -417,15 +585,66 @@ function BusinessProfileDisplay({
   const compactLocation = formatCompactLocation(displayAddress)
   const workingStatus = getCompactWorkingStatus(profile.workingHours)
   const experienceText = formatBusinessExperience(profile)
-  const whatsappDigits = displayWhatsApp.replace(/\D/g, '')
-  const whatsappUrl = whatsappDigits ? `https://wa.me/${whatsappDigits}` : null
+  const whatsappUrl = toWhatsappUrl(displayWhatsApp)
+  const rawWhatsappUrl = toWhatsappUrl(displayRawWhatsApp)
+  const websiteUrl = toValidUrl(displayWebsite)
+  const contactItems: ContactInfoItem[] = [
+    displayPhone
+      ? {
+          key: 'phone',
+          label: 'Phone',
+          value: displayPhone,
+          href: `tel:${displayPhone}`,
+          icon: 'phone',
+        }
+      : null,
+    rawWhatsappUrl && displayRawWhatsApp
+      ? {
+          key: 'whatsapp',
+          label: 'WhatsApp',
+          value: displayRawWhatsApp,
+          href: rawWhatsappUrl,
+          icon: 'whatsapp',
+          external: true,
+        }
+      : null,
+    displayEmail
+      ? {
+          key: 'email',
+          label: 'Email',
+          value: displayEmail,
+          href: `mailto:${displayEmail}`,
+          icon: 'email',
+        }
+      : null,
+    websiteUrl
+      ? {
+          key: 'website',
+          label: 'Website',
+          value: formatWebsiteDisplay(websiteUrl),
+          href: websiteUrl,
+          icon: 'website',
+          external: true,
+        }
+      : null,
+  ].filter((item): item is ContactInfoItem => Boolean(item))
   const hasRating = typeof profile.ratingAverage === 'number' && Number.isFinite(profile.ratingAverage) && Boolean(profile.ratingCount)
   const hasAboutSection = Boolean(profile.aboutBusiness || keywordItems.length > 0)
+  const hasContactSection = contactItems.length > 0 || socialLinks.length > 0
+  const hasLocationSection = Boolean(displayAddress || directionsUrl)
   const offeringSectionLabel = 'Services'
 
   useEffect(() => {
     setLogoFailed(false)
   }, [profile.logoUrl])
+
+  useEffect(() => {
+    return () => {
+      if (copyAddressTimeoutRef.current !== null) {
+        window.clearTimeout(copyAddressTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const scrollToQR = () => {
     qrSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -436,6 +655,23 @@ function BusinessProfileDisplay({
     requestAnimationFrame(() => {
       compactCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     })
+  }
+
+  const handleCopyAddress = async () => {
+    if (!displayAddress) return
+
+    const copied = await copyTextToClipboard(displayAddress)
+    if (!copied) return
+
+    setAddressCopied(true)
+    if (copyAddressTimeoutRef.current !== null) {
+      window.clearTimeout(copyAddressTimeoutRef.current)
+    }
+
+    copyAddressTimeoutRef.current = window.setTimeout(() => {
+      setAddressCopied(false)
+      copyAddressTimeoutRef.current = null
+    }, 1800)
   }
 
   return (
@@ -738,64 +974,60 @@ function BusinessProfileDisplay({
         </div>
       </article>
 
-      {(displayPhone || displayWhatsApp || displayEmail || displayWebsite) && (
-        <section aria-label="Contact" className={`${cardBase} px-6 py-6 sm:px-8`}>
-          <h2 className={sectionHeading}>Contact</h2>
+      {hasContactSection && (
+        <section aria-label="Contact Information" className="overflow-hidden rounded-3xl border border-slate-100 bg-white px-5 py-6 shadow-sm sm:px-8">
+          <h2 className="text-lg font-bold tracking-tight text-slate-950">Contact Information</h2>
 
-          <div className="mb-3 grid grid-cols-3 gap-3" role="group" aria-label="Contact actions">
-            <a
-              href={displayPhone ? `tel:${displayPhone}` : undefined}
-              aria-label="Call business"
-              aria-disabled={!displayPhone}
-              className={`flex items-center justify-center gap-1.5 rounded-xl py-3 text-sm font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                displayPhone
-                  ? 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
-                  : 'pointer-events-none cursor-not-allowed bg-gray-100 text-gray-400'
-              }`}
-            >
-              <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-              </svg>
-              Call
-            </a>
+          {contactItems.length > 0 && (
+            <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+              {contactItems.map((item) => (
+                <li key={item.key} className="min-w-0">
+                  <a
+                    href={item.href}
+                    target={item.external ? '_blank' : undefined}
+                    rel={item.external ? 'noopener noreferrer' : undefined}
+                    className="flex min-w-0 items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-3 text-left transition hover:border-slate-200 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-slate-700 shadow-sm" aria-hidden="true">
+                      <ContactInfoIcon icon={item.icon} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-xs font-semibold uppercase tracking-widest text-slate-400">
+                        {item.label}
+                      </span>
+                      <span className="block truncate text-sm font-semibold text-slate-800">{item.value}</span>
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
 
-            <a
-              href={displayWhatsApp ? `https://wa.me/${displayWhatsApp.replace(/\D/g, '')}` : undefined}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Open WhatsApp"
-              aria-disabled={!displayWhatsApp}
-              className={`flex items-center justify-center gap-1.5 rounded-xl py-3 text-sm font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
-                displayWhatsApp
-                  ? 'bg-green-600 text-white hover:bg-green-700 active:scale-95'
-                  : 'pointer-events-none cursor-not-allowed bg-gray-100 text-gray-400'
-              }`}
-            >
-              <svg className="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-              </svg>
-              WA
-            </a>
-
-            <a
-              href={displayEmail ? `mailto:${displayEmail}` : undefined}
-              aria-label="Send email"
-              aria-disabled={!displayEmail}
-              className={`flex items-center justify-center gap-1.5 rounded-xl py-3 text-sm font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 ${
-                displayEmail
-                  ? 'bg-slate-700 text-white hover:bg-slate-800 active:scale-95'
-                  : 'pointer-events-none cursor-not-allowed bg-gray-100 text-gray-400'
-              }`}
-            >
-              <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-              Email
-            </a>
-          </div>
+          {socialLinks.length > 0 && (
+            <div className={contactItems.length > 0 ? 'mt-5 border-t border-slate-100 pt-5' : 'mt-4'}>
+              <div className="flex min-w-0 items-center gap-3">
+                <h3 className="shrink-0 text-sm font-bold text-slate-900">Follow Us</h3>
+                <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto">
+                  {socialLinks.map(({ label, url, platform }) => (
+                    <a
+                      key={`${label}-${url}`}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`Open ${label}`}
+                      title={label}
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-100 bg-slate-50 text-slate-700 transition hover:border-slate-200 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+                    >
+                      <SocialLinkIcon platform={platform} />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
           <div
-            className={`mb-5 grid ${saveButtonSlot ? 'grid-cols-2' : 'grid-cols-1'} gap-3`}
+            className={`mt-5 grid ${saveButtonSlot ? 'grid-cols-2' : 'grid-cols-1'} gap-3`}
             role="group"
             aria-label="Profile actions"
           >
@@ -803,66 +1035,16 @@ function BusinessProfileDisplay({
               type="button"
               onClick={onShare}
               aria-label="Share profile link"
-              className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white transition-all hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 active:scale-95"
+              className="flex min-w-0 items-center justify-center gap-2 rounded-2xl bg-slate-950 px-3 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-700 focus:ring-offset-2 active:scale-[0.99]"
             >
               <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
               </svg>
-              Share Profile
+              <span className="truncate">Share Profile</span>
             </button>
 
             {saveButtonSlot}
           </div>
-
-          <ul className="space-y-3">
-            {displayPhone && (
-              <li className="flex items-center gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50" aria-hidden="true">
-                  <svg className="h-3.5 w-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                  </svg>
-                </span>
-                <span className="text-sm text-gray-700">{displayPhone}</span>
-              </li>
-            )}
-            {displayRawWhatsApp && (
-              <li className="flex items-center gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-green-50" aria-hidden="true">
-                  <svg className="h-3.5 w-3.5 text-green-600" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                  </svg>
-                </span>
-                <span className="text-sm text-gray-700">{displayRawWhatsApp}</span>
-              </li>
-            )}
-            {displayEmail && (
-              <li className="flex items-center gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100" aria-hidden="true">
-                  <svg className="h-3.5 w-3.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                </span>
-                <span className="break-all text-sm text-gray-700">{displayEmail}</span>
-              </li>
-            )}
-            {displayWebsite && (
-              <li className="flex items-center gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50" aria-hidden="true">
-                  <svg className="h-3.5 w-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                  </svg>
-                </span>
-                <a
-                  href={displayWebsite}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="truncate text-sm text-blue-600 hover:underline focus:outline-none focus:underline"
-                >
-                  {displayWebsite.replace(/^https?:\/\//, '')}
-                </a>
-              </li>
-            )}
-          </ul>
         </section>
       )}
 
@@ -986,63 +1168,116 @@ function BusinessProfileDisplay({
       )}
 
       {workingHours.length > 0 && (
-        <section aria-label="Working Hours" className={`${cardBase} px-6 py-6 sm:px-8`}>
-          <h2 className={sectionHeading}>Working Hours</h2>
-          <ul className="space-y-2">
-            {workingHours.map(({ day, hours }) => (
-              <li key={day} className="flex items-center justify-between gap-4">
-                <span className="text-sm font-medium text-gray-700">{day}</span>
-                <span className="text-right text-sm text-gray-500">{hours}</span>
-              </li>
-            ))}
-          </ul>
+        <section aria-label="Working Hours" className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
+          <button
+            type="button"
+            onClick={() => setIsWorkingHoursExpanded((current) => !current)}
+            aria-expanded={isWorkingHoursExpanded}
+            className="flex w-full min-w-0 items-center gap-3 px-5 py-5 text-left focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-inset sm:px-8"
+          >
+            <span className="min-w-0 flex-1">
+              <span className="block text-lg font-bold tracking-tight text-slate-950">Working Hours</span>
+              <span className="mt-2 flex min-w-0 items-center gap-2 text-sm">
+                <span
+                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${
+                    workingStatus.tone === 'open'
+                      ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100'
+                      : workingStatus.tone === 'closed'
+                        ? 'bg-rose-50 text-rose-700 ring-1 ring-rose-100'
+                        : 'bg-slate-100 text-slate-600 ring-1 ring-slate-200'
+                  }`}
+                >
+                  <span
+                    className={`h-2 w-2 rounded-full ${
+                      workingStatus.tone === 'open'
+                        ? 'bg-emerald-500'
+                        : workingStatus.tone === 'closed'
+                          ? 'bg-rose-500'
+                          : 'bg-slate-400'
+                    }`}
+                    aria-hidden="true"
+                  />
+                  {workingStatus.label}
+                </span>
+                <span className="min-w-0 truncate text-slate-500">
+                  Today: {todayWorkingHours}
+                </span>
+              </span>
+            </span>
+            <svg
+              className={`h-5 w-5 shrink-0 text-slate-400 transition-transform ${isWorkingHoursExpanded ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {isWorkingHoursExpanded && (
+            <div className="border-t border-slate-100 px-5 pb-5 pt-2 sm:px-8">
+              <ul className="space-y-2">
+                {workingHours.map(({ key, day, hours, closed, isToday }) => (
+                  <li
+                    key={key}
+                    className={`flex min-w-0 items-center justify-between gap-4 rounded-2xl px-4 py-3 ${
+                      isToday ? 'border border-blue-100 bg-blue-50/80' : 'bg-slate-50/70'
+                    }`}
+                  >
+                    <span className={`min-w-0 truncate text-sm font-semibold ${isToday ? 'text-blue-800' : 'text-slate-700'}`}>
+                      {day}
+                    </span>
+                    <span className={`shrink-0 text-right text-sm font-medium ${closed ? 'text-rose-600' : 'text-slate-600'}`}>
+                      {hours}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </section>
       )}
 
-      {(displayAddress || googleMapsUrl) && (
-        <section aria-label="Location" className={`${cardBase} px-6 py-6 sm:px-8`}>
-          <h2 className={sectionHeading}>Location</h2>
-          <div className="flex items-start gap-3">
-            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-orange-50" aria-hidden="true">
-              <svg className="h-3.5 w-3.5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            </span>
-            <div className="space-y-3">
-              {displayAddress && (
-                <p className="whitespace-pre-line text-sm leading-relaxed text-gray-700">{displayAddress}</p>
-              )}
-              {googleMapsUrl && (
+      {hasLocationSection && (
+        <section aria-label="Location" className="overflow-hidden rounded-3xl border border-slate-100 bg-white px-5 py-6 shadow-sm sm:px-8">
+          <h2 className="text-lg font-bold tracking-tight text-slate-950">Location</h2>
+          <div className="mt-4 flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            {displayAddress ? (
+              <p className="min-w-0 whitespace-pre-line break-words text-sm leading-7 text-slate-700 sm:flex-1">
+                {displayAddress}
+              </p>
+            ) : (
+              <p className="min-w-0 text-sm leading-7 text-slate-500 sm:flex-1">Map link available</p>
+            )}
+
+            <div className="flex shrink-0 flex-col gap-2 sm:min-w-44">
+              {directionsUrl && (
                 <a
-                  href={googleMapsUrl}
+                  href={directionsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline focus:outline-none focus:underline"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-700 focus:ring-offset-2 active:scale-[0.99]"
                 >
-                  View on Google Maps
+                  <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 21l7-18-18 7 8 4 3 7z" />
+                  </svg>
+                  Get Directions
                 </a>
               )}
+              {displayAddress && (
+                <button
+                  type="button"
+                  onClick={handleCopyAddress}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 active:scale-[0.99]"
+                >
+                  <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16h8M8 12h8m-7 8h6a2 2 0 002-2V8.83a2 2 0 00-.59-1.42l-3.82-3.82A2 2 0 0011.17 3H7a2 2 0 00-2 2v13a2 2 0 002 2h2z" />
+                  </svg>
+                  {addressCopied ? 'Copied' : 'Copy Address'}
+                </button>
+              )}
             </div>
-          </div>
-        </section>
-      )}
-
-      {socialLinks.length > 0 && (
-        <section aria-label="Connect Online" className={`${cardBase} px-6 py-6 sm:px-8`}>
-          <h2 className={sectionHeading}>Connect Online</h2>
-          <div className="flex flex-wrap gap-3">
-            {socialLinks.map(({ label, url }) => (
-              <a
-                key={label}
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              >
-                {label}
-              </a>
-            ))}
           </div>
         </section>
       )}
