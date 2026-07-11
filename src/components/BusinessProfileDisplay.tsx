@@ -176,6 +176,21 @@ interface ContactInfoItem {
   external?: boolean
 }
 
+interface QualificationDisplayItem {
+  key: string
+  title: string
+  issuingOrganization: string
+  year: string
+  description: string
+  documentTypeLabel: string
+}
+
+interface FaqDisplayItem {
+  key: string
+  question: string
+  answer: string
+}
+
 function getTodayWorkingDayIndex(): number {
   const day = new Date().getDay()
   return day === 0 ? 6 : day - 1
@@ -212,6 +227,69 @@ function normalizeWorkingHours(value: JsonObject | null | undefined): WorkingHou
   })
 
   return hours
+}
+
+function getDocumentTypeLabel(fileName: string, mimeType: string): string {
+  const normalizedMimeType = mimeType.toLowerCase()
+  if (normalizedMimeType.includes('pdf')) return 'PDF'
+  if (normalizedMimeType.includes('image')) return 'Image'
+  if (normalizedMimeType.includes('word') || normalizedMimeType.includes('document')) return 'Document'
+
+  const extension = fileName.split('.').pop()?.trim()
+  if (extension && /^[a-z0-9]{2,5}$/i.test(extension)) return extension.toUpperCase()
+
+  return fileName || mimeType ? 'File' : ''
+}
+
+function normalizeQualifications(
+  value: BusinessProfileDisplayData['qualifications']
+): QualificationDisplayItem[] {
+  if (!Array.isArray(value)) return []
+
+  return value.reduce<QualificationDisplayItem[]>((items, item, index) => {
+    if (!item || typeof item !== 'object') return items
+
+    const title = trimText(item.title)
+    if (!title) return items
+
+    const issuingOrganization = trimText(item.issuingOrganization)
+    const description = trimText(item.description)
+    const year = typeof item.year === 'number' && Number.isFinite(item.year) ? String(item.year) : ''
+    const documentFileName = trimText(item.documentFileName)
+    const documentMimeType = trimText(item.documentMimeType)
+    const documentTypeLabel = getDocumentTypeLabel(documentFileName, documentMimeType)
+
+    items.push({
+      key: `qualification-${title}-${issuingOrganization || 'issuer'}-${year || 'no-year'}-${index}`,
+      title,
+      issuingOrganization,
+      year,
+      description,
+      documentTypeLabel,
+    })
+
+    return items
+  }, [])
+}
+
+function normalizeFaqs(value: BusinessProfileDisplayData['faqs']): FaqDisplayItem[] {
+  if (!Array.isArray(value)) return []
+
+  return value.reduce<FaqDisplayItem[]>((items, item, index) => {
+    if (!item || typeof item !== 'object') return items
+
+    const question = trimText(item.question)
+    const answer = trimText(item.answer)
+    if (!question || !answer) return items
+
+    items.push({
+      key: `faq-${question}-${index}`,
+      question,
+      answer,
+    })
+
+    return items
+  }, [])
 }
 
 interface CompactWorkingStatus {
@@ -558,6 +636,8 @@ function BusinessProfileDisplay({
 }: BusinessProfileDisplayProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [isWorkingHoursExpanded, setIsWorkingHoursExpanded] = useState(false)
+  const [isFaqsExpanded, setIsFaqsExpanded] = useState(false)
+  const [openFaqKey, setOpenFaqKey] = useState<string | null>(null)
   const [addressCopied, setAddressCopied] = useState(false)
   const [logoFailed, setLogoFailed] = useState(false)
   const compactCardRef = useRef<HTMLElement>(null)
@@ -582,6 +662,8 @@ function BusinessProfileDisplay({
   const galleryItems = normalizeStringArray(profile.galleryImages)
     .map(toDisplayImageUrl)
     .filter((url): url is string => Boolean(url))
+  const qualificationItems = normalizeQualifications(profile.qualifications)
+  const faqItems = normalizeFaqs(profile.faqs)
   const compactLocation = formatCompactLocation(displayAddress)
   const workingStatus = getCompactWorkingStatus(profile.workingHours)
   const experienceText = formatBusinessExperience(profile)
@@ -646,6 +728,12 @@ function BusinessProfileDisplay({
     }
   }, [])
 
+  useEffect(() => {
+    if (!isFaqsExpanded) {
+      setOpenFaqKey(null)
+    }
+  }, [isFaqsExpanded])
+
   const scrollToQR = () => {
     qrSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
@@ -672,6 +760,10 @@ function BusinessProfileDisplay({
       setAddressCopied(false)
       copyAddressTimeoutRef.current = null
     }, 1800)
+  }
+
+  const handleToggleFaqSection = () => {
+    setIsFaqsExpanded((current) => !current)
   }
 
   return (
@@ -1026,25 +1118,6 @@ function BusinessProfileDisplay({
             </div>
           )}
 
-          <div
-            className={`mt-5 grid ${saveButtonSlot ? 'grid-cols-2' : 'grid-cols-1'} gap-3`}
-            role="group"
-            aria-label="Profile actions"
-          >
-            <button
-              type="button"
-              onClick={onShare}
-              aria-label="Share profile link"
-              className="flex min-w-0 items-center justify-center gap-2 rounded-2xl bg-slate-950 px-3 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-700 focus:ring-offset-2 active:scale-[0.99]"
-            >
-              <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-              </svg>
-              <span className="truncate">Share Profile</span>
-            </button>
-
-            {saveButtonSlot}
-          </div>
         </section>
       )}
 
@@ -1282,6 +1355,124 @@ function BusinessProfileDisplay({
         </section>
       )}
 
+      {qualificationItems.length > 0 && (
+        <section aria-label="Certificates and Qualifications" className="overflow-hidden rounded-3xl border border-slate-100 bg-white py-6 shadow-sm">
+          <div className="px-5 sm:px-8">
+            <h2 className="text-lg font-bold tracking-tight text-slate-950">Certificates & Qualifications</h2>
+          </div>
+
+          <div className="mt-4 overflow-x-auto scroll-smooth px-5 pb-1 sm:px-8">
+            <ul className="flex snap-x snap-mandatory gap-3">
+              {qualificationItems.map((item) => (
+                <li
+                  key={item.key}
+                  className="flex min-h-[13rem] w-[82%] max-w-[19rem] shrink-0 snap-start flex-col rounded-2xl border border-slate-100 bg-slate-50/70 p-4 sm:w-72"
+                >
+                  <div className="mb-4 flex items-start justify-between gap-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-blue-700 shadow-sm" aria-hidden="true">
+                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12.75l2 2 4-4M7 4h10a2 2 0 012 2v14l-4-2-3 2-3-2-4 2V6a2 2 0 012-2z" />
+                      </svg>
+                    </span>
+                    {item.year && (
+                      <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-xs font-bold text-slate-500 ring-1 ring-slate-100">
+                        {item.year}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <h3 className="line-clamp-2 text-sm font-bold leading-snug text-slate-950">{item.title}</h3>
+                    {item.issuingOrganization && (
+                      <p className="mt-2 line-clamp-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                        {item.issuingOrganization}
+                      </p>
+                    )}
+                    {item.description && (
+                      <p className="mt-3 line-clamp-3 text-xs leading-5 text-slate-600">{item.description}</p>
+                    )}
+                  </div>
+
+                  {item.documentTypeLabel && (
+                    <div className="mt-4 inline-flex max-w-full items-center gap-2 self-start rounded-full border border-slate-100 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600">
+                      <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 3v5h5" />
+                      </svg>
+                      <span className="truncate">{item.documentTypeLabel} attached</span>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      )}
+
+      {faqItems.length > 0 && (
+        <section aria-label="Frequently Asked Questions" className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
+          <button
+            type="button"
+            onClick={handleToggleFaqSection}
+            aria-expanded={isFaqsExpanded}
+            className="flex w-full min-w-0 items-center justify-between gap-3 px-5 py-5 text-left focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-inset sm:px-8"
+          >
+            <span className="min-w-0 truncate text-lg font-bold tracking-tight text-slate-950">
+              Frequently Asked Questions
+            </span>
+            <svg
+              className={`h-5 w-5 shrink-0 text-slate-400 transition-transform ${isFaqsExpanded ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {isFaqsExpanded && (
+            <div className="border-t border-slate-100 px-5 py-4 sm:px-8">
+              <ul className="space-y-3">
+                {faqItems.map((item, index) => {
+                  const isAnswerOpen = openFaqKey === item.key
+                  const answerId = `business-profile-faq-answer-${index}`
+
+                  return (
+                    <li key={item.key} className="rounded-2xl border border-slate-100 bg-slate-50/70">
+                      <button
+                        type="button"
+                        onClick={() => setOpenFaqKey(isAnswerOpen ? null : item.key)}
+                        aria-expanded={isAnswerOpen}
+                        aria-controls={answerId}
+                        className="flex w-full min-w-0 items-center justify-between gap-3 px-4 py-4 text-left focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-inset"
+                      >
+                        <span className="min-w-0 text-sm font-semibold leading-6 text-slate-900">{item.question}</span>
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-slate-500 shadow-sm" aria-hidden="true">
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            {isAnswerOpen ? (
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14" />
+                            ) : (
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v14m7-7H5" />
+                            )}
+                          </svg>
+                        </span>
+                      </button>
+
+                      {isAnswerOpen && (
+                        <div id={answerId} className="border-t border-slate-100 px-4 pb-4 pt-3">
+                          <p className="whitespace-pre-line text-sm leading-7 text-slate-600">{item.answer}</p>
+                        </div>
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          )}
+        </section>
+      )}
+
       <section ref={qrSectionRef} aria-label="QR Code" className={`${cardBase} px-6 py-8 sm:px-8`}>
         <div className="mb-6 text-center">
           <h2 className="text-sm font-bold tracking-tight text-gray-900">QR Code</h2>
@@ -1322,6 +1513,55 @@ function BusinessProfileDisplay({
       </section>
 
       {footerSlot}
+
+            <section aria-label="Final contact actions" className="overflow-hidden rounded-3xl border border-slate-100 bg-white px-5 py-6 shadow-sm sm:px-8">
+              <div className="min-w-0">
+                <h2 className="text-lg font-bold tracking-tight text-slate-950">
+                  Ready to contact {profile.businessName}?
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-slate-500">Call or message the business directly.</p>
+              </div>
+
+              <div className="mt-5 grid gap-3 sm:grid-cols-2" role="group" aria-label="Final profile actions">
+                {displayPhone && (
+                  <a
+                    href={`tel:${displayPhone}`}
+                    className="flex min-w-0 items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:scale-[0.99]"
+                  >
+                    <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                    <span className="truncate">Call Now</span>
+                  </a>
+                )}
+
+                {whatsappUrl && (
+                  <a
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex min-w-0 items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 active:scale-[0.99]"
+                  >
+                    <ContactInfoIcon icon="whatsapp" />
+                    <span className="truncate">WhatsApp</span>
+                  </a>
+                )}
+
+                <button
+                  type="button"
+                  onClick={onShare}
+                  aria-label="Share profile link"
+                  className="flex min-w-0 items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-700 focus:ring-offset-2 active:scale-[0.99]"
+                >
+                  <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                  </svg>
+                  <span className="truncate">Share Profile</span>
+                </button>
+
+                {saveButtonSlot}
+              </div>
+            </section>
 
             <div className="pb-2 pt-2 text-center">
               <button
