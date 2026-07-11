@@ -100,6 +100,58 @@ function normalizeStringArray(value: unknown[] | string[] | null | undefined): s
   }, [])
 }
 
+function normalizeProductOfferings(value: BusinessProfileDisplayData['products_menu_packages']): DisplayOfferingItem[] {
+  if (!Array.isArray(value)) return []
+
+  return value.reduce<DisplayOfferingItem[]>((items, item, index) => {
+    if (!item || typeof item !== 'object') return items
+
+    const name = trimText(item.name)
+    const price = trimText(item.price)
+    if (!name || !price) return items
+
+    const description = trimText(item.description)
+    const imageUrl = toDisplayImageUrl(item.imageUrl)
+    items.push({
+      key: `product-${name}-${price}-${imageUrl ?? index}`,
+      name,
+      description,
+      price,
+      imageUrl,
+      isLegacy: false,
+    })
+
+    return items
+  }, [])
+}
+
+function normalizeOfferingItems(
+  products: BusinessProfileDisplayData['products_menu_packages'],
+  services: unknown[] | string[] | null | undefined
+): DisplayOfferingItem[] {
+  const productOfferings = normalizeProductOfferings(products)
+  if (productOfferings.length > 0) return productOfferings
+
+  return normalizeStringArray(services).map((service, index) => ({
+    key: `legacy-service-${service}-${index}`,
+    name: service,
+    description: '',
+    price: '',
+    imageUrl: null,
+    isLegacy: true,
+  }))
+}
+
+function getOfferingEnquiryUrl(itemName: string, whatsappNumber: string, phoneNumber: string): string | null {
+  const whatsappDigits = whatsappNumber.replace(/\D/g, '')
+  if (whatsappDigits) {
+    return `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(`Hi, I would like to enquire about ${itemName}.`)}`
+  }
+
+  const phone = trimText(phoneNumber)
+  return phone ? `tel:${phone}` : null
+}
+
 function normalizeWorkingHours(value: JsonObject | null | undefined): Array<{ day: string; hours: string }> {
   if (!isRecord(value)) return []
 
@@ -130,6 +182,15 @@ interface CompactWorkingStatus {
   label: string
   detail: string
   tone: 'open' | 'closed' | 'unknown'
+}
+
+interface DisplayOfferingItem {
+  key: string
+  name: string
+  description: string
+  price: string
+  imageUrl: string | null
+  isLegacy: boolean
 }
 
 function getBusinessInitials(value: string): string {
@@ -344,7 +405,7 @@ function BusinessProfileDisplay({
   const coverBannerUrl = toDisplayImageUrl(profile.coverBannerUrl)
   const displayLogoUrl = logoFailed ? null : toDisplayImageUrl(profile.logoUrl)
   const businessInitials = getBusinessInitials(profile.businessName)
-  const serviceItems = normalizeStringArray(profile.services)
+  const offeringItems = normalizeOfferingItems(profile.products_menu_packages, profile.services)
   const workingHours = normalizeWorkingHours(profile.workingHours)
   const googleMapsUrl = toValidUrl(profile.googleMapsUrl)
   const directionsUrl = toDirectionsUrl(googleMapsUrl, displayAddress)
@@ -359,6 +420,8 @@ function BusinessProfileDisplay({
   const whatsappDigits = displayWhatsApp.replace(/\D/g, '')
   const whatsappUrl = whatsappDigits ? `https://wa.me/${whatsappDigits}` : null
   const hasRating = typeof profile.ratingAverage === 'number' && Number.isFinite(profile.ratingAverage) && Boolean(profile.ratingCount)
+  const hasAboutSection = Boolean(profile.aboutBusiness || keywordItems.length > 0)
+  const offeringSectionLabel = 'Services'
 
   useEffect(() => {
     setLogoFailed(false)
@@ -803,26 +866,122 @@ function BusinessProfileDisplay({
         </section>
       )}
 
-      {profile.aboutBusiness && (
-        <section aria-label="About" className={`${cardBase} px-6 py-6 sm:px-8`}>
-          <h2 className={sectionHeading}>About</h2>
-          <p className="text-sm leading-relaxed text-gray-700">{profile.aboutBusiness}</p>
+      {hasAboutSection && (
+        <section aria-label="About Us" className="overflow-hidden rounded-3xl border border-slate-100 bg-white px-5 py-6 shadow-sm sm:px-8">
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <h2 className="text-lg font-bold tracking-tight text-slate-950">About Us</h2>
+          </div>
+
+          {profile.aboutBusiness && (
+            <p className="whitespace-pre-line text-sm leading-7 text-slate-700">{profile.aboutBusiness}</p>
+          )}
+
+          {keywordItems.length > 0 && (
+            <div className={profile.aboutBusiness ? 'mt-5' : ''}>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">
+                Business Keywords / Tags
+              </p>
+              <ul className="flex flex-wrap gap-2">
+                {keywordItems.map((keyword) => (
+                  <li
+                    key={keyword}
+                    className="inline-flex max-w-full items-center rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700"
+                  >
+                    <span className="truncate">{keyword}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </section>
       )}
 
-      {serviceItems.length > 0 && (
-        <section aria-label="Services" className={`${cardBase} px-6 py-6 sm:px-8`}>
-          <h2 className={sectionHeading}>Services</h2>
-          <ul className="flex flex-wrap gap-2">
-            {serviceItems.map((service) => (
-              <li
-                key={service}
-                className="inline-flex items-center rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700"
-              >
-                {service}
-              </li>
-            ))}
-          </ul>
+      {offeringItems.length > 0 && (
+        <section aria-label={offeringSectionLabel} className="overflow-hidden rounded-3xl border border-slate-100 bg-white py-6 shadow-sm">
+          <div className="px-5 sm:px-8">
+            <h2 className="text-lg font-bold tracking-tight text-slate-950">{offeringSectionLabel}</h2>
+          </div>
+
+          <div className="mt-4 overflow-x-auto px-5 pb-1 sm:px-8">
+            <ul className="flex gap-3">
+              {offeringItems.map((item) => {
+                const enquiryUrl = getOfferingEnquiryUrl(item.name, displayRawWhatsApp, displayPhone)
+
+                return (
+                  <li
+                    key={item.key}
+                    className="flex w-[16.5rem] shrink-0 flex-col overflow-hidden rounded-2xl border border-slate-100 bg-slate-50/70"
+                  >
+                    {item.imageUrl && (
+                      <img
+                        src={item.imageUrl}
+                        alt={`${item.name} image`}
+                        className="aspect-[4/3] w-full bg-slate-100 object-cover"
+                        loading="lazy"
+                        onError={(event) => {
+                          event.currentTarget.style.display = 'none'
+                        }}
+                      />
+                    )}
+
+                    <div className="flex flex-1 flex-col p-4">
+                      <div className="flex-1">
+                        <h3 className="line-clamp-2 text-sm font-bold leading-snug text-slate-950">{item.name}</h3>
+                        {item.description && (
+                          <p className="mt-2 line-clamp-3 text-xs leading-5 text-slate-500">{item.description}</p>
+                        )}
+                      </div>
+
+                      <div className="mt-4 flex items-center justify-between gap-3">
+                        {item.price ? (
+                          <p className="min-w-0 truncate text-sm font-bold text-slate-900">{item.price}</p>
+                        ) : (
+                          <p className="min-w-0 truncate text-xs font-semibold uppercase tracking-wide text-slate-400">
+                            Service
+                          </p>
+                        )}
+                        {enquiryUrl && (
+                          <a
+                            href={enquiryUrl}
+                            target={enquiryUrl.startsWith('https://') ? '_blank' : undefined}
+                            rel={enquiryUrl.startsWith('https://') ? 'noopener noreferrer' : undefined}
+                            className="shrink-0 rounded-full bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-700 focus:ring-offset-2"
+                          >
+                            Enquire
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        </section>
+      )}
+
+      {galleryItems.length > 0 && (
+        <section aria-label="Gallery" className="overflow-hidden rounded-3xl border border-slate-100 bg-white py-6 shadow-sm">
+          <div className="px-5 sm:px-8">
+            <h2 className="text-lg font-bold tracking-tight text-slate-950">Gallery</h2>
+          </div>
+
+          <div className="mt-4 overflow-x-auto px-5 pb-1 sm:px-8">
+            <div className="flex gap-3">
+              {galleryItems.map((imageUrl, index) => (
+                <img
+                  key={imageUrl}
+                  src={imageUrl}
+                  alt={`${profile.businessName} gallery image ${index + 1}`}
+                  className="h-28 w-28 shrink-0 rounded-2xl border border-slate-100 bg-slate-50 object-cover sm:h-32 sm:w-32"
+                  loading="lazy"
+                  onError={(event) => {
+                    event.currentTarget.style.display = 'none'
+                  }}
+                />
+              ))}
+            </div>
+          </div>
         </section>
       )}
 
@@ -883,41 +1042,6 @@ function BusinessProfileDisplay({
               >
                 {label}
               </a>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {keywordItems.length > 0 && (
-        <section aria-label="Keywords" className={`${cardBase} px-6 py-6 sm:px-8`}>
-          <h2 className={sectionHeading}>Keywords</h2>
-          <ul className="flex flex-wrap gap-2">
-            {keywordItems.map((keyword) => (
-              <li
-                key={keyword}
-                className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700"
-              >
-                {keyword}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {galleryItems.length > 0 && (
-        <section aria-label="Gallery" className={`${cardBase} px-6 py-6 sm:px-8`}>
-          <h2 className={sectionHeading}>Gallery</h2>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {galleryItems.map((imageUrl, index) => (
-              <img
-                key={imageUrl}
-                src={imageUrl}
-                alt={`${profile.businessName} gallery image ${index + 1}`}
-                className="aspect-square w-full rounded-xl border border-gray-100 bg-gray-50 object-cover"
-                onError={(event) => {
-                  event.currentTarget.style.display = 'none'
-                }}
-              />
             ))}
           </div>
         </section>
