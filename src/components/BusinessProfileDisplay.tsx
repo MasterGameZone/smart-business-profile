@@ -1,11 +1,16 @@
 import type { ReactNode, RefObject } from 'react'
 import QRCode from 'react-qr-code'
-import type { JsonObject, SocialLinks } from '../types/businessProfile.ts'
+import type { BusinessProfileRow, JsonObject, SocialLinks } from '../types/businessProfile.ts'
 
 export interface BusinessProfileDisplayData {
   businessName: string
   ownerName: string
   businessCategory: string
+  established_year?: BusinessProfileRow['established_year']
+  years_of_experience?: BusinessProfileRow['years_of_experience']
+  products_menu_packages?: BusinessProfileRow['products_menu_packages']
+  faqs?: BusinessProfileRow['faqs']
+  qualifications?: BusinessProfileRow['qualifications']
   phoneNumber: string
   whatsappNumber: string
   email: string
