@@ -12,7 +12,7 @@ import type { BusinessProfileRow } from '../types/businessProfile.ts'
 import { ToastContainer, type ToastItem, type ToastType } from '../components/Toast.tsx'
 import BusinessProfileDisplay from '../components/BusinessProfileDisplay.tsx'
 import ReportProfileAction from '../components/ReportProfileAction.tsx'
-import ReviewSection from '../components/ReviewSection.tsx'
+import ReviewSection, { type ReviewSummary } from '../components/ReviewSection.tsx'
 import { svgContainerToBlob, triggerBlobDownload } from '../utils/qr.ts'
 import AppHeader from '../components/AppHeader.tsx'
 import { useAuth } from '../context/AuthContext.tsx'
@@ -53,6 +53,7 @@ function PublicBusinessProfilePage() {
   const [isFavoriteSaved, setIsFavoriteSaved] = useState(false)
   const [isFavoriteLoading, setIsFavoriteLoading] = useState(false)
   const [hasCheckedFavorite, setHasCheckedFavorite] = useState(false)
+  const [reviewSummary, setReviewSummary] = useState<ReviewSummary | null>(null)
   const qrSectionRef = useRef<HTMLElement>(null) as RefObject<HTMLElement>
   const qrCodeRef = useRef<HTMLDivElement>(null) as RefObject<HTMLDivElement>
   const isOwnerPreview = Boolean(user && profile?.owner_id && user.id === profile.owner_id)
@@ -91,6 +92,7 @@ function PublicBusinessProfilePage() {
       }
 
       setProfile(null)
+      setReviewSummary(null)
       setLoadState('loading')
 
       try {
@@ -320,6 +322,13 @@ function PublicBusinessProfilePage() {
                 businessName: profile.business_name,
                 ownerName: profile.owner_name,
                 businessCategory: profile.business_category,
+                established_year: profile.established_year,
+                years_of_experience: profile.years_of_experience,
+                products_menu_packages: profile.products_menu_packages,
+                faqs: profile.faqs,
+                qualifications: profile.qualifications,
+                ratingAverage: reviewSummary?.average ?? null,
+                ratingCount: reviewSummary?.count ?? null,
                 phoneNumber: profile.phone_number,
                 whatsappNumber: profile.whatsapp_number || '',
                 email: profile.email || '',
@@ -367,6 +376,7 @@ function PublicBusinessProfilePage() {
                     businessOwnerId={profile.owner_id}
                     userId={user?.id ?? null}
                     onLogin={() => navigate('/login', { state: { from: location } })}
+                    onSummaryChange={setReviewSummary}
                   />
                   <ReportProfileAction
                     businessProfileId={profile.id}

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { RefObject } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { useProfile } from '../context/ProfileContext.tsx'
+import { useProfile, type ProfileData } from '../context/ProfileContext.tsx'
 import { useAuth } from '../context/AuthContext.tsx'
 import { insertBusinessProfile } from '../lib/businessProfileService.ts'
 import { usePageMeta } from '../hooks/usePageMeta.ts'
@@ -9,6 +9,7 @@ import { ToastContainer, type ToastItem, type ToastType } from '../components/To
 import BusinessProfileDisplay from '../components/BusinessProfileDisplay.tsx'
 import { svgContainerToBlob, triggerBlobDownload } from '../utils/qr.ts'
 import AppHeader from '../components/AppHeader.tsx'
+import type { BusinessProfileRow } from '../types/businessProfile.ts'
 
 const CREATE_PROFILE_STEP_STORAGE_PREFIX = 'smart-business-profile:create-profile-step'
 
@@ -45,6 +46,70 @@ function parsePreviewKeywords(text: string): string[] {
   }
 
   return keywords
+}
+
+function parsePreviewOptionalYear(value: string): BusinessProfileRow['established_year'] {
+  const trimmed = value.trim()
+  if (!trimmed) return null
+
+  const year = Number(trimmed)
+  if (!Number.isInteger(year)) return null
+
+  return year
+}
+
+function parsePreviewOptionalNonNegativeInteger(value: string): BusinessProfileRow['years_of_experience'] {
+  const trimmed = value.trim()
+  if (!trimmed) return null
+
+  const numericValue = Number(trimmed)
+  if (!Number.isInteger(numericValue) || numericValue < 0) return null
+
+  return numericValue
+}
+
+function mapPreviewFaqs(faqs: ProfileData['faqs']): BusinessProfileRow['faqs'] {
+  return faqs
+    .map((item) => ({
+      question: item.question.trim(),
+      answer: item.answer.trim(),
+    }))
+    .filter((item) => item.question && item.answer)
+}
+
+function mapPreviewProductsMenuPackages(
+  productsMenuPackages: ProfileData['productsMenuPackages']
+): BusinessProfileRow['products_menu_packages'] {
+  return productsMenuPackages
+    .map((item) => ({
+      name: item.name.trim(),
+      description: item.description.trim(),
+      price: item.price.trim() || null,
+      imageUrl: item.imageUrl?.trim() || null,
+    }))
+    .filter((item) => item.name && item.price)
+}
+
+function mapPreviewQualifications(qualifications: ProfileData['qualifications']): BusinessProfileRow['qualifications'] {
+  return qualifications
+    .map((item) => ({
+      title: item.title.trim(),
+      issuingOrganization: item.issuingOrganization.trim() || null,
+      year: parsePreviewOptionalYear(item.year),
+      description: item.description.trim() || null,
+      documentFileName: item.documentFilePath.trim() ? item.documentFileName.trim() || null : null,
+      documentFilePath: item.documentFilePath.trim() || null,
+      documentMimeType: item.documentFilePath.trim() ? item.documentMimeType.trim() || null : null,
+    }))
+    .filter(
+      (item) =>
+        item.title ||
+        item.issuingOrganization ||
+        item.year !== null ||
+        item.description ||
+        item.documentFilePath
+    )
+    .filter((item) => item.title)
 }
 
 function ProfilePreviewPage() {
@@ -120,6 +185,23 @@ function ProfilePreviewPage() {
   const profileUrl = window.location.href
   const previewServices = useMemo(() => parsePreviewServices(profileData.servicesText), [profileData.servicesText])
   const previewKeywords = useMemo(() => parsePreviewKeywords(profileData.keywordsText), [profileData.keywordsText])
+  const previewEstablishedYear = useMemo(
+    () => parsePreviewOptionalYear(profileData.establishedYear),
+    [profileData.establishedYear]
+  )
+  const previewYearsOfExperience = useMemo(
+    () => parsePreviewOptionalNonNegativeInteger(profileData.yearsOfExperience),
+    [profileData.yearsOfExperience]
+  )
+  const previewFaqs = useMemo(() => mapPreviewFaqs(profileData.faqs), [profileData.faqs])
+  const previewProductsMenuPackages = useMemo(
+    () => mapPreviewProductsMenuPackages(profileData.productsMenuPackages),
+    [profileData.productsMenuPackages]
+  )
+  const previewQualifications = useMemo(
+    () => mapPreviewQualifications(profileData.qualifications),
+    [profileData.qualifications]
+  )
   const galleryImageUrls = useMemo(
     () => [...profileData.existingGalleryImageUrls, ...selectedGalleryPreviewUrls],
     [profileData.existingGalleryImageUrls, selectedGalleryPreviewUrls]
@@ -276,6 +358,11 @@ function ProfilePreviewPage() {
               businessName: profileData.businessName,
               ownerName: profileData.ownerName,
               businessCategory: profileData.businessCategory,
+              established_year: previewEstablishedYear,
+              years_of_experience: previewYearsOfExperience,
+              products_menu_packages: previewProductsMenuPackages,
+              faqs: previewFaqs,
+              qualifications: previewQualifications,
               phoneNumber: profileData.phoneNumber,
               whatsappNumber: profileData.whatsappNumber,
               email: profileData.email,
