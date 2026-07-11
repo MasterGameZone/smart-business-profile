@@ -24,6 +24,36 @@ import {
 } from './storageService'
 
 const MAX_GALLERY_IMAGES = 6
+let supportsBusinessSubcategoriesColumnCache: boolean | null = null
+
+async function supportsBusinessSubcategoriesColumn(): Promise<boolean> {
+  if (supportsBusinessSubcategoriesColumnCache !== null) {
+    return supportsBusinessSubcategoriesColumnCache
+  }
+
+  const { error } = await supabase
+    .from('business_profiles')
+    .select('business_subcategories')
+    .limit(1)
+
+  if (!error) {
+    supportsBusinessSubcategoriesColumnCache = true
+    return true
+  }
+
+  if (
+    error.code === 'PGRST204' ||
+    error.message.includes("'business_subcategories' column") ||
+    error.message.includes('business_subcategories')
+  ) {
+    supportsBusinessSubcategoriesColumnCache = false
+    return false
+  }
+
+  console.warn('Could not verify business_subcategories schema support:', error)
+  supportsBusinessSubcategoriesColumnCache = false
+  return false
+}
 
 function parseServices(text: string): string[] {
   return text
@@ -157,12 +187,11 @@ function mapSocialLinks(data: ProfileData): Record<string, string> {
   }, {})
 }
 
-function mapProfileDataToFields(data: ProfileData) {
+function mapProfileDataToBaseFields(data: ProfileData): Omit<BusinessProfileInsert, 'slug' | 'business_subcategories'> {
   return {
     business_name: data.businessName.trim(),
     owner_name: data.ownerName.trim(),
     business_category: data.businessCategory,
-    business_subcategories: data.businessSubcategories.length > 0 ? data.businessSubcategories : null,
     established_year: parseOptionalYear(data.establishedYear),
     years_of_experience: parseOptionalNonNegativeInteger(data.yearsOfExperience),
     highlights: parseHighlights(data.highlights),
@@ -185,6 +214,16 @@ function mapProfileDataToFields(data: ProfileData) {
     gallery_images: data.existingGalleryImageUrls,
     is_public: data.isPublic,
   }
+}
+
+async function mapProfileDataToFields(data: ProfileData): Promise<Omit<BusinessProfileInsert, 'slug'>> {
+  const fields: Omit<BusinessProfileInsert, 'slug'> = mapProfileDataToBaseFields(data)
+
+  if (await supportsBusinessSubcategoriesColumn()) {
+    fields.business_subcategories = data.businessSubcategories.length > 0 ? data.businessSubcategories : null
+  }
+
+  return fields
 }
 
 function validateImageBeforeProfileWrite(file: File | null): void {
@@ -378,11 +417,11 @@ async function uploadPendingProfileImages(
   return updates
 }
 
-export function mapProfileDataToInsert(
+export async function mapProfileDataToInsert(
   data: ProfileData
-): Omit<BusinessProfileInsert, 'slug'> {
+): Promise<Omit<BusinessProfileInsert, 'slug'>> {
   return {
-    ...mapProfileDataToFields(data),
+    ...(await mapProfileDataToFields(data)),
     logo_url: null,
   }
 }
@@ -428,7 +467,7 @@ export async function insertBusinessProfile(
   const slug = await generateUniqueSlug(data.businessName)
 
   const payload: BusinessProfileInsert = {
-    ...mapProfileDataToInsert(data),
+    ...(await mapProfileDataToInsert(data)),
     slug,
     owner_id: user.id,
   }
@@ -486,7 +525,7 @@ export async function updateBusinessProfile(
   id: string,
   data: ProfileData
 ): Promise<BusinessProfileRow> {
-  const payload: BusinessProfileUpdate = mapProfileDataToFields(data)
+  const payload: BusinessProfileUpdate = await mapProfileDataToFields(data)
 
   validateImagesBeforeProfileWrite(data)
 

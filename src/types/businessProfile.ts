@@ -43,7 +43,7 @@ export interface BusinessProfileRow {
   business_name: string
   owner_name: string
   business_category: string
-  business_subcategories: string[] | null
+  business_subcategories?: string[] | null
   established_year: number | null
   years_of_experience: number | null
   highlights: string[] | null

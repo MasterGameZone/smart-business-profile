@@ -1369,7 +1369,10 @@ function CreateProfilePage() {
         businessName: updated.business_name,
         ownerName: updated.owner_name,
         businessCategory: updated.business_category,
-        businessSubcategories: normalizeSubcategoryValues(updated.business_subcategories),
+        businessSubcategories:
+          updated.business_subcategories === undefined
+            ? profileData.businessSubcategories
+            : normalizeSubcategoryValues(updated.business_subcategories),
         establishedYear: profileData.establishedYear,
         yearsOfExperience: profileData.yearsOfExperience,
         highlights: profileData.highlights,
