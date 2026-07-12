@@ -734,10 +734,6 @@ function BusinessProfileDisplay({
     }
   }, [isFaqsExpanded])
 
-  const scrollToQR = () => {
-    qrSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
-
   const handleHideFullProfile = () => {
     setIsExpanded(false)
     requestAnimationFrame(() => {
@@ -981,91 +977,6 @@ function BusinessProfileDisplay({
       >
         <div className="overflow-hidden">
           <div className="space-y-4 pt-4">
-      <article className={cardBase}>
-        <div className="relative h-36 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700">
-          {coverBannerUrl ? (
-            <img
-              src={coverBannerUrl}
-              alt={`${profile.businessName} cover banner`}
-              className="h-full w-full object-cover"
-              onError={(event) => {
-                event.currentTarget.style.display = 'none'
-              }}
-            />
-          ) : (
-            <div
-              aria-hidden="true"
-              className="absolute inset-0 opacity-10"
-              style={{
-                backgroundImage:
-                  'radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)',
-                backgroundSize: '40px 40px',
-              }}
-            />
-          )}
-        </div>
-
-        <div className="px-6 pb-6 sm:px-8">
-          <div className="-mt-12 mb-4 flex items-end justify-between">
-            <div
-              className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-white shadow-lg ring-4 ring-blue-50"
-              aria-label={displayLogoUrl ? 'Business logo' : `${businessInitials} placeholder`}
-            >
-              {displayLogoUrl ? (
-                <img
-                  src={displayLogoUrl}
-                  alt={`${profile.businessName} logo`}
-                  className="h-full w-full object-cover"
-                  onError={() => setLogoFailed(true)}
-                />
-              ) : (
-                <span className="select-none text-3xl font-bold text-blue-600">{businessInitials}</span>
-              )}
-            </div>
-
-            <div className="mt-14 flex items-center gap-2">
-              <button
-                type="button"
-                onClick={scrollToQR}
-                aria-label="View QR Code"
-                className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-600 transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 active:scale-95"
-              >
-                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 3.5a.5.5 0 11-1 0 .5.5 0 011 0z" />
-                </svg>
-                QR Code
-              </button>
-              <button
-                type="button"
-                onClick={onShare}
-                aria-label="Share profile link"
-                className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 active:scale-95"
-              >
-                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                </svg>
-                Share
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 sm:text-2xl">
-              {profile.businessName}
-            </h1>
-            {displayTagline && (
-              <p className="mt-2 text-sm leading-relaxed text-gray-600">{displayTagline}</p>
-            )}
-            {profile.businessCategory && (
-              <span className="mt-1.5 inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700">
-                {profile.businessCategory}
-              </span>
-            )}
-            {profile.ownerName && <p className="mt-1.5 text-sm text-gray-500">{profile.ownerName}</p>}
-          </div>
-        </div>
-      </article>
-
       {hasContactSection && (
         <section aria-label="Contact Information" className="overflow-hidden rounded-3xl border border-slate-100 bg-white px-5 py-6 shadow-sm sm:px-8">
           <h2 className="text-lg font-bold tracking-tight text-slate-950">Contact Information</h2>
