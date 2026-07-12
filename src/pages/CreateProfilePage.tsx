@@ -2757,19 +2757,22 @@ function CreateProfilePage() {
                   accept={imageAccept}
                   onChange={handleCoverBannerChange}
                   aria-invalid={!!errors.coverBanner}
-                  aria-describedby={errors.coverBanner ? 'coverBanner-error' : 'coverBanner-help'}
+                  aria-describedby={errors.coverBanner ? 'coverBanner-error' : 'coverBanner-help coverBanner-recommendation'}
                   className={`${fileInputBase} ${errors.coverBanner ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
                 />
                 {fieldError('coverBanner')}
                 <p id="coverBanner-help" className="mt-2 text-xs text-slate-400">
                   Upload a wide banner image for the top of your public business profile. JPG, PNG, or WebP only. Maximum file size is 5 MB.
                 </p>
+                <p id="coverBanner-recommendation" className="mt-1 text-xs text-slate-400">
+                  Recommended size: 1600 x 600 px (16:6 ratio). Keep important content near the center.
+                </p>
                 {coverBannerPreviewUrl && (
                   <div className="mt-4">
                     <img
                       src={coverBannerPreviewUrl}
                       alt="Selected cover banner preview"
-                      className="aspect-[3/1] w-full rounded-2xl border border-slate-200 object-cover bg-slate-50"
+                      className="aspect-[16/6] w-full rounded-2xl border border-slate-200 bg-slate-50 object-cover"
                     />
                     <div className="mt-3 flex items-center justify-between gap-3">
                       <p className="truncate text-xs text-slate-500">

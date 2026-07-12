@@ -39,6 +39,31 @@ export interface StoragePathResult {
   path: string
 }
 
+export async function getBusinessDocumentViewUrl(path: string): Promise<string | null> {
+  const trimmedPath = path.trim()
+  if (!trimmedPath) return null
+
+  try {
+    const url = new URL(trimmedPath)
+    if (['http:', 'https:', 'blob:'].includes(url.protocol)) {
+      return trimmedPath
+    }
+  } catch {
+    // Continue to signed-url resolution for storage paths.
+  }
+
+  const { data, error } = await supabase.storage
+    .from(BUSINESS_DOCUMENTS_BUCKET)
+    .createSignedUrl(trimmedPath, 60)
+
+  if (error) {
+    console.error('Failed to create signed URL for business document:', error)
+    return null
+  }
+
+  return data?.signedUrl ?? null
+}
+
 export function validateImageFile(file: File): ImageValidationResult {
   if (!ALLOWED_IMAGE_TYPES.includes(file.type as (typeof ALLOWED_IMAGE_TYPES)[number])) {
     return {

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
 import QRCode from 'react-qr-code'
+import { getBusinessDocumentViewUrl } from '../lib/storageService.ts'
 import type { BusinessProfileRow, JsonObject, SocialLinks } from '../types/businessProfile.ts'
 
 export interface BusinessProfileDisplayData {
@@ -162,7 +163,7 @@ interface WorkingHourRow {
 interface SocialLinkItem {
   label: string
   url: string
-  platform: string
+  platform: 'instagram' | 'facebook' | 'youtube' | 'linkedin' | 'x' | 'pinterest' | 'tiktok' | 'external'
 }
 
 type ContactInfoIconName = 'phone' | 'whatsapp' | 'email' | 'website'
@@ -179,10 +180,10 @@ interface ContactInfoItem {
 interface QualificationDisplayItem {
   key: string
   title: string
-  issuingOrganization: string
   year: string
-  description: string
-  documentTypeLabel: string
+  documentPath: string
+  hasAttachedDocument: boolean
+  isImageDocument: boolean
 }
 
 interface FaqDisplayItem {
@@ -229,18 +230,6 @@ function normalizeWorkingHours(value: JsonObject | null | undefined): WorkingHou
   return hours
 }
 
-function getDocumentTypeLabel(fileName: string, mimeType: string): string {
-  const normalizedMimeType = mimeType.toLowerCase()
-  if (normalizedMimeType.includes('pdf')) return 'PDF'
-  if (normalizedMimeType.includes('image')) return 'Image'
-  if (normalizedMimeType.includes('word') || normalizedMimeType.includes('document')) return 'Document'
-
-  const extension = fileName.split('.').pop()?.trim()
-  if (extension && /^[a-z0-9]{2,5}$/i.test(extension)) return extension.toUpperCase()
-
-  return fileName || mimeType ? 'File' : ''
-}
-
 function normalizeQualifications(
   value: BusinessProfileDisplayData['qualifications']
 ): QualificationDisplayItem[] {
@@ -252,20 +241,18 @@ function normalizeQualifications(
     const title = trimText(item.title)
     if (!title) return items
 
-    const issuingOrganization = trimText(item.issuingOrganization)
-    const description = trimText(item.description)
     const year = typeof item.year === 'number' && Number.isFinite(item.year) ? String(item.year) : ''
-    const documentFileName = trimText(item.documentFileName)
+    const documentFilePath = trimText(item.documentFilePath)
     const documentMimeType = trimText(item.documentMimeType)
-    const documentTypeLabel = getDocumentTypeLabel(documentFileName, documentMimeType)
+    const isImageDocument = documentMimeType.toLowerCase().includes('image')
 
     items.push({
-      key: `qualification-${title}-${issuingOrganization || 'issuer'}-${year || 'no-year'}-${index}`,
+      key: `qualification-${title}-${year || 'no-year'}-${index}`,
       title,
-      issuingOrganization,
       year,
-      description,
-      documentTypeLabel,
+      documentPath: documentFilePath,
+      hasAttachedDocument: Boolean(documentFilePath),
+      isImageDocument,
     })
 
     return items
@@ -500,25 +487,71 @@ async function copyTextToClipboard(value: string): Promise<boolean> {
   }
 }
 
-function toSocialPlatformLabel(value: string): string {
-  const trimmed = trimText(value)
-  if (!trimmed) return ''
+function getSocialLinkDetails(url: string): Pick<SocialLinkItem, 'label' | 'platform'> {
+  let hostname = ''
 
-  switch (trimmed.toLowerCase()) {
-    case 'facebook':
-      return 'Facebook'
-    case 'instagram':
-      return 'Instagram'
-    case 'linkedin':
-      return 'LinkedIn'
-    case 'youtube':
-      return 'YouTube'
-    case 'x':
-    case 'twitter':
-    case 'x / twitter':
-      return 'X / Twitter'
-    default:
-      return trimmed
+  try {
+    hostname = new URL(url).hostname.toLowerCase()
+  } catch {
+    return {
+      label: 'External Link',
+      platform: 'external',
+    }
+  }
+
+  const normalizedHost = hostname.startsWith('www.') ? hostname.slice(4) : hostname
+
+  if (normalizedHost === 'instagram.com' || normalizedHost.endsWith('.instagram.com')) {
+    return { label: 'Instagram', platform: 'instagram' }
+  }
+
+  if (
+    normalizedHost === 'facebook.com' ||
+    normalizedHost.endsWith('.facebook.com') ||
+    normalizedHost === 'fb.com' ||
+    normalizedHost.endsWith('.fb.com')
+  ) {
+    return { label: 'Facebook', platform: 'facebook' }
+  }
+
+  if (
+    normalizedHost === 'youtube.com' ||
+    normalizedHost.endsWith('.youtube.com') ||
+    normalizedHost === 'youtu.be' ||
+    normalizedHost.endsWith('.youtu.be')
+  ) {
+    return { label: 'YouTube', platform: 'youtube' }
+  }
+
+  if (normalizedHost === 'linkedin.com' || normalizedHost.endsWith('.linkedin.com')) {
+    return { label: 'LinkedIn', platform: 'linkedin' }
+  }
+
+  if (
+    normalizedHost === 'x.com' ||
+    normalizedHost.endsWith('.x.com') ||
+    normalizedHost === 'twitter.com' ||
+    normalizedHost.endsWith('.twitter.com')
+  ) {
+    return { label: 'X', platform: 'x' }
+  }
+
+  if (
+    normalizedHost === 'pinterest.com' ||
+    normalizedHost.endsWith('.pinterest.com') ||
+    normalizedHost === 'pin.it' ||
+    normalizedHost.endsWith('.pin.it')
+  ) {
+    return { label: 'Pinterest', platform: 'pinterest' }
+  }
+
+  if (normalizedHost === 'tiktok.com' || normalizedHost.endsWith('.tiktok.com')) {
+    return { label: 'TikTok', platform: 'tiktok' }
+  }
+
+  return {
+    label: 'External Link',
+    platform: 'external',
   }
 }
 
@@ -527,22 +560,31 @@ function normalizeSocialLinks(value: SocialLinks | null | undefined): SocialLink
 
   const links: SocialLinkItem[] = []
 
-  for (const [key, entryValue] of Object.entries(value)) {
-    const label = toSocialPlatformLabel(key)
+  for (const entryValue of Object.values(value)) {
     const url = typeof entryValue === 'string' ? toValidUrl(entryValue) : null
 
-    if (label && url) {
-      links.push({ label, url, platform: key.toLowerCase() })
+    if (url) {
+      const { label, platform } = getSocialLinkDetails(url)
+      links.push({ label, url, platform })
     }
   }
 
-  return links
+  return links.slice(0, 4)
+}
+
+function CategoryIcon() {
+  return (
+    <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3.75 9.75L12 4.5l8.25 5.25v8.75a1 1 0 01-1 1H4.75a1 1 0 01-1-1V9.75z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8.25 19.5v-4.25a1 1 0 011-1h5.5a1 1 0 011 1v4.25M8.5 10.5h.01M12 10.5h.01M15.5 10.5h.01" />
+    </svg>
+  )
 }
 
 function ContactInfoIcon({ icon }: { icon: ContactInfoIconName }) {
   if (icon === 'whatsapp') {
     return (
-      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <svg className="h-[18px] w-[18px]" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
       </svg>
     )
@@ -571,20 +613,38 @@ function ContactInfoIcon({ icon }: { icon: ContactInfoIconName }) {
   )
 }
 
-function SocialLinkIcon({ platform }: { platform: string }) {
-  const normalized = platform.toLowerCase()
+function getContactIconTone(icon: ContactInfoIconName): string {
+  if (icon === 'whatsapp') return 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100'
+  if (icon === 'email') return 'bg-violet-50 text-violet-600 ring-1 ring-violet-100'
+  if (icon === 'website') return 'bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100'
 
-  if (normalized === 'facebook') {
+  return 'bg-blue-50 text-blue-600 ring-1 ring-blue-100'
+}
+
+function getSocialIconTone(platform: SocialLinkItem['platform']): string {
+  if (platform === 'instagram') return 'text-pink-600'
+  if (platform === 'facebook') return 'text-blue-600'
+  if (platform === 'youtube') return 'text-red-600'
+  if (platform === 'linkedin') return 'text-sky-700'
+  if (platform === 'x') return 'text-slate-900'
+  if (platform === 'pinterest') return 'text-rose-600'
+  if (platform === 'tiktok') return 'text-cyan-600'
+
+  return 'text-violet-600'
+}
+
+function SocialLinkIcon({ platform }: { platform: SocialLinkItem['platform'] }) {
+  if (platform === 'facebook') {
     return (
-      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <svg className="h-[18px] w-[18px]" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M14 8h2.5V4.2A23.7 23.7 0 0012.86 4C9.25 4 6.78 6.2 6.78 10.25V14H3v4.25h3.78V24h4.65v-5.75h3.64L15.65 14h-4.22v-3.33C11.43 9.44 11.78 8 14 8z" />
       </svg>
     )
   }
 
-  if (normalized === 'instagram') {
+  if (platform === 'instagram') {
     return (
-      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <rect width="16" height="16" x="4" y="4" rx="5" strokeWidth={2} />
         <path strokeLinecap="round" strokeWidth={2} d="M16.5 7.5h.01" />
         <circle cx="12" cy="12" r="3.5" strokeWidth={2} />
@@ -592,32 +652,48 @@ function SocialLinkIcon({ platform }: { platform: string }) {
     )
   }
 
-  if (normalized === 'linkedin') {
+  if (platform === 'linkedin') {
     return (
-      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <svg className="h-[18px] w-[18px]" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M6.94 8.88H3.12V21h3.82V8.88zM5.03 3A2.2 2.2 0 002.8 5.2a2.2 2.2 0 002.18 2.21h.03A2.2 2.2 0 007.25 5.2 2.2 2.2 0 005.03 3zM21.2 14.05c0-3.7-1.98-5.42-4.62-5.42a3.98 3.98 0 00-3.62 2h.02V8.88H9.16c.05 1.14 0 12.12 0 12.12h3.82v-6.77c0-.36.03-.72.13-.98.28-.72.93-1.47 2.02-1.47 1.43 0 2 1.1 2 2.68V21h3.82l.25-6.95z" />
       </svg>
     )
   }
 
-  if (normalized === 'youtube') {
+  if (platform === 'youtube') {
     return (
-      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <svg className="h-[18px] w-[18px]" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M21.58 7.2a2.75 2.75 0 00-1.94-1.95C17.93 4.8 12 4.8 12 4.8s-5.93 0-7.64.45A2.75 2.75 0 002.42 7.2C2 8.92 2 12.5 2 12.5s0 3.58.42 5.3a2.75 2.75 0 001.94 1.95c1.71.45 7.64.45 7.64.45s5.93 0 7.64-.45a2.75 2.75 0 001.94-1.95c.42-1.72.42-5.3.42-5.3s0-3.58-.42-5.3zM10 15.7V9.3l5.2 3.2L10 15.7z" />
       </svg>
     )
   }
 
-  if (normalized === 'x' || normalized === 'twitter' || normalized === 'x / twitter') {
+  if (platform === 'x') {
     return (
-      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <svg className="h-[18px] w-[18px]" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M13.8 10.47L21.24 2h-1.76l-6.46 7.35L7.86 2H1.91l7.8 11.12L1.9 22h1.76l6.83-7.77L15.94 22h5.95l-8.09-11.53zm-2.42 2.75l-.79-1.1-6.29-8.8h2.72l5.08 7.1.79 1.1 6.6 9.24h-2.72l-5.39-7.54z" />
       </svg>
     )
   }
 
+  if (platform === 'pinterest') {
+    return (
+      <svg className="h-[18px] w-[18px]" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12.07 2C6.62 2 4 5.9 4 10.15c0 2.47.94 4.67 2.95 5.49.33.14.62.01.72-.36.07-.25.22-.88.29-1.14.1-.37.06-.5-.21-.82-.58-.68-.96-1.56-.96-2.82 0-3.64 2.72-6.9 7.08-6.9 3.86 0 5.98 2.36 5.98 5.51 0 4.14-1.83 7.64-4.55 7.64-1.5 0-2.63-1.24-2.27-2.77.43-1.82 1.27-3.78 1.27-5.09 0-1.17-.63-2.15-1.93-2.15-1.53 0-2.76 1.59-2.76 3.71 0 1.35.46 2.27.46 2.27l-1.85 7.82c-.55 2.32-.08 5.16-.04 5.45.03.17.24.21.33.08.12-.16 1.69-2.1 2.22-4.04.15-.55.86-3.39.86-3.39.43.82 1.68 1.55 3.01 1.55 3.96 0 6.64-3.61 6.64-8.44C22 5.4 17.84 2 12.07 2z" />
+      </svg>
+    )
+  }
+
+  if (platform === 'tiktok') {
+    return (
+      <svg className="h-[18px] w-[18px]" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M15.86 2H12.8v12.35a2.5 2.5 0 11-2.16-2.47V8.77a5.6 5.6 0 104.87 5.58V7.92c1.2.86 2.67 1.36 4.2 1.38V6.24a4.82 4.82 0 01-2.55-.74A4.82 4.82 0 0115.86 2z" />
+      </svg>
+    )
+  }
+
   return (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.5 10.5L21 3m0 0h-5.5M21 3v5.5M10 4H7a3 3 0 00-3 3v10a3 3 0 003 3h10a3 3 0 003-3v-3" />
     </svg>
   )
@@ -640,6 +716,8 @@ function BusinessProfileDisplay({
   const [openFaqKey, setOpenFaqKey] = useState<string | null>(null)
   const [addressCopied, setAddressCopied] = useState(false)
   const [logoFailed, setLogoFailed] = useState(false)
+  const [qualificationPreviewUrls, setQualificationPreviewUrls] = useState<Record<string, string>>({})
+  const [failedQualificationPreviewKeys, setFailedQualificationPreviewKeys] = useState<Set<string>>(() => new Set())
   const compactCardRef = useRef<HTMLElement>(null)
   const copyAddressTimeoutRef = useRef<number | null>(null)
   const displayPhone = trimText(profile.phoneNumber)
@@ -663,6 +741,7 @@ function BusinessProfileDisplay({
     .map(toDisplayImageUrl)
     .filter((url): url is string => Boolean(url))
   const qualificationItems = normalizeQualifications(profile.qualifications)
+  const attachedQualificationItems = qualificationItems.filter((item) => item.hasAttachedDocument)
   const faqItems = normalizeFaqs(profile.faqs)
   const compactLocation = formatCompactLocation(displayAddress)
   const workingStatus = getCompactWorkingStatus(profile.workingHours)
@@ -734,6 +813,42 @@ function BusinessProfileDisplay({
     }
   }, [isFaqsExpanded])
 
+  useEffect(() => {
+    let isCurrent = true
+    const imageQualifications = qualificationItems.filter((item) => item.hasAttachedDocument && item.isImageDocument)
+
+    setFailedQualificationPreviewKeys(new Set())
+    if (imageQualifications.length === 0) {
+      setQualificationPreviewUrls({})
+      return () => {
+        isCurrent = false
+      }
+    }
+
+    void Promise.all(
+      imageQualifications.map(async (item) => {
+        const previewUrl = await getBusinessDocumentViewUrl(item.documentPath)
+        return previewUrl ? [item.key, previewUrl] as const : null
+      })
+    ).then((entries) => {
+      if (!isCurrent) return
+
+      setQualificationPreviewUrls(
+        entries.reduce<Record<string, string>>((urls, entry) => {
+          if (entry) {
+            urls[entry[0]] = entry[1]
+          }
+
+          return urls
+        }, {})
+      )
+    })
+
+    return () => {
+      isCurrent = false
+    }
+  }, [profile.qualifications])
+
   const handleHideFullProfile = () => {
     setIsExpanded(false)
     requestAnimationFrame(() => {
@@ -762,18 +877,42 @@ function BusinessProfileDisplay({
     setIsFaqsExpanded((current) => !current)
   }
 
+  const handleOpenGalleryImage = (imageUrl: string) => {
+    window.open(imageUrl, '_blank', 'noopener,noreferrer')
+  }
+
+  const handleViewAllGalleryImages = () => {
+    const firstGalleryImage = galleryItems[0]
+    if (!firstGalleryImage) return
+
+    handleOpenGalleryImage(firstGalleryImage)
+  }
+
+  const handleOpenQualificationDocument = async (documentPath: string) => {
+    const viewUrl = await getBusinessDocumentViewUrl(documentPath)
+    if (!viewUrl) return
+
+    window.open(viewUrl, '_blank', 'noopener,noreferrer')
+  }
+
+  const handleViewAllQualifications = () => {
+    attachedQualificationItems.forEach((item) => {
+      void handleOpenQualificationDocument(item.documentPath)
+    })
+  }
+
   return (
     <div className="space-y-4">
       <article
         ref={compactCardRef}
-        className="overflow-hidden rounded-[1.75rem] border border-white/80 bg-white shadow-[0_24px_70px_-36px_rgba(15,23,42,0.55)]"
+        className="mx-auto w-full max-w-[45rem] overflow-hidden rounded-[1.5rem] border border-white/80 bg-white shadow-[0_24px_70px_-36px_rgba(15,23,42,0.55)] sm:rounded-[1.75rem]"
       >
-        <div className="relative h-40 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700">
+        <div className="relative aspect-[16/6] w-full bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700">
           {coverBannerUrl ? (
             <img
               src={coverBannerUrl}
               alt={`${profile.businessName} cover banner`}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover object-center"
               onError={(event) => {
                 event.currentTarget.style.display = 'none'
               }}
@@ -792,10 +931,10 @@ function BusinessProfileDisplay({
           <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/25 to-transparent" />
         </div>
 
-        <div className="px-4 pb-4 sm:px-5">
-          <div className="-mt-11 flex items-end justify-between gap-3">
+        <div className="px-3.5 pb-3.5 sm:px-5 sm:pb-4">
+          <div className="-mt-10 flex items-end justify-between gap-3 sm:-mt-11">
             <div
-              className="relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-white shadow-xl ring-1 ring-slate-100"
+              className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-white shadow-xl ring-1 ring-slate-100 sm:h-24 sm:w-24"
               aria-label={displayLogoUrl ? 'Business logo' : `${businessInitials} logo placeholder`}
             >
               {displayLogoUrl ? (
@@ -806,13 +945,13 @@ function BusinessProfileDisplay({
                   onError={() => setLogoFailed(true)}
                 />
               ) : (
-                <span className="select-none text-2xl font-bold text-blue-700">{businessInitials}</span>
+                <span className="select-none text-xl font-bold text-blue-700 sm:text-2xl">{businessInitials}</span>
               )}
             </div>
           </div>
 
-          <div className="mt-3 flex min-w-0 items-center gap-2">
-            <h1 className="min-w-0 flex-1 truncate text-2xl font-bold leading-tight tracking-tight text-slate-950">
+          <div className="mt-2.5 flex min-w-0 items-center gap-2">
+            <h1 className="min-w-0 flex-1 truncate text-[1.35rem] font-bold leading-tight tracking-tight text-slate-950 sm:text-2xl">
               {profile.businessName}
             </h1>
             {hasRating && (
@@ -829,15 +968,16 @@ function BusinessProfileDisplay({
           </div>
 
           {profile.businessCategory && (
-            <div className="mt-2">
-              <span className="inline-flex max-w-full items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">
-                <span className="truncate">{profile.businessCategory}</span>
+            <div className="mt-2 flex min-w-0 items-center gap-1.5 text-xs font-medium text-blue-700 sm:text-[13px]">
+              <span className="shrink-0" aria-hidden="true">
+                <CategoryIcon />
               </span>
+              <span className="truncate">{profile.businessCategory}</span>
             </div>
           )}
 
           {displayTagline && (
-            <p className="mt-2 text-sm italic leading-relaxed text-slate-500">{displayTagline}</p>
+            <p className="mt-1.5 text-sm italic leading-relaxed text-slate-500">{displayTagline}</p>
           )}
 
           {experienceText && (
@@ -849,7 +989,7 @@ function BusinessProfileDisplay({
             </p>
           )}
 
-          <div className="mt-3 flex min-w-0 items-center overflow-hidden whitespace-nowrap rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2 text-[11px] text-slate-600 sm:text-xs">
+          <div className="mt-3 flex min-w-0 items-center overflow-hidden whitespace-nowrap rounded-[1.15rem] border border-slate-100 bg-slate-50 px-3 py-2 text-[11px] text-slate-600 sm:rounded-2xl sm:text-xs">
             <span className="flex min-w-0 flex-1 items-center gap-1.5">
               <svg className="h-3.5 w-3.5 shrink-0 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -887,18 +1027,18 @@ function BusinessProfileDisplay({
             )}
           </div>
 
-          <div className="mt-4 grid grid-cols-4 gap-2" role="group" aria-label="Primary profile actions">
+          <div className="mt-3 grid grid-cols-4 gap-1.5 sm:mt-3.5 sm:gap-2" role="group" aria-label="Primary profile actions">
             <a
               href={displayPhone ? `tel:${displayPhone}` : undefined}
               aria-label="Call business"
               aria-disabled={!displayPhone}
-              className={`flex min-w-0 flex-col items-center justify-center gap-1.5 rounded-2xl border px-1 py-3 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+              className={`flex min-h-[4.5rem] min-w-0 flex-col items-center justify-center gap-1 rounded-[0.9rem] border px-1 py-2.5 text-[11px] font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:min-h-[4.875rem] sm:gap-1.5 sm:rounded-[0.95rem] sm:py-3 sm:text-[13px] ${
                 displayPhone
                   ? 'border-blue-100 bg-blue-50 text-blue-700 hover:bg-blue-100 active:scale-95'
                   : 'pointer-events-none cursor-not-allowed border-slate-100 bg-slate-50 text-slate-300'
               }`}
             >
-              <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <svg className="h-5 w-5 shrink-0 sm:h-[1.35rem] sm:w-[1.35rem]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
               </svg>
               <span className="max-w-full truncate">Call</span>
@@ -910,13 +1050,13 @@ function BusinessProfileDisplay({
               rel="noopener noreferrer"
               aria-label="Open WhatsApp"
               aria-disabled={!whatsappUrl}
-              className={`flex min-w-0 flex-col items-center justify-center gap-1.5 rounded-2xl border px-1 py-3 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+              className={`flex min-h-[4.5rem] min-w-0 flex-col items-center justify-center gap-1 rounded-[0.9rem] border px-1 py-2.5 text-[11px] font-semibold transition focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:min-h-[4.875rem] sm:gap-1.5 sm:rounded-[0.95rem] sm:py-3 sm:text-[13px] ${
                 whatsappUrl
                   ? 'border-emerald-100 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 active:scale-95'
                   : 'pointer-events-none cursor-not-allowed border-slate-100 bg-slate-50 text-slate-300'
               }`}
             >
-              <svg className="h-5 w-5 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <svg className="h-5 w-5 shrink-0 sm:h-[1.35rem] sm:w-[1.35rem]" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
               </svg>
               <span className="max-w-full truncate">WhatsApp</span>
@@ -928,13 +1068,13 @@ function BusinessProfileDisplay({
               rel="noopener noreferrer"
               aria-label="Open directions"
               aria-disabled={!directionsUrl}
-              className={`flex min-w-0 flex-col items-center justify-center gap-1.5 rounded-2xl border px-1 py-3 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+              className={`flex min-h-[4.5rem] min-w-0 flex-col items-center justify-center gap-1 rounded-[0.9rem] border px-1 py-2.5 text-[11px] font-semibold transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:min-h-[4.875rem] sm:gap-1.5 sm:rounded-[0.95rem] sm:py-3 sm:text-[13px] ${
                 directionsUrl
                   ? 'border-indigo-100 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 active:scale-95'
                   : 'pointer-events-none cursor-not-allowed border-slate-100 bg-slate-50 text-slate-300'
               }`}
             >
-              <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <svg className="h-5 w-5 shrink-0 sm:h-[1.35rem] sm:w-[1.35rem]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 21l7-18-18 7 8 4 3 7z" />
               </svg>
               <span className="max-w-full truncate">Directions</span>
@@ -944,9 +1084,9 @@ function BusinessProfileDisplay({
               type="button"
               onClick={onShare}
               aria-label="Share profile link"
-              className="flex min-w-0 flex-col items-center justify-center gap-1.5 rounded-2xl border border-amber-100 bg-amber-50 px-1 py-3 text-xs font-semibold text-amber-700 transition hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 active:scale-95"
+              className="flex min-h-[4.5rem] min-w-0 flex-col items-center justify-center gap-1 rounded-[0.9rem] border border-amber-100 bg-amber-50 px-1 py-2.5 text-[11px] font-semibold text-amber-700 transition hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 active:scale-95 sm:min-h-[4.875rem] sm:gap-1.5 sm:rounded-[0.95rem] sm:py-3 sm:text-[13px]"
             >
-              <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <svg className="h-5 w-5 shrink-0 sm:h-[1.35rem] sm:w-[1.35rem]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
               </svg>
               <span className="max-w-full truncate">Share</span>
@@ -958,7 +1098,7 @@ function BusinessProfileDisplay({
               type="button"
               onClick={() => setIsExpanded(true)}
               aria-expanded={isExpanded}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-700 focus:ring-offset-2 active:scale-[0.99]"
+              className="mt-3.5 flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-700 focus:ring-offset-2 active:scale-[0.99]"
             >
               View Full Profile
               <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -978,27 +1118,25 @@ function BusinessProfileDisplay({
         <div className="overflow-hidden">
           <div className="space-y-4 pt-4">
       {hasContactSection && (
-        <section aria-label="Contact Information" className="overflow-hidden rounded-3xl border border-slate-100 bg-white px-5 py-6 shadow-sm sm:px-8">
+        <section aria-label="Contact Information" className="overflow-hidden rounded-3xl border border-slate-100 bg-white px-5 py-5 shadow-sm sm:px-8 sm:py-6">
           <h2 className="text-lg font-bold tracking-tight text-slate-950">Contact Information</h2>
 
           {contactItems.length > 0 && (
-            <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+            <ul className="mt-4 grid grid-cols-2 gap-x-3 gap-y-3">
               {contactItems.map((item) => (
                 <li key={item.key} className="min-w-0">
                   <a
                     href={item.href}
                     target={item.external ? '_blank' : undefined}
                     rel={item.external ? 'noopener noreferrer' : undefined}
-                    className="flex min-w-0 items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-3 text-left transition hover:border-slate-200 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+                    aria-label={item.external ? `Open ${item.value}` : `${item.label} ${item.value}`}
+                    className="flex min-w-0 items-center gap-2 rounded-xl border border-slate-100 bg-slate-50/70 px-2.5 py-2 text-left transition hover:border-slate-200 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
                   >
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-slate-700 shadow-sm" aria-hidden="true">
+                    <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${getContactIconTone(item.icon)}`} aria-hidden="true">
                       <ContactInfoIcon icon={item.icon} />
                     </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-xs font-semibold uppercase tracking-widest text-slate-400">
-                        {item.label}
-                      </span>
-                      <span className="block truncate text-sm font-semibold text-slate-800">{item.value}</span>
+                    <span className="min-w-0 flex-1 truncate whitespace-nowrap text-[12.5px] font-medium text-slate-700 sm:text-[13.5px]" title={item.value}>
+                      {item.value}
                     </span>
                   </a>
                 </li>
@@ -1007,10 +1145,13 @@ function BusinessProfileDisplay({
           )}
 
           {socialLinks.length > 0 && (
-            <div className={contactItems.length > 0 ? 'mt-5 border-t border-slate-100 pt-5' : 'mt-4'}>
+            <div className={contactItems.length > 0 ? 'mt-5 border-t border-slate-100 pt-4' : 'mt-4'}>
               <div className="flex min-w-0 items-center gap-3">
-                <h3 className="shrink-0 text-sm font-bold text-slate-900">Follow Us</h3>
-                <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto">
+                <h3 className="shrink-0 text-sm font-semibold text-slate-900">Follow Us</h3>
+                <div
+                  className="grid min-w-0 flex-1 gap-1.5 sm:gap-2"
+                  style={{ gridTemplateColumns: `repeat(${socialLinks.length}, minmax(0, 1fr))` }}
+                >
                   {socialLinks.map(({ label, url, platform }) => (
                     <a
                       key={`${label}-${url}`}
@@ -1019,9 +1160,11 @@ function BusinessProfileDisplay({
                       rel="noopener noreferrer"
                       aria-label={`Open ${label}`}
                       title={label}
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-100 bg-slate-50 text-slate-700 transition hover:border-slate-200 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+                      className="flex h-9 min-w-0 items-center justify-center rounded-xl border border-slate-100 bg-slate-50 transition hover:border-slate-200 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
                     >
-                      <SocialLinkIcon platform={platform} />
+                      <span className={getSocialIconTone(platform)} aria-hidden="true">
+                        <SocialLinkIcon platform={platform} />
+                      </span>
                     </a>
                   ))}
                 </div>
@@ -1043,15 +1186,12 @@ function BusinessProfileDisplay({
           )}
 
           {keywordItems.length > 0 && (
-            <div className={profile.aboutBusiness ? 'mt-5' : ''}>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">
-                Business Keywords / Tags
-              </p>
+            <div className={profile.aboutBusiness ? 'mt-4' : ''}>
               <ul className="flex flex-wrap gap-2">
                 {keywordItems.map((keyword) => (
                   <li
                     key={keyword}
-                    className="inline-flex max-w-full items-center rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700"
+                    className="inline-flex max-w-full items-center rounded-full border border-blue-100 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 sm:text-[13px]"
                   >
                     <span className="truncate">{keyword}</span>
                   </li>
@@ -1128,23 +1268,37 @@ function BusinessProfileDisplay({
 
       {galleryItems.length > 0 && (
         <section aria-label="Gallery" className="overflow-hidden rounded-3xl border border-slate-100 bg-white py-6 shadow-sm">
-          <div className="px-5 sm:px-8">
+          <div className="flex items-center justify-between gap-3 px-5 sm:px-8">
             <h2 className="text-lg font-bold tracking-tight text-slate-950">Gallery</h2>
+            <button
+              type="button"
+              onClick={handleViewAllGalleryImages}
+              className="shrink-0 text-xs font-medium text-blue-700 transition hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:text-[13px]"
+            >
+              View All
+            </button>
           </div>
 
-          <div className="mt-4 overflow-x-auto px-5 pb-1 sm:px-8">
-            <div className="flex gap-3">
+          <div className="mt-3 overflow-x-auto px-5 pb-0.5 sm:px-8">
+            <div className="flex gap-2.5">
               {galleryItems.map((imageUrl, index) => (
-                <img
+                <button
                   key={imageUrl}
-                  src={imageUrl}
-                  alt={`${profile.businessName} gallery image ${index + 1}`}
-                  className="h-28 w-28 shrink-0 rounded-2xl border border-slate-100 bg-slate-50 object-cover sm:h-32 sm:w-32"
-                  loading="lazy"
-                  onError={(event) => {
-                    event.currentTarget.style.display = 'none'
-                  }}
-                />
+                  type="button"
+                  onClick={() => handleOpenGalleryImage(imageUrl)}
+                  aria-label={`Open ${profile.businessName} gallery image ${index + 1}`}
+                  className="h-24 w-24 shrink-0 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:h-[108px] sm:w-[108px]"
+                >
+                  <img
+                    src={imageUrl}
+                    alt={`${profile.businessName} gallery image ${index + 1}`}
+                    className="h-24 w-24 shrink-0 rounded-2xl border border-slate-100 bg-slate-50 object-cover sm:h-[108px] sm:w-[108px]"
+                    loading="lazy"
+                    onError={(event) => {
+                      event.currentTarget.style.display = 'none'
+                    }}
+                  />
+                </button>
               ))}
             </div>
           </div>
@@ -1200,19 +1354,17 @@ function BusinessProfileDisplay({
           </button>
 
           {isWorkingHoursExpanded && (
-            <div className="border-t border-slate-100 px-5 pb-5 pt-2 sm:px-8">
-              <ul className="space-y-2">
+            <div className="border-t border-slate-100 px-5 pb-4 pt-2 sm:px-8">
+              <ul className="space-y-1.5">
                 {workingHours.map(({ key, day, hours, closed, isToday }) => (
                   <li
                     key={key}
-                    className={`flex min-w-0 items-center justify-between gap-4 rounded-2xl px-4 py-3 ${
-                      isToday ? 'border border-blue-100 bg-blue-50/80' : 'bg-slate-50/70'
-                    }`}
+                    className="flex min-w-0 items-center justify-between gap-4 py-1.5"
                   >
-                    <span className={`min-w-0 truncate text-sm font-semibold ${isToday ? 'text-blue-800' : 'text-slate-700'}`}>
+                    <span className={`min-w-0 truncate text-sm ${isToday ? 'font-semibold text-sky-500' : 'font-medium text-slate-700'}`}>
                       {day}
                     </span>
-                    <span className={`shrink-0 text-right text-sm font-medium ${closed ? 'text-rose-600' : 'text-slate-600'}`}>
+                    <span className={`shrink-0 text-right text-sm font-medium ${closed ? 'text-slate-500' : 'text-slate-600'}`}>
                       {hours}
                     </span>
                   </li>
@@ -1226,95 +1378,123 @@ function BusinessProfileDisplay({
       {hasLocationSection && (
         <section aria-label="Location" className="overflow-hidden rounded-3xl border border-slate-100 bg-white px-5 py-6 shadow-sm sm:px-8">
           <h2 className="text-lg font-bold tracking-tight text-slate-950">Location</h2>
-          <div className="mt-4 flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="mt-4 min-w-0">
             {displayAddress ? (
-              <p className="min-w-0 whitespace-pre-line break-words text-sm leading-7 text-slate-700 sm:flex-1">
+              <p
+                className="min-w-0 truncate whitespace-nowrap text-[13px] font-medium leading-6 text-slate-700 sm:text-sm"
+                title={displayAddress}
+                aria-label={displayAddress}
+              >
                 {displayAddress}
               </p>
             ) : (
-              <p className="min-w-0 text-sm leading-7 text-slate-500 sm:flex-1">Map link available</p>
+              <p className="min-w-0 truncate whitespace-nowrap text-[13px] leading-6 text-slate-500 sm:text-sm">Map link available</p>
             )}
 
-            <div className="flex shrink-0 flex-col gap-2 sm:min-w-44">
-              {directionsUrl && (
-                <a
-                  href={directionsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-700 focus:ring-offset-2 active:scale-[0.99]"
-                >
-                  <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 21l7-18-18 7 8 4 3 7z" />
-                  </svg>
-                  Get Directions
-                </a>
-              )}
-              {displayAddress && (
-                <button
-                  type="button"
-                  onClick={handleCopyAddress}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 active:scale-[0.99]"
-                >
-                  <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16h8M8 12h8m-7 8h6a2 2 0 002-2V8.83a2 2 0 00-.59-1.42l-3.82-3.82A2 2 0 0011.17 3H7a2 2 0 00-2 2v13a2 2 0 002 2h2z" />
-                  </svg>
-                  {addressCopied ? 'Copied' : 'Copy Address'}
-                </button>
-              )}
-            </div>
+            {(directionsUrl || displayAddress) && (
+              <div
+                className="mt-3 grid gap-2"
+                style={{ gridTemplateColumns: `repeat(${directionsUrl && displayAddress ? 2 : 1}, minmax(0, 1fr))` }}
+              >
+                {directionsUrl && (
+                  <a
+                    href={directionsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-blue-200 bg-white px-3 py-2 text-[12.5px] font-medium text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:scale-[0.99] sm:h-10 sm:text-[13px]"
+                  >
+                    <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 21l7-18-18 7 8 4 3 7z" />
+                    </svg>
+                    <span className="truncate">Get Directions</span>
+                  </a>
+                )}
+                {displayAddress && (
+                  <button
+                    type="button"
+                    onClick={handleCopyAddress}
+                    className="inline-flex min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-[12.5px] font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 active:scale-[0.99] sm:h-10 sm:text-[13px]"
+                  >
+                    <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16h8M8 12h8m-7 8h6a2 2 0 002-2V8.83a2 2 0 00-.59-1.42l-3.82-3.82A2 2 0 0011.17 3H7a2 2 0 00-2 2v13a2 2 0 002 2h2z" />
+                    </svg>
+                    <span className="truncate">{addressCopied ? 'Copied' : 'Copy Address'}</span>
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </section>
       )}
 
       {qualificationItems.length > 0 && (
-        <section aria-label="Certificates and Qualifications" className="overflow-hidden rounded-3xl border border-slate-100 bg-white py-6 shadow-sm">
-          <div className="px-5 sm:px-8">
+        <section aria-label="Certificates and Qualifications" className="overflow-hidden rounded-3xl border border-slate-100 bg-white py-5 shadow-sm">
+          <div className="flex items-center justify-between gap-3 px-5 sm:px-8">
             <h2 className="text-lg font-bold tracking-tight text-slate-950">Certificates & Qualifications</h2>
+            {attachedQualificationItems.length > 0 && (
+              <button
+                type="button"
+                onClick={handleViewAllQualifications}
+                className="shrink-0 text-xs font-medium text-blue-700 transition hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:text-[13px]"
+              >
+                View All
+              </button>
+            )}
           </div>
 
-          <div className="mt-4 overflow-x-auto scroll-smooth px-5 pb-1 sm:px-8">
-            <ul className="flex snap-x snap-mandatory gap-3">
-              {qualificationItems.map((item) => (
-                <li
-                  key={item.key}
-                  className="flex min-h-[13rem] w-[82%] max-w-[19rem] shrink-0 snap-start flex-col rounded-2xl border border-slate-100 bg-slate-50/70 p-4 sm:w-72"
-                >
-                  <div className="mb-4 flex items-start justify-between gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-blue-700 shadow-sm" aria-hidden="true">
-                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12.75l2 2 4-4M7 4h10a2 2 0 012 2v14l-4-2-3 2-3-2-4 2V6a2 2 0 012-2z" />
-                      </svg>
-                    </span>
-                    {item.year && (
-                      <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-xs font-bold text-slate-500 ring-1 ring-slate-100">
-                        {item.year}
-                      </span>
-                    )}
-                  </div>
+          <div className="mt-3 overflow-x-auto scroll-smooth px-5 pb-0.5 sm:px-8">
+            <ul className="flex snap-x snap-mandatory gap-2.5">
+              {qualificationItems.map((item) => {
+                const previewUrl = qualificationPreviewUrls[item.key]
+                const shouldShowImagePreview = Boolean(previewUrl) && !failedQualificationPreviewKeys.has(item.key)
 
-                  <div className="min-w-0 flex-1">
-                    <h3 className="line-clamp-2 text-sm font-bold leading-snug text-slate-950">{item.title}</h3>
-                    {item.issuingOrganization && (
-                      <p className="mt-2 line-clamp-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                        {item.issuingOrganization}
-                      </p>
-                    )}
-                    {item.description && (
-                      <p className="mt-3 line-clamp-3 text-xs leading-5 text-slate-600">{item.description}</p>
-                    )}
-                  </div>
+                return (
+                  <li
+                    key={item.key}
+                    className="flex w-[clamp(170px,50vw,190px)] shrink-0 snap-start rounded-2xl border border-slate-100 bg-slate-50/70 p-3"
+                  >
+                    <div className="flex min-w-0 items-start gap-2.5">
+                      {shouldShowImagePreview ? (
+                        <img
+                          src={previewUrl}
+                          alt={`${item.title} preview`}
+                          className="h-24 w-24 shrink-0 rounded-2xl border border-slate-100 bg-white object-contain sm:h-[108px] sm:w-[108px]"
+                          loading="lazy"
+                          onError={() => {
+                            setFailedQualificationPreviewKeys((current) => new Set(current).add(item.key))
+                          }}
+                        />
+                      ) : (
+                        <div className="flex h-24 w-24 shrink-0 flex-col items-center justify-center rounded-2xl border border-slate-100 bg-white text-blue-700 sm:h-[108px] sm:w-[108px]">
+                          <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 3v5h5" />
+                          </svg>
+                        </div>
+                      )}
 
-                  {item.documentTypeLabel && (
-                    <div className="mt-4 inline-flex max-w-full items-center gap-2 self-start rounded-full border border-slate-100 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600">
-                      <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 3v5h5" />
-                      </svg>
-                      <span className="truncate">{item.documentTypeLabel} attached</span>
+                      <div className="flex min-w-0 flex-1 flex-col pt-0.5">
+                        <div className="min-w-0">
+                          <h3 className="line-clamp-2 text-sm font-bold leading-tight text-slate-950">{item.title}</h3>
+                          {item.year && (
+                            <p className="mt-0.5 text-xs font-medium text-slate-500">{item.year}</p>
+                          )}
+                        </div>
+
+                        {item.hasAttachedDocument && (
+                          <button
+                            type="button"
+                            onClick={() => void handleOpenQualificationDocument(item.documentPath)}
+                            className="mt-1.5 inline-flex h-8 items-center justify-center self-start rounded-xl border border-blue-200 bg-white px-3 text-xs font-medium text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                          >
+                            View
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  )}
-                </li>
-              ))}
+                  </li>
+                )
+              })}
             </ul>
           </div>
         </section>
