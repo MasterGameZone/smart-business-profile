@@ -1155,62 +1155,75 @@ function BusinessProfileDisplay({
         <div className="overflow-hidden">
           <div className="space-y-4 pt-4">
       {hasContactSection && (
-        <section aria-label="Contact Information" className="overflow-hidden rounded-3xl border border-slate-100 bg-white px-5 py-5 shadow-sm sm:px-8 sm:py-6">
-          <h2 className="text-lg font-bold tracking-tight text-slate-950">Contact Information</h2>
+  <section
+    aria-label="Contact Information"
+    className="overflow-hidden rounded-3xl border border-slate-100 bg-white px-5 py-3.5 shadow-sm sm:px-8 sm:py-4"
+  >
+    <h2 className="text-lg font-bold tracking-tight text-slate-950">Contact Information</h2>
 
-          {contactItems.length > 0 && (
-            <ul className="mt-4 grid grid-cols-2 gap-x-3 gap-y-3">
-              {contactItems.map((item) => (
-                <li key={item.key} className="min-w-0">
-                  <a
-                    href={item.href}
-                    target={item.external ? '_blank' : undefined}
-                    rel={item.external ? 'noopener noreferrer' : undefined}
-                    aria-label={item.external ? `Open ${item.value}` : `${item.label} ${item.value}`}
-                    className="flex min-w-0 items-center gap-2 rounded-xl border border-slate-100 bg-slate-50/70 px-2.5 py-2 text-left transition hover:border-slate-200 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
-                  >
-                    <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${getContactIconTone(item.icon)}`} aria-hidden="true">
-                      <ContactInfoIcon icon={item.icon} />
-                    </span>
-                    <span className="min-w-0 flex-1 truncate whitespace-nowrap text-[12.5px] font-medium text-slate-700 sm:text-[13.5px]" title={item.value}>
-                      {item.value}
-                    </span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          )}
+    {contactItems.length > 0 && (
+      <ul className="mt-2.5 grid grid-cols-2 gap-x-3 gap-y-0.5">
+        {contactItems.map((item) => (
+          <li key={item.key} className="min-w-0">
+            <a
+              href={item.href}
+              target={item.external ? '_blank' : undefined}
+              rel={item.external ? 'noopener noreferrer' : undefined}
+              aria-label={item.external ? `Open ${item.value}` : `${item.label} ${item.value}`}
+              className="group flex min-w-0 items-center gap-2 rounded-xl bg-transparent px-2.5 py-0.5 text-left transition-colors duration-150 hover:bg-transparent focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+            >
+              <span
+                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-transform duration-150 group-hover:scale-105 ${getContactIconTone(item.icon)}`}
+                aria-hidden="true"
+              >
+                <ContactInfoIcon icon={item.icon} />
+              </span>
 
-          {socialLinks.length > 0 && (
-            <div className={contactItems.length > 0 ? 'mt-5 border-t border-slate-100 pt-4' : 'mt-4'}>
-              <div className="flex min-w-0 items-center gap-3">
-                <h3 className="shrink-0 text-sm font-semibold text-slate-900">Follow Us</h3>
-                <div
-                  className="grid min-w-0 flex-1 gap-1.5 sm:gap-2"
-                  style={{ gridTemplateColumns: `repeat(${socialLinks.length}, minmax(0, 1fr))` }}
+              <span
+                className="min-w-0 flex-1 truncate whitespace-nowrap text-[12.5px] font-medium text-slate-700 transition-colors duration-150 group-hover:text-slate-950 sm:text-[13.5px]"
+                title={item.value}
+              >
+                {item.value}
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    )}
+
+    {socialLinks.length > 0 && (
+      <div className={contactItems.length > 0 ? 'mt-2.5 border-t border-slate-100 pt-2' : 'mt-2.5'}>
+        <div className="flex min-w-0 items-center gap-3">
+          <h3 className="shrink-0 text-sm font-semibold text-slate-900">Follow Us</h3>
+
+          <div
+            className="grid min-w-0 flex-1 gap-0.5 sm:gap-1"
+            style={{ gridTemplateColumns: `repeat(${socialLinks.length}, minmax(0, 1fr))` }}
+          >
+            {socialLinks.map(({ label, url, platform }) => (
+              <a
+                key={`${label}-${url}`}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Open ${label}`}
+                title={label}
+                className="group flex h-7 min-w-0 items-center justify-center rounded-xl bg-transparent transition-colors duration-150 hover:bg-transparent focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+              >
+                <span
+                  className={`transition-transform duration-150 group-hover:scale-110 ${getSocialIconTone(platform)}`}
+                  aria-hidden="true"
                 >
-                  {socialLinks.map(({ label, url, platform }) => (
-                    <a
-                      key={`${label}-${url}`}
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={`Open ${label}`}
-                      title={label}
-                      className="flex h-9 min-w-0 items-center justify-center rounded-xl border border-slate-100 bg-slate-50 transition hover:border-slate-200 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
-                    >
-                      <span className={getSocialIconTone(platform)} aria-hidden="true">
-                        <SocialLinkIcon platform={platform} />
-                      </span>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-        </section>
-      )}
+                  <SocialLinkIcon platform={platform} />
+                </span>
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+    )}
+  </section>
+)}
 
       {hasAboutSection && (
         <section aria-label="About Us" className="overflow-hidden rounded-3xl border border-slate-100 bg-white px-5 py-6 shadow-sm sm:px-8">
@@ -1257,60 +1270,60 @@ function BusinessProfileDisplay({
                     key={item.key}
                     className="flex w-fit min-w-[15.5rem] max-w-[250px] shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_12px_28px_-24px_rgba(15,23,42,0.5)] sm:min-w-[16.5rem] sm:max-w-[19rem] lg:min-w-[17.25rem] lg:max-w-[20rem]"
                   >
-                    <div className="flex w-[5.75rem] shrink-0 flex-col gap-2 self-start p-3 sm:w-[6.25rem] sm:p-4 lg:w-[6.75rem]">
-                      <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-                        {hasImage ? (
-                          <img
-                            src={item.imageUrl ?? undefined}
-                            alt={`${item.name} image`}
-                            className={`block w-full object-cover object-center ${
-                              shouldCropTallImage
-                                ? 'h-[8.05rem] sm:h-[8.75rem] lg:h-[9.45rem]'
-                                : 'h-auto'
-                            }`}
-                            loading="lazy"
-                            onLoad={(event) => {
-                              const { naturalHeight, naturalWidth } = event.currentTarget
-                              if (!naturalHeight || !naturalWidth) return
+                    <div className="flex w-[5.75rem] shrink-0 self-stretch flex-col gap-2 p-3 sm:w-[6.25rem] sm:p-4 lg:w-[6.75rem]">
+  <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+    {hasImage ? (
+      <img
+        src={item.imageUrl ?? undefined}
+        alt={`${item.name} image`}
+        className={`block w-full object-cover object-center ${
+          shouldCropTallImage
+            ? 'h-[8.05rem] sm:h-[8.75rem] lg:h-[9.45rem]'
+            : 'h-auto'
+        }`}
+        loading="lazy"
+        onLoad={(event) => {
+          const { naturalHeight, naturalWidth } = event.currentTarget
+          if (!naturalHeight || !naturalWidth) return
 
-                              const isTooTall = naturalHeight / naturalWidth > 1.4
-                              setTallOfferingImageKeys((current) => {
-                                const next = new Set(current)
-                                if (isTooTall) {
-                                  next.add(item.key)
-                                } else {
-                                  next.delete(item.key)
-                                }
-                                return next
-                              })
-                            }}
-                            onError={(event) => {
-                              event.currentTarget.style.display = 'none'
-                              setFailedOfferingImageKeys((current) => {
-                                const next = new Set(current)
-                                next.add(item.key)
-                                return next
-                              })
-                            }}
-                          />
-                        ) : (
-                          <div className="flex h-[6.5rem] w-full items-center justify-center bg-slate-50 px-2 text-center text-[11px] font-medium text-slate-400 sm:h-[7rem] sm:text-xs lg:h-[7.5rem]">
-                            No Image
-                          </div>
-                        )}
-                      </div>
+          const isTooTall = naturalHeight / naturalWidth > 1.4
+          setTallOfferingImageKeys((current) => {
+            const next = new Set(current)
+            if (isTooTall) {
+              next.add(item.key)
+            } else {
+              next.delete(item.key)
+            }
+            return next
+          })
+        }}
+        onError={(event) => {
+          event.currentTarget.style.display = 'none'
+          setFailedOfferingImageKeys((current) => {
+            const next = new Set(current)
+            next.add(item.key)
+            return next
+          })
+        }}
+      />
+    ) : (
+      <div className="flex h-[6.5rem] w-full items-center justify-center bg-slate-50 px-2 text-center text-[11px] font-medium text-slate-400 sm:h-[7rem] sm:text-xs lg:h-[7.5rem]">
+        No Image
+      </div>
+    )}
+  </div>
 
-                      {enquiryUrl && (
-                        <a
-                          href={enquiryUrl}
-                          target={enquiryUrl.startsWith('https://') ? '_blank' : undefined}
-                          rel={enquiryUrl.startsWith('https://') ? 'noopener noreferrer' : undefined}
-                          className="inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-2.5 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:text-sm"
-                        >
-                          Enquire
-                        </a>
-                      )}
-                    </div>
+  {enquiryUrl && (
+    <a
+      href={enquiryUrl}
+      target={enquiryUrl.startsWith('https://') ? '_blank' : undefined}
+      rel={enquiryUrl.startsWith('https://') ? 'noopener noreferrer' : undefined}
+      className="mt-auto inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-2.5 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:text-sm"
+    >
+      Enquire
+    </a>
+  )}
+</div>
 
                     <div className="flex min-w-0 flex-[1_1_auto] flex-col justify-start py-3.5 pr-3.5 sm:py-4 sm:pr-4">
                       <div className="min-w-0">
