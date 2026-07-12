@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
+import { cloneElement, isValidElement, useEffect, useRef, useState, type ReactElement, type ReactNode, type RefObject } from 'react'
+import { createPortal } from 'react-dom'
 import QRCode from 'react-qr-code'
 import { getBusinessDocumentViewUrl } from '../lib/storageService.ts'
 import type { BusinessProfileRow, JsonObject, SocialLinks } from '../types/businessProfile.ts'
@@ -43,7 +44,8 @@ interface BusinessProfileDisplayProps {
   footerSlot?: ReactNode
 }
 
-const cardBase = 'bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden'
+const compactSecondaryButtonClass =
+  'inline-flex h-7 min-w-0 items-center justify-center gap-1 whitespace-nowrap rounded-md border border-slate-300 bg-white px-2 text-[10px] font-medium leading-none text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 active:scale-[0.99] sm:h-8 sm:gap-1.5 sm:rounded-lg sm:px-3 sm:text-xs'
 const workingDayLabels = [
   { key: 'monday', label: 'Monday' },
   { key: 'tuesday', label: 'Tuesday' },
@@ -713,9 +715,12 @@ function BusinessProfileDisplay({
   const [isExpanded, setIsExpanded] = useState(false)
   const [isWorkingHoursExpanded, setIsWorkingHoursExpanded] = useState(false)
   const [isFaqsExpanded, setIsFaqsExpanded] = useState(false)
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false)
   const [openFaqKey, setOpenFaqKey] = useState<string | null>(null)
   const [addressCopied, setAddressCopied] = useState(false)
   const [logoFailed, setLogoFailed] = useState(false)
+  const [failedOfferingImageKeys, setFailedOfferingImageKeys] = useState<Set<string>>(() => new Set())
+  const [tallOfferingImageKeys, setTallOfferingImageKeys] = useState<Set<string>>(() => new Set())
   const [qualificationPreviewUrls, setQualificationPreviewUrls] = useState<Record<string, string>>({})
   const [failedQualificationPreviewKeys, setFailedQualificationPreviewKeys] = useState<Set<string>>(() => new Set())
   const compactCardRef = useRef<HTMLElement>(null)
@@ -794,10 +799,23 @@ function BusinessProfileDisplay({
   const hasContactSection = contactItems.length > 0 || socialLinks.length > 0
   const hasLocationSection = Boolean(displayAddress || directionsUrl)
   const offeringSectionLabel = 'Services'
+  const displayBusinessName = trimText(profile.businessName) || 'this business'
+  const bottomActionBaseClass =
+    'flex flex-1 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-transparent px-1.5 py-2.5 text-[11px] font-semibold text-slate-700 shadow-none transition hover:bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70 sm:gap-2 sm:px-2 sm:text-sm'
+  const styledSaveButtonSlot = isValidElement<{ className?: string }>(saveButtonSlot)
+    ? cloneElement(saveButtonSlot as ReactElement<{ className?: string }>, {
+        className: `${saveButtonSlot.props.className ?? ''} ${bottomActionBaseClass} !border-0 !bg-transparent !px-2 !py-2.5 !text-slate-700 !shadow-none hover:!bg-white/70 [&_svg]:text-amber-600`,
+      })
+    : saveButtonSlot
 
   useEffect(() => {
     setLogoFailed(false)
   }, [profile.logoUrl])
+
+  useEffect(() => {
+    setFailedOfferingImageKeys(new Set())
+    setTallOfferingImageKeys(new Set())
+  }, [profile.products_menu_packages, profile.services])
 
   useEffect(() => {
     return () => {
@@ -812,6 +830,25 @@ function BusinessProfileDisplay({
       setOpenFaqKey(null)
     }
   }, [isFaqsExpanded])
+
+  useEffect(() => {
+    if (!isQrModalOpen) return
+
+    const originalOverflow = document.body.style.overflow
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsQrModalOpen(false)
+      }
+    }
+
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.body.style.overflow = originalOverflow
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isQrModalOpen])
 
   useEffect(() => {
     let isCurrent = true
@@ -1212,49 +1249,84 @@ function BusinessProfileDisplay({
             <ul className="flex gap-3">
               {offeringItems.map((item) => {
                 const enquiryUrl = getOfferingEnquiryUrl(item.name, displayRawWhatsApp, displayPhone)
+                const hasImage = Boolean(item.imageUrl) && !failedOfferingImageKeys.has(item.key)
+                const shouldCropTallImage = tallOfferingImageKeys.has(item.key)
 
                 return (
                   <li
                     key={item.key}
-                    className="flex w-[16.5rem] shrink-0 flex-col overflow-hidden rounded-2xl border border-slate-100 bg-slate-50/70"
+                    className="flex w-fit min-w-[15.5rem] max-w-[250px] shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_12px_28px_-24px_rgba(15,23,42,0.5)] sm:min-w-[16.5rem] sm:max-w-[19rem] lg:min-w-[17.25rem] lg:max-w-[20rem]"
                   >
-                    {item.imageUrl && (
-                      <img
-                        src={item.imageUrl}
-                        alt={`${item.name} image`}
-                        className="aspect-[4/3] w-full bg-slate-100 object-cover"
-                        loading="lazy"
-                        onError={(event) => {
-                          event.currentTarget.style.display = 'none'
-                        }}
-                      />
-                    )}
+                    <div className="flex w-[5.75rem] shrink-0 flex-col gap-2 self-start p-3 sm:w-[6.25rem] sm:p-4 lg:w-[6.75rem]">
+                      <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                        {hasImage ? (
+                          <img
+                            src={item.imageUrl ?? undefined}
+                            alt={`${item.name} image`}
+                            className={`block w-full object-cover object-center ${
+                              shouldCropTallImage
+                                ? 'h-[8.05rem] sm:h-[8.75rem] lg:h-[9.45rem]'
+                                : 'h-auto'
+                            }`}
+                            loading="lazy"
+                            onLoad={(event) => {
+                              const { naturalHeight, naturalWidth } = event.currentTarget
+                              if (!naturalHeight || !naturalWidth) return
 
-                    <div className="flex flex-1 flex-col p-4">
-                      <div className="flex-1">
-                        <h3 className="line-clamp-2 text-sm font-bold leading-snug text-slate-950">{item.name}</h3>
-                        {item.description && (
-                          <p className="mt-2 line-clamp-3 text-xs leading-5 text-slate-500">{item.description}</p>
+                              const isTooTall = naturalHeight / naturalWidth > 1.4
+                              setTallOfferingImageKeys((current) => {
+                                const next = new Set(current)
+                                if (isTooTall) {
+                                  next.add(item.key)
+                                } else {
+                                  next.delete(item.key)
+                                }
+                                return next
+                              })
+                            }}
+                            onError={(event) => {
+                              event.currentTarget.style.display = 'none'
+                              setFailedOfferingImageKeys((current) => {
+                                const next = new Set(current)
+                                next.add(item.key)
+                                return next
+                              })
+                            }}
+                          />
+                        ) : (
+                          <div className="flex h-[6.5rem] w-full items-center justify-center bg-slate-50 px-2 text-center text-[11px] font-medium text-slate-400 sm:h-[7rem] sm:text-xs lg:h-[7.5rem]">
+                            No Image
+                          </div>
                         )}
                       </div>
 
-                      <div className="mt-4 flex items-center justify-between gap-3">
+                      {enquiryUrl && (
+                        <a
+                          href={enquiryUrl}
+                          target={enquiryUrl.startsWith('https://') ? '_blank' : undefined}
+                          rel={enquiryUrl.startsWith('https://') ? 'noopener noreferrer' : undefined}
+                          className="inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-2.5 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:text-sm"
+                        >
+                          Enquire
+                        </a>
+                      )}
+                    </div>
+
+                    <div className="flex min-w-0 flex-[1_1_auto] flex-col justify-start py-3.5 pr-3.5 sm:py-4 sm:pr-4">
+                      <div className="min-w-0">
+                        <h3 className="line-clamp-2 text-sm font-bold leading-snug text-slate-950 sm:text-[15px]">{item.name}</h3>
+                        {item.description && (
+                          <p className="mt-1.5 line-clamp-3 text-xs leading-5 text-slate-500 sm:text-[13px]">{item.description}</p>
+                        )}
+                      </div>
+
+                      <div className="mt-2.5">
                         {item.price ? (
-                          <p className="min-w-0 truncate text-sm font-bold text-slate-900">{item.price}</p>
+                          <p className="min-w-0 truncate text-sm font-bold text-slate-900 sm:text-[15px]">{item.price}</p>
                         ) : (
                           <p className="min-w-0 truncate text-xs font-semibold uppercase tracking-wide text-slate-400">
                             Service
                           </p>
-                        )}
-                        {enquiryUrl && (
-                          <a
-                            href={enquiryUrl}
-                            target={enquiryUrl.startsWith('https://') ? '_blank' : undefined}
-                            rel={enquiryUrl.startsWith('https://') ? 'noopener noreferrer' : undefined}
-                            className="shrink-0 rounded-full bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-700 focus:ring-offset-2"
-                          >
-                            Enquire
-                          </a>
                         )}
                       </div>
                     </div>
@@ -1401,7 +1473,7 @@ function BusinessProfileDisplay({
                     href={directionsUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-blue-200 bg-white px-3 py-2 text-[12.5px] font-medium text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:scale-[0.99] sm:h-10 sm:text-[13px]"
+                    className={compactSecondaryButtonClass}
                   >
                     <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 21l7-18-18 7 8 4 3 7z" />
@@ -1413,7 +1485,7 @@ function BusinessProfileDisplay({
                   <button
                     type="button"
                     onClick={handleCopyAddress}
-                    className="inline-flex min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-[12.5px] font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 active:scale-[0.99] sm:h-10 sm:text-[13px]"
+                    className={compactSecondaryButtonClass}
                   >
                     <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16h8M8 12h8m-7 8h6a2 2 0 002-2V8.83a2 2 0 00-.59-1.42l-3.82-3.82A2 2 0 0011.17 3H7a2 2 0 00-2 2v13a2 2 0 002 2h2z" />
@@ -1485,7 +1557,7 @@ function BusinessProfileDisplay({
                           <button
                             type="button"
                             onClick={() => void handleOpenQualificationDocument(item.documentPath)}
-                            className="mt-1.5 inline-flex h-8 items-center justify-center self-start rounded-xl border border-blue-200 bg-white px-3 text-xs font-medium text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            className={`mt-1.5 self-start ${compactSecondaryButtonClass}`}
                           >
                             View
                           </button>
@@ -1564,93 +1636,134 @@ function BusinessProfileDisplay({
         </section>
       )}
 
-      <section ref={qrSectionRef} aria-label="QR Code" className={`${cardBase} px-6 py-8 sm:px-8`}>
-        <div className="mb-6 text-center">
-          <h2 className="text-sm font-bold tracking-tight text-gray-900">QR Code</h2>
-          <p className="mt-1 text-xs text-gray-500">Scan this QR Code to open this business profile.</p>
-        </div>
-
-        <div className="mb-6 flex justify-center">
-          <div ref={qrCodeRef} className="rounded-2xl border-2 border-gray-100 bg-white p-4">
-            <QRCode value={profileUrl} size={160} bgColor="#ffffff" fgColor="#1e293b" level="M" />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3" role="group" aria-label="QR Code actions">
-          <button
-            type="button"
-            onClick={onDownloadQR}
-            aria-label="Download QR Code as PNG"
-            className="flex items-center justify-center gap-2 rounded-xl bg-gray-900 py-3 text-sm font-semibold text-white transition-all hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-700 focus:ring-offset-2 active:scale-95"
+      {isQrModalOpen &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/45 p-0 sm:items-center sm:p-4"
+            onClick={(event) => {
+              if (event.target === event.currentTarget) {
+                setIsQrModalOpen(false)
+              }
+            }}
           >
-            <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            Download QR
-          </button>
+            <div className="relative w-full max-w-md">
+              <button
+                type="button"
+                onClick={() => setIsQrModalOpen(false)}
+                aria-label="Close QR Code"
+                className="absolute right-4 top-4 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-slate-500 shadow-sm transition hover:bg-white hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
 
-          <button
-            type="button"
-            onClick={onShareQR}
-            aria-label="Share QR Code image"
-            className="flex items-center justify-center gap-2 rounded-xl bg-violet-600 py-3 text-sm font-semibold text-white transition-all hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 active:scale-95"
-          >
-            <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-            </svg>
-            Share QR
-          </button>
-        </div>
-      </section>
+              <div className="max-h-[88vh] overflow-y-auto rounded-t-[1.75rem] sm:rounded-[1.75rem]">
+                <section
+                  id="profile-qr-modal"
+                  ref={qrSectionRef}
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="profile-qr-modal-title"
+                  aria-label="QR Code"
+                  className="overflow-hidden border border-gray-100 bg-white px-6 py-8 shadow-sm sm:rounded-[1.75rem] sm:px-8"
+                >
+                  <div className="mb-6 text-center">
+                    <h2 id="profile-qr-modal-title" className="text-sm font-bold tracking-tight text-gray-900">
+                      QR Code
+                    </h2>
+                    <p className="mt-1 text-xs text-gray-500">Scan this QR Code to open this business profile.</p>
+                  </div>
+
+                  <div className="mb-6 flex justify-center">
+                    <div ref={qrCodeRef} className="rounded-2xl border-2 border-gray-100 bg-white p-4">
+                      <QRCode value={profileUrl} size={160} bgColor="#ffffff" fgColor="#1e293b" level="M" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3" role="group" aria-label="QR Code actions">
+                    <button
+                      type="button"
+                      onClick={onDownloadQR}
+                      aria-label="Download QR Code as PNG"
+                      className="flex items-center justify-center gap-2 rounded-xl bg-gray-900 py-3 text-sm font-semibold text-white transition-all hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-700 focus:ring-offset-2 active:scale-95"
+                    >
+                      <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                      Download QR
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={onShareQR}
+                      aria-label="Share QR Code image"
+                      className="flex items-center justify-center gap-2 rounded-xl bg-violet-600 py-3 text-sm font-semibold text-white transition-all hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 active:scale-95"
+                    >
+                      <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                      </svg>
+                      Share QR
+                    </button>
+                  </div>
+                </section>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
 
       {footerSlot}
 
-            <section aria-label="Final contact actions" className="overflow-hidden rounded-3xl border border-slate-100 bg-white px-5 py-6 shadow-sm sm:px-8">
+            <section aria-label="Final contact actions" className="overflow-hidden rounded-3xl border border-blue-100 bg-blue-50/80 px-5 py-6 shadow-sm sm:px-8">
               <div className="min-w-0">
                 <h2 className="text-lg font-bold tracking-tight text-slate-950">
-                  Ready to contact {profile.businessName}?
+                  Stay connected with {displayBusinessName}
                 </h2>
-                <p className="mt-2 text-sm leading-6 text-slate-500">Call or message the business directly.</p>
+                <p className="mt-2 text-sm leading-6 text-slate-500">Share this profile or save it for later.</p>
               </div>
 
-              <div className="mt-5 grid gap-3 sm:grid-cols-2" role="group" aria-label="Final profile actions">
-                {displayPhone && (
-                  <a
-                    href={`tel:${displayPhone}`}
-                    className="flex min-w-0 items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:scale-[0.99]"
+              <div className="mt-4 border-t border-blue-100/90 pt-4">
+                <div className="flex min-w-0 items-center" role="group" aria-label="Final profile actions">
+                  <button
+                    type="button"
+                    onClick={onShare}
+                    aria-label="Share profile link"
+                    className={bottomActionBaseClass}
                   >
-                    <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    <svg className="h-4 w-4 shrink-0 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                     </svg>
-                    <span className="truncate">Call Now</span>
-                  </a>
-                )}
+                    <span className="min-w-0 whitespace-nowrap">Share Profile</span>
+                  </button>
 
-                {whatsappUrl && (
-                  <a
-                    href={whatsappUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex min-w-0 items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 active:scale-[0.99]"
+                  <span className="mx-1.5 my-auto h-4 w-px shrink-0 bg-slate-200 sm:h-[15px] sm:mx-[5px]" aria-hidden="true" />
+
+                  <button
+                    type="button"
+                    onClick={() => setIsQrModalOpen(true)}
+                    aria-haspopup="dialog"
+                    aria-expanded={isQrModalOpen}
+                    aria-controls="profile-qr-modal"
+                    className={bottomActionBaseClass}
                   >
-                    <ContactInfoIcon icon="whatsapp" />
-                    <span className="truncate">WhatsApp</span>
-                  </a>
-                )}
+                    <svg className="h-4 w-4 shrink-0 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm11 1h2m-2 3h2m-5-3h1m2 5h5m-8-3v3m0-6v1m6 0v5" />
+                    </svg>
+                    <span className="min-w-0 whitespace-nowrap">QR Code</span>
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={onShare}
-                  aria-label="Share profile link"
-                  className="flex min-w-0 items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-700 focus:ring-offset-2 active:scale-[0.99]"
-                >
-                  <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                  </svg>
-                  <span className="truncate">Share Profile</span>
-                </button>
-
-                {saveButtonSlot}
+                  {styledSaveButtonSlot && (
+                    <>
+                      <span className="mx-1.5 my-auto h-4 w-px shrink-0 bg-slate-200 sm:h-[15px] sm:mx-[5px]" aria-hidden="true" />
+                      {isValidElement(styledSaveButtonSlot) ? (
+                        styledSaveButtonSlot
+                      ) : (
+                        <div className="flex min-w-0 flex-1 items-center justify-center">{styledSaveButtonSlot}</div>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
             </section>
 

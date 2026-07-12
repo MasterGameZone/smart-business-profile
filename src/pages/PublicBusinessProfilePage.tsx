@@ -251,6 +251,8 @@ function PublicBusinessProfilePage() {
   const favoriteButtonClass = user && isFavoriteSaved
     ? 'flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 py-3 text-sm font-semibold text-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70'
     : 'flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3 text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70'
+  const compactSecondaryActionClass =
+    'inline-flex h-7 items-center justify-center whitespace-nowrap rounded-md border border-slate-300 bg-white px-2 text-[10px] font-medium leading-none text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 sm:h-8 sm:rounded-lg sm:px-3 sm:text-xs'
 
   const pageBackgroundClass = isOwnerPreview
     ? 'min-h-screen bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.18),transparent_34%),linear-gradient(180deg,#020617_0%,#0f172a_32%,#0b1120_100%)] pb-12 text-slate-100'
@@ -370,20 +372,40 @@ function PublicBusinessProfilePage() {
                 </button>
               }
               footerSlot={
-                <>
-                  <ReviewSection
-                    businessProfileId={profile.id}
-                    businessOwnerId={profile.owner_id}
-                    userId={user?.id ?? null}
-                    onLogin={() => navigate('/login', { state: { from: location } })}
-                    onSummaryChange={setReviewSummary}
-                  />
-                  <ReportProfileAction
-                    businessProfileId={profile.id}
-                    userId={user?.id ?? null}
-                    onLogin={() => navigate('/login', { state: { from: location } })}
-                  />
-                </>
+                <section
+                  aria-label="Ratings actions"
+                  className="overflow-hidden rounded-3xl border border-slate-100 bg-white px-5 py-5 shadow-sm sm:px-8 sm:py-6"
+                >
+                  <div className="flex items-center justify-between gap-1.5 overflow-hidden">
+                    <div className="flex min-w-0 items-center gap-1 text-[10px] font-semibold text-slate-900 sm:gap-1.5 sm:text-xs">
+                      <svg className="h-3 w-3 shrink-0 text-amber-400 sm:h-3.5 sm:w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path d="M9.05 2.93c.3-.92 1.6-.92 1.9 0l1.18 3.63a1 1 0 0 0 .95.69h3.82c.97 0 1.37 1.24.59 1.81l-3.09 2.24a1 1 0 0 0-.36 1.12l1.18 3.63c.3.92-.76 1.69-1.54 1.12l-3.09-2.24a1 1 0 0 0-1.18 0l-3.09 2.24c-.78.57-1.84-.2-1.54-1.12l1.18-3.63a1 1 0 0 0-.36-1.12L2.51 9.06c-.78-.57-.38-1.81.59-1.81h3.82a1 1 0 0 0 .95-.69l1.18-3.63z" />
+                      </svg>
+                      <span className="min-w-0 truncate">
+                        {reviewSummary && reviewSummary.count > 0
+                          ? `${reviewSummary.average.toFixed(1)} Ratings`
+                          : 'No Ratings Yet'}
+                      </span>
+                    </div>
+
+                    <div className="flex shrink-0 items-center gap-1">
+                      <ReviewSection
+                        businessProfileId={profile.id}
+                        businessOwnerId={profile.owner_id}
+                        userId={user?.id ?? null}
+                        onLogin={() => navigate('/login', { state: { from: location } })}
+                        onSummaryChange={setReviewSummary}
+                        triggerClassName={compactSecondaryActionClass}
+                      />
+                      <ReportProfileAction
+                        businessProfileId={profile.id}
+                        userId={user?.id ?? null}
+                        onLogin={() => navigate('/login', { state: { from: location } })}
+                        triggerClassName={compactSecondaryActionClass}
+                      />
+                    </div>
+                  </div>
+                </section>
               }
             />
           </div>
