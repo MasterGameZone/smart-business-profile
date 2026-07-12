@@ -1154,77 +1154,6 @@ function BusinessProfileDisplay({
       >
         <div className="overflow-hidden">
           <div className="space-y-4 pt-4">
-      {hasContactSection && (
-  <section
-    aria-label="Contact Information"
-    className="overflow-hidden rounded-3xl border border-slate-100 bg-white px-5 py-3.5 shadow-sm sm:px-8 sm:py-4"
-  >
-    <h2 className="text-lg font-bold tracking-tight text-slate-950">Contact Information</h2>
-
-    {contactItems.length > 0 && (
-      <ul className="mt-2.5 grid grid-cols-2 gap-x-3 gap-y-0.5">
-        {contactItems.map((item) => (
-          <li key={item.key} className="min-w-0">
-            <a
-              href={item.href}
-              target={item.external ? '_blank' : undefined}
-              rel={item.external ? 'noopener noreferrer' : undefined}
-              aria-label={item.external ? `Open ${item.value}` : `${item.label} ${item.value}`}
-              className="group flex min-w-0 items-center gap-2 rounded-xl bg-transparent px-2.5 py-0.5 text-left transition-colors duration-150 hover:bg-transparent focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
-            >
-              <span
-                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-transform duration-150 group-hover:scale-105 ${getContactIconTone(item.icon)}`}
-                aria-hidden="true"
-              >
-                <ContactInfoIcon icon={item.icon} />
-              </span>
-
-              <span
-                className="min-w-0 flex-1 truncate whitespace-nowrap text-[12.5px] font-medium text-slate-700 transition-colors duration-150 group-hover:text-slate-950 sm:text-[13.5px]"
-                title={item.value}
-              >
-                {item.value}
-              </span>
-            </a>
-          </li>
-        ))}
-      </ul>
-    )}
-
-    {socialLinks.length > 0 && (
-      <div className={contactItems.length > 0 ? 'mt-2.5 border-t border-slate-100 pt-2' : 'mt-2.5'}>
-        <div className="flex min-w-0 items-center gap-3">
-          <h3 className="shrink-0 text-sm font-semibold text-slate-900">Follow Us</h3>
-
-          <div
-            className="grid min-w-0 flex-1 gap-0.5 sm:gap-1"
-            style={{ gridTemplateColumns: `repeat(${socialLinks.length}, minmax(0, 1fr))` }}
-          >
-            {socialLinks.map(({ label, url, platform }) => (
-              <a
-                key={`${label}-${url}`}
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={`Open ${label}`}
-                title={label}
-                className="group flex h-7 min-w-0 items-center justify-center rounded-xl bg-transparent transition-colors duration-150 hover:bg-transparent focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
-              >
-                <span
-                  className={`transition-transform duration-150 group-hover:scale-110 ${getSocialIconTone(platform)}`}
-                  aria-hidden="true"
-                >
-                  <SocialLinkIcon platform={platform} />
-                </span>
-              </a>
-            ))}
-          </div>
-        </div>
-      </div>
-    )}
-  </section>
-)}
-
       {hasAboutSection && (
         <section aria-label="About Us" className="overflow-hidden rounded-3xl border border-slate-100 bg-white px-5 py-6 shadow-sm sm:px-8">
           <div className="mb-4 flex items-center justify-between gap-4">
@@ -1512,6 +1441,77 @@ function BusinessProfileDisplay({
         </section>
       )}
 
+      {hasContactSection && (
+  <section
+    aria-label="Contact Information"
+    className="overflow-hidden rounded-3xl border border-slate-100 bg-white px-5 py-3.5 shadow-sm sm:px-8 sm:py-4"
+  >
+    <h2 className="text-lg font-bold tracking-tight text-slate-950">Contact Information</h2>
+
+    {contactItems.length > 0 && (
+      <ul className="mt-2.5 grid grid-cols-2 gap-x-3 gap-y-0.5">
+        {contactItems.map((item) => (
+          <li key={item.key} className="min-w-0">
+            <a
+              href={item.href}
+              target={item.external ? '_blank' : undefined}
+              rel={item.external ? 'noopener noreferrer' : undefined}
+              aria-label={item.external ? `Open ${item.value}` : `${item.label} ${item.value}`}
+              className="group flex min-w-0 items-center gap-2 rounded-xl bg-transparent px-2.5 py-0.5 text-left transition-colors duration-150 hover:bg-transparent focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+            >
+              <span
+                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-transform duration-150 group-hover:scale-105 ${getContactIconTone(item.icon)}`}
+                aria-hidden="true"
+              >
+                <ContactInfoIcon icon={item.icon} />
+              </span>
+
+              <span
+                className="min-w-0 flex-1 truncate whitespace-nowrap text-[12.5px] font-medium text-slate-700 transition-colors duration-150 group-hover:text-slate-950 sm:text-[13.5px]"
+                title={item.value}
+              >
+                {item.value}
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    )}
+
+    {socialLinks.length > 0 && (
+      <div className={contactItems.length > 0 ? 'mt-2.5 border-t border-slate-100 pt-2' : 'mt-2.5'}>
+        <div className="flex min-w-0 items-center gap-3">
+          <h3 className="shrink-0 text-sm font-semibold text-slate-900">Follow Us</h3>
+
+          <div
+            className="grid min-w-0 flex-1 gap-0.5 sm:gap-1"
+            style={{ gridTemplateColumns: `repeat(${socialLinks.length}, minmax(0, 1fr))` }}
+          >
+            {socialLinks.map(({ label, url, platform }) => (
+              <a
+                key={`${label}-${url}`}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Open ${label}`}
+                title={label}
+                className="group flex h-7 min-w-0 items-center justify-center rounded-xl bg-transparent transition-colors duration-150 hover:bg-transparent focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+              >
+                <span
+                  className={`transition-transform duration-150 group-hover:scale-110 ${getSocialIconTone(platform)}`}
+                  aria-hidden="true"
+                >
+                  <SocialLinkIcon platform={platform} />
+                </span>
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+    )}
+  </section>
+)}
+
       {qualificationItems.length > 0 && (
         <section aria-label="Certificates and Qualifications" className="overflow-hidden rounded-3xl border border-slate-100 bg-white py-5 shadow-sm">
           <div className="flex items-center justify-between gap-3 px-5 sm:px-8">
@@ -1584,6 +1584,8 @@ function BusinessProfileDisplay({
           </div>
         </section>
       )}
+
+      {footerSlot}
 
       {faqItems.length > 0 && (
         <section aria-label="Frequently Asked Questions" className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
@@ -1725,8 +1727,6 @@ function BusinessProfileDisplay({
           </div>,
           document.body
         )}
-
-      {footerSlot}
 
             <section aria-label="Final contact actions" className="overflow-hidden rounded-3xl border border-blue-100 bg-blue-50/80 px-5 py-6 shadow-sm sm:px-8">
               <div className="min-w-0">
