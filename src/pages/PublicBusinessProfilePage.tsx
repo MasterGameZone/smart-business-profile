@@ -312,13 +312,7 @@ function PublicBusinessProfilePage() {
         )}
 
         {loadState === 'found' && profile && (
-          <div
-            className={
-              isOwnerPreview
-                ? 'rounded-[2rem] border border-white/12 bg-white/[0.05] p-1 shadow-[0_32px_80px_-38px_rgba(2,12,27,0.98)] backdrop-blur-xl'
-                : 'rounded-[2rem] border border-white/55 bg-white/28 p-1 shadow-[0_32px_80px_-38px_rgba(15,23,42,0.45)] backdrop-blur-xl'
-            }
-          >
+          <div className="rounded-[2rem] border border-slate-100 bg-white p-1 shadow-[0_32px_80px_-38px_rgba(15,23,42,0.45)]">
             <BusinessProfileDisplay
               profile={{
                 businessName: profile.business_name,
