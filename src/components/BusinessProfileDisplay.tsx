@@ -185,7 +185,8 @@ interface QualificationDisplayItem {
   year: string
   documentPath: string
   hasAttachedDocument: boolean
-  isImageDocument: boolean
+  hasImagePreview: boolean
+  immediatePreviewUrl: string | null
 }
 
 interface FaqDisplayItem {
@@ -246,7 +247,8 @@ function normalizeQualifications(
     const year = typeof item.year === 'number' && Number.isFinite(item.year) ? String(item.year) : ''
     const documentFilePath = trimText(item.documentFilePath)
     const documentMimeType = trimText(item.documentMimeType)
-    const isImageDocument = documentMimeType.toLowerCase().includes('image')
+    const hasImagePreview = canRenderQualificationImagePreview(documentFilePath, documentMimeType)
+    const immediatePreviewUrl = getImmediateQualificationPreviewUrl(documentFilePath)
 
     items.push({
       key: `qualification-${title}-${year || 'no-year'}-${index}`,
@@ -254,11 +256,39 @@ function normalizeQualifications(
       year,
       documentPath: documentFilePath,
       hasAttachedDocument: Boolean(documentFilePath),
-      isImageDocument,
+      hasImagePreview,
+      immediatePreviewUrl,
     })
 
     return items
   }, [])
+}
+
+function canRenderQualificationImagePreview(documentPath: string, documentMimeType: string): boolean {
+  const normalizedMimeType = documentMimeType.trim().toLowerCase()
+  if (normalizedMimeType === 'image/jpeg' || normalizedMimeType === 'image/png' || normalizedMimeType === 'image/webp') {
+    return true
+  }
+
+  const normalizedPath = documentPath.trim().toLowerCase()
+  return (
+    normalizedPath.endsWith('.jpg') ||
+    normalizedPath.endsWith('.jpeg') ||
+    normalizedPath.endsWith('.png') ||
+    normalizedPath.endsWith('.webp')
+  )
+}
+
+function getImmediateQualificationPreviewUrl(documentPath: string): string | null {
+  const trimmedPath = documentPath.trim()
+  if (!trimmedPath) return null
+
+  try {
+    const url = new URL(trimmedPath)
+    return ['http:', 'https:', 'blob:', 'data:'].includes(url.protocol) ? trimmedPath : null
+  } catch {
+    return null
+  }
 }
 
 function normalizeFaqs(value: BusinessProfileDisplayData['faqs']): FaqDisplayItem[] {
@@ -852,11 +882,20 @@ function BusinessProfileDisplay({
 
   useEffect(() => {
     let isCurrent = true
-    const imageQualifications = qualificationItems.filter((item) => item.hasAttachedDocument && item.isImageDocument)
+    const imageQualifications = qualificationItems.filter(
+      (item) => item.hasAttachedDocument && item.hasImagePreview && !item.immediatePreviewUrl
+    )
+    const immediatePreviewUrls = qualificationItems.reduce<Record<string, string>>((urls, item) => {
+      if (item.hasImagePreview && item.immediatePreviewUrl) {
+        urls[item.key] = item.immediatePreviewUrl
+      }
+
+      return urls
+    }, {})
 
     setFailedQualificationPreviewKeys(new Set())
     if (imageQualifications.length === 0) {
-      setQualificationPreviewUrls({})
+      setQualificationPreviewUrls(immediatePreviewUrls)
       return () => {
         isCurrent = false
       }
@@ -877,7 +916,7 @@ function BusinessProfileDisplay({
           }
 
           return urls
-        }, {})
+        }, { ...immediatePreviewUrls })
       )
     })
 
@@ -1544,7 +1583,6 @@ function BusinessProfileDisplay({
                           src={previewUrl}
                           alt={`${item.title} preview`}
                           className="h-24 w-24 shrink-0 rounded-2xl border border-slate-100 bg-white object-contain sm:h-[108px] sm:w-[108px]"
-                          loading="lazy"
                           onError={() => {
                             setFailedQualificationPreviewKeys((current) => new Set(current).add(item.key))
                           }}
