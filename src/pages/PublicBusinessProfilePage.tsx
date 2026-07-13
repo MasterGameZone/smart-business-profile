@@ -10,7 +10,7 @@ import {
 import { usePageMeta } from '../hooks/usePageMeta.ts'
 import type { BusinessProfileRow } from '../types/businessProfile.ts'
 import { ToastContainer, type ToastItem, type ToastType } from '../components/Toast.tsx'
-import BusinessProfileDisplay from '../components/BusinessProfileDisplay.tsx'
+import BusinessProfileDisplay, { businessProfileOuterWrapperClassName } from '../components/BusinessProfileDisplay.tsx'
 import ReportProfileAction from '../components/ReportProfileAction.tsx'
 import ReviewSection, { type ReviewSummary } from '../components/ReviewSection.tsx'
 import { svgContainerToBlob, triggerBlobDownload } from '../utils/qr.ts'
@@ -312,7 +312,7 @@ function PublicBusinessProfilePage() {
         )}
 
         {loadState === 'found' && profile && (
-          <div className="rounded-[2rem] border border-slate-100 bg-white p-1 shadow-[0_32px_80px_-38px_rgba(15,23,42,0.45)]">
+          <div className={businessProfileOuterWrapperClassName}>
             <BusinessProfileDisplay
               profile={{
                 businessName: profile.business_name,

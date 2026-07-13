@@ -46,6 +46,9 @@ interface BusinessProfileDisplayProps {
   footerSlot?: ReactNode
 }
 
+export const businessProfileOuterWrapperClassName =
+  'rounded-[2rem] border border-slate-100 bg-white p-1 shadow-[0_32px_80px_-38px_rgba(15,23,42,0.45)]'
+
 const compactSecondaryButtonClass =
   'inline-flex h-7 min-w-0 items-center justify-center gap-1 whitespace-nowrap rounded-md border border-slate-300 bg-white px-2 text-[10px] font-medium leading-none text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 active:scale-[0.99] sm:h-8 sm:gap-1.5 sm:rounded-lg sm:px-3 sm:text-xs'
 const workingDayLabels = [

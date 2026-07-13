@@ -7,7 +7,7 @@ import { insertBusinessProfile } from '../lib/businessProfileService.ts'
 import { clearCreateProfileDraftFiles } from '../lib/createProfileDraftFiles.ts'
 import { usePageMeta } from '../hooks/usePageMeta.ts'
 import { ToastContainer, type ToastItem, type ToastType } from '../components/Toast.tsx'
-import BusinessProfileDisplay from '../components/BusinessProfileDisplay.tsx'
+import BusinessProfileDisplay, { businessProfileOuterWrapperClassName } from '../components/BusinessProfileDisplay.tsx'
 import { svgContainerToBlob, triggerBlobDownload } from '../utils/qr.ts'
 import AppHeader from '../components/AppHeader.tsx'
 import type { BusinessProfileRow } from '../types/businessProfile.ts'
@@ -400,40 +400,42 @@ function ProfilePreviewPage() {
         )}
 
         {hasProfile && (
-          <BusinessProfileDisplay
-            profile={{
-              businessName: profileData.businessName,
-              ownerName: profileData.ownerName,
-              businessCategory: profileData.businessCategory,
-              established_year: previewEstablishedYear,
-              years_of_experience: previewYearsOfExperience,
-              products_menu_packages: previewProductsMenuPackages,
-              faqs: previewFaqs,
-              qualifications: previewQualifications,
-              phoneNumber: profileData.phoneNumber,
-              whatsappNumber: profileData.whatsappNumber,
-              email: profileData.email,
-              website: profileData.website,
-              address: profileData.address,
-              aboutBusiness: profileData.aboutBusiness,
-              logoUrl,
-              coverBannerUrl,
-              tagline: profileData.tagline,
-              services: previewServices,
-              workingHours: profileData.workingHours,
-              googleMapsUrl: profileData.googleMapsUrl,
-              socialLinks: profileData.socialLinks,
-              keywords: previewKeywords,
-              galleryImages: galleryImageUrls,
-            }}
-            profileUrl={profileUrl}
-            onShare={handleShare}
-            qrSectionRef={qrSectionRef}
-            qrCodeRef={qrCodeRef}
-            onDownloadQR={handleDownloadQR}
-            onShareQR={handleShareQR}
-            previewActionSlot={previewActionSlot}
-          />
+          <div className={businessProfileOuterWrapperClassName}>
+            <BusinessProfileDisplay
+              profile={{
+                businessName: profileData.businessName,
+                ownerName: profileData.ownerName,
+                businessCategory: profileData.businessCategory,
+                established_year: previewEstablishedYear,
+                years_of_experience: previewYearsOfExperience,
+                products_menu_packages: previewProductsMenuPackages,
+                faqs: previewFaqs,
+                qualifications: previewQualifications,
+                phoneNumber: profileData.phoneNumber,
+                whatsappNumber: profileData.whatsappNumber,
+                email: profileData.email,
+                website: profileData.website,
+                address: profileData.address,
+                aboutBusiness: profileData.aboutBusiness,
+                logoUrl,
+                coverBannerUrl,
+                tagline: profileData.tagline,
+                services: previewServices,
+                workingHours: profileData.workingHours,
+                googleMapsUrl: profileData.googleMapsUrl,
+                socialLinks: profileData.socialLinks,
+                keywords: previewKeywords,
+                galleryImages: galleryImageUrls,
+              }}
+              profileUrl={profileUrl}
+              onShare={handleShare}
+              qrSectionRef={qrSectionRef}
+              qrCodeRef={qrCodeRef}
+              onDownloadQR={handleDownloadQR}
+              onShareQR={handleShareQR}
+              previewActionSlot={previewActionSlot}
+            />
+          </div>
         )}
       </div>
     </div>
