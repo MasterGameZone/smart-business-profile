@@ -34,8 +34,6 @@ interface FormErrors {
   faqs?: string
   productsMenuPackages?: string
   qualifications?: string
-  documents?: string
-  documentName?: string
   phoneNumber?: string
   whatsappNumber?: string
   email?: string
@@ -71,7 +69,6 @@ const MAX_QUALIFICATIONS = 10
 const QUALIFICATION_TITLE_MAX_LENGTH = 60
 const QUALIFICATION_ISSUING_ORGANIZATION_MAX_LENGTH = 60
 const QUALIFICATION_DESCRIPTION_MAX_LENGTH = 200
-const DOCUMENT_NAME_MAX_LENGTH = 60
 const BUSINESS_NAME_MAX_LENGTH = 40
 const OWNER_NAME_MAX_LENGTH = 30
 const TAGLINE_MAX_LENGTH = 80
@@ -552,7 +549,6 @@ function CreateProfilePage() {
   const logoInputRef = useRef<HTMLInputElement>(null)
   const coverBannerInputRef = useRef<HTMLInputElement>(null)
   const galleryInputRef = useRef<HTMLInputElement>(null)
-  const documentInputRef = useRef<HTMLInputElement>(null)
   const subcategoryDropdownRef = useRef<HTMLDivElement>(null)
   const stepContentRef = useRef<HTMLDivElement>(null)
   const shouldScrollStepIntoViewRef = useRef(false)
@@ -1193,68 +1189,6 @@ function CreateProfilePage() {
     updateQualifications(profileData.qualifications.filter((item) => item.id !== itemId))
   }
 
-  const handleDocumentFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(e.target.files ?? [])
-    if (selectedFiles.length === 0) return
-
-    const existingKeys = new Set(
-      [
-        ...profileData.existingDocuments.map((document) => document.file_name.toLowerCase()),
-        ...profileData.documentFiles.map((file) => file.name.toLowerCase()),
-      ]
-    )
-    const nextDocumentFiles = [...profileData.documentFiles]
-
-    for (const file of selectedFiles) {
-      const validationError = validateSelectedDocument(file)
-      if (validationError) {
-        setErrors((prev) => ({ ...prev, documents: validationError }))
-        if (documentInputRef.current) {
-          documentInputRef.current.value = ''
-        }
-        return
-      }
-
-      const key = file.name.toLowerCase()
-      if (existingKeys.has(key)) {
-        continue
-      }
-
-      existingKeys.add(key)
-      nextDocumentFiles.push(file)
-    }
-
-    setProfileData({
-      ...profileData,
-      documentFiles: nextDocumentFiles,
-    })
-    setErrors((prev) => ({ ...prev, documents: undefined }))
-
-    if (documentInputRef.current) {
-      documentInputRef.current.value = ''
-    }
-  }
-
-  const handleRemovePendingDocument = (index: number) => {
-    setProfileData({
-      ...profileData,
-      documentFiles: profileData.documentFiles.filter((_, documentIndex) => documentIndex !== index),
-    })
-    if (errors.documents) {
-      setErrors((prev) => ({ ...prev, documents: undefined }))
-    }
-  }
-
-  const handleRemoveExistingDocument = (documentId: string) => {
-    setProfileData({
-      ...profileData,
-      existingDocuments: profileData.existingDocuments.filter((document) => document.id !== documentId),
-    })
-    if (errors.documents) {
-      setErrors((prev) => ({ ...prev, documents: undefined }))
-    }
-  }
-
   const validate = (): boolean => {
     const newErrors: FormErrors = {}
     const currentYear = getCurrentYear()
@@ -1375,9 +1309,6 @@ function CreateProfilePage() {
     ) {
       newErrors.qualifications =
         `Keep qualification name within ${QUALIFICATION_TITLE_MAX_LENGTH} characters, issuing organization within ${QUALIFICATION_ISSUING_ORGANIZATION_MAX_LENGTH} characters, and description within ${QUALIFICATION_DESCRIPTION_MAX_LENGTH} characters.`
-    }
-    if (profileData.documentName.length > DOCUMENT_NAME_MAX_LENGTH) {
-      newErrors.documentName = `Document name must be ${DOCUMENT_NAME_MAX_LENGTH} characters or fewer.`
     }
     if (!profileData.address.trim()) {
       newErrors.address = 'Address is required.'
@@ -1545,9 +1476,6 @@ function CreateProfilePage() {
             ? `Add up to ${MAX_QUALIFICATIONS} credentials only.`
             : `Keep qualification name within ${QUALIFICATION_TITLE_MAX_LENGTH} characters, issuing organization within ${QUALIFICATION_ISSUING_ORGANIZATION_MAX_LENGTH} characters, and description within ${QUALIFICATION_DESCRIPTION_MAX_LENGTH} characters.`
       }
-      if (profileData.documentName.length > DOCUMENT_NAME_MAX_LENGTH) {
-        stepErrors.documentName = `Document name must be ${DOCUMENT_NAME_MAX_LENGTH} characters or fewer.`
-      }
     }
 
     setErrors((prev) => ({
@@ -1570,7 +1498,6 @@ function CreateProfilePage() {
       workingHours: currentStepIndex === 2 ? stepErrors.workingHours : prev.workingHours,
       galleryImages: currentStepIndex === 3 ? stepErrors.galleryImages : prev.galleryImages,
       qualifications: currentStepIndex === 4 ? stepErrors.qualifications : prev.qualifications,
-      documentName: currentStepIndex === 4 ? stepErrors.documentName : prev.documentName,
     }))
 
     return Object.keys(stepErrors).length === 0
@@ -1690,9 +1617,6 @@ function CreateProfilePage() {
     }
     if (galleryInputRef.current) {
       galleryInputRef.current.value = ''
-    }
-    if (documentInputRef.current) {
-      documentInputRef.current.value = ''
     }
   }
 
@@ -3038,106 +2962,6 @@ function CreateProfilePage() {
               )}
             </div>
             {fieldError('qualifications')}
-
-            <FormSubsectionHeading
-              id="section-documents"
-              title="Optional Documents"
-              description="Upload brochures, menus, certificates, licenses, rate cards, or similar supporting documents."
-            />
-
-            <div className="rounded-2xl border border-slate-200 bg-white/85 p-4 sm:p-5">
-              <div className="mb-5">
-                <label htmlFor="documentName" className={labelClass}>
-                  Document Name
-                  <span className={optionalTextClass}>Optional</span>
-                </label>
-                <input
-                  type="text"
-                  id="documentName"
-                  name="documentName"
-                  value={profileData.documentName}
-                  onChange={handleChange}
-                  maxLength={DOCUMENT_NAME_MAX_LENGTH}
-                  placeholder="e.g. Business Brochure, Menu, Rate Card, Registration Certificate"
-                  aria-invalid={!!errors.documentName}
-                  aria-describedby={
-                    errors.documentName
-                      ? 'documentName-error documentName-counter'
-                      : 'documentName-counter'
-                  }
-                  className={`${inputBase} ${errors.documentName ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
-                />
-                {fieldError('documentName')}
-                {characterCounter('documentName-counter', profileData.documentName, DOCUMENT_NAME_MAX_LENGTH)}
-              </div>
-
-              <label htmlFor="documents" className={labelClass}>
-                Upload Documents
-                <span className={optionalTextClass}>Optional</span>
-              </label>
-              <input
-                ref={documentInputRef}
-                type="file"
-                id="documents"
-                name="documents"
-                accept={documentAccept}
-                multiple
-                onChange={handleDocumentFilesChange}
-                aria-invalid={!!errors.documents}
-                aria-describedby={errors.documents ? 'documents-error' : 'documents-help'}
-                className={`${fileInputBase} ${errors.documents ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
-              />
-              {fieldError('documents')}
-              <p id="documents-help" className="mt-2 text-xs text-slate-400">
-                Supported formats: PDF, JPG, PNG, and WebP. Maximum file size is 10 MB per file.
-              </p>
-
-              {(profileData.existingDocuments.length > 0 || profileData.documentFiles.length > 0) && (
-                <div className="mt-4 space-y-3">
-                  {profileData.existingDocuments.map((document) => (
-                    <div
-                      key={document.id}
-                      className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-slate-800">
-                          {document.document_name || document.file_name}
-                        </p>
-                        <p className="mt-1 text-xs text-slate-500">{formatMimeTypeLabel(document.mime_type)}</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveExistingDocument(document.id)}
-                        className="inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 transition hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-rose-200"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ))}
-
-                  {profileData.documentFiles.map((file, index) => (
-                    <div
-                      key={`${file.name}-${file.lastModified}-${index}`}
-                      className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-slate-800">
-                          {profileData.documentName.trim() || file.name}
-                        </p>
-                        <p className="mt-1 text-xs text-slate-500">{formatMimeTypeLabel(file.type)}</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleRemovePendingDocument(index)}
-                        className="inline-flex items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 transition hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-rose-200"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
 
             </div>
           </section>
