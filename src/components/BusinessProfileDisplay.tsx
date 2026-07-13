@@ -1,6 +1,7 @@
 import { cloneElement, isValidElement, useEffect, useRef, useState, type ReactElement, type ReactNode, type RefObject } from 'react'
 import { createPortal } from 'react-dom'
 import QRCode from 'react-qr-code'
+import { useAuth } from '../context/AuthContext.tsx'
 import { getBusinessDocumentViewUrl } from '../lib/storageService.ts'
 import type { BusinessProfileRow, JsonObject, SocialLinks } from '../types/businessProfile.ts'
 
@@ -742,6 +743,7 @@ function BusinessProfileDisplay({
   saveButtonSlot,
   footerSlot,
 }: BusinessProfileDisplayProps) {
+  const { isLoading: isAuthLoading, session } = useAuth()
   const [isExpanded, setIsExpanded] = useState(false)
   const [isWorkingHoursExpanded, setIsWorkingHoursExpanded] = useState(false)
   const [isFaqsExpanded, setIsFaqsExpanded] = useState(false)
@@ -830,6 +832,7 @@ function BusinessProfileDisplay({
   const hasLocationSection = Boolean(displayAddress || directionsUrl)
   const offeringSectionLabel = 'Services'
   const displayBusinessName = trimText(profile.businessName) || 'this business'
+  const authViewerScopeKey = session?.user?.id ?? 'anonymous'
   const bottomActionBaseClass =
     'flex flex-1 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-transparent px-1.5 py-2.5 text-[11px] font-semibold text-slate-700 shadow-none transition hover:bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70 sm:gap-2 sm:px-2 sm:text-sm'
   const styledSaveButtonSlot = isValidElement<{ className?: string }>(saveButtonSlot)
@@ -881,7 +884,19 @@ function BusinessProfileDisplay({
   }, [isQrModalOpen])
 
   useEffect(() => {
+    setQualificationPreviewUrls({})
+    setFailedQualificationPreviewKeys(new Set())
+  }, [authViewerScopeKey, isAuthLoading, profile.qualifications])
+
+  useEffect(() => {
     let isCurrent = true
+
+    if (isAuthLoading) {
+      return () => {
+        isCurrent = false
+      }
+    }
+
     const imageQualifications = qualificationItems.filter(
       (item) => item.hasAttachedDocument && item.hasImagePreview && !item.immediatePreviewUrl
     )
@@ -893,7 +908,6 @@ function BusinessProfileDisplay({
       return urls
     }, {})
 
-    setFailedQualificationPreviewKeys(new Set())
     if (imageQualifications.length === 0) {
       setQualificationPreviewUrls(immediatePreviewUrls)
       return () => {
@@ -923,7 +937,7 @@ function BusinessProfileDisplay({
     return () => {
       isCurrent = false
     }
-  }, [profile.qualifications])
+  }, [authViewerScopeKey, isAuthLoading, profile.qualifications])
 
   const handleHideFullProfile = () => {
     setIsExpanded(false)
@@ -965,6 +979,8 @@ function BusinessProfileDisplay({
   }
 
   const handleOpenQualificationDocument = async (documentPath: string) => {
+    if (isAuthLoading) return
+
     const viewUrl = await getBusinessDocumentViewUrl(documentPath)
     if (!viewUrl) return
 

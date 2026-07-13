@@ -39,6 +39,31 @@ export interface StoragePathResult {
   path: string
 }
 
+interface BusinessDocumentAuthContext {
+  authScopeKey: string
+  authState: 'authenticated' | 'anonymous'
+}
+
+const pendingBusinessDocumentViewUrlRequests = new Map<string, Promise<string | null>>()
+
+async function getBusinessDocumentAuthContext(): Promise<BusinessDocumentAuthContext> {
+  const { data, error } = await supabase.auth.getSession()
+
+  if (error) {
+    console.error('Failed to inspect Supabase auth session for business document access.', {
+      message: error.message,
+      status: 'status' in error ? error.status : undefined,
+      statusCode: 'statusCode' in error ? error.statusCode : undefined,
+    })
+  }
+
+  const userId = data.session?.user?.id?.trim() ?? ''
+  return {
+    authScopeKey: userId || 'anonymous',
+    authState: userId ? 'authenticated' : 'anonymous',
+  }
+}
+
 export async function getBusinessDocumentViewUrl(path: string): Promise<string | null> {
   const trimmedPath = path.trim()
   if (!trimmedPath) return null
@@ -52,16 +77,36 @@ export async function getBusinessDocumentViewUrl(path: string): Promise<string |
     // Continue to signed-url resolution for storage paths.
   }
 
-  const { data, error } = await supabase.storage
-    .from(BUSINESS_DOCUMENTS_BUCKET)
-    .createSignedUrl(trimmedPath, 60)
-
-  if (error) {
-    console.error('Failed to create signed URL for business document:', error)
-    return null
+  const authContext = await getBusinessDocumentAuthContext()
+  const requestKey = `${authContext.authScopeKey}:${trimmedPath}`
+  const existingRequest = pendingBusinessDocumentViewUrlRequests.get(requestKey)
+  if (existingRequest) {
+    return existingRequest
   }
 
-  return data?.signedUrl ?? null
+  const request = (async () => {
+    const { data, error } = await supabase.storage
+      .from(BUSINESS_DOCUMENTS_BUCKET)
+      .createSignedUrl(trimmedPath, 60)
+
+    if (error) {
+      console.error('Failed to create signed URL for business document.', {
+        documentPath: trimmedPath,
+        authState: authContext.authState,
+        message: error.message,
+        status: 'status' in error ? error.status : undefined,
+        statusCode: 'statusCode' in error ? error.statusCode : undefined,
+      })
+      return null
+    }
+
+    return data?.signedUrl ?? null
+  })().finally(() => {
+    pendingBusinessDocumentViewUrlRequests.delete(requestKey)
+  })
+
+  pendingBusinessDocumentViewUrlRequests.set(requestKey, request)
+  return request
 }
 
 export function validateImageFile(file: File): ImageValidationResult {
