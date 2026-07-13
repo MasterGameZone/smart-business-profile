@@ -254,14 +254,14 @@ function PublicBusinessProfilePage() {
   const compactSecondaryActionClass =
     'inline-flex h-7 items-center justify-center whitespace-nowrap rounded-md border border-slate-300 bg-white px-2 text-[10px] font-medium leading-none text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 sm:h-8 sm:rounded-lg sm:px-3 sm:text-xs'
 
-  const pageBackgroundClass = isOwnerPreview
-    ? 'min-h-screen bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.18),transparent_34%),linear-gradient(180deg,#020617_0%,#0f172a_32%,#0b1120_100%)] pb-12 text-slate-100'
-    : 'min-h-screen bg-gradient-to-b from-slate-100 to-blue-50 pb-12'
+  const pageBackgroundClass =
+    'min-h-screen bg-[linear-gradient(180deg,#020617_0%,#030712_34%,#020617_100%)] pb-12 text-slate-100'
 
   return (
     <div className={pageBackgroundClass}>
       <ToastContainer toasts={toasts} />
       <AppHeader
+        variant="publicBusinessProfile"
         previewConfig={
           isOwnerPreview
             ? {

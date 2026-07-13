@@ -12,6 +12,7 @@ interface AppHeaderPreviewConfig {
 
 interface AppHeaderProps {
   previewConfig?: AppHeaderPreviewConfig | null
+  variant?: 'default' | 'publicBusinessProfile'
 }
 
 interface NavItem {
@@ -30,7 +31,7 @@ interface HomeMenuItem {
 
 let hasPlayedNavbarEntrance = false
 
-function AppHeader({ previewConfig = null }: AppHeaderProps) {
+function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, isLoading, accountMode, isBusinessOwnerEnabled, setPreferredAccountMode } = useAuth()
@@ -46,19 +47,24 @@ function AppHeader({ previewConfig = null }: AppHeaderProps) {
   const isCreateProfilePage = location.pathname === '/create-profile'
   const isDirectoryPage = location.pathname === '/directory'
   const isAuthEntryPage = location.pathname === '/login' || location.pathname === '/signup'
-  const isSimpleDarkNavbarPage = isAuthEntryPage || isDirectoryPage
+  const isPublicBusinessProfileVariant = variant === 'publicBusinessProfile'
+  const isSimpleDarkNavbarPage = isAuthEntryPage || isDirectoryPage || isPublicBusinessProfileVariant
   const showCreateProfileTopBar = Boolean(user) && isCreateProfilePage
   const showMinimalCustomerTopBar = Boolean(user) && (isLandingPage || isStartBusinessPage)
   const showStartBusinessLogoOnly = Boolean(user) && isStartBusinessPage
   const showBusinessHomeTopBar = Boolean(user) && isBusinessHomePage
   const isDarkLandingNavbar =
     isLandingPage || isStartBusinessPage || isBusinessHomePage || isCreateProfilePage || isSimpleDarkNavbarPage
-  const showPreviewHeader = Boolean(previewConfig)
+  const showPreviewHeader = Boolean(previewConfig) && !isPublicBusinessProfileVariant
   const useDarkHeaderStyle = isDarkLandingNavbar || showPreviewHeader
-  const hideAuthenticatedNavButtons = showMinimalCustomerTopBar || showBusinessHomeTopBar || showCreateProfileTopBar
+  const hideAuthenticatedNavButtons =
+    showMinimalCustomerTopBar || showBusinessHomeTopBar || showCreateProfileTopBar || isPublicBusinessProfileVariant
   const showLoggedInHomeIcons = showMinimalCustomerTopBar && !showStartBusinessLogoOnly
   const hasTopBarMenu = showLoggedInHomeIcons || showBusinessHomeTopBar
   const authenticatedHomePath = isCreateProfilePage && accountMode === 'business_owner' ? '/business-home' : '/'
+  const useInlineDarkNavbarLayout = isPublicBusinessProfileVariant || ((isLandingPage || isSimpleDarkNavbarPage) && !user)
+  const publicBusinessProfileBackPath = previewConfig?.backPath ?? '/'
+  const publicBusinessProfileBackLabel = previewConfig?.backLabel ?? 'Back to Home'
   const navbarInteractionStyle: CSSProperties = {
     WebkitTapHighlightColor: 'transparent',
   }
@@ -271,7 +277,7 @@ function AppHeader({ previewConfig = null }: AppHeaderProps) {
         >
           <div
             className={`flex items-center justify-between gap-2 sm:gap-3 ${
-              (isLandingPage || isSimpleDarkNavbarPage) && !user ? 'flex-nowrap' : 'flex-wrap'
+              useInlineDarkNavbarLayout ? 'flex-nowrap' : 'flex-wrap'
             }`}
           >
             <button
@@ -312,6 +318,49 @@ function AppHeader({ previewConfig = null }: AppHeaderProps) {
                   style={navbarInteractionStyle}
                 >
                   {previewConfig.backLabel}
+                </button>
+                <button
+                  type="button"
+                  aria-label="Help"
+                  onClick={handleCreateProfileHelp}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/12 bg-white/5 text-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                  style={navbarInteractionStyle}
+                >
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-4.5 w-4.5"
+                  >
+                    <path d="M9.09 9a3 3 0 1 1 5.82 1c0 2-3 3-3 3" />
+                    <path d="M12 17h.01" />
+                    <circle cx="12" cy="12" r="9" />
+                  </svg>
+                </button>
+              </div>
+            )}
+
+            {!isLoading && isPublicBusinessProfileVariant && (
+              <div className="ml-auto flex shrink-0 items-center gap-2" aria-label="Public business profile quick actions">
+                <button
+                  type="button"
+                  onClick={() => navigate('/directory')}
+                  className="inline-flex min-h-[36px] items-center justify-center rounded-full border border-white/12 bg-white/5 px-4 py-2 text-sm font-medium text-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                  style={navbarInteractionStyle}
+                >
+                  Businesses
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate(publicBusinessProfileBackPath)}
+                  className="inline-flex min-h-[36px] items-center justify-center rounded-full border border-white/12 bg-white/5 px-4 py-2 text-sm font-medium text-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                  style={navbarInteractionStyle}
+                >
+                  {publicBusinessProfileBackLabel}
                 </button>
                 <button
                   type="button"
@@ -466,7 +515,7 @@ function AppHeader({ previewConfig = null }: AppHeaderProps) {
             {!isLoading && !showPreviewHeader && !hideAuthenticatedNavButtons && (
               <nav
                 className={`flex items-center ${
-                  (isLandingPage || isSimpleDarkNavbarPage) && !user
+                  useInlineDarkNavbarLayout
                     ? 'ml-auto shrink-0 flex-nowrap gap-1 sm:gap-2'
                     : 'w-full flex-wrap justify-end gap-2 pt-2 sm:w-auto sm:pt-0'
                 }`}
@@ -483,7 +532,7 @@ function AppHeader({ previewConfig = null }: AppHeaderProps) {
                     <span className="relative z-10">{item.label}</span>
                   </button>
                 ))}
-                {user && (
+                {user && !isPublicBusinessProfileVariant && (
                   <button
                     type="button"
                     onClick={handleLogout}
