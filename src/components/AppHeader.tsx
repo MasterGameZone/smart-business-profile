@@ -45,24 +45,36 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
   const isStartBusinessPage = location.pathname === '/start-business'
   const isBusinessHomePage = location.pathname === '/business-home'
   const isCreateProfilePage = location.pathname === '/create-profile'
+  const isProfilePreviewPage = location.pathname === '/profile-preview'
   const isDirectoryPage = location.pathname === '/directory'
   const isAuthEntryPage = location.pathname === '/login' || location.pathname === '/signup'
   const isPublicBusinessProfileVariant = variant === 'publicBusinessProfile'
   const isSimpleDarkNavbarPage = isAuthEntryPage || isDirectoryPage || isPublicBusinessProfileVariant
   const showCreateProfileTopBar = Boolean(user) && isCreateProfilePage
+  const showProfilePreviewTopBar = isProfilePreviewPage
   const showMinimalCustomerTopBar = Boolean(user) && (isLandingPage || isStartBusinessPage)
   const showStartBusinessLogoOnly = Boolean(user) && isStartBusinessPage
   const showBusinessHomeTopBar = Boolean(user) && isBusinessHomePage
   const isDarkLandingNavbar =
-    isLandingPage || isStartBusinessPage || isBusinessHomePage || isCreateProfilePage || isSimpleDarkNavbarPage
+    isLandingPage ||
+    isStartBusinessPage ||
+    isBusinessHomePage ||
+    isCreateProfilePage ||
+    isProfilePreviewPage ||
+    isSimpleDarkNavbarPage
   const showPreviewHeader = Boolean(previewConfig) && !isPublicBusinessProfileVariant
   const useDarkHeaderStyle = isDarkLandingNavbar || showPreviewHeader
   const hideAuthenticatedNavButtons =
-    showMinimalCustomerTopBar || showBusinessHomeTopBar || showCreateProfileTopBar || isPublicBusinessProfileVariant
+    showMinimalCustomerTopBar ||
+    showBusinessHomeTopBar ||
+    showCreateProfileTopBar ||
+    showProfilePreviewTopBar ||
+    isPublicBusinessProfileVariant
   const showLoggedInHomeIcons = showMinimalCustomerTopBar && !showStartBusinessLogoOnly
   const hasTopBarMenu = showLoggedInHomeIcons || showBusinessHomeTopBar
   const authenticatedHomePath = isCreateProfilePage && accountMode === 'business_owner' ? '/business-home' : '/'
-  const useInlineDarkNavbarLayout = isPublicBusinessProfileVariant || ((isLandingPage || isSimpleDarkNavbarPage) && !user)
+  const useInlineDarkNavbarLayout =
+    isProfilePreviewPage || isPublicBusinessProfileVariant || ((isLandingPage || isSimpleDarkNavbarPage) && !user)
   const publicBusinessProfileBackPath = previewConfig?.backPath ?? '/'
   const publicBusinessProfileBackLabel = previewConfig?.backLabel ?? 'Back to Home'
   const navbarInteractionStyle: CSSProperties = {
@@ -306,7 +318,14 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
                 />
                 <span className="relative z-10">SB</span>
               </span>
-              {!showPreviewHeader && !isLandingPage && !isStartBusinessPage && !isBusinessHomePage && !isCreateProfilePage && !isSimpleDarkNavbarPage && 'Smart Business Profile'}
+              {!showPreviewHeader &&
+                !isLandingPage &&
+                !isStartBusinessPage &&
+                !isBusinessHomePage &&
+                !isCreateProfilePage &&
+                !isProfilePreviewPage &&
+                !isSimpleDarkNavbarPage &&
+                'Smart Business Profile'}
             </button>
 
             {!isLoading && showPreviewHeader && previewConfig && (
@@ -418,6 +437,19 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
                     <path d="M12 17h.01" />
                     <circle cx="12" cy="12" r="9" />
                   </svg>
+                </button>
+              </div>
+            )}
+
+            {!isLoading && !showPreviewHeader && showProfilePreviewTopBar && (
+              <div className="ml-auto flex shrink-0 items-center gap-2" aria-label="Profile preview quick actions">
+                <button
+                  type="button"
+                  onClick={() => navigate('/business-home')}
+                  className="inline-flex min-h-[36px] items-center justify-center rounded-full border border-white/12 bg-white/5 px-4 py-2 text-sm font-medium text-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                  style={navbarInteractionStyle}
+                >
+                  Home
                 </button>
               </div>
             )}

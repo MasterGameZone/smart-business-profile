@@ -368,7 +368,7 @@ function ProfilePreviewPage() {
   )
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-100 to-blue-50 pb-12">
+    <div className="min-h-screen bg-[linear-gradient(180deg,#020617_0%,#030712_34%,#020617_100%)] pb-12 text-slate-100">
       <ToastContainer toasts={toasts} />
       <AppHeader />
 
@@ -384,8 +384,8 @@ function ProfilePreviewPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
             </div>
-            <h1 className="mb-2 text-2xl font-bold text-gray-900">No Business Profile Found</h1>
-            <p className="mb-8 max-w-sm text-gray-500">Create your business profile to see it here.</p>
+            <h1 className="mb-2 text-2xl font-bold text-slate-50">No Business Profile Found</h1>
+            <p className="mb-8 max-w-sm text-slate-300">Create your business profile to see it here.</p>
             <button
               type="button"
               onClick={() => navigate('/create-profile')}
