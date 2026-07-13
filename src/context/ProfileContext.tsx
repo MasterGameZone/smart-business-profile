@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useState, type Dispatch, type SetStateAction } from 'react'
 import type {
   BusinessProfileDocumentRow,
   BusinessProfileFaqValue,
@@ -340,6 +340,23 @@ export interface ProfileData {
   existingDocuments: BusinessProfileDocumentRow[]
 }
 
+export const CREATE_PROFILE_DRAFT_STORAGE_VERSION = 1
+export const CREATE_PROFILE_DRAFT_STORAGE_PREFIX = 'smart-business-profile:create-profile-draft'
+
+export function getCreateProfileDraftStorageKey(userId: string): string {
+  return `${CREATE_PROFILE_DRAFT_STORAGE_PREFIX}:v${CREATE_PROFILE_DRAFT_STORAGE_VERSION}:${userId}:new`
+}
+
+export function removeCreateProfileDraft(userId: string | null | undefined): void {
+  if (!userId) return
+
+  try {
+    window.localStorage.removeItem(getCreateProfileDraftStorageKey(userId))
+  } catch {
+    // Draft cleanup is best-effort when localStorage is unavailable.
+  }
+}
+
 function createDefaultProfileData(): ProfileData {
   return {
     id: null,
@@ -382,7 +399,7 @@ function createDefaultProfileData(): ProfileData {
 
 interface ProfileContextValue {
   profileData: ProfileData
-  setProfileData: (data: ProfileData) => void
+  setProfileData: Dispatch<SetStateAction<ProfileData>>
   clearProfile: () => void
 }
 

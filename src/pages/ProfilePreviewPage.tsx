@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { RefObject } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { useProfile, type ProfileData } from '../context/ProfileContext.tsx'
+import { removeCreateProfileDraft, useProfile, type ProfileData } from '../context/ProfileContext.tsx'
 import { useAuth } from '../context/AuthContext.tsx'
 import { insertBusinessProfile } from '../lib/businessProfileService.ts'
+import { clearCreateProfileDraftFiles } from '../lib/createProfileDraftFiles.ts'
 import { usePageMeta } from '../hooks/usePageMeta.ts'
 import { ToastContainer, type ToastItem, type ToastType } from '../components/Toast.tsx'
 import BusinessProfileDisplay from '../components/BusinessProfileDisplay.tsx'
@@ -116,7 +117,7 @@ function ProfilePreviewPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { profileData, setProfileData } = useProfile()
-  const { accountMode } = useAuth()
+  const { accountMode, user } = useAuth()
 
   usePageMeta({
     title: 'Preview Business Profile | Smart Business Profile',
@@ -260,6 +261,12 @@ function ProfilePreviewPage() {
       const saved = await insertBusinessProfile(profileData)
       removeCreateProfileStepIndex(getCreateProfileStepStorageKey(profileData.id))
       removeCreateProfileStepIndex(getCreateProfileStepStorageKey(null))
+      removeCreateProfileDraft(user?.id)
+      if (user?.id) {
+        void clearCreateProfileDraftFiles({ userId: user.id, profileId: null }).catch((draftFileError) => {
+          console.warn('Failed to clear draft files after profile save.', draftFileError)
+        })
+      }
       setProfileData({
         ...profileData,
         id: saved.id,

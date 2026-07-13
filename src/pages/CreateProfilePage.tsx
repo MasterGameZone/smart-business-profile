@@ -2,12 +2,16 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   createDefaultSocialLinks,
+  CREATE_PROFILE_DRAFT_STORAGE_VERSION,
   createProfileFaqItem,
   createProfileProductItem,
   createProfileQualificationItem,
+  getCreateProfileDraftStorageKey,
   normalizeQualificationItems,
+  removeCreateProfileDraft,
   useProfile,
   workingDays,
+  type ProfileData,
   type ProfileFaqItem,
   type ProfileProductItem,
   type ProfileQualificationItem,
@@ -15,6 +19,15 @@ import {
 } from '../context/ProfileContext.tsx'
 import { useAuth } from '../context/AuthContext.tsx'
 import { updateBusinessProfile } from '../lib/businessProfileService.ts'
+import {
+  clearCreateProfileDraftFiles,
+  removeCreateProfileDraftFile,
+  removeCreateProfileDraftFilesByField,
+  restoreCreateProfileDraftFiles,
+  saveCreateProfileDraftFile,
+  type CreateProfileDraftFileScope,
+  type RestoredCreateProfileDraftFile,
+} from '../lib/createProfileDraftFiles.ts'
 import { validateDocumentFile, validateImageFile } from '../lib/storageService.ts'
 import { usePageMeta } from '../hooks/usePageMeta.ts'
 import { ToastContainer, type ToastItem, type ToastType } from '../components/Toast.tsx'
@@ -85,6 +98,67 @@ const FORM_STEPS = [
   'Certificates & Documents',
 ] as const
 const CREATE_PROFILE_STEP_STORAGE_PREFIX = 'smart-business-profile:create-profile-step'
+const CREATE_PROFILE_DRAFT_DEBOUNCE_MS = 500
+const SINGLE_FILE_DRAFT_ITEM_KEY = 'current'
+
+interface DraftFaqItem {
+  question: string
+  answer: string
+}
+
+interface DraftProductItem {
+  id: string
+  name: string
+  description: string
+  price: string
+  imageUrl: string | null
+}
+
+interface DraftQualificationItem {
+  id: string
+  title: string
+  issuingOrganization: string
+  year: string
+  description: string
+  documentFileName: string
+  documentFilePath: string
+  documentMimeType: string
+}
+
+interface CreateProfileDraftData {
+  businessName: string
+  ownerName: string
+  businessCategory: string
+  businessSubcategories: string[]
+  establishedYear: string
+  yearsOfExperience: string
+  highlights: string[]
+  faqs: DraftFaqItem[]
+  productsMenuPackages: DraftProductItem[]
+  qualifications: DraftQualificationItem[]
+  phoneNumber: string
+  whatsappNumber: string
+  email: string
+  website: string
+  address: string
+  aboutBusiness: string
+  tagline: string
+  servicesText: string
+  workingHours: Record<WorkingDayKey, { open: string; close: string; closed: boolean }>
+  googleMapsUrl: string
+  socialLinks: Record<string, string>
+  keywordsText: string
+  isPublic: boolean
+}
+
+interface CreateProfileDraft {
+  version: number
+  userId: string
+  profileId: null
+  currentStepIndex: number
+  profileData: CreateProfileDraftData
+  updatedAt: string
+}
 
 function getCreateProfileStepStorageKey(profileId: string | null | undefined): string {
   return `${CREATE_PROFILE_STEP_STORAGE_PREFIX}:${profileId ?? 'new'}`
@@ -119,6 +193,477 @@ function removeCreateProfileStepIndex(storageKey: string): void {
   } catch {
     // Ignore unavailable sessionStorage during cleanup.
   }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function toDraftString(value: unknown): string {
+  return typeof value === 'string' ? value : ''
+}
+
+function toDraftStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+
+  return value.filter((item): item is string => typeof item === 'string')
+}
+
+function toDraftSocialLinks(value: unknown): Record<string, string> {
+  if (!isRecord(value)) return createDefaultSocialLinks()
+
+  return Object.entries(value).reduce<Record<string, string>>((links, [key, entryValue]) => {
+    const trimmedKey = key.trim()
+    if (trimmedKey && typeof entryValue === 'string') {
+      links[trimmedKey] = entryValue
+    }
+
+    return links
+  }, {})
+}
+
+function toDraftWorkingHours(value: unknown): CreateProfileDraftData['workingHours'] {
+  const normalized = workingDays.reduce<CreateProfileDraftData['workingHours']>((hours, { key }) => {
+    hours[key] = { open: '', close: '', closed: false }
+    return hours
+  }, {} as CreateProfileDraftData['workingHours'])
+
+  if (!isRecord(value)) return normalized
+
+  workingDays.forEach(({ key }) => {
+    const dayValue = value[key]
+    if (!isRecord(dayValue)) return
+
+    normalized[key] = {
+      open: toDraftString(dayValue.open),
+      close: toDraftString(dayValue.close),
+      closed: typeof dayValue.closed === 'boolean' ? dayValue.closed : false,
+    }
+  })
+
+  return normalized
+}
+
+function normalizeDraftStepIndex(value: unknown): number {
+  const stepIndex = typeof value === 'number' ? value : Number(value)
+  return Number.isInteger(stepIndex) && stepIndex >= 0 && stepIndex < FORM_STEPS.length ? stepIndex : 0
+}
+
+function serializeCreateProfileDraftData(data: ProfileData): CreateProfileDraftData {
+  return {
+    businessName: data.businessName,
+    ownerName: data.ownerName,
+    businessCategory: data.businessCategory,
+    businessSubcategories: data.businessSubcategories,
+    establishedYear: data.establishedYear,
+    yearsOfExperience: data.yearsOfExperience,
+    highlights: data.highlights,
+    faqs: data.faqs.map((item) => ({
+      question: item.question,
+      answer: item.answer,
+    })),
+    productsMenuPackages: data.productsMenuPackages.map((item) => ({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      price: item.price,
+      imageUrl: item.imageUrl,
+    })),
+    qualifications: data.qualifications.map((item) => ({
+      id: item.id,
+      title: item.title,
+      issuingOrganization: item.issuingOrganization,
+      year: item.year,
+      description: item.description,
+      documentFileName: item.documentFilePath ? item.documentFileName : '',
+      documentFilePath: item.documentFilePath,
+      documentMimeType: item.documentFilePath ? item.documentMimeType : '',
+    })),
+    phoneNumber: data.phoneNumber,
+    whatsappNumber: data.whatsappNumber,
+    email: data.email,
+    website: data.website,
+    address: data.address,
+    aboutBusiness: data.aboutBusiness,
+    tagline: data.tagline,
+    servicesText: data.servicesText,
+    workingHours: data.workingHours,
+    googleMapsUrl: data.googleMapsUrl,
+    socialLinks: data.socialLinks,
+    keywordsText: data.keywordsText,
+    isPublic: data.isPublic,
+  }
+}
+
+function parseDraftFaqs(value: unknown): ProfileFaqItem[] {
+  if (!Array.isArray(value)) return []
+
+  return value
+    .filter(isRecord)
+    .map((item) => createProfileFaqItem(toDraftString(item.question), toDraftString(item.answer)))
+    .filter((item) => item.question.trim() || item.answer.trim())
+}
+
+function parseDraftProducts(value: unknown): ProfileProductItem[] {
+  if (!Array.isArray(value)) return [createProfileProductItem()]
+
+  const products = value
+    .filter(isRecord)
+    .map((item) => {
+      const product = createProfileProductItem(
+        toDraftString(item.name),
+        toDraftString(item.description),
+        toDraftString(item.price),
+        typeof item.imageUrl === 'string' ? item.imageUrl : null
+      )
+      const savedItemId = toDraftString(item.id).trim()
+
+      return savedItemId ? { ...product, id: savedItemId } : product
+    })
+    .filter(
+      (item) =>
+        item.name.trim() ||
+        item.description.trim() ||
+        item.price.trim() ||
+        item.imageUrl
+    )
+
+  return products.length > 0 ? products : [createProfileProductItem()]
+}
+
+function parseDraftQualifications(value: unknown): ProfileQualificationItem[] {
+  if (!Array.isArray(value)) return []
+
+  return value
+    .filter(isRecord)
+    .map((item) => {
+      const qualification = createProfileQualificationItem(
+        toDraftString(item.title),
+        toDraftString(item.issuingOrganization),
+        toDraftString(item.year),
+        toDraftString(item.description),
+        toDraftString(item.documentFilePath) ? toDraftString(item.documentFileName) : '',
+        toDraftString(item.documentFilePath),
+        toDraftString(item.documentFilePath) ? toDraftString(item.documentMimeType) : ''
+      )
+      const savedItemId = toDraftString(item.id).trim()
+
+      return savedItemId ? { ...qualification, id: savedItemId } : qualification
+    })
+    .filter(
+      (item) =>
+        item.title.trim() ||
+        item.issuingOrganization.trim() ||
+        item.year.trim() ||
+        item.description.trim() ||
+        item.documentFilePath.trim()
+    )
+}
+
+function parseCreateProfileDraftData(value: unknown): CreateProfileDraftData | null {
+  if (!isRecord(value)) return null
+
+  return {
+    businessName: toDraftString(value.businessName),
+    ownerName: toDraftString(value.ownerName),
+    businessCategory: toDraftString(value.businessCategory),
+    businessSubcategories: toDraftStringArray(value.businessSubcategories),
+    establishedYear: toDraftString(value.establishedYear),
+    yearsOfExperience: toDraftString(value.yearsOfExperience),
+    highlights: toDraftStringArray(value.highlights),
+    faqs: parseDraftFaqs(value.faqs).map((item) => ({
+      question: item.question,
+      answer: item.answer,
+    })),
+    productsMenuPackages: parseDraftProducts(value.productsMenuPackages).map((item) => ({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      price: item.price,
+      imageUrl: item.imageUrl,
+    })),
+    qualifications: parseDraftQualifications(value.qualifications).map((item) => ({
+      id: item.id,
+      title: item.title,
+      issuingOrganization: item.issuingOrganization,
+      year: item.year,
+      description: item.description,
+      documentFileName: item.documentFileName,
+      documentFilePath: item.documentFilePath,
+      documentMimeType: item.documentMimeType,
+    })),
+    phoneNumber: toDraftString(value.phoneNumber),
+    whatsappNumber: toDraftString(value.whatsappNumber),
+    email: toDraftString(value.email),
+    website: toDraftString(value.website),
+    address: toDraftString(value.address),
+    aboutBusiness: toDraftString(value.aboutBusiness),
+    tagline: toDraftString(value.tagline),
+    servicesText: toDraftString(value.servicesText),
+    workingHours: toDraftWorkingHours(value.workingHours),
+    googleMapsUrl: toDraftString(value.googleMapsUrl),
+    socialLinks: toDraftSocialLinks(value.socialLinks),
+    keywordsText: toDraftString(value.keywordsText),
+    isPublic: typeof value.isPublic === 'boolean' ? value.isPublic : true,
+  }
+}
+
+function parseCreateProfileDraft(rawValue: string, userId: string): CreateProfileDraft | null {
+  try {
+    const parsed: unknown = JSON.parse(rawValue)
+    if (!isRecord(parsed)) return null
+    if (parsed.version !== CREATE_PROFILE_DRAFT_STORAGE_VERSION) return null
+    if (parsed.userId !== userId) return null
+    if (parsed.profileId !== null) return null
+
+    const profileDraftData = parseCreateProfileDraftData(parsed.profileData)
+    if (!profileDraftData) return null
+
+    return {
+      version: CREATE_PROFILE_DRAFT_STORAGE_VERSION,
+      userId,
+      profileId: null,
+      currentStepIndex: normalizeDraftStepIndex(parsed.currentStepIndex),
+      profileData: profileDraftData,
+      updatedAt: toDraftString(parsed.updatedAt),
+    }
+  } catch {
+    return null
+  }
+}
+
+function applyCreateProfileDraftData(currentData: ProfileData, draftData: CreateProfileDraftData): ProfileData {
+  const productsMenuPackages = parseDraftProducts(draftData.productsMenuPackages).map((product, index) => {
+    const existingProduct =
+      currentData.productsMenuPackages.find((item) => item.id === product.id) ??
+      currentData.productsMenuPackages[index]
+
+    return existingProduct?.imageFile
+      ? {
+          ...product,
+          imageFile: existingProduct.imageFile,
+        }
+      : product
+  })
+  const qualifications = parseDraftQualifications(draftData.qualifications).map((qualification, index) => {
+    const existingQualification =
+      currentData.qualifications.find((item) => item.id === qualification.id) ??
+      currentData.qualifications[index]
+
+    if (!existingQualification?.documentFile) return qualification
+
+    return {
+      ...qualification,
+      documentFile: existingQualification.documentFile,
+      documentFileName: existingQualification.documentFile.name,
+      documentMimeType: existingQualification.documentFile.type,
+    }
+  })
+
+  return {
+    ...currentData,
+    id: null,
+    slug: null,
+    ownerId: null,
+    businessName: draftData.businessName,
+    ownerName: draftData.ownerName,
+    businessCategory: draftData.businessCategory,
+    businessSubcategories: draftData.businessSubcategories,
+    establishedYear: draftData.establishedYear,
+    yearsOfExperience: draftData.yearsOfExperience,
+    highlights: draftData.highlights,
+    faqs: parseDraftFaqs(draftData.faqs),
+    productsMenuPackages,
+    qualifications,
+    phoneNumber: draftData.phoneNumber,
+    whatsappNumber: draftData.whatsappNumber,
+    email: draftData.email,
+    website: draftData.website,
+    address: draftData.address,
+    aboutBusiness: draftData.aboutBusiness,
+    tagline: draftData.tagline,
+    servicesText: draftData.servicesText,
+    workingHours: draftData.workingHours,
+    googleMapsUrl: draftData.googleMapsUrl,
+    socialLinks: draftData.socialLinks,
+    keywordsText: draftData.keywordsText,
+    isPublic: draftData.isPublic,
+    logo: currentData.logo,
+    existingLogoUrl: null,
+    coverBanner: currentData.coverBanner,
+    existingCoverBannerUrl: null,
+    galleryImages: currentData.galleryImages,
+    existingGalleryImageUrls: [],
+    documentName: '',
+    documentFiles: currentData.documentFiles,
+    existingDocuments: [],
+  }
+}
+
+function findDraftFileItemIndex<T extends { id: string }>(items: T[], itemKey: string): number {
+  const itemIdIndex = items.findIndex((item) => item.id === itemKey)
+  if (itemIdIndex >= 0) return itemIdIndex
+
+  const legacyItemIndex = Number(itemKey)
+  return Number.isInteger(legacyItemIndex) && legacyItemIndex >= 0 && legacyItemIndex < items.length
+    ? legacyItemIndex
+    : -1
+}
+
+function mergeRestoredCreateProfileDraftFiles(
+  currentData: ProfileData,
+  restoredFiles: RestoredCreateProfileDraftFile[]
+): { profileData: ProfileData; mergedFileCount: number } {
+  const nextData: ProfileData = {
+    ...currentData,
+    productsMenuPackages: [...currentData.productsMenuPackages],
+    qualifications: [...currentData.qualifications],
+    galleryImages: [...currentData.galleryImages],
+    documentFiles: [...currentData.documentFiles],
+  }
+  let mergedFileCount = 0
+
+  restoredFiles.forEach(({ fieldKey, itemKey, file }) => {
+    if (fieldKey === 'logo') {
+      if (!validateImageFile(file).valid || nextData.logo) return
+
+      nextData.logo = file
+      mergedFileCount += 1
+      return
+    }
+
+    if (fieldKey === 'coverBanner') {
+      if (!validateImageFile(file).valid || nextData.coverBanner) return
+
+      nextData.coverBanner = file
+      mergedFileCount += 1
+      return
+    }
+
+    if (fieldKey === 'galleryImage') {
+      if (
+        !validateImageFile(file).valid ||
+        currentData.galleryImages.length > 0 ||
+        nextData.galleryImages.length >= MAX_GALLERY_IMAGES
+      ) {
+        return
+      }
+
+      nextData.galleryImages.push(file)
+      mergedFileCount += 1
+      return
+    }
+
+    if (fieldKey === 'productImage') {
+      const itemIndex = findDraftFileItemIndex(nextData.productsMenuPackages, itemKey)
+      const product = nextData.productsMenuPackages[itemIndex]
+      if (!validateImageFile(file).valid || !product || product.imageFile) return
+
+      nextData.productsMenuPackages[itemIndex] = {
+        ...product,
+        imageFile: file,
+      }
+      mergedFileCount += 1
+      return
+    }
+
+    if (fieldKey === 'qualificationDocument') {
+      const itemIndex = findDraftFileItemIndex(nextData.qualifications, itemKey)
+      const qualification = nextData.qualifications[itemIndex]
+      if (!validateDocumentFile(file).valid || !qualification || qualification.documentFile) return
+
+      nextData.qualifications[itemIndex] = {
+        ...qualification,
+        documentFile: file,
+        documentFileName: file.name,
+        documentMimeType: file.type,
+      }
+      mergedFileCount += 1
+      return
+    }
+
+    if (fieldKey === 'documentFile') {
+      if (!validateDocumentFile(file).valid || currentData.documentFiles.length > 0) return
+
+      nextData.documentFiles.push(file)
+      mergedFileCount += 1
+    }
+  })
+
+  return {
+    profileData: mergedFileCount > 0 ? nextData : currentData,
+    mergedFileCount,
+  }
+}
+
+function hasWorkingHoursDraftData(workingHours: CreateProfileDraftData['workingHours']): boolean {
+  return workingDays.some(({ key }) => {
+    const day = workingHours[key]
+    return day.closed || day.open.trim().length > 0 || day.close.trim().length > 0
+  })
+}
+
+function hasSerializableProfileData(data: ProfileData): boolean {
+  return (
+    Boolean(
+      data.businessName.trim() ||
+        data.ownerName.trim() ||
+        data.businessCategory.trim() ||
+        data.establishedYear.trim() ||
+        data.yearsOfExperience.trim() ||
+        data.phoneNumber.trim() ||
+        data.whatsappNumber.trim() ||
+        data.email.trim() ||
+        data.website.trim() ||
+        data.address.trim() ||
+        data.aboutBusiness.trim() ||
+        data.tagline.trim() ||
+        data.servicesText.trim() ||
+        data.googleMapsUrl.trim() ||
+        data.keywordsText.trim()
+    ) ||
+    data.businessSubcategories.length > 0 ||
+    data.highlights.length > 0 ||
+    data.faqs.length > 0 ||
+    data.productsMenuPackages.some(
+      (item) => item.name.trim() || item.description.trim() || item.price.trim() || item.imageFile || item.imageUrl
+    ) ||
+    data.qualifications.length > 0 ||
+    Object.values(data.socialLinks).some((value) => value.trim().length > 0) ||
+    hasWorkingHoursData(data.workingHours) ||
+    Boolean(data.logo || data.coverBanner || data.galleryImages.length > 0 || data.documentFiles.length > 0)
+  )
+}
+
+function isCreateProfileDraftDataEmpty(data: CreateProfileDraftData, currentStepIndex: number): boolean {
+  return (
+    currentStepIndex === 0 &&
+    !data.businessName.trim() &&
+    !data.ownerName.trim() &&
+    !data.businessCategory.trim() &&
+    data.businessSubcategories.length === 0 &&
+    !data.establishedYear.trim() &&
+    !data.yearsOfExperience.trim() &&
+    data.highlights.length === 0 &&
+    data.faqs.length === 0 &&
+    !data.phoneNumber.trim() &&
+    !data.whatsappNumber.trim() &&
+    !data.email.trim() &&
+    !data.website.trim() &&
+    !data.address.trim() &&
+    !data.aboutBusiness.trim() &&
+    !data.tagline.trim() &&
+    !data.servicesText.trim() &&
+    !data.googleMapsUrl.trim() &&
+    !data.keywordsText.trim() &&
+    data.productsMenuPackages.every(
+      (item) => !item.name.trim() && !item.description.trim() && !item.price.trim() && !item.imageUrl
+    ) &&
+    data.qualifications.length === 0 &&
+    Object.values(data.socialLinks).every((value) => !value.trim()) &&
+    !hasWorkingHoursDraftData(data.workingHours) &&
+    data.isPublic
+  )
 }
 
 function isValidOptionalUrl(value: string): boolean {
@@ -546,6 +1091,7 @@ function CreateProfilePage() {
   )
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const [isSubcategoryDropdownOpen, setIsSubcategoryDropdownOpen] = useState(false)
+  const [isDraftTextHydrationComplete, setIsDraftTextHydrationComplete] = useState(false)
   const logoInputRef = useRef<HTMLInputElement>(null)
   const coverBannerInputRef = useRef<HTMLInputElement>(null)
   const galleryInputRef = useRef<HTMLInputElement>(null)
@@ -553,6 +1099,23 @@ function CreateProfilePage() {
   const stepContentRef = useRef<HTMLDivElement>(null)
   const shouldScrollStepIntoViewRef = useRef(false)
   const previousProfileIdRef = useRef(profileData.id)
+  const hasProcessedDraftRestoreRef = useRef(false)
+  const skipNextDraftPersistRef = useRef(false)
+  const restoringDraftFileScopeRef = useRef<string | null>(null)
+  const hydratedDraftFileScopeRef = useRef<string | null>(null)
+  const activeDraftFileScopeKeyRef = useRef<string | null>(null)
+  const hasShownDraftFileWarningRef = useRef(false)
+  const draftFileScope = useMemo<CreateProfileDraftFileScope | null>(() => {
+    if (!user?.id) return null
+
+    return {
+      userId: user.id,
+      profileId: profileData.id,
+    }
+  }, [profileData.id, user?.id])
+  const draftFileScopeKey = draftFileScope
+    ? `${draftFileScope.userId}:${draftFileScope.profileId ?? 'new'}`
+    : null
 
   const coverBannerPreviewUrl = useMemo(() => {
     if (profileData.coverBanner) return URL.createObjectURL(profileData.coverBanner)
@@ -602,9 +1165,268 @@ function CreateProfilePage() {
   const isFirstStep = currentStepIndex === 0
   const isLastStep = currentStepIndex === FORM_STEPS.length - 1
 
+  const showDraftFileWarning = (
+    message = 'Some uploaded files could not be saved locally. Text draft data is still saved.'
+  ) => {
+    if (hasShownDraftFileWarningRef.current) return
+
+    hasShownDraftFileWarningRef.current = true
+    showToast(message, 'info')
+  }
+
+  const saveDraftFile = (
+    fieldKey: Parameters<typeof saveCreateProfileDraftFile>[1],
+    itemKey: string,
+    file: File
+  ) => {
+    if (!draftFileScope) return
+
+    void saveCreateProfileDraftFile(draftFileScope, fieldKey, itemKey, file).catch((error) => {
+      console.warn('Failed to save draft file locally.', error)
+      showDraftFileWarning()
+    })
+  }
+
+  const removeDraftFile = (
+    fieldKey: Parameters<typeof removeCreateProfileDraftFile>[1],
+    itemKey: string
+  ) => {
+    if (!draftFileScope) return
+
+    void removeCreateProfileDraftFile(draftFileScope, fieldKey, itemKey).catch((error) => {
+      console.warn('Failed to remove draft file locally.', error)
+    })
+  }
+
+  const replaceGalleryDraftFiles = (files: File[]) => {
+    if (!draftFileScope) return
+
+    void (async () => {
+      await removeCreateProfileDraftFilesByField(draftFileScope, 'galleryImage')
+      await Promise.all(
+        files.map((file, index) =>
+          saveCreateProfileDraftFile(draftFileScope, 'galleryImage', String(index), file)
+        )
+      )
+    })().catch((error) => {
+      console.warn('Failed to save gallery draft files locally.', error)
+      showDraftFileWarning()
+    })
+  }
+
+  const replaceProductDraftFiles = (products: ProfileProductItem[]) => {
+    if (!draftFileScope) return
+
+    void (async () => {
+      await removeCreateProfileDraftFilesByField(draftFileScope, 'productImage')
+      await Promise.all(
+        products.flatMap((item) =>
+          item.imageFile
+            ? [saveCreateProfileDraftFile(draftFileScope, 'productImage', item.id, item.imageFile)]
+            : []
+        )
+      )
+    })().catch((error) => {
+      console.warn('Failed to save product draft files locally.', error)
+      showDraftFileWarning()
+    })
+  }
+
+  const replaceQualificationDraftFiles = (qualifications: ProfileQualificationItem[]) => {
+    if (!draftFileScope) return
+
+    void (async () => {
+      await removeCreateProfileDraftFilesByField(draftFileScope, 'qualificationDocument')
+      await Promise.all(
+        qualifications.flatMap((item) =>
+          item.documentFile
+            ? [
+                saveCreateProfileDraftFile(
+                  draftFileScope,
+                  'qualificationDocument',
+                  item.id,
+                  item.documentFile
+                ),
+              ]
+            : []
+        )
+      )
+    })().catch((error) => {
+      console.warn('Failed to save qualification draft files locally.', error)
+      showDraftFileWarning()
+    })
+  }
+
+  const clearDraftFiles = () => {
+    if (!draftFileScope) return
+
+    void clearCreateProfileDraftFiles(draftFileScope).catch((error) => {
+      console.warn('Failed to clear draft files locally.', error)
+    })
+  }
+
   useEffect(() => {
-    setCurrentStepIndex(readCreateProfileStepIndex(stepStorageKey))
-  }, [stepStorageKey])
+    if (isEditMode) {
+      setCurrentStepIndex(readCreateProfileStepIndex(stepStorageKey))
+    }
+  }, [isEditMode, stepStorageKey])
+
+  useEffect(() => {
+    setLogoFileName(profileData.logo?.name ?? '')
+  }, [profileData.logo])
+
+  useEffect(() => {
+    setCoverBannerFileName(profileData.coverBanner?.name ?? '')
+  }, [profileData.coverBanner])
+
+  useEffect(() => {
+    activeDraftFileScopeKeyRef.current = draftFileScopeKey
+  }, [draftFileScopeKey])
+
+  useEffect(() => {
+    if (!user?.id) return
+
+    if (isEditMode || hasProcessedDraftRestoreRef.current) {
+      setIsDraftTextHydrationComplete(true)
+      return
+    }
+
+    hasProcessedDraftRestoreRef.current = true
+    if (hasSerializableProfileData(profileData)) {
+      setIsDraftTextHydrationComplete(true)
+      return
+    }
+
+    let rawDraft: string | null = null
+    try {
+      rawDraft = window.localStorage.getItem(getCreateProfileDraftStorageKey(user.id))
+    } catch {
+      setIsDraftTextHydrationComplete(true)
+      return
+    }
+
+    if (!rawDraft) {
+      setIsDraftTextHydrationComplete(true)
+      return
+    }
+
+    const draft = parseCreateProfileDraft(rawDraft, user.id)
+    if (!draft) {
+      setIsDraftTextHydrationComplete(true)
+      return
+    }
+
+    const restoredProfileData = applyCreateProfileDraftData(profileData, draft.profileData)
+    skipNextDraftPersistRef.current = true
+    setProfileData((currentData) => applyCreateProfileDraftData(currentData, draft.profileData))
+    setCurrentStepIndex(draft.currentStepIndex)
+    writeCreateProfileStepIndex(stepStorageKey, draft.currentStepIndex)
+    setSocialLinkRows(createSocialLinkRows(restoredProfileData.socialLinks))
+    setBusinessExperienceValue(
+      formatBusinessExperienceValue(restoredProfileData.establishedYear, restoredProfileData.yearsOfExperience)
+    )
+    setIsDraftTextHydrationComplete(true)
+    showToast('Draft restored.', 'info')
+  }, [isEditMode, profileData, setProfileData, stepStorageKey, user?.id])
+
+  useEffect(() => {
+    if (!hasProcessedDraftRestoreRef.current || isEditMode || !user?.id) return undefined
+
+    if (skipNextDraftPersistRef.current) {
+      skipNextDraftPersistRef.current = false
+      return undefined
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      const draftData = serializeCreateProfileDraftData(profileData)
+      const storageKey = getCreateProfileDraftStorageKey(user.id)
+
+      try {
+        if (isCreateProfileDraftDataEmpty(draftData, currentStepIndex)) {
+          window.localStorage.removeItem(storageKey)
+          return
+        }
+
+        const draft: CreateProfileDraft = {
+          version: CREATE_PROFILE_DRAFT_STORAGE_VERSION,
+          userId: user.id,
+          profileId: null,
+          currentStepIndex,
+          profileData: draftData,
+          updatedAt: new Date().toISOString(),
+        }
+
+        window.localStorage.setItem(storageKey, JSON.stringify(draft))
+      } catch {
+        // Draft persistence is best-effort and should never block the form.
+      }
+    }, CREATE_PROFILE_DRAFT_DEBOUNCE_MS)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [currentStepIndex, isEditMode, profileData, user?.id])
+
+  useEffect(() => {
+    if (
+      !isDraftTextHydrationComplete ||
+      !draftFileScope ||
+      !draftFileScopeKey ||
+      hydratedDraftFileScopeRef.current === draftFileScopeKey ||
+      restoringDraftFileScopeRef.current === draftFileScopeKey
+    ) {
+      return undefined
+    }
+
+    restoringDraftFileScopeRef.current = draftFileScopeKey
+
+    void restoreCreateProfileDraftFiles(draftFileScope)
+      .then((restoredFiles) => {
+        if (activeDraftFileScopeKeyRef.current !== draftFileScopeKey) return
+
+        if (import.meta.env.DEV) {
+          console.debug('Restored create-profile draft files.', {
+            draftFileScopeKey,
+            restoredFileCount: restoredFiles.length,
+            files: restoredFiles.map(({ fieldKey, itemKey, file }) => ({
+              fieldKey,
+              itemKey,
+              name: file.name,
+              type: file.type,
+              size: file.size,
+              lastModified: file.lastModified,
+            })),
+          })
+        }
+
+        if (restoredFiles.length === 0) return
+
+        setProfileData((currentData) => {
+          const { profileData: mergedProfileData, mergedFileCount } =
+            mergeRestoredCreateProfileDraftFiles(currentData, restoredFiles)
+
+          if (import.meta.env.DEV) {
+            console.debug('Merged create-profile draft files into form state.', {
+              draftFileScopeKey,
+              restoredFileCount: restoredFiles.length,
+              mergedFileCount,
+            })
+          }
+
+          return mergedProfileData
+        })
+      })
+      .catch((error) => {
+        console.warn('Failed to restore draft files locally.', error)
+        showDraftFileWarning('Some uploaded files could not be restored locally. Text draft data is still saved.')
+      })
+      .finally(() => {
+        if (restoringDraftFileScopeRef.current === draftFileScopeKey) {
+          restoringDraftFileScopeRef.current = null
+        }
+        if (activeDraftFileScopeKeyRef.current === draftFileScopeKey) {
+          hydratedDraftFileScopeRef.current = draftFileScopeKey
+        }
+      })
+  }, [draftFileScope, draftFileScopeKey, isDraftTextHydrationComplete, setProfileData])
 
   useEffect(() => {
     if (!shouldScrollStepIntoViewRef.current) return undefined
@@ -816,6 +1638,7 @@ function CreateProfilePage() {
       setProfileData({ ...profileData, logo: null })
       setLogoFileName('')
       setErrors((prev) => ({ ...prev, logo: undefined }))
+      removeDraftFile('logo', SINGLE_FILE_DRAFT_ITEM_KEY)
       return
     }
 
@@ -824,6 +1647,7 @@ function CreateProfilePage() {
       setProfileData({ ...profileData, logo: null })
       setLogoFileName('')
       setErrors((prev) => ({ ...prev, logo: validationError }))
+      removeDraftFile('logo', SINGLE_FILE_DRAFT_ITEM_KEY)
       if (logoInputRef.current) {
         logoInputRef.current.value = ''
       }
@@ -833,6 +1657,7 @@ function CreateProfilePage() {
     setProfileData({ ...profileData, logo: file })
     setLogoFileName(file ? file.name : '')
     setErrors((prev) => ({ ...prev, logo: undefined }))
+    saveDraftFile('logo', SINGLE_FILE_DRAFT_ITEM_KEY, file)
   }
 
   const handleCoverBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -842,6 +1667,7 @@ function CreateProfilePage() {
       setProfileData({ ...profileData, coverBanner: null })
       setCoverBannerFileName('')
       setErrors((prev) => ({ ...prev, coverBanner: undefined }))
+      removeDraftFile('coverBanner', SINGLE_FILE_DRAFT_ITEM_KEY)
       return
     }
 
@@ -850,6 +1676,7 @@ function CreateProfilePage() {
       setProfileData({ ...profileData, coverBanner: null })
       setCoverBannerFileName('')
       setErrors((prev) => ({ ...prev, coverBanner: validationError }))
+      removeDraftFile('coverBanner', SINGLE_FILE_DRAFT_ITEM_KEY)
       if (coverBannerInputRef.current) {
         coverBannerInputRef.current.value = ''
       }
@@ -859,6 +1686,7 @@ function CreateProfilePage() {
     setProfileData({ ...profileData, coverBanner: file })
     setCoverBannerFileName(file.name)
     setErrors((prev) => ({ ...prev, coverBanner: undefined }))
+    saveDraftFile('coverBanner', SINGLE_FILE_DRAFT_ITEM_KEY, file)
   }
 
   const handleClearCoverBanner = () => {
@@ -869,6 +1697,7 @@ function CreateProfilePage() {
     })
     setCoverBannerFileName('')
     setErrors((prev) => ({ ...prev, coverBanner: undefined }))
+    removeDraftFile('coverBanner', SINGLE_FILE_DRAFT_ITEM_KEY)
     if (coverBannerInputRef.current) {
       coverBannerInputRef.current.value = ''
     }
@@ -910,10 +1739,12 @@ function CreateProfilePage() {
         ? `Only ${remainingSlots} more gallery image${remainingSlots === 1 ? '' : 's'} can be added. The extra files were not selected.`
         : undefined
 
+    const nextGalleryImages = [...profileData.galleryImages, ...allowedFiles]
     setProfileData({
       ...profileData,
-      galleryImages: [...profileData.galleryImages, ...allowedFiles],
+      galleryImages: nextGalleryImages,
     })
+    replaceGalleryDraftFiles(nextGalleryImages)
     setErrors((prev) => ({ ...prev, galleryImages: limitMessage }))
 
     if (galleryInputRef.current) {
@@ -922,10 +1753,12 @@ function CreateProfilePage() {
   }
 
   const handleRemoveSelectedGalleryImage = (index: number) => {
+    const nextGalleryImages = profileData.galleryImages.filter((_, imageIndex) => imageIndex !== index)
     setProfileData({
       ...profileData,
-      galleryImages: profileData.galleryImages.filter((_, imageIndex) => imageIndex !== index),
+      galleryImages: nextGalleryImages,
     })
+    replaceGalleryDraftFiles(nextGalleryImages)
     setErrors((prev) => ({ ...prev, galleryImages: undefined }))
   }
 
@@ -1093,19 +1926,19 @@ function CreateProfilePage() {
       return
     }
 
-    updateProductsMenuPackages(
-      profileData.productsMenuPackages.map((item) =>
-        item.id === itemId ? { ...item, imageFile: file } : item
-      )
+    const nextProducts = profileData.productsMenuPackages.map((item) =>
+      item.id === itemId ? { ...item, imageFile: file } : item
     )
+    updateProductsMenuPackages(nextProducts)
+    replaceProductDraftFiles(nextProducts)
   }
 
   const handleRemoveProductImage = (itemId: string) => {
-    updateProductsMenuPackages(
-      profileData.productsMenuPackages.map((item) =>
-        item.id === itemId ? { ...item, imageFile: null, imageUrl: null } : item
-      )
+    const nextProducts = profileData.productsMenuPackages.map((item) =>
+      item.id === itemId ? { ...item, imageFile: null, imageUrl: null } : item
     )
+    updateProductsMenuPackages(nextProducts)
+    replaceProductDraftFiles(nextProducts)
   }
 
   const handleAddProduct = () => {
@@ -1117,7 +1950,9 @@ function CreateProfilePage() {
   }
 
   const handleRemoveProduct = (itemId: string) => {
-    updateProductsMenuPackages(profileData.productsMenuPackages.filter((item) => item.id !== itemId))
+    const nextProducts = profileData.productsMenuPackages.filter((item) => item.id !== itemId)
+    updateProductsMenuPackages(nextProducts)
+    replaceProductDraftFiles(nextProducts)
   }
 
   const handleQualificationChange = (
@@ -1146,35 +1981,35 @@ function CreateProfilePage() {
       return
     }
 
-    updateQualifications(
-      profileData.qualifications.map((item) =>
-        item.id === itemId
-          ? {
-              ...item,
-              documentFile: file,
-              documentFileName: file.name,
-              documentMimeType: file.type,
-            }
-          : item
-      )
+    const nextQualifications = profileData.qualifications.map((item) =>
+      item.id === itemId
+        ? {
+            ...item,
+            documentFile: file,
+            documentFileName: file.name,
+            documentMimeType: file.type,
+          }
+        : item
     )
+    updateQualifications(nextQualifications)
+    replaceQualificationDraftFiles(nextQualifications)
     e.target.value = ''
   }
 
   const handleRemoveQualificationDocument = (itemId: string) => {
-    updateQualifications(
-      profileData.qualifications.map((item) =>
-        item.id === itemId
-          ? {
-              ...item,
-              documentFile: null,
-              documentFileName: '',
-              documentFilePath: '',
-              documentMimeType: '',
-            }
-          : item
-      )
+    const nextQualifications = profileData.qualifications.map((item) =>
+      item.id === itemId
+        ? {
+            ...item,
+            documentFile: null,
+            documentFileName: '',
+            documentFilePath: '',
+            documentMimeType: '',
+          }
+        : item
     )
+    updateQualifications(nextQualifications)
+    replaceQualificationDraftFiles(nextQualifications)
   }
 
   const handleAddQualification = () => {
@@ -1186,7 +2021,9 @@ function CreateProfilePage() {
   }
 
   const handleRemoveQualification = (itemId: string) => {
-    updateQualifications(profileData.qualifications.filter((item) => item.id !== itemId))
+    const nextQualifications = profileData.qualifications.filter((item) => item.id !== itemId)
+    updateQualifications(nextQualifications)
+    replaceQualificationDraftFiles(nextQualifications)
   }
 
   const validate = (): boolean => {
@@ -1540,6 +2377,7 @@ function CreateProfilePage() {
     try {
       const updated = await updateBusinessProfile(profileData.id as string, profileData)
       removeCreateProfileStepIndex(stepStorageKey)
+      clearDraftFiles()
       setProfileData({
         ...profileData,
         businessName: updated.business_name,
@@ -1601,6 +2439,8 @@ function CreateProfilePage() {
     if (!confirmed) return
     removeCreateProfileStepIndex(stepStorageKey)
     removeCreateProfileStepIndex(getCreateProfileStepStorageKey(null))
+    removeCreateProfileDraft(user?.id)
+    clearDraftFiles()
     clearProfile()
     setCurrentStepIndex(0)
     setErrors({})
