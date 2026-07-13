@@ -42,6 +42,7 @@ interface BusinessProfileDisplayProps {
   onDownloadQR: () => void
   onShareQR: () => void
   saveButtonSlot?: ReactNode
+  previewActionSlot?: ReactNode
   footerSlot?: ReactNode
 }
 
@@ -741,6 +742,7 @@ function BusinessProfileDisplay({
   onDownloadQR,
   onShareQR,
   saveButtonSlot,
+  previewActionSlot,
   footerSlot,
 }: BusinessProfileDisplayProps) {
   const { isLoading: isAuthLoading, session } = useAuth()
@@ -1198,6 +1200,8 @@ function BusinessProfileDisplay({
               </svg>
             </button>
           )}
+
+          {!isExpanded && previewActionSlot && <div className="mt-3.5">{previewActionSlot}</div>}
         </div>
       </article>
 
@@ -1847,6 +1851,8 @@ function BusinessProfileDisplay({
                 </svg>
               </button>
             </div>
+
+            {previewActionSlot && <div className="pb-2 pt-2">{previewActionSlot}</div>}
           </div>
         </div>
       </div>

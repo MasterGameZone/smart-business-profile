@@ -319,6 +319,46 @@ function ProfilePreviewPage() {
   }
 
   const hasProfile = profileData.businessName.trim().length > 0
+  const previewActionSlot = (
+    <div className="grid grid-cols-2 gap-3" role="group" aria-label="Preview profile actions">
+      <button
+        type="button"
+        onClick={handleEditProfile}
+        className="inline-flex min-w-0 items-center justify-center gap-2 rounded-xl border border-[#cfe5ea] bg-[#edf6f9] px-3 py-3 text-sm font-semibold text-slate-800 shadow-sm transition-all hover:bg-[#e2f0f4] focus:outline-none focus:ring-2 focus:ring-sky-200 focus:ring-offset-2 active:scale-95"
+      >
+        <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+        </svg>
+        <span className="truncate">Back</span>
+      </button>
+
+      <button
+        type="button"
+        onClick={handleSaveProfile}
+        disabled={isSaving || hasSaved}
+        aria-busy={isSaving}
+        aria-label="Save profile to database"
+        className="inline-flex min-w-0 items-center justify-center gap-2 rounded-xl border border-[#cfe5ea] bg-[#edf6f9] px-3 py-3 text-sm font-semibold text-slate-800 shadow-sm transition-all hover:bg-[#e2f0f4] focus:outline-none focus:ring-2 focus:ring-sky-200 focus:ring-offset-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-70 disabled:active:scale-100"
+      >
+        {isSaving ? (
+          <>
+            <svg className="h-4 w-4 shrink-0 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            <span className="truncate">Saving...</span>
+          </>
+        ) : (
+          <>
+            <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+            </svg>
+            <span className="truncate">Save</span>
+          </>
+        )}
+      </button>
+    </div>
+  )
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-100 to-blue-50 pb-12">
@@ -385,61 +425,7 @@ function ProfilePreviewPage() {
             qrCodeRef={qrCodeRef}
             onDownloadQR={handleDownloadQR}
             onShareQR={handleShareQR}
-            saveButtonSlot={
-              hasSaved ? (
-                <button
-                  type="button"
-                  onClick={handleEditProfile}
-                  aria-label="Edit business profile"
-                  className="flex items-center justify-center gap-2 rounded-xl bg-amber-500 py-3 text-sm font-semibold text-white transition-all hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 active:scale-95"
-                >
-                  <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  Edit Profile
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleSaveProfile}
-                  disabled={isSaving}
-                  aria-busy={isSaving}
-                  aria-label="Save profile to database"
-                  className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white transition-all hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-70 disabled:active:scale-100"
-                >
-                  {isSaving ? (
-                    <>
-                      <svg className="h-4 w-4 shrink-0 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                      </svg>
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                      </svg>
-                      Save Profile
-                    </>
-                  )}
-                </button>
-              )
-            }
-            footerSlot={
-              <div className="pb-2 pt-2 text-center">
-                <button
-                  type="button"
-                  onClick={() => navigate('/create-profile')}
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-8 py-3 text-sm font-medium text-gray-600 shadow-sm transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 active:scale-95"
-                >
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 17l-5-5m0 0l5-5m-5 5h12" />
-                  </svg>
-                  Back to Edit
-                </button>
-              </div>
-            }
+            previewActionSlot={previewActionSlot}
           />
         )}
       </div>
