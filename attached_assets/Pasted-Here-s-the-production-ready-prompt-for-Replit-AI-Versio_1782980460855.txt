@@ -97,7 +97,7 @@ This page will contain the business profile form in the next version.
 Button:
 
 ```text
-Back to Home
+Home
 ```
 
 Clicking the button should navigate back to:
@@ -182,7 +182,7 @@ Version 0.2 is complete only if:
 * The landing page still displays correctly.
 * Clicking **Create Business Profile** navigates to `/create-profile`.
 * The Create Profile page displays the heading, description, and Back button.
-* Clicking **Back to Home** returns to the landing page.
+* Clicking **Home** returns to the landing page.
 * Navigation occurs without a page refresh.
 * No console errors.
 * The application runs successfully in Replit.

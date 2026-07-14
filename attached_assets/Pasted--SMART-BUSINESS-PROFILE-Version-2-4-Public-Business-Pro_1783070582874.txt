@@ -88,8 +88,7 @@ The requested business profile does not exist or may have been removed.
 
 Provide a button:
 
-Back to Home
-
+Home
 ---
 
 ## 6. Profile Display

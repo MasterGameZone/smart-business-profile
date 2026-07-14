@@ -67,7 +67,7 @@ Continue
 
 Secondary Button
 
-Back to Home
+Home
 
 The Continue button should not submit anywhere yet.
 
@@ -151,7 +151,7 @@ The Create Profile page displays the complete form.
 
 Required fields validate correctly.
 
-Back to Home still works.
+Home still works.
 
 Continue button does not navigate.
 

@@ -87,7 +87,7 @@ Primary Button:
 Continue
 
 Secondary Button:
-Back to Home
+Home
 
 ---
 
@@ -211,7 +211,7 @@ Version 0.3 is complete only if:
 - The placeholder page has been replaced with the form.
 - All required fields validate correctly.
 - Continue button validates the form.
-- Back to Home works.
+- Home works.
 - No console errors.
 - Responsive on desktop and mobile.
 - No unnecessary dependencies installed.

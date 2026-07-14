@@ -76,7 +76,7 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
   const useInlineDarkNavbarLayout =
     isProfilePreviewPage || isPublicBusinessProfileVariant || ((isLandingPage || isSimpleDarkNavbarPage) && !user)
   const publicBusinessProfileBackPath = previewConfig?.backPath ?? '/'
-  const publicBusinessProfileBackLabel = previewConfig?.backLabel ?? 'Back to Home'
+  const publicBusinessProfileBackLabel = previewConfig?.backLabel ?? 'Home'
   const navbarInteractionStyle: CSSProperties = {
     WebkitTapHighlightColor: 'transparent',
   }
@@ -414,7 +414,7 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
                   className="inline-flex min-h-[36px] items-center justify-center rounded-full border border-white/12 bg-white/5 px-4 py-2 text-sm font-medium text-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
                   style={navbarInteractionStyle}
                 >
-                  Back to Home
+                  Home
                 </button>
                 <button
                   type="button"
