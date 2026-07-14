@@ -158,7 +158,7 @@ function ReportProfileAction({ businessProfileId, userId, onLogin, triggerClassN
         </svg>
       </button>
 
-      <form onSubmit={handleSubmit} className="rounded-2xl border border-gray-100 bg-slate-50 px-4 py-4">
+      <form onSubmit={handleSubmit} className="rounded-2xl border border-gray-100 bg-[#f8fafc] px-4 py-4">
         <label htmlFor="profileReportReason" className="block text-sm font-semibold text-black">
           Reason
         </label>
@@ -245,7 +245,7 @@ function ReportProfileAction({ businessProfileId, userId, onLogin, triggerClassN
       </button>
 
       {message && (
-        <p className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-black" role="status">
+        <p className="mt-4 rounded-xl bg-[#f8fafc] px-4 py-3 text-sm text-black" role="status">
           {message}
         </p>
       )}

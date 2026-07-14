@@ -204,7 +204,7 @@ function DirectoryPage() {
         )}
 
         {loadState === 'empty' && (
-          <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-16 text-center shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md">
+          <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-2xl border border-white/10 bg-white px-4 py-16 text-center shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md">
             <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-sky-400/10">
               <svg className="h-8 w-8 text-sky-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -215,7 +215,7 @@ function DirectoryPage() {
         )}
 
         {loadState === 'found' && filteredProfiles.length === 0 && (
-          <div className="flex min-h-[30vh] flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-16 text-center shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md">
+          <div className="flex min-h-[30vh] flex-col items-center justify-center rounded-2xl border border-white/10 bg-white px-4 py-16 text-center shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md">
             <p className="mb-6 font-medium text-black">No businesses found matching your filters.</p>
             <button
               type="button"
@@ -232,7 +232,7 @@ function DirectoryPage() {
             {filteredProfiles.map((profile) => (
               <div
                 key={profile.id}
-                className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.05] p-6 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md"
+                className="flex flex-col rounded-2xl border border-white/10 bg-white p-6 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md"
               >
                 <div className="mb-4 flex items-start gap-4">
                   {profile.logo_url ? (

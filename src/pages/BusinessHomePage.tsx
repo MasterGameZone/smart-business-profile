@@ -148,7 +148,7 @@ function BusinessHomePage() {
       <AppHeader />
 
       <main className="mx-auto max-w-5xl px-4 py-10 sm:py-14">
-        <section className="rounded-3xl border border-white/10 bg-white/[0.05] p-6 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md sm:p-8">
+        <section className="rounded-3xl border border-white/10 bg-white p-6 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md sm:p-8">
           <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">Business Home</h1>
           <p className="mt-4 text-sm leading-relaxed text-black sm:text-base">
             Manage your business profiles from one place.
@@ -166,7 +166,7 @@ function BusinessHomePage() {
           </div>
 
           {loadState === 'loading' && (
-            <div className="flex min-h-[16rem] items-center justify-center rounded-3xl border border-white/10 bg-white/[0.05] px-6 py-10 text-center shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md">
+            <div className="flex min-h-[16rem] items-center justify-center rounded-3xl border border-white/10 bg-white px-6 py-10 text-center shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md">
               <p className="text-sm text-black">Loading your business profiles...</p>
             </div>
           )}
@@ -187,7 +187,7 @@ function BusinessHomePage() {
           )}
 
           {loadState === 'empty' && (
-            <div className="rounded-3xl border border-white/10 bg-white/[0.05] px-6 py-12 text-center shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md sm:px-8">
+            <div className="rounded-3xl border border-white/10 bg-white px-6 py-12 text-center shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md sm:px-8">
               <h3 className="text-xl font-semibold tracking-tight text-black">No business profiles yet.</h3>
               <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-black sm:text-base">
                 Create your first business profile to start sharing your business with customers.
@@ -207,7 +207,7 @@ function BusinessHomePage() {
               {profiles.map((profile) => (
                 <article
                   key={profile.id}
-                  className="rounded-3xl border border-white/10 bg-white/[0.05] p-6 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md sm:p-8"
+                  className="rounded-3xl border border-white/10 bg-white p-6 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md sm:p-8"
                 >
                   <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">

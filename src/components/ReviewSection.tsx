@@ -152,7 +152,7 @@ function ReviewImageThumbnail({
   onRemove: () => void;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-xl border border-gray-100 bg-gray-50">
+    <div className="relative overflow-hidden rounded-xl border border-gray-100 bg-[#f4f7fb]">
       <img
         src={imageUrl}
         alt={altText}
@@ -623,7 +623,7 @@ function ReviewSection({
           Ratings & Reviews
         </h2>
 
-        <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
+        <div className="mt-4 rounded-2xl border border-slate-100 bg-[#f8fafc] px-4 py-4">
           {summary.count > 0 ? (
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
               <div className="sm:min-w-[8rem]">
@@ -733,7 +733,7 @@ function ReviewSection({
       ) : (
         <>
           {!userId && (
-            <div className="mb-5 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-4">
+            <div className="mb-5 rounded-2xl border border-blue-100 bg-[#f8fafc] px-4 py-4">
               <p className="text-sm font-medium text-blue-950">
                 Log in to rate this business.
               </p>
@@ -935,7 +935,7 @@ function ReviewSection({
                     )}
 
                     {review.ownerReply && (
-                      <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-3">
+                      <div className="mt-4 rounded-2xl border border-blue-100 bg-[#f4f7fb] px-4 py-3">
                         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                           <p className="text-xs font-semibold uppercase tracking-widest text-blue-900">
                             Response from owner
@@ -955,7 +955,7 @@ function ReviewSection({
                     {canManageOwnerReplies && isReplyFormOpen && (
                       <form
                         onSubmit={(event) => handleReplySubmit(event, review)}
-                        className="mt-4 rounded-2xl border border-gray-100 bg-slate-50 px-4 py-4"
+                        className="mt-4 rounded-2xl border border-gray-100 bg-[#f8fafc] px-4 py-4"
                       >
                         <label
                           htmlFor={`ownerReply-${review.id}`}

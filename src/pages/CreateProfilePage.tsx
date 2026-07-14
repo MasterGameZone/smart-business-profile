@@ -2466,7 +2466,7 @@ function CreateProfilePage() {
   const fileInputBase =
     `${inputBase} cursor-pointer px-3 py-2.5 file:mr-4 file:rounded-xl file:border-0 file:bg-slate-900 file:px-4 file:py-2 file:text-xs file:font-semibold file:text-white hover:file:bg-slate-800`
   const sectionCardClass =
-    'rounded-[26px] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(248,250,252,0.98),rgba(241,245,249,0.92))] p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.38)] sm:p-7'
+    'rounded-[26px] border border-slate-200/80 bg-white p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.38)] sm:p-7'
   const labelClass = 'mb-2 block text-sm font-medium text-black'
   const optionalTextClass = 'ml-2 text-xs font-normal text-black'
   const compactFieldLabelClass = 'mb-1.5 block text-xs font-semibold uppercase tracking-[0.08em] text-black'
@@ -2535,7 +2535,7 @@ function CreateProfilePage() {
 
         <main className="relative mx-auto max-w-5xl px-4 pb-16 pt-10 sm:px-6 sm:pt-14 lg:px-8">
           <ToastContainer toasts={toasts} />
-          <div className="relative overflow-hidden rounded-[32px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.96))] px-5 py-6 shadow-[0_40px_120px_-48px_rgba(2,12,27,0.85)] sm:px-8 sm:py-10 lg:px-12 lg:py-12">
+          <div className="relative overflow-hidden rounded-[32px] border border-white/70 bg-white px-5 py-6 shadow-[0_40px_120px_-48px_rgba(2,12,27,0.85)] sm:px-8 sm:py-10 lg:px-12 lg:py-12">
             <div
               aria-hidden="true"
               className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-[linear-gradient(180deg,rgba(255,255,255,0.75),rgba(255,255,255,0))]"
@@ -2646,7 +2646,7 @@ function CreateProfilePage() {
 
               {profileData.businessCategory && (
                 <div className="md:col-span-2">
-                  <div className="rounded-2xl border border-slate-200 bg-white/85 p-4 sm:p-5">
+                  <div className="rounded-2xl border border-slate-200 bg-[#f4f7fb] p-4 sm:p-5">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                       <div>
                         <label htmlFor="businessSubcategories" className={labelClass}>
@@ -3022,7 +3022,7 @@ function CreateProfilePage() {
                 return (
                   <div
                     key={row.id}
-                    className="rounded-2xl border border-slate-200 bg-white/85 p-4"
+                    className="rounded-2xl border border-slate-200 bg-[#f4f7fb] p-4"
                   >
                     <div className="grid gap-3 md:grid-cols-[minmax(0,210px)_minmax(0,1fr)_auto] md:items-start">
                       <div>
@@ -3143,12 +3143,12 @@ function CreateProfilePage() {
 
             <div className="space-y-4">
               {profileData.productsMenuPackages.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 px-4 py-5 text-sm text-black">
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-[#f8fafc] px-4 py-5 text-sm text-black">
                   No product, menu, or package items added yet.
                 </div>
               ) : (
                 profileData.productsMenuPackages.map((item, index) => (
-                  <div key={item.id} className="rounded-2xl border border-slate-200 bg-white/85 p-4 sm:p-5">
+                  <div key={item.id} className="rounded-2xl border border-slate-200 bg-[#f4f7fb] p-4 sm:p-5">
                     <div className="mb-4 flex items-center justify-between gap-3">
                       <p className="text-sm font-semibold text-black">Item {index + 1}</p>
                       <button
@@ -3310,8 +3310,8 @@ function CreateProfilePage() {
               title={<>Working Hours <span className="text-red-500" aria-hidden="true">*</span></>}
               description="Show when your business is open so customers know when to reach you."
             />
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white/85">
-              <div className="hidden border-b border-slate-200/80 bg-slate-50/80 px-4 py-3 md:grid md:grid-cols-[140px_minmax(0,170px)_minmax(0,170px)_auto] md:items-center md:gap-3">
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-[#f4f7fb]">
+              <div className="hidden border-b border-slate-200/80 bg-[#f8fafc] px-4 py-3 md:grid md:grid-cols-[140px_minmax(0,170px)_minmax(0,170px)_auto] md:items-center md:gap-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.08em] text-black">Day</p>
                 <p className="text-xs font-semibold uppercase tracking-[0.08em] text-black">Open Time</p>
                 <p className="text-xs font-semibold uppercase tracking-[0.08em] text-black">Close Time</p>
@@ -3399,12 +3399,12 @@ function CreateProfilePage() {
 
             <div className="space-y-4">
               {profileData.faqs.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 px-4 py-5 text-sm text-black">
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-[#f8fafc] px-4 py-5 text-sm text-black">
                   No FAQs added yet.
                 </div>
               ) : (
                 profileData.faqs.map((faq, index) => (
-                  <div key={faq.id} className="rounded-2xl border border-slate-200 bg-white/85 p-4 sm:p-5">
+                  <div key={faq.id} className="rounded-2xl border border-slate-200 bg-[#f4f7fb] p-4 sm:p-5">
                     <div className="mb-4 flex items-center justify-between gap-3">
                       <p className="text-sm font-semibold text-black">FAQ {index + 1}</p>
                       <button
@@ -3477,7 +3477,7 @@ function CreateProfilePage() {
               description="Upload the logo, banner, and gallery images that make your profile look trustworthy and complete."
             />
             <div className="space-y-5">
-              <div className="rounded-2xl border border-slate-200 bg-white/85 p-4 sm:p-5">
+              <div className="rounded-2xl border border-slate-200 bg-[#f4f7fb] p-4 sm:p-5">
                 <label htmlFor="logo" className={labelClass}>
                   Business Logo
                   <span className={optionalTextClass}>Optional</span>
@@ -3508,7 +3508,7 @@ function CreateProfilePage() {
                 )}
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-white/85 p-4 sm:p-5">
+              <div className="rounded-2xl border border-slate-200 bg-[#f4f7fb] p-4 sm:p-5">
                 <label htmlFor="coverBanner" className={labelClass}>
                   Cover Banner
                   <span className={optionalTextClass}>Optional</span>
@@ -3536,7 +3536,7 @@ function CreateProfilePage() {
                     <img
                       src={coverBannerPreviewUrl}
                       alt="Selected cover banner preview"
-                      className="aspect-[16/6] w-full rounded-2xl border border-slate-200 bg-slate-50 object-cover"
+                      className="aspect-[16/6] w-full rounded-2xl border border-slate-200 bg-[#f4f7fb] object-cover"
                     />
                     <div className="mt-3 flex items-center justify-between gap-3">
                       <p className="truncate text-xs text-black">
@@ -3554,7 +3554,7 @@ function CreateProfilePage() {
                 )}
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-white/85 p-4 sm:p-5">
+              <div className="rounded-2xl border border-slate-200 bg-[#f4f7fb] p-4 sm:p-5">
                 <label htmlFor="galleryImages" className={labelClass}>
                   Business Gallery <span className="text-red-500" aria-hidden="true">*</span>
                 </label>
@@ -3579,7 +3579,7 @@ function CreateProfilePage() {
                 {(profileData.existingGalleryImageUrls.length > 0 || selectedGalleryPreviews.length > 0) && (
                   <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
                     {profileData.existingGalleryImageUrls.map((url) => (
-                      <div key={url} className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+                      <div key={url} className="relative overflow-hidden rounded-2xl border border-slate-200 bg-[#f4f7fb]">
                         <img
                           src={url}
                           alt="Saved gallery preview"
@@ -3596,7 +3596,7 @@ function CreateProfilePage() {
                     ))}
 
                     {selectedGalleryPreviews.map((preview, index) => (
-                      <div key={preview.key} className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+                      <div key={preview.key} className="relative overflow-hidden rounded-2xl border border-slate-200 bg-[#f4f7fb]">
                         <img
                           src={preview.url}
                           alt={`Selected gallery preview ${index + 1}`}
@@ -3646,12 +3646,12 @@ function CreateProfilePage() {
 
             <div className="space-y-4">
               {profileData.qualifications.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 px-4 py-5 text-sm text-black">
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-[#f8fafc] px-4 py-5 text-sm text-black">
                   No credentials added yet.
                 </div>
               ) : (
                 profileData.qualifications.map((item, index) => (
-                  <div key={item.id} className="rounded-2xl border border-slate-200 bg-white/85 p-4 sm:p-5">
+                  <div key={item.id} className="rounded-2xl border border-slate-200 bg-[#f4f7fb] p-4 sm:p-5">
                     <div className="mb-4 flex items-center justify-between gap-3">
                       <p className="text-sm font-semibold text-black">Credential {index + 1}</p>
                       <button
@@ -3777,7 +3777,7 @@ function CreateProfilePage() {
                         </p>
 
                         {(item.documentFile || item.documentFileName.trim()) && (
-                          <div className="mt-3 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="mt-3 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-[#f4f7fb] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                             <div className="min-w-0">
                               <p className="truncate text-sm font-medium text-black">
                                 {item.documentFile?.name || item.documentFileName}
@@ -3811,7 +3811,7 @@ function CreateProfilePage() {
 
           {/* -- Buttons -- */}
           {!isLastStep && (
-            <div className="rounded-[26px] border border-slate-200/90 bg-slate-50/90 p-4 sm:p-5">
+            <div className="rounded-[26px] border border-slate-200/90 bg-[#f8fafc] p-4 sm:p-5">
               <div className={`flex items-center ${isFirstStep ? 'justify-end' : 'justify-between'}`}>
                 {!isFirstStep && (
                   <button
@@ -3835,7 +3835,7 @@ function CreateProfilePage() {
           )}
 
           {isLastStep && (
-            <div className="rounded-[26px] border border-slate-200/90 bg-slate-50/90 p-4 sm:p-5">
+            <div className="rounded-[26px] border border-slate-200/90 bg-[#f8fafc] p-4 sm:p-5">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                   <button

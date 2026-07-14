@@ -1086,7 +1086,7 @@ function BusinessProfileDisplay({
             </p>
           )}
 
-          <div className="mt-3 flex min-w-0 items-center overflow-hidden whitespace-nowrap rounded-[1.15rem] border border-slate-100 bg-slate-50 px-3 py-2 text-[11px] text-black sm:rounded-2xl sm:text-xs">
+          <div className="mt-3 flex min-w-0 items-center overflow-hidden whitespace-nowrap rounded-[1.15rem] border border-slate-100 bg-[#f4f7fb] px-3 py-2 text-[11px] text-black sm:rounded-2xl sm:text-xs">
             <span className="flex min-w-0 flex-1 items-center gap-1.5">
               <svg className="h-3.5 w-3.5 shrink-0 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -1262,7 +1262,7 @@ function BusinessProfileDisplay({
                     className="flex w-fit min-w-[15.5rem] max-w-[250px] shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_12px_28px_-24px_rgba(15,23,42,0.5)] sm:min-w-[16.5rem] sm:max-w-[19rem] lg:min-w-[17.25rem] lg:max-w-[20rem]"
                   >
                     <div className="flex w-[5.75rem] shrink-0 self-stretch flex-col gap-2 p-3 sm:w-[6.25rem] sm:p-4 lg:w-[6.75rem]">
-  <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+  <div className="overflow-hidden rounded-xl border border-slate-200 bg-[#f4f7fb]">
     {hasImage ? (
       <img
         src={item.imageUrl ?? undefined}
@@ -1298,7 +1298,7 @@ function BusinessProfileDisplay({
         }}
       />
     ) : (
-      <div className="flex h-[6.5rem] w-full items-center justify-center bg-slate-50 px-2 text-center text-[11px] font-medium text-black sm:h-[7rem] sm:text-xs lg:h-[7.5rem]">
+      <div className="flex h-[6.5rem] w-full items-center justify-center bg-[#f4f7fb] px-2 text-center text-[11px] font-medium text-black sm:h-[7rem] sm:text-xs lg:h-[7.5rem]">
         No Image
       </div>
     )}
@@ -1368,7 +1368,7 @@ function BusinessProfileDisplay({
                   <img
                     src={imageUrl}
                     alt={`${profile.businessName} gallery image ${index + 1}`}
-                    className="h-24 w-24 shrink-0 rounded-2xl border border-slate-100 bg-slate-50 object-cover sm:h-[108px] sm:w-[108px]"
+                    className="h-24 w-24 shrink-0 rounded-2xl border border-slate-100 bg-[#f4f7fb] object-cover sm:h-[108px] sm:w-[108px]"
                     loading="lazy"
                     onError={(event) => {
                       event.currentTarget.style.display = 'none'
@@ -1598,7 +1598,7 @@ function BusinessProfileDisplay({
                 return (
                   <li
                     key={item.key}
-                    className="flex w-[clamp(170px,50vw,190px)] shrink-0 snap-start rounded-2xl border border-slate-100 bg-slate-50/70 p-3"
+                    className="flex w-[clamp(170px,50vw,190px)] shrink-0 snap-start rounded-2xl border border-slate-100 bg-[#f4f7fb] p-3"
                   >
                     <div className="flex min-w-0 items-start gap-2.5">
                       {shouldShowImagePreview ? (
@@ -1678,7 +1678,7 @@ function BusinessProfileDisplay({
                   const answerId = `business-profile-faq-answer-${index}`
 
                   return (
-                    <li key={item.key} className="rounded-2xl border border-slate-100 bg-slate-50/70">
+                    <li key={item.key} className="rounded-2xl border border-slate-100 bg-[#f4f7fb]">
                       <button
                         type="button"
                         onClick={() => setOpenFaqKey(isAnswerOpen ? null : item.key)}
@@ -1789,7 +1789,7 @@ function BusinessProfileDisplay({
           document.body
         )}
 
-            <section aria-label="Final contact actions" className="overflow-hidden rounded-3xl border border-blue-100 bg-blue-50/80 px-5 py-6 shadow-sm sm:px-8">
+            <section aria-label="Final contact actions" className="overflow-hidden rounded-3xl border border-blue-100 bg-[#f8fafc] px-5 py-6 shadow-sm sm:px-8">
               <div className="min-w-0">
                 <h2 className="text-lg font-bold tracking-tight text-black">
                   Stay connected with {displayBusinessName}
