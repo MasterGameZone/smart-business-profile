@@ -636,9 +636,9 @@ function LandingPage() {
               Built for business owners and visitors
             </span>
 
-            <h1 className="mb-4 text-3xl font-bold leading-tight tracking-tight text-black sm:mb-5 sm:text-4xl md:text-5xl lg:text-6xl">
+            <h1 className="mb-4 text-3xl font-bold leading-tight tracking-tight text-[#0f172a] sm:mb-5 sm:text-4xl md:text-5xl lg:text-6xl">
               Create your business profile.{' '}
-              <span className="bg-[linear-gradient(90deg,#e2f3ff_0%,#7dd3fc_35%,#60a5fa_70%,#c4b5fd_100%)] bg-clip-text text-transparent">
+              <span className="bg-[linear-gradient(90deg,#2563eb_0%,#3b82f6_45%,#7c3aed_100%)] bg-clip-text text-transparent">
                 Get discovered faster.
               </span>
             </h1>
