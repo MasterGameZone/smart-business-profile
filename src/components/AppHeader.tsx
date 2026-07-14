@@ -315,8 +315,8 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
         <div
           className={`rounded-[2rem] px-3 py-1.5 backdrop-blur-xl sm:px-4 sm:py-2 md:px-5 ${
             useDarkHeaderStyle
-              ? 'border border-white/10 bg-[#f8fafc] shadow-[0_18px_36px_-28px_rgba(2,6,23,0.75)]'
-              : 'border border-slate-200/80 bg-[#f8fafc] shadow-[0_22px_48px_-30px_rgba(15,23,42,0.34),0_14px_24px_-24px_rgba(15,23,42,0.22)]'
+              ? 'border border-[rgba(199,210,223,0.10)] bg-[#f8fafc] shadow-[0_18px_36px_-28px_rgba(2,6,23,0.75)]'
+              : 'border border-[rgba(199,210,223,0.80)] bg-[#f8fafc] shadow-[0_22px_48px_-30px_rgba(15,23,42,0.34),0_14px_24px_-24px_rgba(15,23,42,0.22)]'
           }`}
         >
           <div
