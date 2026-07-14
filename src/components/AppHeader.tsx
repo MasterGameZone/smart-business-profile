@@ -38,9 +38,11 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
   const { clearProfile } = useProfile()
   const [isSigningOut, setIsSigningOut] = useState(false)
   const [isHomeMenuOpen, setIsHomeMenuOpen] = useState(false)
+  const [isLandingMobileMenuOpen, setIsLandingMobileMenuOpen] = useState(false)
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const [shouldAnimateEntrance] = useState(() => !hasPlayedNavbarEntrance)
   const homeMenuRef = useRef<HTMLDivElement | null>(null)
+  const landingMobileMenuRef = useRef<HTMLDivElement | null>(null)
   const isLandingPage = location.pathname === '/'
   const isStartBusinessPage = location.pathname === '/start-business'
   const isBusinessHomePage = location.pathname === '/business-home'
@@ -75,6 +77,7 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
   const authenticatedHomePath = isCreateProfilePage && accountMode === 'business_owner' ? '/business-home' : '/'
   const useInlineDarkNavbarLayout =
     isProfilePreviewPage || isPublicBusinessProfileVariant || ((isLandingPage || isSimpleDarkNavbarPage) && !user)
+  const showLandingMobileHamburger = !user && isLandingPage
   const publicBusinessProfileBackPath = previewConfig?.backPath ?? '/'
   const publicBusinessProfileBackLabel = previewConfig?.backLabel ?? 'Home'
   const navbarInteractionStyle: CSSProperties = {
@@ -114,7 +117,34 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
   }, [hasTopBarMenu, isHomeMenuOpen])
 
   useEffect(() => {
+    if (!showLandingMobileHamburger || !isLandingMobileMenuOpen) {
+      return undefined
+    }
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!landingMobileMenuRef.current?.contains(event.target as Node)) {
+        setIsLandingMobileMenuOpen(false)
+      }
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsLandingMobileMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isLandingMobileMenuOpen, showLandingMobileHamburger])
+
+  useEffect(() => {
     setIsHomeMenuOpen(false)
+    setIsLandingMobileMenuOpen(false)
   }, [location.pathname, location.hash])
 
   const showError = (message: string) => {
@@ -176,6 +206,8 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
   }
 
   const handleNavItemClick = (item: NavItem) => {
+    setIsLandingMobileMenuOpen(false)
+
     if (item.type === 'scroll') {
       const sectionId = item.path.replace('#', '')
       navigate({ pathname: '/', hash: item.path })
@@ -546,11 +578,11 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
 
             {!isLoading && !showPreviewHeader && !hideAuthenticatedNavButtons && (
               <nav
-                className={`flex items-center ${
+                className={`items-center ${
                   useInlineDarkNavbarLayout
                     ? 'ml-auto shrink-0 flex-nowrap gap-1 sm:gap-2'
                     : 'w-full flex-wrap justify-end gap-2 pt-2 sm:w-auto sm:pt-0'
-                }`}
+                } ${showLandingMobileHamburger ? 'hidden sm:flex' : 'flex'}`}
                 aria-label="Primary navigation"
               >
                 {navItems.map((item) => (
@@ -580,6 +612,66 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
                   </button>
                 )}
               </nav>
+            )}
+
+            {!isLoading && showLandingMobileHamburger && (
+              <div ref={landingMobileMenuRef} className="relative ml-auto flex shrink-0 items-center sm:hidden" aria-label="Landing page mobile navigation">
+                <button
+                  type="button"
+                  aria-label={isLandingMobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+                  aria-expanded={isLandingMobileMenuOpen}
+                  aria-haspopup="menu"
+                  onClick={() => setIsLandingMobileMenuOpen((open) => !open)}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/12 bg-white/5 text-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                  style={navbarInteractionStyle}
+                >
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-4.5 w-4.5"
+                  >
+                    {isLandingMobileMenuOpen ? (
+                      <>
+                        <path d="M6 6l12 12" />
+                        <path d="M18 6L6 18" />
+                      </>
+                    ) : (
+                      <>
+                        <path d="M4 7h16" />
+                        <path d="M4 12h16" />
+                        <path d="M4 17h16" />
+                      </>
+                    )}
+                  </svg>
+                </button>
+
+                {isLandingMobileMenuOpen && (
+                  <div
+                    role="menu"
+                    aria-label="Landing page navigation menu"
+                    className="absolute right-0 top-full z-40 mt-2 w-[min(9rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_48px_-28px_rgba(15,23,42,0.45)]"
+                  >
+                    <div className="p-2">
+                      {navItems.map((item) => (
+                        <button
+                          key={item.path}
+                          type="button"
+                          role="menuitem"
+                          onClick={() => handleNavItemClick(item)}
+                          className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none"
+                        >
+                          <span className="truncate">{item.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
 
             {!isLoading && !showPreviewHeader && showLoggedInHomeIcons && (
