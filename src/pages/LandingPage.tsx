@@ -214,6 +214,15 @@ function LandingPage() {
 
         <main className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
           <section className="mb-8 sm:mb-10">
+            <div className="mb-5 sm:mb-6">
+              <h1 className="text-2xl font-bold tracking-tight text-slate-50 sm:text-3xl">
+                Find trusted businesses near you
+              </h1>
+              <p className="mt-2 max-w-2xl text-sm text-slate-300 sm:text-base">
+                Search, save, and connect with businesses from one place.
+              </p>
+            </div>
+
             <div className="flex flex-col gap-3 sm:flex-row">
               <div className="relative flex-1">
                 <label htmlFor="customer-home-search" className="sr-only">
