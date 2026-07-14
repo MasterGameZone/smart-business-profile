@@ -463,6 +463,56 @@ function LandingPage() {
             </div>
           </section>
 
+          <section className="mb-8 sm:mb-10" aria-labelledby="final-directory-cta-heading">
+            <div className="py-1">
+              <div className="inline-flex items-center gap-2 rounded-full border border-sky-100 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.8}
+                    d="M12 3l7 3-7 3-7-3 7-3zm7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6m7 3v12"
+                  />
+                </svg>
+                Explore More
+              </div>
+
+              <div className="mt-4 max-w-3xl">
+                <h2 id="final-directory-cta-heading" className="text-2xl font-bold tracking-tight text-black sm:text-3xl">
+                  <span className="block">Looking for</span>
+                  <span className="block">something specific?</span>
+                </h2>
+                <p className="mt-3 max-w-2xl text-sm leading-7 text-black sm:text-base">
+                  Browse businesses by category, service, or location.
+                </p>
+              </div>
+
+              <div className="mt-5 flex flex-col items-start gap-3">
+                <button
+                  type="button"
+                  onClick={() => navigate('/directory')}
+                  className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  Explore Business Directory
+                  <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14m-6-6 6 6-6 6" />
+                  </svg>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => navigate('/directory')}
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700 transition hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  Browse by Category
+                  <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 6l6 6-6 6" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </section>
+
           <section className="mb-8 sm:mb-10" aria-labelledby="recommended-businesses-heading">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
