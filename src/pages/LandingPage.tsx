@@ -402,6 +402,67 @@ function LandingPage() {
             )}
           </section>
 
+          <section className="mb-8 sm:mb-10" aria-labelledby="local-business-support-heading">
+            <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white px-5 py-6 shadow-[0_22px_48px_-30px_rgba(15,23,42,0.26),0_12px_24px_-24px_rgba(15,23,42,0.18)] sm:px-7 sm:py-7">
+              <div className="inline-flex items-center gap-2 rounded-full border border-sky-100 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.8}
+                    d="M17 20a4 4 0 0 0-8 0m8 0H7m10 0h3m-3 0v-.5a3.5 3.5 0 0 0-7 0v.5m7-8a3 3 0 1 0-6 0 3 3 0 0 0 6 0zm-9 1a2.5 2.5 0 1 0-5 0 2.5 2.5 0 0 0 5 0zm12 0a2.5 2.5 0 1 0-5 0 2.5 2.5 0 0 0 5 0z"
+                  />
+                </svg>
+                Community Initiative
+              </div>
+
+              <div className="mt-4 max-w-3xl">
+                <h2 id="local-business-support-heading" className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
+                  <span className="block">Help Build Your</span>
+                  <span className="block">Local Business Network</span>
+                </h2>
+                <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+                  Know a trusted local business that is not listed yet? Help them create a professional digital presence and become part of a platform built with its community.
+                </p>
+              </div>
+
+              <div className="mt-5 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Support a Local Business
+                </button>
+
+                <button
+                  type="button"
+                  className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-full border border-blue-200 bg-white px-5 py-2.5 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19V6m0 13-4-4m4 4 4-4M5 5h14" />
+                  </svg>
+                  View My Local Impact
+                </button>
+              </div>
+
+              <div className="mt-5 flex items-start gap-2 text-sm text-slate-500">
+                <svg className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.8}
+                    d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6l7-3z"
+                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 9h.01M11 12h1v4h1" />
+                </svg>
+                <p>You do not just use Smart Business Profile. You help build it.</p>
+              </div>
+            </div>
+          </section>
+
           <section className="mb-8 sm:mb-10" aria-labelledby="recommended-businesses-heading">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
