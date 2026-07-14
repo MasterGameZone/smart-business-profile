@@ -403,7 +403,7 @@ function LandingPage() {
           </section>
 
           <section className="mb-8 sm:mb-10" aria-labelledby="local-business-support-heading">
-            <div className="overflow-hidden rounded-3xl border border-[#c7d2df] bg-white px-5 py-6 shadow-[0_22px_48px_-30px_rgba(15,23,42,0.26),0_12px_24px_-24px_rgba(15,23,42,0.18)] sm:px-7 sm:py-7">
+            <div className="py-1">
               <div className="inline-flex items-center gap-2 rounded-full border border-sky-100 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">
                 <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path
