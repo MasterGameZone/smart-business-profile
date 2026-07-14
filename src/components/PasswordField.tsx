@@ -10,6 +10,8 @@ interface PasswordFieldProps {
   placeholder?: string
   autoComplete?: string
   hasError?: boolean
+  labelClassName?: string
+  inputClassName?: string
 }
 
 function PasswordField({
@@ -21,12 +23,14 @@ function PasswordField({
   placeholder = '••••••••',
   autoComplete = 'current-password',
   hasError = false,
+  labelClassName = 'mb-1.5 block text-sm font-medium text-slate-200',
+  inputClassName = authInputBase,
 }: PasswordFieldProps) {
   const [visible, setVisible] = useState(false)
 
   return (
     <div>
-      <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-slate-200">
+      <label htmlFor={id} className={labelClassName}>
         {label} <span className="text-red-500" aria-hidden="true">*</span>
       </label>
       <div className="relative">
@@ -40,7 +44,7 @@ function PasswordField({
           autoComplete={autoComplete}
           aria-required="true"
           aria-invalid={hasError}
-          className={`${authInputBase} pr-11 ${hasError ? 'border-red-400/70 bg-red-500/10 focus:ring-red-400' : ''}`}
+          className={`${inputClassName} pr-11 ${hasError ? 'border-red-400/70 bg-red-500/10 focus:ring-red-400' : ''}`}
         />
         <button
           type="button"

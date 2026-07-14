@@ -44,13 +44,13 @@ function AuthLayout({ title, subtitle, children, footer, darkBackground = false 
           <div
             className={`rounded-2xl px-6 py-8 sm:px-10 sm:py-10 ${
               darkBackground
-                ? 'border border-[#c7d2df] bg-[linear-gradient(180deg,rgba(15,23,42,0.72),rgba(2,6,23,0.84))] shadow-[0_28px_70px_-38px_rgba(2,12,27,0.92)] backdrop-blur-md'
+                ? 'border border-[#c7d2df] bg-[#f8fafc] shadow-[0_28px_70px_-38px_rgba(2,12,27,0.92)] backdrop-blur-md'
                 : 'border border-[#c7d2df] bg-white shadow-sm'
             }`}
           >
             <div className="text-center mb-8">
-              <h1 className={`mb-2 tracking-tight ${darkBackground ? 'text-3xl font-bold text-slate-50' : 'text-2xl font-bold text-black'}`}>{title}</h1>
-              <p className={darkBackground ? 'text-base text-slate-300' : 'text-sm text-black'}>{subtitle}</p>
+              <h1 className={`mb-2 tracking-tight ${darkBackground ? 'text-3xl font-bold text-black' : 'text-2xl font-bold text-black'}`}>{title}</h1>
+              <p className={darkBackground ? 'text-base text-black' : 'text-sm text-black'}>{subtitle}</p>
             </div>
 
             {children}

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import AuthLayout, { authInputBase, authLabel, authError } from '../../components/AuthLayout.tsx'
+import AuthLayout, { authError } from '../../components/AuthLayout.tsx'
 import PasswordField from '../../components/PasswordField.tsx'
 import { ToastContainer, type ToastItem, type ToastType } from '../../components/Toast.tsx'
 import { usePageMeta } from '../../hooks/usePageMeta.ts'
@@ -14,6 +14,8 @@ interface FormErrors {
 }
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const authSignUpFieldBase =
+  'w-full rounded-xl border border-[#c7d2df] bg-white/[0.08] px-4 py-2.5 text-sm text-slate-50 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-400/70 focus:border-transparent'
 
 function SignUpPage() {
   usePageMeta({
@@ -106,7 +108,7 @@ function SignUpPage() {
       ) : (
         <form onSubmit={handleSubmit} noValidate className="space-y-5">
           <div>
-            <label htmlFor="fullName" className={authLabel}>
+            <label htmlFor="fullName" className="mb-1.5 block text-sm font-medium text-black">
               Full Name <span className="text-red-500" aria-hidden="true">*</span>
             </label>
             <input
@@ -119,13 +121,13 @@ function SignUpPage() {
               autoComplete="name"
               aria-required="true"
               aria-invalid={Boolean(errors.fullName)}
-              className={`${authInputBase} ${errors.fullName ? 'border-red-400/70 bg-red-500/10 focus:ring-red-400' : ''}`}
+              className={`${authSignUpFieldBase} ${errors.fullName ? 'border-red-400/70 bg-red-500/10 focus:ring-red-400' : ''}`}
             />
             {authError(errors.fullName)}
           </div>
 
           <div>
-            <label htmlFor="email" className={authLabel}>
+            <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-black">
               Email <span className="text-red-500" aria-hidden="true">*</span>
             </label>
             <input
@@ -138,7 +140,7 @@ function SignUpPage() {
               autoComplete="email"
               aria-required="true"
               aria-invalid={Boolean(errors.email)}
-              className={`${authInputBase} ${errors.email ? 'border-red-400/70 bg-red-500/10 focus:ring-red-400' : ''}`}
+              className={`${authSignUpFieldBase} ${errors.email ? 'border-red-400/70 bg-red-500/10 focus:ring-red-400' : ''}`}
             />
             {authError(errors.email)}
           </div>
@@ -152,6 +154,8 @@ function SignUpPage() {
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="new-password"
               hasError={Boolean(errors.password)}
+              labelClassName="mb-1.5 block text-sm font-medium text-black"
+              inputClassName={authSignUpFieldBase}
             />
             {authError(errors.password)}
           </div>
@@ -165,6 +169,8 @@ function SignUpPage() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               autoComplete="new-password"
               hasError={Boolean(errors.confirmPassword)}
+              labelClassName="mb-1.5 block text-sm font-medium text-black"
+              inputClassName={authSignUpFieldBase}
             />
             {authError(errors.confirmPassword)}
           </div>
