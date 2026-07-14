@@ -368,7 +368,7 @@ function PublicBusinessProfilePage() {
               footerSlot={
                 <section
                   aria-label="Ratings actions"
-                  className="overflow-hidden rounded-3xl border border-slate-100 bg-white px-5 py-5 shadow-sm sm:px-8 sm:py-6"
+                  className="overflow-hidden rounded-3xl border border-[#c7d2df] bg-white px-5 py-5 shadow-sm sm:px-8 sm:py-6"
                 >
                   <div className="flex items-center justify-between gap-1.5 overflow-hidden">
                     <div className="flex min-w-0 items-center gap-1 text-[10px] font-semibold text-black sm:gap-1.5 sm:text-xs">

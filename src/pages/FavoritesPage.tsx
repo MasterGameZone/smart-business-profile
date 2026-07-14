@@ -121,7 +121,7 @@ function FavoritesPage() {
         )}
 
         {loadState === 'empty' && (
-          <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-2xl border border-white/10 bg-white px-4 py-16 text-center shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md">
+          <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-2xl border border-[#c7d2df] bg-white px-4 py-16 text-center shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md">
             <p className="font-medium text-black">No saved businesses yet.</p>
             <p className="mt-2 text-sm text-black">Save businesses you want to revisit later.</p>
           </div>
@@ -132,7 +132,7 @@ function FavoritesPage() {
             {favorites.map((favorite) => (
               <article
                 key={favorite.id}
-                className="flex flex-col rounded-2xl border border-white/10 bg-white p-6 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md"
+                className="flex flex-col rounded-2xl border border-[#c7d2df] bg-white p-6 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md"
               >
                 <div className="mb-4 flex items-start gap-4">
                   {favorite.business_profile.logo_url ? (

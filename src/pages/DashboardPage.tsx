@@ -145,7 +145,7 @@ function DashboardPage() {
       <AppHeader />
 
       <main id="my-business" className="max-w-3xl mx-auto px-4 py-10">
-        <div className="mb-6 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+        <div className="mb-6 rounded-2xl border border-[#c7d2df] bg-white p-6 shadow-sm">
           <p className="text-sm font-medium text-black">Signed in as</p>
           <p className="mt-1 text-base font-semibold text-black break-all">{user?.email}</p>
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
@@ -220,7 +220,7 @@ function DashboardPage() {
 
         {/* ── Empty State ── */}
         {loadState === 'empty' && (
-          <div className="flex flex-col items-center justify-center min-h-[40vh] text-center px-4 bg-white rounded-2xl border border-gray-100 shadow-sm py-16">
+          <div className="flex flex-col items-center justify-center min-h-[40vh] text-center px-4 bg-white rounded-2xl border border-[#c7d2df] shadow-sm py-16">
             <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center mb-6">
               <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -247,7 +247,7 @@ function DashboardPage() {
             {profiles.map((profile) => (
               <div
                 key={profile.id}
-                className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8"
+                className="bg-white rounded-2xl border border-[#c7d2df] shadow-sm p-6 sm:p-8"
               >
                 <div className="flex items-start gap-4 mb-6">
                   {profile.logo_url ? (

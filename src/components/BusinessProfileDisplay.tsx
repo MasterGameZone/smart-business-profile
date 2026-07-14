@@ -47,7 +47,7 @@ interface BusinessProfileDisplayProps {
 }
 
 export const businessProfileOuterWrapperClassName =
-  'rounded-[2rem] border border-slate-100 bg-white p-1 shadow-[0_32px_80px_-38px_rgba(15,23,42,0.45)]'
+  'rounded-[2rem] border border-[#c7d2df] bg-white p-1 shadow-[0_32px_80px_-38px_rgba(15,23,42,0.45)]'
 
 const compactSecondaryButtonClass =
   'inline-flex h-7 min-w-0 items-center justify-center gap-1 whitespace-nowrap rounded-md border border-slate-300 bg-white px-2 text-[10px] font-medium leading-none text-black transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 active:scale-[0.99] sm:h-8 sm:gap-1.5 sm:rounded-lg sm:px-3 sm:text-xs'
@@ -1002,7 +1002,7 @@ function BusinessProfileDisplay({
     <div className="space-y-4">
       <article
         ref={compactCardRef}
-        className="mx-auto w-full max-w-[45rem] overflow-hidden rounded-[1.5rem] border border-white/80 bg-white shadow-[0_24px_70px_-36px_rgba(15,23,42,0.55)] sm:rounded-[1.75rem]"
+        className="mx-auto w-full max-w-[45rem] overflow-hidden rounded-[1.5rem] border border-[#c7d2df] bg-white shadow-[0_24px_70px_-36px_rgba(15,23,42,0.55)] sm:rounded-[1.75rem]"
       >
         <div className="relative aspect-[16/6] w-full bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700">
           {coverBannerUrl ? (
@@ -1086,7 +1086,7 @@ function BusinessProfileDisplay({
             </p>
           )}
 
-          <div className="mt-3 flex min-w-0 items-center overflow-hidden whitespace-nowrap rounded-[1.15rem] border border-slate-100 bg-[#f4f7fb] px-3 py-2 text-[11px] text-black sm:rounded-2xl sm:text-xs">
+          <div className="mt-3 flex min-w-0 items-center overflow-hidden whitespace-nowrap rounded-[1.15rem] border border-[#c7d2df] bg-[#f4f7fb] px-3 py-2 text-[11px] text-black sm:rounded-2xl sm:text-xs">
             <span className="flex min-w-0 flex-1 items-center gap-1.5">
               <svg className="h-3.5 w-3.5 shrink-0 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -1217,7 +1217,7 @@ function BusinessProfileDisplay({
         <div className="overflow-hidden">
           <div className="space-y-4 pt-4">
       {hasAboutSection && (
-        <section aria-label="About Us" className="overflow-hidden rounded-3xl border border-slate-100 bg-white px-5 py-6 shadow-sm sm:px-8">
+        <section aria-label="About Us" className="overflow-hidden rounded-3xl border border-[#c7d2df] bg-white px-5 py-6 shadow-sm sm:px-8">
           <div className="mb-4 flex items-center justify-between gap-4">
             <h2 className="text-lg font-bold tracking-tight text-black">About Us</h2>
           </div>
@@ -1244,7 +1244,7 @@ function BusinessProfileDisplay({
       )}
 
       {offeringItems.length > 0 && (
-        <section aria-label={offeringSectionLabel} className="overflow-hidden rounded-3xl border border-slate-100 bg-white py-6 shadow-sm">
+        <section aria-label={offeringSectionLabel} className="overflow-hidden rounded-3xl border border-[#c7d2df] bg-white py-6 shadow-sm">
           <div className="px-5 sm:px-8">
             <h2 className="text-lg font-bold tracking-tight text-black">{offeringSectionLabel}</h2>
           </div>
@@ -1259,10 +1259,10 @@ function BusinessProfileDisplay({
                 return (
                   <li
                     key={item.key}
-                    className="flex w-fit min-w-[15.5rem] max-w-[250px] shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_12px_28px_-24px_rgba(15,23,42,0.5)] sm:min-w-[16.5rem] sm:max-w-[19rem] lg:min-w-[17.25rem] lg:max-w-[20rem]"
+                    className="flex w-fit min-w-[15.5rem] max-w-[250px] shrink-0 overflow-hidden rounded-2xl border border-[#c7d2df] bg-white shadow-[0_12px_28px_-24px_rgba(15,23,42,0.5)] sm:min-w-[16.5rem] sm:max-w-[19rem] lg:min-w-[17.25rem] lg:max-w-[20rem]"
                   >
                     <div className="flex w-[5.75rem] shrink-0 self-stretch flex-col gap-2 p-3 sm:w-[6.25rem] sm:p-4 lg:w-[6.75rem]">
-  <div className="overflow-hidden rounded-xl border border-slate-200 bg-[#f4f7fb]">
+  <div className="overflow-hidden rounded-xl border border-[#c7d2df] bg-[#f4f7fb]">
     {hasImage ? (
       <img
         src={item.imageUrl ?? undefined}
@@ -1343,7 +1343,7 @@ function BusinessProfileDisplay({
       )}
 
       {galleryItems.length > 0 && (
-        <section aria-label="Gallery" className="overflow-hidden rounded-3xl border border-slate-100 bg-white py-6 shadow-sm">
+        <section aria-label="Gallery" className="overflow-hidden rounded-3xl border border-[#c7d2df] bg-white py-6 shadow-sm">
           <div className="flex items-center justify-between gap-3 px-5 sm:px-8">
             <h2 className="text-lg font-bold tracking-tight text-black">Gallery</h2>
             <button
@@ -1382,7 +1382,7 @@ function BusinessProfileDisplay({
       )}
 
       {workingHours.length > 0 && (
-        <section aria-label="Working Hours" className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
+        <section aria-label="Working Hours" className="overflow-hidden rounded-3xl border border-[#c7d2df] bg-white shadow-sm">
           <button
             type="button"
             onClick={() => setIsWorkingHoursExpanded((current) => !current)}
@@ -1452,7 +1452,7 @@ function BusinessProfileDisplay({
       )}
 
       {hasLocationSection && (
-        <section aria-label="Location" className="overflow-hidden rounded-3xl border border-slate-100 bg-white px-5 py-6 shadow-sm sm:px-8">
+        <section aria-label="Location" className="overflow-hidden rounded-3xl border border-[#c7d2df] bg-white px-5 py-6 shadow-sm sm:px-8">
           <h2 className="text-lg font-bold tracking-tight text-black">Location</h2>
           <div className="mt-4 min-w-0">
             {displayAddress ? (
@@ -1506,7 +1506,7 @@ function BusinessProfileDisplay({
       {hasContactSection && (
   <section
     aria-label="Contact Information"
-    className="overflow-hidden rounded-3xl border border-slate-100 bg-white px-5 py-3.5 shadow-sm sm:px-8 sm:py-4"
+    className="overflow-hidden rounded-3xl border border-[#c7d2df] bg-white px-5 py-3.5 shadow-sm sm:px-8 sm:py-4"
   >
     <h2 className="text-lg font-bold tracking-tight text-black">Contact Information</h2>
 
@@ -1575,7 +1575,7 @@ function BusinessProfileDisplay({
 )}
 
       {qualificationItems.length > 0 && (
-        <section aria-label="Certificates and Qualifications" className="overflow-hidden rounded-3xl border border-slate-100 bg-white py-5 shadow-sm">
+        <section aria-label="Certificates and Qualifications" className="overflow-hidden rounded-3xl border border-[#c7d2df] bg-white py-5 shadow-sm">
           <div className="flex items-center justify-between gap-3 px-5 sm:px-8">
             <h2 className="text-lg font-bold tracking-tight text-black">Certificates & Qualifications</h2>
             {attachedQualificationItems.length > 0 && (
@@ -1598,7 +1598,7 @@ function BusinessProfileDisplay({
                 return (
                   <li
                     key={item.key}
-                    className="flex w-[clamp(170px,50vw,190px)] shrink-0 snap-start rounded-2xl border border-slate-100 bg-[#f4f7fb] p-3"
+                    className="flex w-[clamp(170px,50vw,190px)] shrink-0 snap-start rounded-2xl border border-[#c7d2df] bg-[#f4f7fb] p-3"
                   >
                     <div className="flex min-w-0 items-start gap-2.5">
                       {shouldShowImagePreview ? (
@@ -1649,7 +1649,7 @@ function BusinessProfileDisplay({
       {footerSlot}
 
       {faqItems.length > 0 && (
-        <section aria-label="Frequently Asked Questions" className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
+        <section aria-label="Frequently Asked Questions" className="overflow-hidden rounded-3xl border border-[#c7d2df] bg-white shadow-sm">
           <button
             type="button"
             onClick={handleToggleFaqSection}
@@ -1678,7 +1678,7 @@ function BusinessProfileDisplay({
                   const answerId = `business-profile-faq-answer-${index}`
 
                   return (
-                    <li key={item.key} className="rounded-2xl border border-slate-100 bg-[#f4f7fb]">
+                    <li key={item.key} className="rounded-2xl border border-[#c7d2df] bg-[#f4f7fb]">
                       <button
                         type="button"
                         onClick={() => setOpenFaqKey(isAnswerOpen ? null : item.key)}
@@ -1789,7 +1789,7 @@ function BusinessProfileDisplay({
           document.body
         )}
 
-            <section aria-label="Final contact actions" className="overflow-hidden rounded-3xl border border-blue-100 bg-[#f8fafc] px-5 py-6 shadow-sm sm:px-8">
+            <section aria-label="Final contact actions" className="overflow-hidden rounded-3xl border border-[#c7d2df] bg-[#f8fafc] px-5 py-6 shadow-sm sm:px-8">
               <div className="min-w-0">
                 <h2 className="text-lg font-bold tracking-tight text-black">
                   Stay connected with {displayBusinessName}

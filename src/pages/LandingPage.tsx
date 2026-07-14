@@ -61,7 +61,7 @@ const visitorBenefits = [
 ]
 
 const darkCardClass =
-  'rounded-3xl border border-white/10 bg-white p-6 shadow-[0_28px_80px_-42px_rgba(2,12,27,0.95)] backdrop-blur-md sm:p-8'
+  'rounded-3xl border border-[#c7d2df] bg-white p-6 shadow-[0_28px_80px_-42px_rgba(2,12,27,0.95)] backdrop-blur-md sm:p-8'
 
 const sectionHeadingClass = 'text-xl font-bold tracking-tight text-black sm:text-2xl md:text-3xl'
 type RecommendationState = 'idle' | 'loading' | 'found' | 'empty' | 'error'
@@ -284,7 +284,7 @@ function LandingPage() {
                   {liveSearchResults.map((profile) => (
                     <article
                       key={`search-${profile.id}`}
-                      className="flex h-full flex-col rounded-3xl border border-white/10 bg-white p-5 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md"
+                      className="flex h-full flex-col rounded-3xl border border-[#c7d2df] bg-white p-5 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md"
                     >
                       <div className="mb-4 flex items-start gap-3">
                         {profile.logo_url ? (
@@ -349,7 +349,7 @@ function LandingPage() {
                 {recentlyViewedBusinesses.map((profile) => (
                   <article
                     key={`recent-${profile.id}`}
-                    className="flex h-full flex-col rounded-3xl border border-white/10 bg-white p-5 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md"
+                    className="flex h-full flex-col rounded-3xl border border-[#c7d2df] bg-white p-5 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md"
                   >
                     <div className="mb-4 flex items-start gap-3">
                       {profile.logo_url ? (
@@ -403,7 +403,7 @@ function LandingPage() {
           </section>
 
           <section className="mb-8 sm:mb-10" aria-labelledby="local-business-support-heading">
-            <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white px-5 py-6 shadow-[0_22px_48px_-30px_rgba(15,23,42,0.26),0_12px_24px_-24px_rgba(15,23,42,0.18)] sm:px-7 sm:py-7">
+            <div className="overflow-hidden rounded-3xl border border-[#c7d2df] bg-white px-5 py-6 shadow-[0_22px_48px_-30px_rgba(15,23,42,0.26),0_12px_24px_-24px_rgba(15,23,42,0.18)] sm:px-7 sm:py-7">
               <div className="inline-flex items-center gap-2 rounded-full border border-sky-100 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">
                 <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path
@@ -530,7 +530,7 @@ function LandingPage() {
                   {recommendedBusinesses.map((profile) => (
                     <article
                       key={profile.id}
-                      className="flex h-full flex-col rounded-3xl border border-white/10 bg-white p-5 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md"
+                      className="flex h-full flex-col rounded-3xl border border-[#c7d2df] bg-white p-5 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md"
                     >
                       <div className="mb-4 flex items-start gap-3">
                         {profile.logo_url ? (
@@ -731,7 +731,7 @@ function LandingPage() {
 
             <div className="mx-auto grid max-w-6xl grid-cols-1 gap-4 md:grid-cols-[320px_minmax(0,1fr)] md:items-stretch md:gap-5">
               <ScrollReveal delayMs={60} className="mx-auto md:mx-0">
-                <div className="mx-auto flex aspect-square w-full max-w-[19rem] items-center justify-center rounded-3xl border border-white/10 bg-white px-6 py-6 text-center shadow-[0_14px_30px_-24px_rgba(2,12,27,0.95)] backdrop-blur-sm sm:max-w-[20rem] sm:px-8 md:h-full md:max-w-none md:aspect-auto">
+                <div className="mx-auto flex aspect-square w-full max-w-[19rem] items-center justify-center rounded-3xl border border-[#c7d2df] bg-white px-6 py-6 text-center shadow-[0_14px_30px_-24px_rgba(2,12,27,0.95)] backdrop-blur-sm sm:max-w-[20rem] sm:px-8 md:h-full md:max-w-none md:aspect-auto">
                   <div className="space-y-1 text-sm font-medium leading-relaxed text-black sm:text-base">
                     <p>Business type preview</p>
                     <p>Animation coming soon</p>
@@ -740,7 +740,7 @@ function LandingPage() {
               </ScrollReveal>
 
               <ScrollReveal delayMs={140}>
-                <div className="rounded-3xl border border-white/10 bg-white px-6 py-6 shadow-[0_14px_30px_-24px_rgba(2,12,27,0.95)] backdrop-blur-sm sm:px-8">
+                <div className="rounded-3xl border border-[#c7d2df] bg-white px-6 py-6 shadow-[0_14px_30px_-24px_rgba(2,12,27,0.95)] backdrop-blur-sm sm:px-8">
                   <div className="space-y-4 text-sm leading-relaxed text-black sm:text-base md:text-left">
                     <p>
                       No matter what kind of local business you run, Smart Business Profile gives you{' '}
@@ -774,7 +774,7 @@ function LandingPage() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {features.map((feature, index) => (
                 <ScrollReveal key={feature.title} delayMs={index * 70} className="h-full">
-                  <div className="flex h-full flex-col rounded-3xl border border-white/10 bg-white p-5 text-left shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md">
+                  <div className="flex h-full flex-col rounded-3xl border border-[#c7d2df] bg-white p-5 text-left shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md">
                     <div className="mb-4 flex items-center gap-4">
                       <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-400/12 text-sky-300 ring-1 ring-sky-300/15">
                         {feature.icon}

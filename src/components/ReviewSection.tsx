@@ -152,7 +152,7 @@ function ReviewImageThumbnail({
   onRemove: () => void;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-xl border border-gray-100 bg-[#f4f7fb]">
+    <div className="relative overflow-hidden rounded-xl border border-[#c7d2df] bg-[#f4f7fb]">
       <img
         src={imageUrl}
         alt={altText}
@@ -613,7 +613,7 @@ function ReviewSection({
   const reviewInterface = (
     <section
       aria-label="Ratings and Reviews"
-      className="rounded-2xl border border-gray-100 bg-white px-6 py-6 shadow-sm sm:px-8"
+      className="rounded-2xl border border-[#c7d2df] bg-white px-6 py-6 shadow-sm sm:px-8"
     >
       <div className="mb-5">
         <h2
@@ -623,7 +623,7 @@ function ReviewSection({
           Ratings & Reviews
         </h2>
 
-        <div className="mt-4 rounded-2xl border border-slate-100 bg-[#f8fafc] px-4 py-4">
+        <div className="mt-4 rounded-2xl border border-[#c7d2df] bg-[#f8fafc] px-4 py-4">
           {summary.count > 0 ? (
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
               <div className="sm:min-w-[8rem]">
@@ -733,7 +733,7 @@ function ReviewSection({
       ) : (
         <>
           {!userId && (
-            <div className="mb-5 rounded-2xl border border-blue-100 bg-[#f8fafc] px-4 py-4">
+            <div className="mb-5 rounded-2xl border border-[#c7d2df] bg-[#f8fafc] px-4 py-4">
               <p className="text-sm font-medium text-blue-950">
                 Log in to rate this business.
               </p>
@@ -753,7 +753,7 @@ function ReviewSection({
           {showReviewForm && (
             <form
               onSubmit={handleSubmit}
-              className="mb-6 rounded-2xl border border-gray-100 bg-white px-4 py-4"
+              className="mb-6 rounded-2xl border border-[#c7d2df] bg-white px-4 py-4"
             >
               <div className="flex items-center justify-between gap-4">
                 <label className="text-sm font-semibold text-black">
@@ -935,7 +935,7 @@ function ReviewSection({
                     )}
 
                     {review.ownerReply && (
-                      <div className="mt-4 rounded-2xl border border-blue-100 bg-[#f4f7fb] px-4 py-3">
+                      <div className="mt-4 rounded-2xl border border-[#c7d2df] bg-[#f4f7fb] px-4 py-3">
                         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                           <p className="text-xs font-semibold uppercase tracking-widest text-blue-900">
                             Response from owner
@@ -955,7 +955,7 @@ function ReviewSection({
                     {canManageOwnerReplies && isReplyFormOpen && (
                       <form
                         onSubmit={(event) => handleReplySubmit(event, review)}
-                        className="mt-4 rounded-2xl border border-gray-100 bg-[#f8fafc] px-4 py-4"
+                        className="mt-4 rounded-2xl border border-[#c7d2df] bg-[#f8fafc] px-4 py-4"
                       >
                         <label
                           htmlFor={`ownerReply-${review.id}`}
