@@ -1102,7 +1102,7 @@ function ReviewSection({
                 d="M11 5H6a2 2 0 00-2 2v11l4-2 4 2 4-2 4 2V7a2 2 0 00-2-2h-5m-2 0V3m0 2h2m-2 0H9"
               />
             </svg>
-            <span>Write a Review</span>
+            <span>Review</span>
           </span>
         </button>
       </div>

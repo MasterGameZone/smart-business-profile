@@ -240,7 +240,7 @@ function ReportProfileAction({ businessProfileId, userId, onLogin, triggerClassN
               d="M5 5v15m0-15h10l-1.5 3L15 11H5"
             />
           </svg>
-          <span>{isCheckingReport ? 'Checking...' : 'Report Profile'}</span>
+          <span>{isCheckingReport ? 'Checking...' : 'Report'}</span>
         </span>
       </button>
 
