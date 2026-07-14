@@ -399,14 +399,6 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
               <div className="ml-auto flex shrink-0 items-center gap-2" aria-label="Public business profile quick actions">
                 <button
                   type="button"
-                  onClick={() => navigate('/directory')}
-                  className="inline-flex min-h-[36px] items-center justify-center rounded-full border border-white/12 bg-white/5 px-4 py-2 text-sm font-medium text-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
-                  style={navbarInteractionStyle}
-                >
-                  Businesses
-                </button>
-                <button
-                  type="button"
                   onClick={() => navigate(publicBusinessProfileBackPath)}
                   className="inline-flex min-h-[36px] items-center justify-center rounded-full border border-white/12 bg-white/5 px-4 py-2 text-sm font-medium text-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
                   style={navbarInteractionStyle}
@@ -492,14 +484,6 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
                 className="ml-auto flex items-center gap-2"
                 aria-label="Business home quick actions"
               >
-                <button
-                  type="button"
-                  onClick={handleCreateBusinessProfile}
-                  className="inline-flex min-h-[36px] items-center justify-center rounded-full border border-sky-400/30 bg-[linear-gradient(135deg,#38bdf8_0%,#2563eb_55%,#0f172a_100%)] px-4 py-2 text-sm font-semibold text-white shadow-[0_16px_32px_-20px_rgba(56,189,248,0.42)] focus:outline-none focus:ring-2 focus:ring-sky-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
-                  style={navbarInteractionStyle}
-                >
-                  + Create Business Profile
-                </button>
                 <button
                   type="button"
                   aria-label="Open account menu"
