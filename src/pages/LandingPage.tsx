@@ -64,6 +64,8 @@ const darkCardClass =
   'rounded-3xl border border-[#c7d2df] bg-white p-6 shadow-[0_28px_80px_-42px_rgba(2,12,27,0.95)] backdrop-blur-md sm:p-8'
 
 const sectionHeadingClass = 'text-xl font-bold tracking-tight text-black sm:text-2xl md:text-3xl'
+const secondaryDirectoryCtaClass =
+  'inline-flex items-center justify-center rounded-full border border-[#c7d2df] bg-[#f8fafc] text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950'
 type RecommendationState = 'idle' | 'loading' | 'found' | 'empty' | 'error'
 
 function truncate(text: string, length: number): string {
@@ -249,7 +251,7 @@ function LandingPage() {
                   value={homeSearchQuery}
                   onChange={(event) => setHomeSearchQuery(event.target.value)}
                   placeholder="Search businesses, categories, services, or locations"
-                  className="w-full rounded-full border border-white/10 bg-white/[0.08] py-3 pl-11 pr-4 text-sm text-black placeholder-slate-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-sky-400/70"
+                  className="w-full rounded-full border border-[#c7d2df] bg-white/[0.08] py-3 pl-11 pr-4 text-sm text-black placeholder-slate-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-sky-400/70"
                 />
               </div>
 
@@ -394,7 +396,7 @@ function LandingPage() {
                 <button
                   type="button"
                   onClick={focusHomeSearch}
-                  className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
+                  className={`${secondaryDirectoryCtaClass} px-5 py-2.5`}
                 >
                   Browse Businesses
                 </button>
@@ -526,7 +528,7 @@ function LandingPage() {
               <button
                 type="button"
                 onClick={() => navigate('/directory')}
-                className="hidden rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950 sm:inline-flex"
+                className={`${secondaryDirectoryCtaClass} hidden px-4 py-2 sm:inline-flex`}
               >
                 Explore Businesses
               </button>
@@ -552,7 +554,7 @@ function LandingPage() {
                 <button
                   type="button"
                   onClick={() => navigate('/directory')}
-                  className="mt-5 inline-flex items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
+                  className={`${secondaryDirectoryCtaClass} mt-5 px-5 py-2.5`}
                 >
                   Explore Businesses
                 </button>
@@ -567,7 +569,7 @@ function LandingPage() {
                 <button
                   type="button"
                   onClick={() => navigate('/directory')}
-                  className="mt-5 inline-flex items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
+                  className={`${secondaryDirectoryCtaClass} mt-5 px-5 py-2.5`}
                 >
                   Explore Businesses
                 </button>
@@ -622,7 +624,7 @@ function LandingPage() {
                   <button
                     type="button"
                     onClick={() => navigate('/directory')}
-                    className="inline-flex w-full items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
+                    className={`${secondaryDirectoryCtaClass} w-full px-5 py-2.5`}
                   >
                     Explore Businesses
                   </button>
@@ -712,7 +714,7 @@ function LandingPage() {
               <button
                 type="button"
                 onClick={() => navigate('/directory')}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/14 bg-white/6 px-6 py-3 text-sm font-medium text-black backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950 sm:w-auto sm:px-8 sm:py-3.5 sm:text-base"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#c7d2df] bg-[#f8fafc] px-6 py-3 text-sm font-medium text-black backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950 sm:w-auto sm:px-8 sm:py-3.5 sm:text-base"
               >
                 Browse Businesses
               </button>
@@ -858,7 +860,7 @@ function LandingPage() {
               <button
                 type="button"
                 onClick={() => navigate('/directory')}
-                className="inline-flex w-full items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-6 py-3 text-sm font-medium text-black backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950 sm:w-auto sm:min-w-[11rem] sm:px-7 sm:text-base"
+                className="inline-flex w-full items-center justify-center rounded-full border border-[#c7d2df] bg-[#f8fafc] px-6 py-3 text-sm font-medium text-black backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950 sm:w-auto sm:min-w-[11rem] sm:px-7 sm:text-base"
               >
                 Browse Businesses
               </button>

@@ -14,7 +14,7 @@ interface FormErrors {
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const authLoginFieldBase =
-  'w-full rounded-xl border border-[#c7d2df] bg-white/[0.08] px-4 py-2.5 text-sm text-slate-50 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-400/70 focus:border-transparent'
+  'w-full rounded-xl border border-[#c7d2df] bg-white/[0.08] px-4 py-2.5 text-sm text-black placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-400/70 focus:border-transparent'
 
 function LoginPage() {
   const navigate = useNavigate()

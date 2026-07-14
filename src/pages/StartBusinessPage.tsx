@@ -85,7 +85,7 @@ function StartBusinessPage() {
               type="button"
               onClick={() => void handleGoBack()}
               disabled={isSubmitting || isLoading}
-              className="inline-flex min-h-[42px] flex-1 items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
+              className="inline-flex min-h-[42px] flex-1 items-center justify-center rounded-full border border-[#c7d2df] bg-[#f8fafc] px-5 py-2.5 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
             >
               No, Go Back
             </button>

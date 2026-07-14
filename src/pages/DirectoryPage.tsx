@@ -115,7 +115,7 @@ function DirectoryPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search businesses..."
-                  className="w-full rounded-full border border-white/10 bg-white/[0.08] py-2.5 pl-11 pr-4 text-sm text-black placeholder-slate-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-sky-400/70"
+                  className="w-full rounded-full border border-[#c7d2df] bg-white/[0.08] py-2.5 pl-11 pr-4 text-sm text-black placeholder-slate-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-sky-400/70"
                 />
               </div>
 
@@ -144,7 +144,7 @@ function DirectoryPage() {
                   value={locationQuery}
                   onChange={(e) => setLocationQuery(e.target.value)}
                   placeholder="Search by location or address..."
-                  className="w-full rounded-full border border-white/10 bg-white/[0.08] py-2.5 pl-11 pr-4 text-sm text-black placeholder-slate-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-sky-400/70"
+                  className="w-full rounded-full border border-[#c7d2df] bg-white/[0.08] py-2.5 pl-11 pr-4 text-sm text-black placeholder-slate-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-sky-400/70"
                 />
               </div>
 

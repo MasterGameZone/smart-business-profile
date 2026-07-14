@@ -1,89 +1,102 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import AuthLayout, { authError } from '../../components/AuthLayout.tsx'
-import PasswordField from '../../components/PasswordField.tsx'
-import { ToastContainer, type ToastItem, type ToastType } from '../../components/Toast.tsx'
-import { usePageMeta } from '../../hooks/usePageMeta.ts'
-import { signUp } from '../../lib/authService.ts'
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import AuthLayout, { authError } from "../../components/AuthLayout.tsx";
+import PasswordField from "../../components/PasswordField.tsx";
+import {
+  ToastContainer,
+  type ToastItem,
+  type ToastType,
+} from "../../components/Toast.tsx";
+import { usePageMeta } from "../../hooks/usePageMeta.ts";
+import { signUp } from "../../lib/authService.ts";
 
 interface FormErrors {
-  fullName?: string
-  email?: string
-  password?: string
-  confirmPassword?: string
+  fullName?: string;
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
 }
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const authSignUpFieldBase =
-  'w-full rounded-xl border border-[#c7d2df] bg-white/[0.08] px-4 py-2.5 text-sm text-slate-50 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-400/70 focus:border-transparent'
+  "w-full rounded-xl border border-[#c7d2df] bg-white/[0.08] px-4 py-2.5 text-sm text-black placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-400/70 focus:border-transparent";
 
 function SignUpPage() {
   usePageMeta({
-    title: 'Sign Up | Smart Business Profile',
-    description: 'Create your Smart Business Profile account and start building a public business profile.',
-  })
+    title: "Sign Up | Smart Business Profile",
+    description:
+      "Create your Smart Business Profile account and start building a public business profile.",
+  });
 
-  const [fullName, setFullName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [errors, setErrors] = useState<FormErrors>({})
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
-  const [toasts, setToasts] = useState<ToastItem[]>([])
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
 
-  const showToast = (message: string, type: ToastType = 'success') => {
-    const id = Date.now()
-    setToasts((prev) => [...prev, { id, message, type }])
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4000)
-  }
+  const showToast = (message: string, type: ToastType = "success") => {
+    const id = Date.now();
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(
+      () => setToasts((prev) => prev.filter((t) => t.id !== id)),
+      4000,
+    );
+  };
 
   const validate = (): boolean => {
-    const newErrors: FormErrors = {}
+    const newErrors: FormErrors = {};
     if (!fullName.trim()) {
-      newErrors.fullName = 'Full name is required.'
+      newErrors.fullName = "Full name is required.";
     }
     if (!email.trim()) {
-      newErrors.email = 'Email is required.'
+      newErrors.email = "Email is required.";
     } else if (!EMAIL_REGEX.test(email.trim())) {
-      newErrors.email = 'Enter a valid email address.'
+      newErrors.email = "Enter a valid email address.";
     }
     if (!password) {
-      newErrors.password = 'Password is required.'
+      newErrors.password = "Password is required.";
     } else if (password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters.'
+      newErrors.password = "Password must be at least 8 characters.";
     }
     if (!confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password.'
+      newErrors.confirmPassword = "Please confirm your password.";
     } else if (password && confirmPassword !== password) {
-      newErrors.confirmPassword = 'Passwords must match.'
+      newErrors.confirmPassword = "Passwords must match.";
     }
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (isSubmitting) return
+    e.preventDefault();
+    if (isSubmitting) return;
 
-    const isValid = validate()
+    const isValid = validate();
     if (!isValid) {
-      const firstErrorField = document.querySelector('[aria-invalid="true"]') as HTMLElement | null
-      firstErrorField?.focus()
-      return
+      const firstErrorField = document.querySelector(
+        '[aria-invalid="true"]',
+      ) as HTMLElement | null;
+      firstErrorField?.focus();
+      return;
     }
 
-    setIsSubmitting(true)
-    const { data, error } = await signUp(fullName, email, password)
-    setIsSubmitting(false)
+    setIsSubmitting(true);
+    const { data, error } = await signUp(fullName, email, password);
+    setIsSubmitting(false);
 
     if (error || !data?.user) {
-      showToast(error || 'Unable to create account. Please try again.', 'error')
-      return
+      showToast(
+        error || "Unable to create account. Please try again.",
+        "error",
+      );
+      return;
     }
 
-    setSubmitted(true)
-  }
+    setSubmitted(true);
+  };
 
   return (
     <AuthLayout
@@ -92,8 +105,11 @@ function SignUpPage() {
       darkBackground
       footer={
         <p className="text-lg text-black">
-          Already have an account?{' '}
-          <Link to="/login" className="font-semibold text-blue-600 focus:outline-none focus:underline">
+          Already have an account?{" "}
+          <Link
+            to="/login"
+            className="font-semibold text-blue-600 focus:outline-none focus:underline"
+          >
             Log in
           </Link>
         </p>
@@ -102,14 +118,24 @@ function SignUpPage() {
       <ToastContainer toasts={toasts} />
 
       {submitted ? (
-        <div role="status" className="rounded-xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
-          Account created successfully. Please verify your email before logging in.
+        <div
+          role="status"
+          className="rounded-xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200"
+        >
+          Account created successfully. Please verify your email before logging
+          in.
         </div>
       ) : (
         <form onSubmit={handleSubmit} noValidate className="space-y-5">
           <div>
-            <label htmlFor="fullName" className="mb-1.5 block text-sm font-medium text-black">
-              Full Name <span className="text-red-500" aria-hidden="true">*</span>
+            <label
+              htmlFor="fullName"
+              className="mb-1.5 block text-sm font-medium text-black"
+            >
+              Full Name{" "}
+              <span className="text-red-500" aria-hidden="true">
+                *
+              </span>
             </label>
             <input
               type="text"
@@ -121,14 +147,20 @@ function SignUpPage() {
               autoComplete="name"
               aria-required="true"
               aria-invalid={Boolean(errors.fullName)}
-              className={`${authSignUpFieldBase} ${errors.fullName ? 'border-red-400/70 bg-red-500/10 focus:ring-red-400' : ''}`}
+              className={`${authSignUpFieldBase} ${errors.fullName ? "border-red-400/70 bg-red-500/10 focus:ring-red-400" : ""}`}
             />
             {authError(errors.fullName)}
           </div>
 
           <div>
-            <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-black">
-              Email <span className="text-red-500" aria-hidden="true">*</span>
+            <label
+              htmlFor="email"
+              className="mb-1.5 block text-sm font-medium text-black"
+            >
+              Email{" "}
+              <span className="text-red-500" aria-hidden="true">
+                *
+              </span>
             </label>
             <input
               type="email"
@@ -140,7 +172,7 @@ function SignUpPage() {
               autoComplete="email"
               aria-required="true"
               aria-invalid={Boolean(errors.email)}
-              className={`${authSignUpFieldBase} ${errors.email ? 'border-red-400/70 bg-red-500/10 focus:ring-red-400' : ''}`}
+              className={`${authSignUpFieldBase} ${errors.email ? "border-red-400/70 bg-red-500/10 focus:ring-red-400" : ""}`}
             />
             {authError(errors.email)}
           </div>
@@ -183,20 +215,36 @@ function SignUpPage() {
           >
             {isSubmitting ? (
               <>
-                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                <svg
+                  className="w-4 h-4 animate-spin"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                  />
                 </svg>
                 Creating account…
               </>
             ) : (
-              'Create Account'
+              "Create Account"
             )}
           </button>
         </form>
       )}
     </AuthLayout>
-  )
+  );
 }
 
-export default SignUpPage
+export default SignUpPage;
