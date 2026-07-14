@@ -68,7 +68,7 @@ function ForgotPasswordPage() {
       title="Forgot Password"
       subtitle="Enter your email and we'll help you get back in."
       footer={
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-black">
           Remembered your password?{' '}
           <Link to="/login" className="font-semibold text-blue-600 hover:text-blue-700 focus:outline-none focus:underline">
             Back to login
@@ -84,7 +84,7 @@ function ForgotPasswordPage() {
         </div>
       ) : (
         <form onSubmit={handleSubmit} noValidate className="space-y-5">
-          <div>
+          <div className="[&_input]:text-black [&_input]:placeholder:text-slate-400 [&_label]:text-black">
             <label htmlFor="email" className={authLabel}>
               Email <span className="text-red-500" aria-hidden="true">*</span>
             </label>

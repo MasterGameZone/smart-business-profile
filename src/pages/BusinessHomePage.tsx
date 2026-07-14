@@ -143,14 +143,14 @@ function BusinessHomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#020617_0%,#030712_34%,#020617_100%)] text-slate-100">
+    <div className="min-h-screen bg-[#eef4fa] text-black">
       <ToastContainer toasts={toasts} />
       <AppHeader />
 
       <main className="mx-auto max-w-5xl px-4 py-10 sm:py-14">
         <section className="rounded-3xl border border-white/10 bg-white/[0.05] p-6 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md sm:p-8">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-50 sm:text-4xl">Business Home</h1>
-          <p className="mt-4 text-sm leading-relaxed text-slate-300 sm:text-base">
+          <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">Business Home</h1>
+          <p className="mt-4 text-sm leading-relaxed text-black sm:text-base">
             Manage your business profiles from one place.
           </p>
         </section>
@@ -158,27 +158,27 @@ function BusinessHomePage() {
         <section className="mt-8" aria-labelledby="my-business-profiles-heading">
           <div className="mb-5 flex items-center justify-between gap-4">
             <div>
-              <h2 id="my-business-profiles-heading" className="text-xl font-semibold tracking-tight text-slate-50 sm:text-2xl">
+              <h2 id="my-business-profiles-heading" className="text-xl font-semibold tracking-tight text-black sm:text-2xl">
                 My Business Profiles
               </h2>
-              <p className="mt-1 text-sm text-slate-400">Profiles created under your account.</p>
+              <p className="mt-1 text-sm text-black">Profiles created under your account.</p>
             </div>
           </div>
 
           {loadState === 'loading' && (
             <div className="flex min-h-[16rem] items-center justify-center rounded-3xl border border-white/10 bg-white/[0.05] px-6 py-10 text-center shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md">
-              <p className="text-sm text-slate-300">Loading your business profiles...</p>
+              <p className="text-sm text-black">Loading your business profiles...</p>
             </div>
           )}
 
           {loadState === 'error' && (
             <div className="flex min-h-[16rem] items-center justify-center rounded-3xl border border-red-400/20 bg-red-400/10 px-6 py-10 text-center shadow-[0_24px_70px_-38px_rgba(120,53,15,0.45)] backdrop-blur-md">
               <div>
-                <p className="text-base font-semibold text-red-100">Unable to load your business profiles right now.</p>
+                <p className="text-base font-semibold text-red-700">Unable to load your business profiles right now.</p>
                 <button
                   type="button"
                   onClick={loadProfiles}
-                  className="mt-4 inline-flex items-center justify-center rounded-full border border-red-300/20 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
+                  className="mt-4 inline-flex items-center justify-center rounded-full border border-red-300/20 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
                 >
                   Try Again
                 </button>
@@ -188,8 +188,8 @@ function BusinessHomePage() {
 
           {loadState === 'empty' && (
             <div className="rounded-3xl border border-white/10 bg-white/[0.05] px-6 py-12 text-center shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md sm:px-8">
-              <h3 className="text-xl font-semibold tracking-tight text-slate-50">No business profiles yet.</h3>
-              <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-slate-300 sm:text-base">
+              <h3 className="text-xl font-semibold tracking-tight text-black">No business profiles yet.</h3>
+              <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-black sm:text-base">
                 Create your first business profile to start sharing your business with customers.
               </p>
               <button
@@ -212,12 +212,12 @@ function BusinessHomePage() {
                   <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-xl font-semibold tracking-tight text-slate-50">{profile.business_name}</h3>
+                        <h3 className="text-xl font-semibold tracking-tight text-black">{profile.business_name}</h3>
                         <span
                           className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                             profile.is_public === false
-                              ? 'bg-slate-200/10 text-slate-300'
-                              : 'bg-emerald-400/12 text-emerald-200'
+                              ? 'bg-slate-200/10 text-black'
+                              : 'bg-emerald-400/12 text-emerald-700'
                           }`}
                         >
                           {profile.is_public === false ? 'Private' : 'Public'}
@@ -225,15 +225,15 @@ function BusinessHomePage() {
                       </div>
 
                       {profile.business_category && (
-                        <p className="mt-2 text-sm text-slate-300">{profile.business_category}</p>
+                        <p className="mt-2 text-sm text-black">{profile.business_category}</p>
                       )}
 
                       {profile.address && (
-                        <p className="mt-1 text-sm text-slate-400">{profile.address}</p>
+                        <p className="mt-1 text-sm text-black">{profile.address}</p>
                       )}
 
                       {profile.about_business && (
-                        <p className="mt-4 max-w-3xl text-sm leading-relaxed text-slate-300">
+                        <p className="mt-4 max-w-3xl text-sm leading-relaxed text-black">
                           {truncate(profile.about_business, 180)}
                         </p>
                       )}
@@ -251,14 +251,14 @@ function BusinessHomePage() {
                     <button
                       type="button"
                       onClick={() => handlePreviewProfile(profile)}
-                      className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
+                      className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
                     >
                       Preview
                     </button>
                     <button
                       type="button"
                       onClick={() => handleCopyProfileLink(profile)}
-                      className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
+                      className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
                     >
                       Share / Copy Link
                     </button>

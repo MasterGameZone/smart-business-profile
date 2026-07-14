@@ -139,15 +139,15 @@ function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-slate-50">
+    <div className="min-h-screen bg-[#eef4fa]">
       <ToastContainer toasts={toasts} />
 
       <AppHeader />
 
       <main id="my-business" className="max-w-3xl mx-auto px-4 py-10">
         <div className="mb-6 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-          <p className="text-sm font-medium text-gray-500">Signed in as</p>
-          <p className="mt-1 text-base font-semibold text-gray-900 break-all">{user?.email}</p>
+          <p className="text-sm font-medium text-black">Signed in as</p>
+          <p className="mt-1 text-base font-semibold text-black break-all">{user?.email}</p>
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
             <button
               type="button"
@@ -162,7 +162,7 @@ function DashboardPage() {
             <button
               type="button"
               onClick={() => navigate('/directory')}
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 active:scale-95"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-black transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 active:scale-95"
             >
               Browse Directory
             </button>
@@ -171,8 +171,8 @@ function DashboardPage() {
 
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight mb-1.5">My Businesses</h1>
-            <p className="text-sm text-gray-500">Manage all of your business profiles from one place.</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-black tracking-tight mb-1.5">My Businesses</h1>
+            <p className="text-sm text-black">Manage all of your business profiles from one place.</p>
           </div>
           {loadState === 'found' && (
             <button
@@ -207,7 +207,7 @@ function DashboardPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
-            <p className="text-gray-700 font-medium mb-6">Unable to load your businesses.</p>
+            <p className="text-black font-medium mb-6">Unable to load your businesses.</p>
             <button
               type="button"
               onClick={loadProfiles}
@@ -226,8 +226,8 @@ function DashboardPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
             </div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Create Your First Business Profile</h2>
-            <p className="text-gray-500 mb-8 max-w-sm">You haven&apos;t created a business profile yet.</p>
+            <h2 className="text-xl font-bold text-black mb-2">Create Your First Business Profile</h2>
+            <p className="text-black mb-8 max-w-sm">You haven&apos;t created a business profile yet.</p>
             <button
               type="button"
               onClick={handleCreateProfile}
@@ -264,13 +264,13 @@ function DashboardPage() {
                     </div>
                   )}
                   <div className="min-w-0">
-                    <p className="text-base font-semibold text-gray-900 truncate">{profile.business_name}</p>
+                    <p className="text-base font-semibold text-black truncate">{profile.business_name}</p>
                     <div className="mt-1 flex flex-wrap items-center gap-2">
-                      <p className="text-sm text-gray-500">{profile.business_category}</p>
+                      <p className="text-sm text-black">{profile.business_category}</p>
                       <span
                         className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                           profile.is_public === false
-                            ? 'bg-gray-100 text-gray-600'
+                            ? 'bg-gray-100 text-black'
                             : 'bg-emerald-50 text-emerald-700'
                         }`}
                       >
@@ -282,16 +282,16 @@ function DashboardPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-4 mb-8">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">Slug</p>
-                    <p className="text-sm text-gray-900 break-all">{profile.slug}</p>
+                    <p className="text-xs font-semibold uppercase tracking-widest text-black mb-1">Slug</p>
+                    <p className="text-sm text-black break-all">{profile.slug}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">Created</p>
-                    <p className="text-sm text-gray-900">{formatDate(profile.created_at)}</p>
+                    <p className="text-xs font-semibold uppercase tracking-widest text-black mb-1">Created</p>
+                    <p className="text-sm text-black">{formatDate(profile.created_at)}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">Last Updated</p>
-                    <p className="text-sm text-gray-900">{formatDate(profile.updated_at)}</p>
+                    <p className="text-xs font-semibold uppercase tracking-widest text-black mb-1">Last Updated</p>
+                    <p className="text-sm text-black">{formatDate(profile.updated_at)}</p>
                   </div>
                 </div>
 
@@ -299,7 +299,7 @@ function DashboardPage() {
                   <button
                     type="button"
                     onClick={() => handleViewPublicProfile(profile)}
-                    className="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-medium text-gray-700 bg-white rounded-full hover:bg-gray-50 active:scale-95 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all border border-gray-200"
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-medium text-black bg-white rounded-full hover:bg-gray-50 active:scale-95 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all border border-gray-200"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />

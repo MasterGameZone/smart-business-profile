@@ -79,13 +79,13 @@ function DirectoryPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#020617_0%,#030712_34%,#020617_100%)] text-slate-100">
+    <div className="min-h-screen bg-[#eef4fa] text-black">
       <AppHeader />
 
       <main className="mx-auto max-w-5xl px-4 py-10">
         <div className="mb-8">
-          <h1 className="mb-1.5 text-2xl font-bold tracking-tight text-slate-50 sm:text-3xl">Business Directory</h1>
-          <p className="text-sm text-slate-300">Browse published business profiles.</p>
+          <h1 className="mb-1.5 text-2xl font-bold tracking-tight text-black sm:text-3xl">Business Directory</h1>
+          <p className="text-sm text-black">Browse published business profiles.</p>
         </div>
 
         {loadState === 'found' && (
@@ -96,7 +96,7 @@ function DirectoryPage() {
                   Search businesses
                 </label>
                 <svg
-                  className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
+                  className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-black"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -115,7 +115,7 @@ function DirectoryPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search businesses..."
-                  className="w-full rounded-full border border-white/10 bg-white/[0.08] py-2.5 pl-11 pr-4 text-sm text-slate-50 placeholder-slate-500 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-sky-400/70"
+                  className="w-full rounded-full border border-white/10 bg-white/[0.08] py-2.5 pl-11 pr-4 text-sm text-black placeholder-slate-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-sky-400/70"
                 />
               </div>
 
@@ -124,7 +124,7 @@ function DirectoryPage() {
                   Search by location or address
                 </label>
                 <svg
-                  className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
+                  className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-black"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -144,7 +144,7 @@ function DirectoryPage() {
                   value={locationQuery}
                   onChange={(e) => setLocationQuery(e.target.value)}
                   placeholder="Search by location or address..."
-                  className="w-full rounded-full border border-white/10 bg-white/[0.08] py-2.5 pl-11 pr-4 text-sm text-slate-50 placeholder-slate-500 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-sky-400/70"
+                  className="w-full rounded-full border border-white/10 bg-white/[0.08] py-2.5 pl-11 pr-4 text-sm text-black placeholder-slate-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-sky-400/70"
                 />
               </div>
 
@@ -156,7 +156,7 @@ function DirectoryPage() {
                   id="directory-category"
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full rounded-full border border-white/10 bg-white/[0.08] px-4 py-2.5 text-sm text-slate-50 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-sky-400/70"
+                  className="w-full rounded-full border border-white/10 bg-white/[0.08] px-4 py-2.5 text-sm text-black focus:border-transparent focus:outline-none focus:ring-2 focus:ring-sky-400/70"
                 >
                   {categories.map((category) => (
                     <option key={category} value={category} className="bg-slate-900 text-slate-50">
@@ -167,7 +167,7 @@ function DirectoryPage() {
               </div>
             </div>
 
-            <p className="mt-3 text-sm text-slate-400" aria-live="polite">
+            <p className="mt-3 text-sm text-black" aria-live="polite">
               {hasActiveFilters
                 ? `Showing ${filteredProfiles.length} of ${profiles.length} businesses`
                 : `Showing ${profiles.length} businesses`}
@@ -192,7 +192,7 @@ function DirectoryPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
-            <p className="mb-6 font-medium text-slate-200">Unable to load businesses.</p>
+            <p className="mb-6 font-medium text-black">Unable to load businesses.</p>
             <button
               type="button"
               onClick={loadProfiles}
@@ -210,13 +210,13 @@ function DirectoryPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
             </div>
-            <p className="font-medium text-slate-200">No businesses have been published yet.</p>
+            <p className="font-medium text-black">No businesses have been published yet.</p>
           </div>
         )}
 
         {loadState === 'found' && filteredProfiles.length === 0 && (
           <div className="flex min-h-[30vh] flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-16 text-center shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md">
-            <p className="mb-6 font-medium text-slate-200">No businesses found matching your filters.</p>
+            <p className="mb-6 font-medium text-black">No businesses found matching your filters.</p>
             <button
               type="button"
               onClick={clearFilters}
@@ -249,20 +249,20 @@ function DirectoryPage() {
                     </div>
                   )}
                   <div className="min-w-0">
-                    <p className="truncate text-base font-semibold text-slate-50">{profile.business_name}</p>
-                    <p className="text-sm text-slate-300">{profile.business_category}</p>
-                    <p className="mt-0.5 text-xs text-slate-500">By {profile.owner_name}</p>
+                    <p className="truncate text-base font-semibold text-black">{profile.business_name}</p>
+                    <p className="text-sm text-black">{profile.business_category}</p>
+                    <p className="mt-0.5 text-xs text-black">By {profile.owner_name}</p>
                   </div>
                 </div>
 
                 {profile.about_business && (
-                  <p className="mb-4 flex-1 text-sm text-slate-300">
+                  <p className="mb-4 flex-1 text-sm text-black">
                     {truncate(profile.about_business, ABOUT_TRUNCATE_LENGTH)}
                   </p>
                 )}
 
                 <div className="flex items-center justify-between gap-3 border-t border-white/10 pt-4">
-                  <p className="break-all text-xs text-slate-500">{profile.slug}</p>
+                  <p className="break-all text-xs text-black">{profile.slug}</p>
                   <button
                     type="button"
                     onClick={() => navigate(`/business/${profile.slug}`)}

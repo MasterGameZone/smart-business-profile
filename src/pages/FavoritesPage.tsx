@@ -82,14 +82,14 @@ function FavoritesPage() {
   )
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#020617_0%,#030712_34%,#020617_100%)] text-slate-100">
+    <div className="min-h-screen bg-[#eef4fa] text-black">
       <ToastContainer toasts={toasts} />
       <AppHeader />
 
       <main className="mx-auto max-w-5xl px-4 py-10">
         <div className="mb-8">
-          <h1 className="mb-1.5 text-2xl font-bold tracking-tight text-slate-50 sm:text-3xl">Saved Businesses</h1>
-          <p className="text-sm text-slate-300">Businesses you saved for quick access.</p>
+          <h1 className="mb-1.5 text-2xl font-bold tracking-tight text-black sm:text-3xl">Saved Businesses</h1>
+          <p className="text-sm text-black">Businesses you saved for quick access.</p>
         </div>
 
         {loadState === 'loading' && (
@@ -109,7 +109,7 @@ function FavoritesPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
-            <p className="mb-6 font-medium text-slate-200">Unable to load saved businesses right now.</p>
+            <p className="mb-6 font-medium text-black">Unable to load saved businesses right now.</p>
             <button
               type="button"
               onClick={loadFavorites}
@@ -122,8 +122,8 @@ function FavoritesPage() {
 
         {loadState === 'empty' && (
           <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-16 text-center shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md">
-            <p className="font-medium text-slate-200">No saved businesses yet.</p>
-            <p className="mt-2 text-sm text-slate-400">Save businesses you want to revisit later.</p>
+            <p className="font-medium text-black">No saved businesses yet.</p>
+            <p className="mt-2 text-sm text-black">Save businesses you want to revisit later.</p>
           </div>
         )}
 
@@ -150,20 +150,20 @@ function FavoritesPage() {
                   )}
 
                   <div className="min-w-0">
-                    <p className="truncate text-base font-semibold text-slate-50">
+                    <p className="truncate text-base font-semibold text-black">
                       {favorite.business_profile.business_name}
                     </p>
                     {favorite.business_profile.business_category && (
-                      <p className="text-sm text-slate-300">{favorite.business_profile.business_category}</p>
+                      <p className="text-sm text-black">{favorite.business_profile.business_category}</p>
                     )}
                     {favorite.business_profile.address && (
-                      <p className="mt-0.5 text-xs text-slate-500">{favorite.business_profile.address}</p>
+                      <p className="mt-0.5 text-xs text-black">{favorite.business_profile.address}</p>
                     )}
                   </div>
                 </div>
 
                 {favorite.business_profile.about_business && (
-                  <p className="mb-4 flex-1 text-sm text-slate-300">
+                  <p className="mb-4 flex-1 text-sm text-black">
                     {truncate(favorite.business_profile.about_business, ABOUT_TRUNCATE_LENGTH)}
                   </p>
                 )}
@@ -180,7 +180,7 @@ function FavoritesPage() {
                     type="button"
                     onClick={() => handleRemoveFavorite(favorite)}
                     disabled={removingFavoriteId === favorite.id}
-                    className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-white/12 bg-white/[0.04] px-5 py-2 text-sm font-medium text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950 disabled:cursor-not-allowed disabled:opacity-70"
+                    className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-white/12 bg-white/[0.04] px-5 py-2 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950 disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     {removingFavoriteId === favorite.id ? 'Removing...' : 'Remove'}
                   </button>

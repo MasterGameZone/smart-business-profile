@@ -151,7 +151,7 @@ function ReportProfileAction({ businessProfileId, userId, onLogin, triggerClassN
         type="button"
         onClick={handleClose}
         aria-label="Close report profile"
-        className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white text-gray-500 transition hover:bg-gray-50 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
+        className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white text-black transition hover:bg-gray-50 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
       >
         <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -159,14 +159,14 @@ function ReportProfileAction({ businessProfileId, userId, onLogin, triggerClassN
       </button>
 
       <form onSubmit={handleSubmit} className="rounded-2xl border border-gray-100 bg-slate-50 px-4 py-4">
-        <label htmlFor="profileReportReason" className="block text-sm font-semibold text-gray-900">
+        <label htmlFor="profileReportReason" className="block text-sm font-semibold text-black">
           Reason
         </label>
         <select
           id="profileReportReason"
           value={reason}
           onChange={(event) => setReason(event.target.value)}
-          className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+          className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
         >
           <option value="">Select a reason</option>
           {businessProfileReportReasons.map((reportReason) => (
@@ -176,8 +176,8 @@ function ReportProfileAction({ businessProfileId, userId, onLogin, triggerClassN
           ))}
         </select>
 
-        <label htmlFor="profileReportDetails" className="mt-4 block text-sm font-semibold text-gray-900">
-          Details <span className="font-normal text-gray-400">Optional</span>
+        <label htmlFor="profileReportDetails" className="mt-4 block text-sm font-semibold text-black">
+          Details <span className="font-normal text-black">Optional</span>
         </label>
         <textarea
           id="profileReportDetails"
@@ -185,7 +185,7 @@ function ReportProfileAction({ businessProfileId, userId, onLogin, triggerClassN
           onChange={(event) => setDetails(event.target.value)}
           rows={3}
           placeholder="Add any extra details optional"
-          className="mt-2 w-full resize-y rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+          className="mt-2 w-full resize-y rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-black placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
         />
 
         {error && (
@@ -205,7 +205,7 @@ function ReportProfileAction({ businessProfileId, userId, onLogin, triggerClassN
           <button
             type="button"
             onClick={handleClose}
-            className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-600 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
+            className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-black transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
           >
             Cancel
           </button>
@@ -215,7 +215,7 @@ function ReportProfileAction({ businessProfileId, userId, onLogin, triggerClassN
   )
 
   const defaultTriggerClassName =
-    'inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70'
+    'inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-black transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70'
 
   return (
     <div aria-label="Report profile" className="space-y-3">
@@ -245,7 +245,7 @@ function ReportProfileAction({ businessProfileId, userId, onLogin, triggerClassN
       </button>
 
       {message && (
-        <p className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700" role="status">
+        <p className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-black" role="status">
           {message}
         </p>
       )}

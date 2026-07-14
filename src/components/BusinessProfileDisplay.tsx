@@ -50,7 +50,7 @@ export const businessProfileOuterWrapperClassName =
   'rounded-[2rem] border border-slate-100 bg-white p-1 shadow-[0_32px_80px_-38px_rgba(15,23,42,0.45)]'
 
 const compactSecondaryButtonClass =
-  'inline-flex h-7 min-w-0 items-center justify-center gap-1 whitespace-nowrap rounded-md border border-slate-300 bg-white px-2 text-[10px] font-medium leading-none text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 active:scale-[0.99] sm:h-8 sm:gap-1.5 sm:rounded-lg sm:px-3 sm:text-xs'
+  'inline-flex h-7 min-w-0 items-center justify-center gap-1 whitespace-nowrap rounded-md border border-slate-300 bg-white px-2 text-[10px] font-medium leading-none text-black transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 active:scale-[0.99] sm:h-8 sm:gap-1.5 sm:rounded-lg sm:px-3 sm:text-xs'
 const workingDayLabels = [
   { key: 'monday', label: 'Monday' },
   { key: 'tuesday', label: 'Tuesday' },
@@ -663,7 +663,7 @@ function getSocialIconTone(platform: SocialLinkItem['platform']): string {
   if (platform === 'facebook') return 'text-blue-600'
   if (platform === 'youtube') return 'text-red-600'
   if (platform === 'linkedin') return 'text-sky-700'
-  if (platform === 'x') return 'text-slate-900'
+  if (platform === 'x') return 'text-black'
   if (platform === 'pinterest') return 'text-rose-600'
   if (platform === 'tiktok') return 'text-cyan-600'
 
@@ -839,10 +839,10 @@ function BusinessProfileDisplay({
   const displayBusinessName = trimText(profile.businessName) || 'this business'
   const authViewerScopeKey = session?.user?.id ?? 'anonymous'
   const bottomActionBaseClass =
-    'flex flex-1 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-transparent px-1.5 py-2.5 text-[11px] font-semibold text-slate-700 shadow-none transition hover:bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70 sm:gap-2 sm:px-2 sm:text-sm'
+    'flex flex-1 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl bg-transparent px-1.5 py-2.5 text-[11px] font-semibold text-black shadow-none transition hover:bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70 sm:gap-2 sm:px-2 sm:text-sm'
   const styledSaveButtonSlot = isValidElement<{ className?: string }>(saveButtonSlot)
     ? cloneElement(saveButtonSlot as ReactElement<{ className?: string }>, {
-        className: `${saveButtonSlot.props.className ?? ''} ${bottomActionBaseClass} !border-0 !bg-transparent !px-2 !py-2.5 !text-slate-700 !shadow-none hover:!bg-white/70 [&_svg]:text-amber-600`,
+        className: `${saveButtonSlot.props.className ?? ''} ${bottomActionBaseClass} !border-0 !bg-transparent !px-2 !py-2.5 !text-black !shadow-none hover:!bg-white/70 [&_svg]:text-amber-600`,
       })
     : saveButtonSlot
 
@@ -1048,7 +1048,7 @@ function BusinessProfileDisplay({
           </div>
 
           <div className="mt-2.5 flex min-w-0 items-center gap-2">
-            <h1 className="min-w-0 flex-1 truncate text-[1.35rem] font-bold leading-tight tracking-tight text-slate-950 sm:text-2xl">
+            <h1 className="min-w-0 flex-1 truncate text-[1.35rem] font-bold leading-tight tracking-tight text-black sm:text-2xl">
               {profile.businessName}
             </h1>
             {hasRating && (
@@ -1074,11 +1074,11 @@ function BusinessProfileDisplay({
           )}
 
           {displayTagline && (
-            <p className="mt-1.5 text-sm italic leading-relaxed text-slate-500">{displayTagline}</p>
+            <p className="mt-1.5 text-sm italic leading-relaxed text-black">{displayTagline}</p>
           )}
 
           {experienceText && (
-            <p className="mt-2 flex items-center gap-1.5 text-sm font-medium text-slate-700">
+            <p className="mt-2 flex items-center gap-1.5 text-sm font-medium text-black">
               <svg className="h-4 w-4 shrink-0 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 3l1.88 5.77h6.07l-4.91 3.57 1.88 5.77L12 14.54l-4.91 3.57 1.88-5.77-4.91-3.57h6.07L12 3z" />
               </svg>
@@ -1086,7 +1086,7 @@ function BusinessProfileDisplay({
             </p>
           )}
 
-          <div className="mt-3 flex min-w-0 items-center overflow-hidden whitespace-nowrap rounded-[1.15rem] border border-slate-100 bg-slate-50 px-3 py-2 text-[11px] text-slate-600 sm:rounded-2xl sm:text-xs">
+          <div className="mt-3 flex min-w-0 items-center overflow-hidden whitespace-nowrap rounded-[1.15rem] border border-slate-100 bg-slate-50 px-3 py-2 text-[11px] text-black sm:rounded-2xl sm:text-xs">
             <span className="flex min-w-0 flex-1 items-center gap-1.5">
               <svg className="h-3.5 w-3.5 shrink-0 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -1101,7 +1101,7 @@ function BusinessProfileDisplay({
                   ? 'text-emerald-600'
                   : workingStatus.tone === 'closed'
                     ? 'text-rose-600'
-                    : 'text-slate-500'
+                    : 'text-black'
               }`}
             >
               <span
@@ -1119,7 +1119,7 @@ function BusinessProfileDisplay({
             {workingStatus.detail && (
               <>
                 <span className="mx-2 h-3 w-px shrink-0 bg-slate-200" aria-hidden="true" />
-                <span className="min-w-0 truncate text-slate-500">{workingStatus.detail}</span>
+                <span className="min-w-0 truncate text-black">{workingStatus.detail}</span>
               </>
             )}
           </div>
@@ -1132,7 +1132,7 @@ function BusinessProfileDisplay({
               className={`flex min-h-[4.5rem] min-w-0 flex-col items-center justify-center gap-1 rounded-[0.9rem] border px-1 py-2.5 text-[11px] font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:min-h-[4.875rem] sm:gap-1.5 sm:rounded-[0.95rem] sm:py-3 sm:text-[13px] ${
                 displayPhone
                   ? 'border-blue-100 bg-blue-50 text-blue-700 hover:bg-blue-100 active:scale-95'
-                  : 'pointer-events-none cursor-not-allowed border-slate-100 bg-slate-50 text-slate-300'
+                  : 'pointer-events-none cursor-not-allowed border-slate-100 bg-slate-50 text-slate-400'
               }`}
             >
               <svg className="h-5 w-5 shrink-0 sm:h-[1.35rem] sm:w-[1.35rem]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -1150,7 +1150,7 @@ function BusinessProfileDisplay({
               className={`flex min-h-[4.5rem] min-w-0 flex-col items-center justify-center gap-1 rounded-[0.9rem] border px-1 py-2.5 text-[11px] font-semibold transition focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:min-h-[4.875rem] sm:gap-1.5 sm:rounded-[0.95rem] sm:py-3 sm:text-[13px] ${
                 whatsappUrl
                   ? 'border-emerald-100 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 active:scale-95'
-                  : 'pointer-events-none cursor-not-allowed border-slate-100 bg-slate-50 text-slate-300'
+                  : 'pointer-events-none cursor-not-allowed border-slate-100 bg-slate-50 text-slate-400'
               }`}
             >
               <svg className="h-5 w-5 shrink-0 sm:h-[1.35rem] sm:w-[1.35rem]" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -1168,7 +1168,7 @@ function BusinessProfileDisplay({
               className={`flex min-h-[4.5rem] min-w-0 flex-col items-center justify-center gap-1 rounded-[0.9rem] border px-1 py-2.5 text-[11px] font-semibold transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:min-h-[4.875rem] sm:gap-1.5 sm:rounded-[0.95rem] sm:py-3 sm:text-[13px] ${
                 directionsUrl
                   ? 'border-indigo-100 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 active:scale-95'
-                  : 'pointer-events-none cursor-not-allowed border-slate-100 bg-slate-50 text-slate-300'
+                  : 'pointer-events-none cursor-not-allowed border-slate-100 bg-slate-50 text-slate-400'
               }`}
             >
               <svg className="h-5 w-5 shrink-0 sm:h-[1.35rem] sm:w-[1.35rem]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -1219,11 +1219,11 @@ function BusinessProfileDisplay({
       {hasAboutSection && (
         <section aria-label="About Us" className="overflow-hidden rounded-3xl border border-slate-100 bg-white px-5 py-6 shadow-sm sm:px-8">
           <div className="mb-4 flex items-center justify-between gap-4">
-            <h2 className="text-lg font-bold tracking-tight text-slate-950">About Us</h2>
+            <h2 className="text-lg font-bold tracking-tight text-black">About Us</h2>
           </div>
 
           {profile.aboutBusiness && (
-            <p className="whitespace-pre-line text-sm leading-7 text-slate-700">{profile.aboutBusiness}</p>
+            <p className="whitespace-pre-line text-sm leading-7 text-black">{profile.aboutBusiness}</p>
           )}
 
           {keywordItems.length > 0 && (
@@ -1246,7 +1246,7 @@ function BusinessProfileDisplay({
       {offeringItems.length > 0 && (
         <section aria-label={offeringSectionLabel} className="overflow-hidden rounded-3xl border border-slate-100 bg-white py-6 shadow-sm">
           <div className="px-5 sm:px-8">
-            <h2 className="text-lg font-bold tracking-tight text-slate-950">{offeringSectionLabel}</h2>
+            <h2 className="text-lg font-bold tracking-tight text-black">{offeringSectionLabel}</h2>
           </div>
 
           <div className="mt-4 overflow-x-auto px-5 pb-1 sm:px-8">
@@ -1298,7 +1298,7 @@ function BusinessProfileDisplay({
         }}
       />
     ) : (
-      <div className="flex h-[6.5rem] w-full items-center justify-center bg-slate-50 px-2 text-center text-[11px] font-medium text-slate-400 sm:h-[7rem] sm:text-xs lg:h-[7.5rem]">
+      <div className="flex h-[6.5rem] w-full items-center justify-center bg-slate-50 px-2 text-center text-[11px] font-medium text-black sm:h-[7rem] sm:text-xs lg:h-[7.5rem]">
         No Image
       </div>
     )}
@@ -1318,17 +1318,17 @@ function BusinessProfileDisplay({
 
                     <div className="flex min-w-0 flex-[1_1_auto] flex-col justify-start py-3.5 pr-3.5 sm:py-4 sm:pr-4">
                       <div className="min-w-0">
-                        <h3 className="line-clamp-2 text-sm font-bold leading-snug text-slate-950 sm:text-[15px]">{item.name}</h3>
+                        <h3 className="line-clamp-2 text-sm font-bold leading-snug text-black sm:text-[15px]">{item.name}</h3>
                         {item.description && (
-                          <p className="mt-1.5 line-clamp-3 text-xs leading-5 text-slate-500 sm:text-[13px]">{item.description}</p>
+                          <p className="mt-1.5 line-clamp-3 text-xs leading-5 text-black sm:text-[13px]">{item.description}</p>
                         )}
                       </div>
 
                       <div className="mt-2.5">
                         {item.price ? (
-                          <p className="min-w-0 truncate text-sm font-bold text-slate-900 sm:text-[15px]">{item.price}</p>
+                          <p className="min-w-0 truncate text-sm font-bold text-black sm:text-[15px]">{item.price}</p>
                         ) : (
-                          <p className="min-w-0 truncate text-xs font-semibold uppercase tracking-wide text-slate-400">
+                          <p className="min-w-0 truncate text-xs font-semibold uppercase tracking-wide text-black">
                             Service
                           </p>
                         )}
@@ -1345,7 +1345,7 @@ function BusinessProfileDisplay({
       {galleryItems.length > 0 && (
         <section aria-label="Gallery" className="overflow-hidden rounded-3xl border border-slate-100 bg-white py-6 shadow-sm">
           <div className="flex items-center justify-between gap-3 px-5 sm:px-8">
-            <h2 className="text-lg font-bold tracking-tight text-slate-950">Gallery</h2>
+            <h2 className="text-lg font-bold tracking-tight text-black">Gallery</h2>
             <button
               type="button"
               onClick={handleViewAllGalleryImages}
@@ -1390,7 +1390,7 @@ function BusinessProfileDisplay({
             className="flex w-full min-w-0 items-center gap-3 px-5 py-5 text-left focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-inset sm:px-8"
           >
             <span className="min-w-0 flex-1">
-              <span className="block text-lg font-bold tracking-tight text-slate-950">Working Hours</span>
+              <span className="block text-lg font-bold tracking-tight text-black">Working Hours</span>
               <span className="mt-2 flex min-w-0 items-center gap-2 text-sm">
                 <span
                   className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${
@@ -1398,7 +1398,7 @@ function BusinessProfileDisplay({
                       ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100'
                       : workingStatus.tone === 'closed'
                         ? 'bg-rose-50 text-rose-700 ring-1 ring-rose-100'
-                        : 'bg-slate-100 text-slate-600 ring-1 ring-slate-200'
+                        : 'bg-slate-100 text-black ring-1 ring-slate-200'
                   }`}
                 >
                   <span
@@ -1413,7 +1413,7 @@ function BusinessProfileDisplay({
                   />
                   {workingStatus.label}
                 </span>
-                <span className="min-w-0 truncate text-slate-500">
+                <span className="min-w-0 truncate text-black">
                   Today: {todayWorkingHours}
                 </span>
               </span>
@@ -1437,10 +1437,10 @@ function BusinessProfileDisplay({
                     key={key}
                     className="flex min-w-0 items-center justify-between gap-4 py-1.5"
                   >
-                    <span className={`min-w-0 truncate text-sm ${isToday ? 'font-semibold text-sky-500' : 'font-medium text-slate-700'}`}>
+                    <span className={`min-w-0 truncate text-sm ${isToday ? 'font-semibold text-sky-500' : 'font-medium text-black'}`}>
                       {day}
                     </span>
-                    <span className={`shrink-0 text-right text-sm font-medium ${closed ? 'text-slate-500' : 'text-slate-600'}`}>
+                    <span className={`shrink-0 text-right text-sm font-medium ${closed ? 'text-black' : 'text-black'}`}>
                       {hours}
                     </span>
                   </li>
@@ -1453,18 +1453,18 @@ function BusinessProfileDisplay({
 
       {hasLocationSection && (
         <section aria-label="Location" className="overflow-hidden rounded-3xl border border-slate-100 bg-white px-5 py-6 shadow-sm sm:px-8">
-          <h2 className="text-lg font-bold tracking-tight text-slate-950">Location</h2>
+          <h2 className="text-lg font-bold tracking-tight text-black">Location</h2>
           <div className="mt-4 min-w-0">
             {displayAddress ? (
               <p
-                className="min-w-0 truncate whitespace-nowrap text-[13px] font-medium leading-6 text-slate-700 sm:text-sm"
+                className="min-w-0 truncate whitespace-nowrap text-[13px] font-medium leading-6 text-black sm:text-sm"
                 title={displayAddress}
                 aria-label={displayAddress}
               >
                 {displayAddress}
               </p>
             ) : (
-              <p className="min-w-0 truncate whitespace-nowrap text-[13px] leading-6 text-slate-500 sm:text-sm">Map link available</p>
+              <p className="min-w-0 truncate whitespace-nowrap text-[13px] leading-6 text-black sm:text-sm">Map link available</p>
             )}
 
             {(directionsUrl || displayAddress) && (
@@ -1508,7 +1508,7 @@ function BusinessProfileDisplay({
     aria-label="Contact Information"
     className="overflow-hidden rounded-3xl border border-slate-100 bg-white px-5 py-3.5 shadow-sm sm:px-8 sm:py-4"
   >
-    <h2 className="text-lg font-bold tracking-tight text-slate-950">Contact Information</h2>
+    <h2 className="text-lg font-bold tracking-tight text-black">Contact Information</h2>
 
     {contactItems.length > 0 && (
       <ul className="mt-2.5 grid grid-cols-2 gap-x-3 gap-y-0.5">
@@ -1529,7 +1529,7 @@ function BusinessProfileDisplay({
               </span>
 
               <span
-                className="min-w-0 flex-1 truncate whitespace-nowrap text-[12.5px] font-medium text-slate-700 transition-colors duration-150 group-hover:text-slate-950 sm:text-[13.5px]"
+                className="min-w-0 flex-1 truncate whitespace-nowrap text-[12.5px] font-medium text-black transition-colors duration-150 group-hover:text-slate-950 sm:text-[13.5px]"
                 title={item.value}
               >
                 {item.value}
@@ -1543,7 +1543,7 @@ function BusinessProfileDisplay({
     {socialLinks.length > 0 && (
       <div className={contactItems.length > 0 ? 'mt-2.5 border-t border-slate-100 pt-2' : 'mt-2.5'}>
         <div className="flex min-w-0 items-center gap-3">
-          <h3 className="shrink-0 text-sm font-semibold text-slate-900">Follow Us</h3>
+          <h3 className="shrink-0 text-sm font-semibold text-black">Follow Us</h3>
 
           <div
             className="grid min-w-0 flex-1 gap-0.5 sm:gap-1"
@@ -1577,7 +1577,7 @@ function BusinessProfileDisplay({
       {qualificationItems.length > 0 && (
         <section aria-label="Certificates and Qualifications" className="overflow-hidden rounded-3xl border border-slate-100 bg-white py-5 shadow-sm">
           <div className="flex items-center justify-between gap-3 px-5 sm:px-8">
-            <h2 className="text-lg font-bold tracking-tight text-slate-950">Certificates & Qualifications</h2>
+            <h2 className="text-lg font-bold tracking-tight text-black">Certificates & Qualifications</h2>
             {attachedQualificationItems.length > 0 && (
               <button
                 type="button"
@@ -1621,9 +1621,9 @@ function BusinessProfileDisplay({
 
                       <div className="flex min-w-0 flex-1 flex-col pt-0.5">
                         <div className="min-w-0">
-                          <h3 className="line-clamp-2 text-sm font-bold leading-tight text-slate-950">{item.title}</h3>
+                          <h3 className="line-clamp-2 text-sm font-bold leading-tight text-black">{item.title}</h3>
                           {item.year && (
-                            <p className="mt-0.5 text-xs font-medium text-slate-500">{item.year}</p>
+                            <p className="mt-0.5 text-xs font-medium text-black">{item.year}</p>
                           )}
                         </div>
 
@@ -1656,7 +1656,7 @@ function BusinessProfileDisplay({
             aria-expanded={isFaqsExpanded}
             className="flex w-full min-w-0 items-center justify-between gap-3 px-5 py-5 text-left focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-inset sm:px-8"
           >
-            <span className="min-w-0 truncate text-lg font-bold tracking-tight text-slate-950">
+            <span className="min-w-0 truncate text-lg font-bold tracking-tight text-black">
               Frequently Asked Questions
             </span>
             <svg
@@ -1686,8 +1686,8 @@ function BusinessProfileDisplay({
                         aria-controls={answerId}
                         className="flex w-full min-w-0 items-center justify-between gap-3 px-4 py-4 text-left focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-inset"
                       >
-                        <span className="min-w-0 text-sm font-semibold leading-6 text-slate-900">{item.question}</span>
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-slate-500 shadow-sm" aria-hidden="true">
+                        <span className="min-w-0 text-sm font-semibold leading-6 text-black">{item.question}</span>
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-black shadow-sm" aria-hidden="true">
                           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             {isAnswerOpen ? (
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14" />
@@ -1700,7 +1700,7 @@ function BusinessProfileDisplay({
 
                       {isAnswerOpen && (
                         <div id={answerId} className="border-t border-slate-100 px-4 pb-4 pt-3">
-                          <p className="whitespace-pre-line text-sm leading-7 text-slate-600">{item.answer}</p>
+                          <p className="whitespace-pre-line text-sm leading-7 text-black">{item.answer}</p>
                         </div>
                       )}
                     </li>
@@ -1727,7 +1727,7 @@ function BusinessProfileDisplay({
                 type="button"
                 onClick={() => setIsQrModalOpen(false)}
                 aria-label="Close QR Code"
-                className="absolute right-4 top-4 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-slate-500 shadow-sm transition hover:bg-white hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                className="absolute right-4 top-4 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-black shadow-sm transition hover:bg-white hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1745,10 +1745,10 @@ function BusinessProfileDisplay({
                   className="overflow-hidden border border-gray-100 bg-white px-6 py-8 shadow-sm sm:rounded-[1.75rem] sm:px-8"
                 >
                   <div className="mb-6 text-center">
-                    <h2 id="profile-qr-modal-title" className="text-sm font-bold tracking-tight text-gray-900">
+                    <h2 id="profile-qr-modal-title" className="text-sm font-bold tracking-tight text-black">
                       QR Code
                     </h2>
-                    <p className="mt-1 text-xs text-gray-500">Scan this QR Code to open this business profile.</p>
+                    <p className="mt-1 text-xs text-black">Scan this QR Code to open this business profile.</p>
                   </div>
 
                   <div className="mb-6 flex justify-center">
@@ -1791,10 +1791,10 @@ function BusinessProfileDisplay({
 
             <section aria-label="Final contact actions" className="overflow-hidden rounded-3xl border border-blue-100 bg-blue-50/80 px-5 py-6 shadow-sm sm:px-8">
               <div className="min-w-0">
-                <h2 className="text-lg font-bold tracking-tight text-slate-950">
+                <h2 className="text-lg font-bold tracking-tight text-black">
                   Stay connected with {displayBusinessName}
                 </h2>
-                <p className="mt-2 text-sm leading-6 text-slate-500">Share this profile or save it for later.</p>
+                <p className="mt-2 text-sm leading-6 text-black">Share this profile or save it for later.</p>
               </div>
 
               <div className="mt-4 border-t border-blue-100/90 pt-4">
@@ -1846,7 +1846,7 @@ function BusinessProfileDisplay({
                 type="button"
                 onClick={handleHideFullProfile}
                 aria-expanded={isExpanded}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 active:scale-[0.99]"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-black shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 active:scale-[0.99]"
               >
                 Hide Full Profile
                 <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

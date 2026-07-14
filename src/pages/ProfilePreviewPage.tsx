@@ -331,7 +331,7 @@ function ProfilePreviewPage() {
       <button
         type="button"
         onClick={handleEditProfile}
-        className="inline-flex min-w-0 items-center justify-center gap-2 rounded-xl border border-[#cfe5ea] bg-[#edf6f9] px-3 py-3 text-sm font-semibold text-slate-800 shadow-sm transition-all hover:bg-[#e2f0f4] focus:outline-none focus:ring-2 focus:ring-sky-200 focus:ring-offset-2 active:scale-95"
+        className="inline-flex min-w-0 items-center justify-center gap-2 rounded-xl border border-[#cfe5ea] bg-[#edf6f9] px-3 py-3 text-sm font-semibold text-black shadow-sm transition-all hover:bg-[#e2f0f4] focus:outline-none focus:ring-2 focus:ring-sky-200 focus:ring-offset-2 active:scale-95"
       >
         <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 17l-5-5m0 0l5-5m-5 5h12" />
@@ -345,7 +345,7 @@ function ProfilePreviewPage() {
         disabled={isSaving || hasSaved}
         aria-busy={isSaving}
         aria-label="Save profile to database"
-        className="inline-flex min-w-0 items-center justify-center gap-2 rounded-xl border border-[#cfe5ea] bg-[#edf6f9] px-3 py-3 text-sm font-semibold text-slate-800 shadow-sm transition-all hover:bg-[#e2f0f4] focus:outline-none focus:ring-2 focus:ring-sky-200 focus:ring-offset-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-70 disabled:active:scale-100"
+        className="inline-flex min-w-0 items-center justify-center gap-2 rounded-xl border border-[#cfe5ea] bg-[#edf6f9] px-3 py-3 text-sm font-semibold text-black shadow-sm transition-all hover:bg-[#e2f0f4] focus:outline-none focus:ring-2 focus:ring-sky-200 focus:ring-offset-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-70 disabled:active:scale-100"
       >
         {isSaving ? (
           <>
@@ -368,7 +368,7 @@ function ProfilePreviewPage() {
   )
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#020617_0%,#030712_34%,#020617_100%)] pb-12 text-slate-100">
+    <div className="min-h-screen bg-[#eef4fa] pb-12 text-black">
       <ToastContainer toasts={toasts} />
       <AppHeader />
 
@@ -384,8 +384,8 @@ function ProfilePreviewPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
             </div>
-            <h1 className="mb-2 text-2xl font-bold text-slate-50">No Business Profile Found</h1>
-            <p className="mb-8 max-w-sm text-slate-300">Create your business profile to see it here.</p>
+            <h1 className="mb-2 text-2xl font-bold text-black">No Business Profile Found</h1>
+            <p className="mb-8 max-w-sm text-black">Create your business profile to see it here.</p>
             <button
               type="button"
               onClick={() => navigate('/create-profile')}

@@ -250,12 +250,12 @@ function PublicBusinessProfilePage() {
 
   const favoriteButtonClass = user && isFavoriteSaved
     ? 'flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 py-3 text-sm font-semibold text-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70'
-    : 'flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3 text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70'
+    : 'flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3 text-sm font-semibold text-black focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70'
   const compactSecondaryActionClass =
-    'inline-flex h-7 items-center justify-center whitespace-nowrap rounded-md border border-slate-300 bg-white px-2 text-[10px] font-medium leading-none text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 sm:h-8 sm:rounded-lg sm:px-3 sm:text-xs'
+    'inline-flex h-7 items-center justify-center whitespace-nowrap rounded-md border border-slate-300 bg-white px-2 text-[10px] font-medium leading-none text-black transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 sm:h-8 sm:rounded-lg sm:px-3 sm:text-xs'
 
   const pageBackgroundClass =
-    'min-h-screen bg-[linear-gradient(180deg,#020617_0%,#030712_34%,#020617_100%)] pb-12 text-slate-100'
+    'min-h-screen bg-[#eef4fa] pb-12 text-black'
 
   return (
     <div className={pageBackgroundClass}>
@@ -279,7 +279,7 @@ function PublicBusinessProfilePage() {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            <p className="mt-4 text-sm text-gray-500">Loading business profile...</p>
+            <p className="mt-4 text-sm text-black">Loading business profile...</p>
           </div>
         )}
 
@@ -290,10 +290,10 @@ function PublicBusinessProfilePage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
               </svg>
             </div>
-            <h1 className="mb-2 text-2xl font-bold text-gray-900">
+            <h1 className="mb-2 text-2xl font-bold text-black">
               {loadState === 'private' ? 'Business Profile Unavailable' : 'Business Profile Not Found'}
             </h1>
-            <p className="mb-8 max-w-sm text-gray-500">
+            <p className="mb-8 max-w-sm text-black">
               {loadState === 'private'
                 ? 'This business profile is not publicly available.'
                 : 'The requested business profile does not exist or may have been removed.'}
@@ -371,7 +371,7 @@ function PublicBusinessProfilePage() {
                   className="overflow-hidden rounded-3xl border border-slate-100 bg-white px-5 py-5 shadow-sm sm:px-8 sm:py-6"
                 >
                   <div className="flex items-center justify-between gap-1.5 overflow-hidden">
-                    <div className="flex min-w-0 items-center gap-1 text-[10px] font-semibold text-slate-900 sm:gap-1.5 sm:text-xs">
+                    <div className="flex min-w-0 items-center gap-1 text-[10px] font-semibold text-black sm:gap-1.5 sm:text-xs">
                       <svg className="h-3 w-3 shrink-0 text-amber-400 sm:h-3.5 sm:w-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                         <path d="M9.05 2.93c.3-.92 1.6-.92 1.9 0l1.18 3.63a1 1 0 0 0 .95.69h3.82c.97 0 1.37 1.24.59 1.81l-3.09 2.24a1 1 0 0 0-.36 1.12l1.18 3.63c.3.92-.76 1.69-1.54 1.12l-3.09-2.24a1 1 0 0 0-1.18 0l-3.09 2.24c-.78.57-1.84-.2-1.54-1.12l1.18-3.63a1 1 0 0 0-.36-1.12L2.51 9.06c-.78-.57-.38-1.81.59-1.81h3.82a1 1 0 0 0 .95-.69l1.18-3.63z" />
                       </svg>

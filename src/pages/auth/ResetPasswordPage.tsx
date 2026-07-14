@@ -76,7 +76,7 @@ function ResetPasswordPage() {
       title="Reset Password"
       subtitle="Choose a new password for your account."
       footer={
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-black">
           Remembered it after all?{' '}
           <Link to="/login" className="font-semibold text-blue-600 hover:text-blue-700 focus:outline-none focus:underline">
             Back to login
@@ -87,7 +87,7 @@ function ResetPasswordPage() {
       <ToastContainer toasts={toasts} />
 
       <form onSubmit={handleSubmit} noValidate className="space-y-5">
-        <div>
+        <div className="[&_button]:text-black [&_input]:text-black [&_input]:placeholder:text-slate-400 [&_label]:text-black">
           <PasswordField
             id="password"
             name="password"
@@ -100,7 +100,7 @@ function ResetPasswordPage() {
           {authError(errors.password)}
         </div>
 
-        <div>
+        <div className="[&_button]:text-black [&_input]:text-black [&_input]:placeholder:text-slate-400 [&_label]:text-black">
           <PasswordField
             id="confirmPassword"
             name="confirmPassword"

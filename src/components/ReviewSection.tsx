@@ -605,7 +605,7 @@ function ReviewSection({
   const showReviewForm = Boolean(userId) && (!ownReview || isEditing);
   const submitLabel = ownReview && isEditing ? "Save Changes" : "Submit Review";
   const defaultTriggerClassName =
-    "inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2";
+    "inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-black transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2";
   const closeModal = () => {
     if (isModalBusy) return;
     setIsModalOpen(false);
@@ -618,7 +618,7 @@ function ReviewSection({
       <div className="mb-5">
         <h2
           id="reviewModalTitle"
-          className="text-xs font-semibold uppercase tracking-widest text-gray-400"
+          className="text-xs font-semibold uppercase tracking-widest text-black"
         >
           Ratings & Reviews
         </h2>
@@ -627,10 +627,10 @@ function ReviewSection({
           {summary.count > 0 ? (
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
               <div className="sm:min-w-[8rem]">
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-black">
                   {summary.average.toFixed(1)}
                 </p>
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-sm text-black">
                   Based on {summary.count} review
                   {summary.count === 1 ? "" : "s"}
                 </p>
@@ -646,9 +646,9 @@ function ReviewSection({
                 {ratingDistribution.map((row) => (
                   <div
                     key={row.rating}
-                    className="flex items-center gap-2.5 text-xs text-gray-600"
+                    className="flex items-center gap-2.5 text-xs text-black"
                   >
-                    <span className="w-2 shrink-0 text-right font-medium text-gray-700">
+                    <span className="w-2 shrink-0 text-right font-medium text-black">
                       {row.rating}
                     </span>
                     <svg
@@ -666,7 +666,7 @@ function ReviewSection({
                         aria-hidden="true"
                       />
                     </div>
-                    <span className="w-6 shrink-0 text-right font-medium text-gray-700">
+                    <span className="w-6 shrink-0 text-right font-medium text-black">
                       {row.count}
                     </span>
                   </div>
@@ -676,10 +676,10 @@ function ReviewSection({
           ) : (
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
               <div className="sm:min-w-[8rem]">
-                <p className="text-sm font-semibold text-gray-900">
+                <p className="text-sm font-semibold text-black">
                   No reviews yet.
                 </p>
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-sm text-black">
                   Be the first to rate this business.
                 </p>
               </div>
@@ -688,9 +688,9 @@ function ReviewSection({
                 {ratingDistribution.map((row) => (
                   <div
                     key={row.rating}
-                    className="flex items-center gap-2.5 text-xs text-gray-600"
+                    className="flex items-center gap-2.5 text-xs text-black"
                   >
-                    <span className="w-2 shrink-0 text-right font-medium text-gray-700">
+                    <span className="w-2 shrink-0 text-right font-medium text-black">
                       {row.rating}
                     </span>
                     <svg
@@ -708,7 +708,7 @@ function ReviewSection({
                         aria-hidden="true"
                       />
                     </div>
-                    <span className="w-6 shrink-0 text-right font-medium text-gray-700">
+                    <span className="w-6 shrink-0 text-right font-medium text-black">
                       {row.count}
                     </span>
                   </div>
@@ -729,7 +729,7 @@ function ReviewSection({
       )}
 
       {isLoading ? (
-        <p className="text-sm text-gray-500">Loading reviews...</p>
+        <p className="text-sm text-black">Loading reviews...</p>
       ) : (
         <>
           {!userId && (
@@ -756,14 +756,14 @@ function ReviewSection({
               className="mb-6 rounded-2xl border border-gray-100 bg-white px-4 py-4"
             >
               <div className="flex items-center justify-between gap-4">
-                <label className="text-sm font-semibold text-gray-900">
+                <label className="text-sm font-semibold text-black">
                   Your rating
                 </label>
                 {ownReview && isEditing && (
                   <button
                     type="button"
                     onClick={cancelEditing}
-                    className="text-sm font-medium text-gray-500 hover:text-gray-700 focus:outline-none focus:underline"
+                    className="text-sm font-medium text-black hover:text-gray-700 focus:outline-none focus:underline"
                   >
                     Cancel
                   </button>
@@ -776,10 +776,10 @@ function ReviewSection({
 
               <label
                 htmlFor="reviewText"
-                className="mt-4 block text-sm font-semibold text-gray-900"
+                className="mt-4 block text-sm font-semibold text-black"
               >
                 Review text{" "}
-                <span className="font-normal text-gray-400">Optional</span>
+                <span className="font-normal text-black">Optional</span>
               </label>
               <textarea
                 id="reviewText"
@@ -787,16 +787,16 @@ function ReviewSection({
                 onChange={(event) => setReviewText(event.target.value)}
                 rows={3}
                 placeholder="Share a short note about your experience."
-                className="mt-2 w-full resize-y rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                className="mt-2 w-full resize-y rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-black placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
               />
 
               <div className="mt-4">
                 <label
                   htmlFor="reviewImages"
-                  className="block text-sm font-semibold text-gray-900"
+                  className="block text-sm font-semibold text-black"
                 >
                   Add photos{" "}
-                  <span className="font-normal text-gray-400">Optional</span>
+                  <span className="font-normal text-black">Optional</span>
                 </label>
                 <input
                   ref={imageInputRef}
@@ -806,9 +806,9 @@ function ReviewSection({
                   multiple
                   onChange={handleImageSelection}
                   disabled={totalFormImages >= MAX_REVIEW_IMAGES}
-                  className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 file:mr-4 file:rounded-lg file:border-0 file:bg-gray-900 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
+                  className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-black file:mr-4 file:rounded-lg file:border-0 file:bg-gray-900 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-black"
                 />
-                <p className="mt-2 text-xs text-gray-400">
+                <p className="mt-2 text-xs text-black">
                   Upload up to 3 images.
                 </p>
               </div>
@@ -897,11 +897,11 @@ function ReviewSection({
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <p className="text-sm font-semibold text-gray-900">
+                        <p className="text-sm font-semibold text-black">
                           {isOwnReview ? "Your review" : "Customer"}
                         </p>
                         {displayDate && (
-                          <p className="mt-0.5 text-xs text-gray-400">
+                          <p className="mt-0.5 text-xs text-black">
                             {displayDate}
                           </p>
                         )}
@@ -913,11 +913,11 @@ function ReviewSection({
                     </div>
 
                     {review.review_text ? (
-                      <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-gray-700">
+                      <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-black">
                         {review.review_text}
                       </p>
                     ) : review.images.length === 0 ? (
-                      <p className="mt-3 text-sm text-gray-500">Rating only.</p>
+                      <p className="mt-3 text-sm text-black">Rating only.</p>
                     ) : null}
 
                     {review.images.length > 0 && (
@@ -959,7 +959,7 @@ function ReviewSection({
                       >
                         <label
                           htmlFor={`ownerReply-${review.id}`}
-                          className="block text-sm font-semibold text-gray-900"
+                          className="block text-sm font-semibold text-black"
                         >
                           Owner reply
                         </label>
@@ -969,7 +969,7 @@ function ReviewSection({
                           onChange={(event) => setReplyText(event.target.value)}
                           rows={3}
                           placeholder="Write a public response to this review..."
-                          className="mt-2 w-full resize-y rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                          className="mt-2 w-full resize-y rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-black placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
                         />
 
                         {replyErrorMessage && (
@@ -997,7 +997,7 @@ function ReviewSection({
                           <button
                             type="button"
                             onClick={closeReplyForm}
-                            className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+                            className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
                           >
                             Cancel
                           </button>
@@ -1129,7 +1129,7 @@ function ReviewSection({
                 onClick={closeModal}
                 disabled={isModalBusy}
                 aria-label="Close ratings and reviews"
-                className="absolute right-4 top-4 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-slate-500 shadow-sm transition hover:bg-white hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
+                className="absolute right-4 top-4 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-black shadow-sm transition hover:bg-white hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 <svg
                   className="h-5 w-5"

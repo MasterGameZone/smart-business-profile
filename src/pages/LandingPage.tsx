@@ -63,7 +63,7 @@ const visitorBenefits = [
 const darkCardClass =
   'rounded-3xl border border-white/10 bg-white/6 p-6 shadow-[0_28px_80px_-42px_rgba(2,12,27,0.95)] backdrop-blur-md sm:p-8'
 
-const sectionHeadingClass = 'text-xl font-bold tracking-tight text-slate-50 sm:text-2xl md:text-3xl'
+const sectionHeadingClass = 'text-xl font-bold tracking-tight text-black sm:text-2xl md:text-3xl'
 type RecommendationState = 'idle' | 'loading' | 'found' | 'empty' | 'error'
 
 function truncate(text: string, length: number): string {
@@ -192,10 +192,10 @@ function LandingPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[linear-gradient(180deg,#020617_0%,#030712_34%,#020617_100%)] text-slate-100">
+      <div className="min-h-screen bg-[#eef4fa] text-black">
         <AppHeader />
         <main className="mx-auto flex min-h-[calc(100vh-4.5rem)] max-w-6xl items-center justify-center px-4 py-10">
-          <div className="flex items-center gap-3 text-sm text-slate-400" role="status" aria-live="polite">
+          <div className="flex items-center gap-3 text-sm text-black" role="status" aria-live="polite">
             <svg className="h-5 w-5 animate-spin text-sky-400" fill="none" viewBox="0 0 24 24" aria-hidden="true">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -209,16 +209,16 @@ function LandingPage() {
 
   if (user) {
     return (
-      <div className="min-h-screen bg-[linear-gradient(180deg,#020617_0%,#030712_34%,#020617_100%)] text-slate-100">
+      <div className="min-h-screen bg-[#eef4fa] text-black">
         <AppHeader />
 
         <main className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
           <section className="mb-8 sm:mb-10">
             <div className="mb-5 sm:mb-6">
-              <h1 className="text-2xl font-bold tracking-tight text-slate-50 sm:text-3xl">
+              <h1 className="text-2xl font-bold tracking-tight text-black sm:text-3xl">
                 Find trusted businesses near you
               </h1>
-              <p className="mt-2 max-w-2xl text-sm text-slate-300 sm:text-base">
+              <p className="mt-2 max-w-2xl text-sm text-black sm:text-base">
                 Search, save, and connect with businesses from one place.
               </p>
             </div>
@@ -229,7 +229,7 @@ function LandingPage() {
                   Search businesses, categories, services, or locations
                 </label>
                 <svg
-                  className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
+                  className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-black"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -249,7 +249,7 @@ function LandingPage() {
                   value={homeSearchQuery}
                   onChange={(event) => setHomeSearchQuery(event.target.value)}
                   placeholder="Search businesses, categories, services, or locations"
-                  className="w-full rounded-full border border-white/10 bg-white/[0.08] py-3 pl-11 pr-4 text-sm text-slate-50 placeholder-slate-500 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-sky-400/70"
+                  className="w-full rounded-full border border-white/10 bg-white/[0.08] py-3 pl-11 pr-4 text-sm text-black placeholder-slate-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-sky-400/70"
                 />
               </div>
 
@@ -261,10 +261,10 @@ function LandingPage() {
             <section className="mb-8 sm:mb-10" aria-labelledby="search-results-heading">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div>
-                  <h2 id="search-results-heading" className="text-xl font-bold tracking-tight text-slate-50 sm:text-2xl">
+                  <h2 id="search-results-heading" className="text-xl font-bold tracking-tight text-black sm:text-2xl">
                     Search Results
                   </h2>
-                  <p className="mt-1 text-sm text-slate-400">
+                  <p className="mt-1 text-sm text-black">
                     {liveSearchResults.length > 0
                       ? `Showing ${liveSearchResults.length} matches for "${homeSearchQuery.trim()}"`
                       : 'No businesses found matching your search.'}
@@ -273,7 +273,7 @@ function LandingPage() {
                 <button
                   type="button"
                   onClick={clearHomeSearch}
-                  className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-medium text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
+                  className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
                 >
                   Clear Search
                 </button>
@@ -294,18 +294,18 @@ function LandingPage() {
                             className="h-12 w-12 rounded-2xl border border-white/10 object-cover"
                           />
                         ) : (
-                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-sky-400/10 text-sm font-semibold text-sky-200">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-sky-400/10 text-sm font-semibold text-sky-700">
                             {getInitials(profile.business_name)}
                           </div>
                         )}
                         <div className="min-w-0">
-                          <h3 className="truncate text-base font-semibold text-slate-50">{profile.business_name}</h3>
-                          <p className="truncate text-sm text-slate-300">{profile.business_category}</p>
-                          {profile.address && <p className="mt-1 truncate text-xs text-slate-500">{profile.address}</p>}
+                          <h3 className="truncate text-base font-semibold text-black">{profile.business_name}</h3>
+                          <p className="truncate text-sm text-black">{profile.business_category}</p>
+                          {profile.address && <p className="mt-1 truncate text-xs text-black">{profile.address}</p>}
                         </div>
                       </div>
 
-                      <p className="flex-1 text-sm leading-relaxed text-slate-300">
+                      <p className="flex-1 text-sm leading-relaxed text-black">
                         {profile.about_business
                           ? truncate(profile.about_business, 120)
                           : 'Open the full profile to view business details and contact options.'}
@@ -314,7 +314,7 @@ function LandingPage() {
                       <button
                         type="button"
                         onClick={() => navigate(`/business/${profile.slug}`)}
-                        className="mt-5 inline-flex items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
+                        className="mt-5 inline-flex items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
                       >
                         View Profile
                       </button>
@@ -323,7 +323,7 @@ function LandingPage() {
                 </div>
               ) : (
                 <div>
-                  <p className="text-sm leading-relaxed text-slate-300">
+                  <p className="text-sm leading-relaxed text-black">
                     Try a business name, category, or owner name that already appears in the directory.
                   </p>
                 </div>
@@ -335,10 +335,10 @@ function LandingPage() {
           <section className="mb-8 sm:mb-10" aria-labelledby="recently-viewed-heading">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
-                <h2 id="recently-viewed-heading" className="text-xl font-bold tracking-tight text-slate-50 sm:text-2xl">
+                <h2 id="recently-viewed-heading" className="text-xl font-bold tracking-tight text-black sm:text-2xl">
                   Recently Viewed Businesses
                 </h2>
-                <p className="mt-1 text-sm text-slate-400">
+                <p className="mt-1 text-sm text-black">
                   Quick access to businesses you open most recently.
                 </p>
               </div>
@@ -359,25 +359,25 @@ function LandingPage() {
                           className="h-12 w-12 rounded-2xl border border-white/10 object-cover"
                         />
                       ) : (
-                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-sky-400/10 text-sm font-semibold text-sky-200">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-sky-400/10 text-sm font-semibold text-sky-700">
                           {getInitials(profile.business_name)}
                         </div>
                       )}
                       <div className="min-w-0">
-                        <h3 className="truncate text-base font-semibold text-slate-50">{profile.business_name}</h3>
-                        <p className="truncate text-sm text-slate-300">{profile.business_category}</p>
-                        {profile.address && <p className="mt-1 truncate text-xs text-slate-500">{profile.address}</p>}
+                        <h3 className="truncate text-base font-semibold text-black">{profile.business_name}</h3>
+                        <p className="truncate text-sm text-black">{profile.business_category}</p>
+                        {profile.address && <p className="mt-1 truncate text-xs text-black">{profile.address}</p>}
                       </div>
                     </div>
 
-                    <p className="flex-1 text-sm leading-relaxed text-slate-300">
+                    <p className="flex-1 text-sm leading-relaxed text-black">
                       {profile.owner_name ? `Viewed from ${profile.owner_name}'s public profile.` : 'Recently opened public business profile.'}
                     </p>
 
                     <button
                       type="button"
                       onClick={() => navigate(`/business/${profile.slug}`)}
-                      className="mt-5 inline-flex items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
+                      className="mt-5 inline-flex items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
                     >
                       View Profile
                     </button>
@@ -387,14 +387,14 @@ function LandingPage() {
             ) : (
               <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-sm leading-relaxed text-slate-300">
+                  <p className="text-sm leading-relaxed text-black">
                     No recently viewed businesses yet. Start exploring businesses to see them here.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={focusHomeSearch}
-                  className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
+                  className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
                 >
                   Browse Businesses
                 </button>
@@ -417,11 +417,11 @@ function LandingPage() {
               </div>
 
               <div className="mt-4 max-w-3xl">
-                <h2 id="local-business-support-heading" className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
+                <h2 id="local-business-support-heading" className="text-2xl font-bold tracking-tight text-black sm:text-3xl">
                   <span className="block">Help Build Your</span>
                   <span className="block">Local Business Network</span>
                 </h2>
-                <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+                <p className="mt-3 max-w-2xl text-sm leading-7 text-black sm:text-base">
                   Know a trusted local business that is not listed yet? Help them create a professional digital presence and become part of a platform built with its community.
                 </p>
               </div>
@@ -448,7 +448,7 @@ function LandingPage() {
                 </button>
               </div>
 
-              <div className="mt-5 flex items-start gap-2 text-sm text-slate-500">
+              <div className="mt-5 flex items-start gap-2 text-sm text-black">
                 <svg className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path
                     strokeLinecap="round"
@@ -466,17 +466,17 @@ function LandingPage() {
           <section className="mb-8 sm:mb-10" aria-labelledby="recommended-businesses-heading">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
-                <h2 id="recommended-businesses-heading" className="text-xl font-bold tracking-tight text-slate-50 sm:text-2xl">
+                <h2 id="recommended-businesses-heading" className="text-xl font-bold tracking-tight text-black sm:text-2xl">
                   Recommended Businesses
                 </h2>
-                <p className="mt-1 text-sm text-slate-400">
+                <p className="mt-1 text-sm text-black">
                   Public profiles you can explore right away.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => navigate('/directory')}
-                className="hidden rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-medium text-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950 sm:inline-flex"
+                className="hidden rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950 sm:inline-flex"
               >
                 Explore Businesses
               </button>
@@ -484,7 +484,7 @@ function LandingPage() {
 
             {recommendationState === 'loading' && (
               <div className="flex min-h-[14rem] items-center justify-center" role="status" aria-live="polite">
-                <div className="flex items-center gap-3 text-sm text-slate-400">
+                <div className="flex items-center gap-3 text-sm text-black">
                   <svg className="h-5 w-5 animate-spin text-sky-400" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -496,13 +496,13 @@ function LandingPage() {
 
             {recommendationState === 'error' && (
               <div>
-                <p className="text-sm leading-relaxed text-slate-300">
+                <p className="text-sm leading-relaxed text-black">
                   Recommendations will appear here based on your location and activity.
                 </p>
                 <button
                   type="button"
                   onClick={() => navigate('/directory')}
-                  className="mt-5 inline-flex items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
+                  className="mt-5 inline-flex items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
                 >
                   Explore Businesses
                 </button>
@@ -511,13 +511,13 @@ function LandingPage() {
 
             {recommendationState === 'empty' && (
               <div>
-                <p className="text-sm leading-relaxed text-slate-300">
+                <p className="text-sm leading-relaxed text-black">
                   Recommendations will appear here based on your location and activity.
                 </p>
                 <button
                   type="button"
                   onClick={() => navigate('/directory')}
-                  className="mt-5 inline-flex items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
+                  className="mt-5 inline-flex items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
                 >
                   Explore Businesses
                 </button>
@@ -540,18 +540,18 @@ function LandingPage() {
                             className="h-12 w-12 rounded-2xl border border-white/10 object-cover"
                           />
                         ) : (
-                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-sky-400/10 text-sm font-semibold text-sky-200">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-sky-400/10 text-sm font-semibold text-sky-700">
                             {getInitials(profile.business_name)}
                           </div>
                         )}
                         <div className="min-w-0">
-                          <h3 className="truncate text-base font-semibold text-slate-50">{profile.business_name}</h3>
-                          <p className="truncate text-sm text-slate-300">{profile.business_category}</p>
-                          {profile.address && <p className="mt-1 truncate text-xs text-slate-500">{profile.address}</p>}
+                          <h3 className="truncate text-base font-semibold text-black">{profile.business_name}</h3>
+                          <p className="truncate text-sm text-black">{profile.business_category}</p>
+                          {profile.address && <p className="mt-1 truncate text-xs text-black">{profile.address}</p>}
                         </div>
                       </div>
 
-                      <p className="flex-1 text-sm leading-relaxed text-slate-300">
+                      <p className="flex-1 text-sm leading-relaxed text-black">
                         {profile.about_business
                           ? truncate(profile.about_business, 120)
                           : 'Open the full profile to view business details and contact options.'}
@@ -560,7 +560,7 @@ function LandingPage() {
                       <button
                         type="button"
                         onClick={() => navigate(`/business/${profile.slug}`)}
-                        className="mt-5 inline-flex items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
+                        className="mt-5 inline-flex items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
                       >
                         View Profile
                       </button>
@@ -572,7 +572,7 @@ function LandingPage() {
                   <button
                     type="button"
                     onClick={() => navigate('/directory')}
-                    className="inline-flex w-full items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
+                    className="inline-flex w-full items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
                   >
                     Explore Businesses
                   </button>
@@ -585,11 +585,11 @@ function LandingPage() {
             <div className="max-w-2xl">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-sky-300">Own a business?</p>
-                  <h2 id="create-business-cta-heading" className="mt-1 text-base font-semibold tracking-tight text-slate-50 sm:text-lg">
+                  <p className="text-xs font-medium uppercase tracking-wide text-blue-600">Own a business?</p>
+                  <h2 id="create-business-cta-heading" className="mt-1 text-base font-semibold tracking-tight text-black sm:text-lg">
                     Create your digital business profile.
                   </h2>
-                  <p className="mt-1 max-w-lg text-xs leading-relaxed text-slate-300 sm:text-sm">
+                  <p className="mt-1 max-w-lg text-xs leading-relaxed text-black sm:text-sm">
                     Publish your details, share a public link, and help customers contact you faster.
                   </p>
                 </div>
@@ -610,7 +610,7 @@ function LandingPage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-x-clip bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.16),transparent_28%),linear-gradient(180deg,#020617_0%,#030712_34%,#020617_100%)] text-slate-100">
+    <div className="relative min-h-screen overflow-x-clip bg-[#eef4fa] text-black">
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
         <div className="landing-ambient-drift absolute inset-x-[-18%] top-[-12rem] h-[34rem] bg-[radial-gradient(circle_at_center,rgba(56,189,248,0.18),transparent_55%)] blur-3xl" />
         <div
@@ -631,19 +631,19 @@ function LandingPage() {
           className="relative px-4 py-16 text-center sm:py-20 lg:py-24"
         >
           <ScrollReveal className="mx-auto max-w-4xl">
-            <span className="mb-5 inline-flex items-center gap-1.5 rounded-full border border-sky-400/20 bg-white/8 px-3 py-1 text-[11px] font-semibold text-sky-200 backdrop-blur sm:mb-6 sm:text-xs">
+            <span className="mb-5 inline-flex items-center gap-1.5 rounded-full border border-sky-400/20 bg-white/8 px-3 py-1 text-[11px] font-semibold text-blue-600 backdrop-blur sm:mb-6 sm:text-xs">
               <span className="h-1.5 w-1.5 rounded-full bg-sky-300" aria-hidden="true" />
               Built for business owners and visitors
             </span>
 
-            <h1 className="mb-4 text-3xl font-bold leading-tight tracking-tight text-slate-50 sm:mb-5 sm:text-4xl md:text-5xl lg:text-6xl">
+            <h1 className="mb-4 text-3xl font-bold leading-tight tracking-tight text-black sm:mb-5 sm:text-4xl md:text-5xl lg:text-6xl">
               Create your business profile.{' '}
               <span className="bg-[linear-gradient(90deg,#e2f3ff_0%,#7dd3fc_35%,#60a5fa_70%,#c4b5fd_100%)] bg-clip-text text-transparent">
                 Get discovered faster.
               </span>
             </h1>
 
-            <p className="mx-auto mb-8 max-w-2xl text-base leading-relaxed text-slate-300 sm:mb-10 sm:text-lg lg:text-xl">
+            <p className="mx-auto mb-8 max-w-2xl text-base leading-relaxed text-black sm:mb-10 sm:text-lg lg:text-xl">
               Smart Business Profile helps owners publish professional digital profiles,
               while visitors can browse public businesses and contact them without signing up.
             </p>
@@ -662,7 +662,7 @@ function LandingPage() {
               <button
                 type="button"
                 onClick={() => navigate('/directory')}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/14 bg-white/6 px-6 py-3 text-sm font-medium text-slate-100 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950 sm:w-auto sm:px-8 sm:py-3.5 sm:text-base"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/14 bg-white/6 px-6 py-3 text-sm font-medium text-black backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950 sm:w-auto sm:px-8 sm:py-3.5 sm:text-base"
               >
                 Browse Businesses
               </button>
@@ -674,14 +674,14 @@ function LandingPage() {
           <div className="mx-auto grid max-w-5xl grid-cols-1 gap-5 md:grid-cols-2">
             <ScrollReveal delayMs={60} className="h-full">
               <div className={`${darkCardClass} h-full`}>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-sky-300">Business Owners</p>
-                <h2 className="mb-3 text-xl font-bold tracking-tight text-slate-50 sm:text-2xl">Build a professional profile customers can trust</h2>
-                <p className="mb-6 text-sm leading-relaxed text-slate-300 sm:text-base">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-blue-600">Business Owners</p>
+                <h2 className="mb-3 text-xl font-bold tracking-tight text-black sm:text-2xl">Build a professional profile customers can trust</h2>
+                <p className="mb-6 text-sm leading-relaxed text-black sm:text-base">
                   Create a public business profile, manage it from your dashboard, and share it through a link or QR code.
                 </p>
                 <ul className="space-y-3">
                   {ownerBenefits.map((benefit) => (
-                    <li key={benefit} className="flex gap-3 text-sm text-slate-300">
+                    <li key={benefit} className="flex gap-3 text-sm text-black">
                       <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-sky-400/12 text-sky-300">
                         <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -696,14 +696,14 @@ function LandingPage() {
 
             <ScrollReveal delayMs={140} className="h-full">
               <div className={`${darkCardClass} h-full`}>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-cyan-300">Visitors</p>
-                <h2 className="mb-3 text-xl font-bold tracking-tight text-slate-50 sm:text-2xl">Find and contact businesses quickly</h2>
-                <p className="mb-6 text-sm leading-relaxed text-slate-300 sm:text-base">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-blue-600">Visitors</p>
+                <h2 className="mb-3 text-xl font-bold tracking-tight text-black sm:text-2xl">Find and contact businesses quickly</h2>
+                <p className="mb-6 text-sm leading-relaxed text-black sm:text-base">
                   Browse public business profiles, search the directory, and contact businesses without creating an account.
                 </p>
                 <ul className="space-y-3">
                   {visitorBenefits.map((benefit) => (
-                    <li key={benefit} className="flex gap-3 text-sm text-slate-300">
+                    <li key={benefit} className="flex gap-3 text-sm text-black">
                       <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cyan-400/12 text-cyan-300">
                         <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -724,7 +724,7 @@ function LandingPage() {
               <h2 className={sectionHeadingClass}>
                 Built for local businesses of every type
               </h2>
-              <p className="mx-auto mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
+              <p className="mx-auto mt-2 max-w-2xl text-sm leading-relaxed text-black">
                 From professionals to local service providers, Smart Business Profile gives businesses a simple public profile visitors can find and contact.
               </p>
             </ScrollReveal>
@@ -732,7 +732,7 @@ function LandingPage() {
             <div className="mx-auto grid max-w-6xl grid-cols-1 gap-4 md:grid-cols-[320px_minmax(0,1fr)] md:items-stretch md:gap-5">
               <ScrollReveal delayMs={60} className="mx-auto md:mx-0">
                 <div className="mx-auto flex aspect-square w-full max-w-[19rem] items-center justify-center rounded-3xl border border-white/10 bg-white/5 px-6 py-6 text-center shadow-[0_14px_30px_-24px_rgba(2,12,27,0.95)] backdrop-blur-sm sm:max-w-[20rem] sm:px-8 md:h-full md:max-w-none md:aspect-auto">
-                  <div className="space-y-1 text-sm font-medium leading-relaxed text-slate-400 sm:text-base">
+                  <div className="space-y-1 text-sm font-medium leading-relaxed text-black sm:text-base">
                     <p>Business type preview</p>
                     <p>Animation coming soon</p>
                   </div>
@@ -741,17 +741,17 @@ function LandingPage() {
 
               <ScrollReveal delayMs={140}>
                 <div className="rounded-3xl border border-white/10 bg-white/5 px-6 py-6 shadow-[0_14px_30px_-24px_rgba(2,12,27,0.95)] backdrop-blur-sm sm:px-8">
-                  <div className="space-y-4 text-sm leading-relaxed text-slate-300 sm:text-base md:text-left">
+                  <div className="space-y-4 text-sm leading-relaxed text-black sm:text-base md:text-left">
                     <p>
                       No matter what kind of local business you run, Smart Business Profile gives you{' '}
-                      <span className="font-medium text-slate-100">one clean public page</span> to
-                      present the <span className="font-medium text-slate-100">details customers look for first</span> -
+                      <span className="font-medium text-black">one clean public page</span> to
+                      present the <span className="font-medium text-black">details customers look for first</span> -
                       your contact options, services, location, working hours, business story,
                       gallery, and social links.
                     </p>
                     <p>
                       It helps visitors understand what you offer, trust your presence, and{' '}
-                      <span className="font-medium text-slate-100">contact you instantly</span>{' '}
+                      <span className="font-medium text-black">contact you instantly</span>{' '}
                       through call, WhatsApp, email, website, or maps without needing to install any
                       app.
                     </p>
@@ -766,7 +766,7 @@ function LandingPage() {
           <div className="mx-auto max-w-5xl">
             <ScrollReveal className="mb-8 text-center">
               <h2 className={sectionHeadingClass}>Everything needed for a clear business presence</h2>
-              <p className="mt-2 text-sm text-slate-400">
+              <p className="mt-2 text-sm text-black">
                 Built for owners who manage profiles and visitors who need quick business information.
               </p>
             </ScrollReveal>
@@ -779,9 +779,9 @@ function LandingPage() {
                       <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-400/12 text-sky-300 ring-1 ring-sky-300/15">
                         {feature.icon}
                       </div>
-                      <p className="text-sm font-semibold text-slate-50">{feature.title}</p>
+                      <p className="text-sm font-semibold text-black">{feature.title}</p>
                     </div>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-300">{feature.description}</p>
+                    <p className="mt-2 text-sm leading-relaxed text-black">{feature.description}</p>
                   </div>
                 </ScrollReveal>
               ))}
@@ -791,10 +791,10 @@ function LandingPage() {
 
         <section className="relative px-4 py-12 text-center sm:py-14" aria-label="Final call to action">
           <ScrollReveal className="mx-auto max-w-2xl">
-            <h2 className="text-2xl font-bold tracking-tight text-slate-50 sm:text-3xl">
+            <h2 className="text-2xl font-bold tracking-tight text-black sm:text-3xl">
               Ready to create your business profile?
             </h2>
-            <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-slate-300 sm:text-base">
+            <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-black sm:text-base">
               Create a professional public profile, share it with a link or QR code, and help visitors contact you faster.
             </p>
             <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -808,7 +808,7 @@ function LandingPage() {
               <button
                 type="button"
                 onClick={() => navigate('/directory')}
-                className="inline-flex w-full items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-6 py-3 text-sm font-medium text-slate-100 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950 sm:w-auto sm:min-w-[11rem] sm:px-7 sm:text-base"
+                className="inline-flex w-full items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-6 py-3 text-sm font-medium text-black backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950 sm:w-auto sm:min-w-[11rem] sm:px-7 sm:text-base"
               >
                 Browse Businesses
               </button>
@@ -821,13 +821,13 @@ function LandingPage() {
         <ScrollReveal className="mx-auto max-w-7xl">
           <div className="flex flex-col gap-6 text-center md:flex-row md:items-start md:justify-between md:gap-10 md:text-left">
             <div className="max-w-md">
-              <p className="text-sm font-semibold text-slate-100">Smart Business Profile</p>
-              <p className="mt-3 text-sm leading-relaxed text-slate-400">
+              <p className="text-sm font-semibold text-black">Smart Business Profile</p>
+              <p className="mt-3 text-sm leading-relaxed text-black">
                 Create a modern public business profile with a shareable link, QR code, and instant contact options.
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-slate-400 sm:gap-x-5 md:max-w-xl md:justify-end">
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-black sm:gap-x-5 md:max-w-xl md:justify-end">
               {footerLinks.map((link) =>
                 link.type === 'route' ? (
                   <button
@@ -860,7 +860,7 @@ function LandingPage() {
             </div>
           </div>
 
-          <p className="mt-6 text-center text-xs text-slate-500 md:mt-7 md:text-left">
+          <p className="mt-6 text-center text-xs text-black md:mt-7 md:text-left">
             &copy; 2026 Smart Business Profile. All rights reserved.
           </p>
         </ScrollReveal>

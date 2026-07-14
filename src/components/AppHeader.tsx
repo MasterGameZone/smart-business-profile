@@ -303,8 +303,8 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
 
     return `${baseClass} ${
       isActive
-        ? 'border-slate-200 bg-slate-100 text-slate-950'
-        : 'border-transparent bg-transparent text-slate-700'
+        ? 'border-slate-200 bg-slate-100 text-black'
+        : 'border-transparent bg-transparent text-black'
     }`
   }
 
@@ -330,7 +330,7 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
               className={`inline-flex shrink-0 items-center gap-2 text-xs font-semibold tracking-tight focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300/80 focus-visible:ring-offset-2 sm:text-sm ${
                 useDarkHeaderStyle
                   ? 'text-slate-100 focus-visible:ring-offset-slate-950'
-                  : 'text-slate-900 focus-visible:ring-offset-slate-50'
+                  : 'text-black focus-visible:ring-offset-slate-50'
               }`}
               aria-label="Go to Smart Business Profile home"
               style={navbarInteractionStyle}
@@ -516,7 +516,7 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
                     className="absolute right-0 top-full z-40 mt-2 w-[18.5rem] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_48px_-28px_rgba(15,23,42,0.45)]"
                   >
                     <div className="border-b border-slate-100 px-4 py-3">
-                      <p className="text-sm font-semibold text-slate-900">Menu</p>
+                      <p className="text-sm font-semibold text-black">Menu</p>
                     </div>
                     <div className="py-2">
                       {businessMenuItems.map((item) => (
@@ -528,13 +528,13 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
                           onClick={() => void handleHomeMenuItemClick(item)}
                           className={`flex w-full items-center justify-between px-4 py-2.5 text-left text-sm ${
                             item.disabled
-                              ? 'cursor-default text-slate-400'
-                              : 'text-slate-700 hover:bg-slate-50 focus:bg-slate-50'
+                              ? 'cursor-default text-black'
+                              : 'text-black hover:bg-slate-50 focus:bg-slate-50'
                           } focus:outline-none`}
                         >
                           <span className="whitespace-nowrap">{item.label}</span>
                           {item.disabled && (
-                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-black">
                               Coming soon
                             </span>
                           )}
@@ -588,7 +588,7 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
                     className={`inline-flex items-center justify-center rounded-full border px-3 py-1 text-xs font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 sm:px-3.5 sm:py-1.5 sm:text-sm ${
                       isDarkLandingNavbar
                         ? 'border-white/12 bg-white/5 text-slate-200 focus-visible:ring-slate-300 focus-visible:ring-offset-slate-950'
-                        : 'border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.92))] text-slate-700 shadow-[0_12px_26px_-22px_rgba(15,23,42,0.38)] focus-visible:ring-slate-300 focus-visible:ring-offset-slate-50'
+                        : 'border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.92))] text-black shadow-[0_12px_26px_-22px_rgba(15,23,42,0.38)] focus-visible:ring-slate-300 focus-visible:ring-offset-slate-50'
                     }`}
                     style={navbarInteractionStyle}
                   >
@@ -647,7 +647,7 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
                           type="button"
                           role="menuitem"
                           onClick={() => handleNavItemClick(item)}
-                          className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none"
+                          className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm font-medium text-black hover:bg-slate-50 focus:bg-slate-50 focus:outline-none"
                         >
                           <span className="truncate">{item.label}</span>
                         </button>
@@ -712,7 +712,7 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
                     className="absolute right-0 top-full z-40 mt-2 w-[18.5rem] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_48px_-28px_rgba(15,23,42,0.45)]"
                   >
                     <div className="border-b border-slate-100 px-4 py-3">
-                      <p className="text-sm font-semibold text-slate-900">Menu</p>
+                      <p className="text-sm font-semibold text-black">Menu</p>
                     </div>
                     <div className="py-2">
                       {homeMenuItems.map((item) => (
@@ -724,13 +724,13 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
                           onClick={() => void handleHomeMenuItemClick(item)}
                           className={`flex w-full items-center justify-between px-4 py-2.5 text-left text-sm ${
                             item.disabled
-                              ? 'cursor-default text-slate-400'
-                              : 'text-slate-700 hover:bg-slate-50 focus:bg-slate-50'
+                              ? 'cursor-default text-black'
+                              : 'text-black hover:bg-slate-50 focus:bg-slate-50'
                           } focus:outline-none`}
                         >
                           <span className="whitespace-nowrap">{item.label}</span>
                           {item.disabled && (
-                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-black">
                               Coming soon
                             </span>
                           )}

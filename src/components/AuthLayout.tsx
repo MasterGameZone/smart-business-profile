@@ -33,8 +33,8 @@ function AuthLayout({ title, subtitle, children, footer, darkBackground = false 
     <div
       className={`relative min-h-screen flex flex-col ${
         darkBackground
-          ? 'bg-[linear-gradient(180deg,#020617_0%,#030712_34%,#020617_100%)] text-slate-100'
-          : 'bg-gradient-to-b from-white to-slate-50'
+          ? 'bg-[#eef4fa] text-black'
+          : 'bg-[#eef4fa]'
       }`}
     >
       <AppHeader />
@@ -49,14 +49,14 @@ function AuthLayout({ title, subtitle, children, footer, darkBackground = false 
             }`}
           >
             <div className="text-center mb-8">
-              <h1 className={`mb-2 tracking-tight ${darkBackground ? 'text-3xl font-bold text-slate-50' : 'text-2xl font-bold text-gray-900'}`}>{title}</h1>
-              <p className={darkBackground ? 'text-base text-slate-300' : 'text-sm text-gray-500'}>{subtitle}</p>
+              <h1 className={`mb-2 tracking-tight ${darkBackground ? 'text-3xl font-bold text-slate-50' : 'text-2xl font-bold text-black'}`}>{title}</h1>
+              <p className={darkBackground ? 'text-base text-slate-300' : 'text-sm text-black'}>{subtitle}</p>
             </div>
 
             {children}
           </div>
 
-          {footer && <div className={`mt-6 text-center ${darkBackground ? 'text-slate-300' : ''}`}>{footer}</div>}
+          {footer && <div className={`mt-6 text-center ${darkBackground ? 'text-black' : ''}`}>{footer}</div>}
         </div>
       </main>
     </div>

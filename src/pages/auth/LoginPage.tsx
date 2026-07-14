@@ -89,9 +89,9 @@ function LoginPage() {
       subtitle="Log in to manage your business profile."
       darkBackground
       footer={
-        <p className="text-lg text-slate-300">
+        <p className="text-lg text-black">
           Don&apos;t have an account?{' '}
-          <Link to="/signup" className="font-semibold text-sky-400 focus:outline-none focus:underline">
+          <Link to="/signup" className="font-semibold text-blue-600 focus:outline-none focus:underline">
             Sign up
           </Link>
         </p>
@@ -133,7 +133,7 @@ function LoginPage() {
         </div>
 
         <div className="flex items-center justify-between">
-          <label htmlFor="rememberMe" className="inline-flex select-none items-center gap-2 text-sm text-slate-300">
+          <label htmlFor="rememberMe" className="inline-flex select-none items-center gap-2 text-sm text-black">
             <input
               type="checkbox"
               id="rememberMe"
@@ -146,7 +146,7 @@ function LoginPage() {
           </label>
           <Link
             to="/forgot-password"
-            className="text-sm font-medium text-sky-400 focus:outline-none focus:underline"
+            className="text-sm font-medium text-blue-600 focus:outline-none focus:underline"
           >
             Forgot password?
           </Link>

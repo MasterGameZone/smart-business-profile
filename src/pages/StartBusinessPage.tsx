@@ -50,25 +50,25 @@ function StartBusinessPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#020617_0%,#030712_34%,#020617_100%)] text-slate-100">
+    <div className="min-h-screen bg-[#eef4fa] text-black">
       <AppHeader />
 
       <main className="mx-auto flex max-w-3xl flex-col items-center px-4 py-10 text-center sm:py-14">
         <section className="w-full">
-          <p className="text-center text-xs font-semibold uppercase tracking-[0.18em] text-sky-300">
+          <p className="text-center text-xs font-semibold uppercase tracking-[0.18em] text-blue-600">
             Business Owner Setup
           </p>
-          <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-50 sm:text-4xl">
+          <h1 className="mt-3 text-3xl font-bold tracking-tight text-black sm:text-4xl">
             Create a business profile for your business
           </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-slate-300 sm:text-base">
+          <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-black sm:text-base">
             Create a profile if you offer any product, service, or professional work and want customers to find and
             contact you easily.
           </p>
         </section>
 
         <section className="mt-14 w-full max-w-md text-center sm:mt-16">
-          <p className="text-base font-semibold tracking-tight text-slate-100">
+          <p className="text-base font-semibold tracking-tight text-black">
             Ready to continue as a business owner?
           </p>
 
@@ -85,13 +85,13 @@ function StartBusinessPage() {
               type="button"
               onClick={() => void handleGoBack()}
               disabled={isSubmitting || isLoading}
-              className="inline-flex min-h-[42px] flex-1 items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
+              className="inline-flex min-h-[42px] flex-1 items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
             >
               No, Go Back
             </button>
           </div>
           {errorMessage && (
-            <p className="mt-4 text-sm text-rose-300" role="alert">
+            <p className="mt-4 text-sm text-rose-600" role="alert">
               {errorMessage}
             </p>
           )}

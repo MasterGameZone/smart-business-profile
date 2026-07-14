@@ -89,9 +89,9 @@ function SignUpPage() {
       subtitle="Sign up to start building your business profile."
       darkBackground
       footer={
-        <p className="text-lg text-slate-300">
+        <p className="text-lg text-black">
           Already have an account?{' '}
-          <Link to="/login" className="font-semibold text-sky-400 focus:outline-none focus:underline">
+          <Link to="/login" className="font-semibold text-blue-600 focus:outline-none focus:underline">
             Log in
           </Link>
         </p>

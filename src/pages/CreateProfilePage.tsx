@@ -981,12 +981,12 @@ function FormSectionHeading({
         />
       )}
       <div className="mt-4 flex items-center justify-between gap-3">
-        <h2 id={id} className="text-xl font-semibold tracking-tight text-slate-900 sm:text-[1.35rem]">
+        <h2 id={id} className="text-xl font-semibold tracking-tight text-black sm:text-[1.35rem]">
           {title}
         </h2>
         {action}
       </div>
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">{description}</p>
+      <p className="mt-2 max-w-2xl text-sm leading-6 text-black">{description}</p>
     </div>
   )
 }
@@ -1002,10 +1002,10 @@ function FormSubsectionHeading({ id, title, description, action }: FormSubsectio
   return (
     <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
       <div>
-        <h3 id={id} className="text-sm font-medium text-slate-700">
+        <h3 id={id} className="text-sm font-medium text-black">
           {title}
         </h3>
-        <p className="mt-2 text-xs leading-5 text-slate-500">{description}</p>
+        <p className="mt-2 text-xs leading-5 text-black">{description}</p>
       </div>
       {action}
     </div>
@@ -2461,15 +2461,15 @@ function CreateProfilePage() {
   }
 
   const inputBase =
-    'w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-[0_1px_2px_rgba(15,23,42,0.04),inset_0_1px_0_rgba(255,255,255,0.7)] transition duration-200 placeholder:text-slate-400 focus:border-sky-500 focus:outline-none focus:ring-4 focus:ring-sky-100'
+    'w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-black shadow-[0_1px_2px_rgba(15,23,42,0.04),inset_0_1px_0_rgba(255,255,255,0.7)] transition duration-200 placeholder:text-slate-400 focus:border-sky-500 focus:outline-none focus:ring-4 focus:ring-sky-100'
   const textareaBase = `${inputBase} min-h-[108px] resize-y`
   const fileInputBase =
     `${inputBase} cursor-pointer px-3 py-2.5 file:mr-4 file:rounded-xl file:border-0 file:bg-slate-900 file:px-4 file:py-2 file:text-xs file:font-semibold file:text-white hover:file:bg-slate-800`
   const sectionCardClass =
     'rounded-[26px] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(248,250,252,0.98),rgba(241,245,249,0.92))] p-5 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.38)] sm:p-7'
-  const labelClass = 'mb-2 block text-sm font-medium text-slate-700'
-  const optionalTextClass = 'ml-2 text-xs font-normal text-slate-400'
-  const compactFieldLabelClass = 'mb-1.5 block text-xs font-semibold uppercase tracking-[0.08em] text-slate-500'
+  const labelClass = 'mb-2 block text-sm font-medium text-black'
+  const optionalTextClass = 'ml-2 text-xs font-normal text-black'
+  const compactFieldLabelClass = 'mb-1.5 block text-xs font-semibold uppercase tracking-[0.08em] text-black'
 
   const fieldError = (key: keyof FormErrors) =>
     errors[key] ? (
@@ -2486,22 +2486,22 @@ function CreateProfilePage() {
     ) : null
 
   const characterCounter = (id: string, value: string, maxLength: number) => (
-    <p id={id} className="mt-2 text-xs text-slate-400">
+    <p id={id} className="mt-2 text-xs text-black">
       {value.length} / {maxLength}
     </p>
   )
 
   if (isForbidden) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-white to-slate-50 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-[#eef4fa] flex items-center justify-center px-4">
         <div className="max-w-md w-full text-center">
           <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-6">
             <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">403 - Access Denied</h1>
-          <p className="text-sm text-gray-500 mb-8">
+          <h1 className="text-2xl font-bold text-black mb-2">403 - Access Denied</h1>
+          <p className="text-sm text-black mb-8">
             You don&apos;t have permission to edit this business profile. It belongs to another user.
           </p>
           <button
@@ -2520,7 +2520,7 @@ function CreateProfilePage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[linear-gradient(180deg,#020617_0%,#030712_34%,#020617_100%)]">
+    <div className="relative min-h-screen overflow-hidden bg-[#eef4fa]">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.16),transparent_62%)]"
@@ -2543,12 +2543,12 @@ function CreateProfilePage() {
 
             <div className="relative">
               <div className="mx-auto mb-8 max-w-2xl text-center sm:mb-10">
-                <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+                <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">
                   <span className="create-profile-heading-reveal inline-block leading-tight">
                     {isEditMode ? 'Edit Your Business Profile' : 'Create Your Business Profile'}
                   </span>
                 </h1>
-                <p className="mt-3 text-sm leading-6 text-slate-500 sm:text-[0.95rem]">
+                <p className="mt-3 text-sm leading-6 text-black sm:text-[0.95rem]">
                   Add the details customers need to discover, trust, and contact your business.
                 </p>
                 <div aria-hidden="true" className="mt-6 h-px w-full bg-slate-200/80" />
@@ -2653,11 +2653,11 @@ function CreateProfilePage() {
                           Subcategories
                           <span className={optionalTextClass}>Optional</span>
                         </label>
-                        <p className="mt-2 text-xs text-slate-400">
+                        <p className="mt-2 text-xs text-black">
                           Select up to 8 subcategories.
                         </p>
                       </div>
-                      <p className="text-xs font-medium text-slate-500">
+                      <p className="text-xs font-medium text-black">
                         {profileData.businessSubcategories.length} / {MAX_SUBCATEGORIES} selected
                       </p>
                     </div>
@@ -2683,14 +2683,14 @@ function CreateProfilePage() {
                         <span
                           className={
                             profileData.businessSubcategories.length > 0
-                              ? 'text-slate-900'
+                              ? 'text-black'
                               : 'text-slate-400'
                           }
                         >
                           {selectedSubcategorySummary}
                         </span>
                         <svg
-                          className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${
+                          className={`h-4 w-4 shrink-0 text-black transition-transform ${
                             isSubcategoryDropdownOpen ? 'rotate-180' : ''
                           }`}
                           fill="none"
@@ -2706,7 +2706,7 @@ function CreateProfilePage() {
                         <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-20 rounded-2xl border border-slate-200 bg-white shadow-[0_18px_40px_-24px_rgba(15,23,42,0.24)]">
                           {profileData.businessSubcategories.length > 0 && (
                             <div className="border-b border-slate-100 px-4 py-3">
-                              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-black">
                                 Selected
                               </p>
                               <div className="mt-2 flex flex-wrap gap-2">
@@ -2760,7 +2760,7 @@ function CreateProfilePage() {
                                     onChange={() => handleSubcategoryToggle(subcategory)}
                                     className="mt-0.5 h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-2 focus:ring-sky-200"
                                   />
-                                  <span className="text-slate-700">{subcategory}</span>
+                                  <span className="text-black">{subcategory}</span>
                                 </label>
                               )
                             })}
@@ -2769,7 +2769,7 @@ function CreateProfilePage() {
                       )}
                     </div>
 
-                    <p id="businessSubcategories-help" className="mt-2 text-xs text-slate-400">
+                    <p id="businessSubcategories-help" className="mt-2 text-xs text-black">
                       {selectedSubcategorySummary}
                     </p>
                     {fieldError('businessSubcategories')}
@@ -2800,7 +2800,7 @@ function CreateProfilePage() {
                 />
                 {fieldError('tagline')}
                 {characterCounter('tagline-counter', profileData.tagline, TAGLINE_MAX_LENGTH)}
-                <p id="tagline-help" className="mt-2 text-xs text-slate-400">
+                <p id="tagline-help" className="mt-2 text-xs text-black">
                   This appears under the business name on the public profile.
                 </p>
               </div>
@@ -2834,7 +2834,7 @@ function CreateProfilePage() {
               {fieldError('establishedYear')}
               {fieldError('yearsOfExperience')}
               {characterCounter('businessExperience-counter', businessExperienceValue, BUSINESS_EXPERIENCE_MAX_LENGTH)}
-              <p id="businessExperience-help" className="mt-2 text-xs text-slate-400">
+              <p id="businessExperience-help" className="mt-2 text-xs text-black">
                 Use a four-digit established year, years of experience, or both.
               </p>
             </div>
@@ -2860,7 +2860,7 @@ function CreateProfilePage() {
                     errors.phoneNumber ? 'border-red-400 bg-red-50/60 focus-within:border-red-400 focus-within:ring-red-100' : 'border-slate-200'
                   }`}
                 >
-                  <span className="flex items-center border-r border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-600">
+                  <span className="flex items-center border-r border-slate-200 bg-slate-50 px-4 text-sm font-medium text-black">
                     {INDIA_COUNTRY_CODE}
                   </span>
                   <input
@@ -2877,11 +2877,11 @@ function CreateProfilePage() {
                     aria-required="true"
                     aria-invalid={!!errors.phoneNumber}
                     aria-describedby={errors.phoneNumber ? 'phoneNumber-error' : 'phoneNumber-help'}
-                    className="w-full bg-transparent px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                    className="w-full bg-transparent px-4 py-3 text-sm text-black placeholder:text-slate-400 focus:outline-none"
                   />
                 </div>
                 {fieldError('phoneNumber')}
-                <p id="phoneNumber-help" className="mt-2 text-xs text-slate-400">
+                <p id="phoneNumber-help" className="mt-2 text-xs text-black">
                   Enter a 10-digit Indian mobile number starting with 6, 7, 8, or 9.
                 </p>
               </div>
@@ -2896,7 +2896,7 @@ function CreateProfilePage() {
                     errors.whatsappNumber ? 'border-red-400 bg-red-50/60 focus-within:border-red-400 focus-within:ring-red-100' : 'border-slate-200'
                   }`}
                 >
-                  <span className="flex items-center border-r border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-600">
+                  <span className="flex items-center border-r border-slate-200 bg-slate-50 px-4 text-sm font-medium text-black">
                     {INDIA_COUNTRY_CODE}
                   </span>
                   <input
@@ -2912,11 +2912,11 @@ function CreateProfilePage() {
                     autoComplete="tel-national"
                     aria-invalid={!!errors.whatsappNumber}
                     aria-describedby={errors.whatsappNumber ? 'whatsappNumber-error' : 'whatsappNumber-help'}
-                    className="w-full bg-transparent px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                    className="w-full bg-transparent px-4 py-3 text-sm text-black placeholder:text-slate-400 focus:outline-none"
                   />
                 </div>
                 {fieldError('whatsappNumber')}
-                <p id="whatsappNumber-help" className="mt-2 text-xs text-slate-400">
+                <p id="whatsappNumber-help" className="mt-2 text-xs text-black">
                   Leave blank to use your phone number for WhatsApp.
                 </p>
               </div>
@@ -3007,7 +3007,7 @@ function CreateProfilePage() {
                     <button
                       type="button"
                       onClick={handleAddSocialLinkRow}
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium text-black transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-200"
                       aria-label="Add social link"
                     >
                       +
@@ -3062,7 +3062,7 @@ function CreateProfilePage() {
                           <button
                             type="button"
                             onClick={() => handleRemoveSocialLinkRow(row.id)}
-                            className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-200"
+                            className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-black transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-200"
                           >
                             Remove
                           </button>
@@ -3132,7 +3132,7 @@ function CreateProfilePage() {
                   <button
                     type="button"
                     onClick={handleAddProduct}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium text-black transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-200"
                     aria-label="Add product, menu item, or package"
                   >
                     +
@@ -3143,14 +3143,14 @@ function CreateProfilePage() {
 
             <div className="space-y-4">
               {profileData.productsMenuPackages.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 px-4 py-5 text-sm text-slate-500">
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 px-4 py-5 text-sm text-black">
                   No product, menu, or package items added yet.
                 </div>
               ) : (
                 profileData.productsMenuPackages.map((item, index) => (
                   <div key={item.id} className="rounded-2xl border border-slate-200 bg-white/85 p-4 sm:p-5">
                     <div className="mb-4 flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold text-slate-800">Item {index + 1}</p>
+                      <p className="text-sm font-semibold text-black">Item {index + 1}</p>
                       <button
                         type="button"
                         onClick={() => handleRemoveProduct(item.id)}
@@ -3254,7 +3254,7 @@ function CreateProfilePage() {
                             />
                             <label
                               htmlFor={`product-image-${item.id}`}
-                              className="inline-flex cursor-pointer items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 focus-within:ring-2 focus-within:ring-sky-200"
+                              className="inline-flex cursor-pointer items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-black transition hover:border-slate-300 hover:bg-slate-100 focus-within:ring-2 focus-within:ring-sky-200"
                             >
                               {item.imageFile || item.imageUrl ? 'Replace image' : 'Upload image'}
                             </label>
@@ -3300,7 +3300,7 @@ function CreateProfilePage() {
                   />
                   {fieldError('keywordsText')}
                   {characterCounter('keywordsText-counter', profileData.keywordsText, KEYWORDS_TEXT_MAX_LENGTH)}
-                  <p id="keywordsText-help" className="mt-2 text-xs text-slate-400">
+                  <p id="keywordsText-help" className="mt-2 text-xs text-black">
                     Separate keywords with commas. Use up to 300 characters total.
                   </p>
                 </div>
@@ -3312,10 +3312,10 @@ function CreateProfilePage() {
             />
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white/85">
               <div className="hidden border-b border-slate-200/80 bg-slate-50/80 px-4 py-3 md:grid md:grid-cols-[140px_minmax(0,170px)_minmax(0,170px)_auto] md:items-center md:gap-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Day</p>
-                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Open Time</p>
-                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Close Time</p>
-                <p className="text-right text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-black">Day</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-black">Open Time</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-black">Close Time</p>
+                <p className="text-right text-xs font-semibold uppercase tracking-[0.08em] text-black">
                   Closed
                 </p>
               </div>
@@ -3329,11 +3329,11 @@ function CreateProfilePage() {
                     className="border-b border-slate-200/80 px-4 py-3 last:border-b-0"
                   >
                     <div className="grid grid-cols-2 items-start gap-3 md:grid-cols-[140px_minmax(0,170px)_minmax(0,170px)_auto] md:items-center">
-                      <p className="order-1 text-sm font-semibold text-slate-800">{label}</p>
+                      <p className="order-1 text-sm font-semibold text-black">{label}</p>
 
                       <label
                         htmlFor={`${key}-closed`}
-                        className="order-2 inline-flex items-center justify-self-start gap-2 whitespace-nowrap text-sm text-slate-500 md:order-4 md:justify-self-end"
+                        className="order-2 inline-flex items-center justify-self-start gap-2 whitespace-nowrap text-sm text-black md:order-4 md:justify-self-end"
                       >
                         <input
                           type="checkbox"
@@ -3346,7 +3346,7 @@ function CreateProfilePage() {
                       </label>
 
                       <div className="order-3 min-w-0 md:order-2">
-                        <label htmlFor={`${key}-open`} className="mb-1.5 block text-xs font-medium text-slate-500 md:sr-only">
+                        <label htmlFor={`${key}-open`} className="mb-1.5 block text-xs font-medium text-black md:sr-only">
                           Open Time
                         </label>
                         <input
@@ -3360,7 +3360,7 @@ function CreateProfilePage() {
                       </div>
 
                       <div className="order-4 min-w-0 md:order-3">
-                        <label htmlFor={`${key}-close`} className="mb-1.5 block text-xs font-medium text-slate-500 md:sr-only">
+                        <label htmlFor={`${key}-close`} className="mb-1.5 block text-xs font-medium text-black md:sr-only">
                           Close Time
                         </label>
                         <input
@@ -3388,7 +3388,7 @@ function CreateProfilePage() {
                   <button
                     type="button"
                     onClick={handleAddFaq}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium text-black transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-200"
                     aria-label="Add FAQ item"
                   >
                     +
@@ -3399,14 +3399,14 @@ function CreateProfilePage() {
 
             <div className="space-y-4">
               {profileData.faqs.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 px-4 py-5 text-sm text-slate-500">
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 px-4 py-5 text-sm text-black">
                   No FAQs added yet.
                 </div>
               ) : (
                 profileData.faqs.map((faq, index) => (
                   <div key={faq.id} className="rounded-2xl border border-slate-200 bg-white/85 p-4 sm:p-5">
                     <div className="mb-4 flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold text-slate-800">FAQ {index + 1}</p>
+                      <p className="text-sm font-semibold text-black">FAQ {index + 1}</p>
                       <button
                         type="button"
                         onClick={() => handleRemoveFaq(faq.id)}
@@ -3495,14 +3495,14 @@ function CreateProfilePage() {
                 />
                 {fieldError('logo')}
                 {logoFileName ? (
-                  <p className="mt-2 flex items-center gap-1 text-xs text-slate-500">
+                  <p className="mt-2 flex items-center gap-1 text-xs text-black">
                     <svg className="w-3.5 h-3.5 shrink-0 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                     {logoFileName}
                   </p>
                 ) : (
-                  <p id="logo-help" className="mt-2 text-xs text-slate-400">
+                  <p id="logo-help" className="mt-2 text-xs text-black">
                     JPG, PNG, or WebP only. Maximum file size is 5 MB.
                   </p>
                 )}
@@ -3525,10 +3525,10 @@ function CreateProfilePage() {
                   className={`${fileInputBase} ${errors.coverBanner ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
                 />
                 {fieldError('coverBanner')}
-                <p id="coverBanner-help" className="mt-2 text-xs text-slate-400">
+                <p id="coverBanner-help" className="mt-2 text-xs text-black">
                   Upload a wide banner image for the top of your public business profile. JPG, PNG, or WebP only. Maximum file size is 5 MB.
                 </p>
-                <p id="coverBanner-recommendation" className="mt-1 text-xs text-slate-400">
+                <p id="coverBanner-recommendation" className="mt-1 text-xs text-black">
                   Recommended size: 1600 x 600 px (16:6 ratio). Keep important content near the center.
                 </p>
                 {coverBannerPreviewUrl && (
@@ -3539,7 +3539,7 @@ function CreateProfilePage() {
                       className="aspect-[16/6] w-full rounded-2xl border border-slate-200 bg-slate-50 object-cover"
                     />
                     <div className="mt-3 flex items-center justify-between gap-3">
-                      <p className="truncate text-xs text-slate-500">
+                      <p className="truncate text-xs text-black">
                         {coverBannerFileName || 'Current cover banner'}
                       </p>
                       <button
@@ -3572,7 +3572,7 @@ function CreateProfilePage() {
                   className={`${fileInputBase} ${errors.galleryImages ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
                 />
                 {fieldError('galleryImages')}
-                <p id="galleryImages-help" className="mt-2 text-xs text-slate-400">
+                <p id="galleryImages-help" className="mt-2 text-xs text-black">
                   Upload photos of your shop, clinic, office, work, products, or services. Up to {MAX_GALLERY_IMAGES} images.
                 </p>
 
@@ -3635,7 +3635,7 @@ function CreateProfilePage() {
                   <button
                     type="button"
                     onClick={handleAddQualification}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium text-black transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-200"
                     aria-label="Add certificate, license, or qualification"
                   >
                     +
@@ -3646,14 +3646,14 @@ function CreateProfilePage() {
 
             <div className="space-y-4">
               {profileData.qualifications.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 px-4 py-5 text-sm text-slate-500">
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 px-4 py-5 text-sm text-black">
                   No credentials added yet.
                 </div>
               ) : (
                 profileData.qualifications.map((item, index) => (
                   <div key={item.id} className="rounded-2xl border border-slate-200 bg-white/85 p-4 sm:p-5">
                     <div className="mb-4 flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold text-slate-800">Credential {index + 1}</p>
+                      <p className="text-sm font-semibold text-black">Credential {index + 1}</p>
                       <button
                         type="button"
                         onClick={() => handleRemoveQualification(item.id)}
@@ -3772,17 +3772,17 @@ function CreateProfilePage() {
                           aria-describedby={errors.qualifications ? 'qualifications-error' : undefined}
                           className={`${fileInputBase} ${errors.qualifications ? 'border-red-400 bg-red-50/60 focus:border-red-400 focus:ring-red-100' : ''}`}
                         />
-                        <p className="mt-2 text-xs text-slate-400">
+                        <p className="mt-2 text-xs text-black">
                           Supported formats: PDF, JPG, PNG, and WebP. Maximum file size is 10 MB.
                         </p>
 
                         {(item.documentFile || item.documentFileName.trim()) && (
                           <div className="mt-3 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                             <div className="min-w-0">
-                              <p className="truncate text-sm font-medium text-slate-800">
+                              <p className="truncate text-sm font-medium text-black">
                                 {item.documentFile?.name || item.documentFileName}
                               </p>
-                              <p className="mt-1 text-xs text-slate-500">
+                              <p className="mt-1 text-xs text-black">
                                 {formatMimeTypeLabel(item.documentFile?.type || item.documentMimeType)}
                               </p>
                             </div>
@@ -3846,10 +3846,10 @@ function CreateProfilePage() {
                     Previous
                   </button>
                   <div>
-                    <p className="text-sm font-semibold text-slate-900">
+                    <p className="text-sm font-semibold text-black">
                       {isEditMode ? 'Review your updates before saving.' : 'Review your details before continuing.'}
                     </p>
-                    <p className="mt-1 text-sm leading-6 text-slate-500">
+                    <p className="mt-1 text-sm leading-6 text-black">
                       {isEditMode
                         ? 'Your existing business profile will be updated with these changes.'
                         : 'You can preview the public profile before creating it.'}
@@ -3861,7 +3861,7 @@ function CreateProfilePage() {
                 <button
                   type="button"
                   onClick={handleClearForm}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-200 sm:w-auto"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-medium text-black transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-200 sm:w-auto"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
