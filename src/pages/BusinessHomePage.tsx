@@ -100,6 +100,35 @@ function ChartIcon() {
   )
 }
 
+function HelpCardIcon() {
+  return (
+    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 17h.01" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9.09 9a3 3 0 115.82 1c0 2-3 2-3 4" />
+      <circle cx="12" cy="12" r="9" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} />
+    </svg>
+  )
+}
+
+function HelpIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 17h.01" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9.09 9a3 3 0 115.82 1c0 2-3 2-3 4" />
+      <circle cx="12" cy="12" r="9" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} />
+    </svg>
+  )
+}
+
+function SupportIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 22a2 2 0 002-2h-4a2 2 0 002 2z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M18 16v-4a6 6 0 10-12 0v4l-2 2h16l-2-2z" />
+    </svg>
+  )
+}
+
 function BusinessHomePage() {
   const navigate = useNavigate()
   const { user, accountMode, isLoading } = useAuth()
@@ -221,6 +250,14 @@ function BusinessHomePage() {
       console.error('Failed to copy public profile link:', error)
       showToast('Unable to copy the public profile link right now.', 'error')
     }
+  }
+
+  const handleViewHelp = () => {
+    navigate('/customer/help-feedback#help')
+  }
+
+  const handleContactSupport = () => {
+    navigate('/customer/help-feedback#help')
   }
 
   return (
@@ -450,6 +487,43 @@ function BusinessHomePage() {
               >
                 Complete Profile
               </button>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-3xl border border-[#c7d2df] bg-white p-5 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md sm:p-6">
+          <div className="flex gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-700 ring-1 ring-sky-100">
+              <HelpCardIcon />
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <h2 className="text-base font-semibold tracking-tight text-black sm:text-lg">
+                Need help improving your profile?
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                We’re here to help you make your profile more complete, trustworthy, and useful for customers.
+              </p>
+
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={handleViewHelp}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-black shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-300/80 focus:ring-offset-2 focus:ring-offset-slate-950 sm:w-auto"
+                >
+                  <HelpIcon />
+                  <span>View Help</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleContactSupport}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-sky-400/30 bg-[linear-gradient(135deg,#38bdf8_0%,#2563eb_55%,#0f172a_100%)] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_16px_32px_-20px_rgba(56,189,248,0.42)] transition focus:outline-none focus:ring-2 focus:ring-sky-300/80 focus:ring-offset-2 focus:ring-offset-slate-950 sm:w-auto"
+                >
+                  <SupportIcon />
+                  <span>Contact Support</span>
+                </button>
+              </div>
             </div>
           </div>
         </section>
