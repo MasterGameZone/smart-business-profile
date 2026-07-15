@@ -27,6 +27,20 @@ function truncate(text: string, length: number): string {
   return `${text.slice(0, length).trimEnd()}...`
 }
 
+function getInitials(value: string): string {
+  const parts = value
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+
+  if (parts.length === 0) return 'BP'
+
+  return parts
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('')
+}
+
 function BusinessHomePage() {
   const navigate = useNavigate()
   const { user, accountMode, isLoading } = useAuth()
@@ -40,6 +54,13 @@ function BusinessHomePage() {
   const [loadState, setLoadState] = useState<LoadState>('loading')
   const [profiles, setProfiles] = useState<BusinessProfileRow[]>([])
   const [toasts, setToasts] = useState<ToastItem[]>([])
+
+  const featuredProfile = profiles[0] ?? null
+  const ownerName = featuredProfile?.owner_name.trim() || profileData.ownerName.trim() || user?.user_metadata?.full_name?.trim() || 'there'
+  const businessName = featuredProfile?.business_name.trim() || profileData.businessName.trim() || 'Business profile'
+  const businessCategory = featuredProfile?.business_category.trim() || profileData.businessCategory.trim() || ''
+  const businessLogoUrl = featuredProfile?.logo_url || null
+  const businessInitials = getInitials(businessName)
 
   useEffect(() => {
     if (!isLoading && user && accountMode !== 'business_owner') {
@@ -148,11 +169,42 @@ function BusinessHomePage() {
       <AppHeader />
 
       <main className="mx-auto max-w-5xl px-4 py-10 sm:py-14">
-        <section className="rounded-3xl border border-[#c7d2df] bg-white p-6 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md sm:p-8">
-          <h1 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">Business Home</h1>
-          <p className="mt-4 text-sm leading-relaxed text-black sm:text-base">
-            Manage your business profiles from one place.
-          </p>
+        <section className="rounded-3xl border border-[#c7d2df] bg-[linear-gradient(135deg,rgba(255,255,255,0.98)_0%,rgba(232,242,252,0.96)_100%)] p-5 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md sm:p-6">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <h1 className="text-2xl font-semibold tracking-tight text-black sm:text-3xl">
+                Welcome back, {ownerName}
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-black sm:text-base">
+                Manage your business profile and help customers connect with you easily.
+              </p>
+            </div>
+
+            <div className="flex min-w-0 items-center gap-3 rounded-2xl border border-[#d5deea] bg-white/75 px-3 py-3 shadow-[0_10px_30px_-24px_rgba(15,23,42,0.35)] sm:min-w-[16rem] sm:max-w-[18rem] sm:justify-start">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#d5deea] bg-slate-100 text-sm font-semibold text-slate-700">
+                {businessLogoUrl ? (
+                  <img
+                    src={businessLogoUrl}
+                    alt={`${businessName} logo`}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span aria-hidden="true">{businessInitials}</span>
+                )}
+              </div>
+
+              <div className="min-w-0">
+                <p className="truncate text-base font-semibold tracking-tight text-black sm:text-lg">
+                  {businessName}
+                </p>
+                {businessCategory ? (
+                  <span className="mt-1 inline-flex max-w-full items-center rounded-full bg-sky-100 px-2.5 py-1 text-xs font-semibold text-sky-800">
+                    <span className="truncate">{businessCategory}</span>
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          </div>
         </section>
 
         <section className="mt-8" aria-labelledby="my-business-profiles-heading">
