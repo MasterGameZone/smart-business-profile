@@ -288,9 +288,18 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
   ]
 
   const customerActivityMenuItems: HomeMenuItem[] = [
-    { label: 'Ratings & Reviews', disabled: true },
-    { label: 'Reported Profiles', disabled: true },
-    { label: 'Submitted Corrections', disabled: true },
+    {
+      label: 'Ratings & Reviews',
+      onSelect: () => navigate('/customer/my-activity', { state: { tab: 'reviews' } }),
+    },
+    {
+      label: 'Reported Profiles',
+      onSelect: () => navigate('/customer/my-activity', { state: { tab: 'reports' } }),
+    },
+    {
+      label: 'Submitted Corrections',
+      onSelect: () => navigate('/customer/my-activity', { state: { tab: 'corrections' } }),
+    },
   ]
 
   const customerCommunityMenuItems: HomeMenuItem[] = [

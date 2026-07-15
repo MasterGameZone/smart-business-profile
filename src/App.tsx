@@ -13,6 +13,7 @@ import StartBusinessPage from './pages/StartBusinessPage.tsx'
 import BusinessHomePage from './pages/BusinessHomePage.tsx'
 import FavoritesPage from './pages/FavoritesPage.tsx'
 import CustomerProfileSettingsPage from './pages/CustomerProfileSettingsPage.tsx'
+import CustomerMyActivityPage from './pages/CustomerMyActivityPage.tsx'
 import ProtectedRoute from './components/ProtectedRoute.tsx'
 
 function App() {
@@ -74,6 +75,14 @@ function App() {
         element={
           <ProtectedRoute>
             <CustomerProfileSettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/customer/my-activity"
+        element={
+          <ProtectedRoute>
+            <CustomerMyActivityPage />
           </ProtectedRoute>
         }
       />
