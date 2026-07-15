@@ -312,6 +312,50 @@ Access is restricted by RLS to the authenticated owner of each row. Authenticate
 
 ---
 
+## Table: customer_feature_votes
+
+Purpose
+
+Stores private customer votes for predefined upcoming platform features.
+
+### Columns
+
+| Column | Type | Nullable | Description |
+|----------|------|----------|-------------|
+| id | UUID | No | Primary key |
+| customer_id | UUID | No | Reference to `auth.users.id` |
+| feature_key | TEXT | No | Stable predefined feature key |
+| feature_title | TEXT | No | Display title for the voted feature |
+| created_at | TIMESTAMP WITH TIME ZONE | No | Record creation timestamp |
+| updated_at | TIMESTAMP WITH TIME ZONE | No | Last update timestamp |
+
+Each customer may vote once per feature through a unique `(customer_id, feature_key)` constraint. Access is restricted by RLS to the authenticated owner of each row. Authenticated customers may select, insert, and delete only their own feature votes. No anonymous or public access is granted.
+
+---
+
+## Table: customer_platform_suggestions
+
+Purpose
+
+Stores private customer-submitted feature suggestions, category suggestions, and platform improvement ideas.
+
+### Columns
+
+| Column | Type | Nullable | Description |
+|----------|------|----------|-------------|
+| id | UUID | No | Primary key |
+| customer_id | UUID | No | Reference to `auth.users.id` |
+| suggestion_type | TEXT | No | `Feature Suggestion`, `Category Suggestion`, or `Platform Improvement` |
+| title | TEXT | No | Short suggestion title |
+| message | TEXT | No | Suggestion details |
+| status | TEXT | No | Suggestion status, defaulting to `Submitted` |
+| created_at | TIMESTAMP WITH TIME ZONE | No | Record creation timestamp |
+| updated_at | TIMESTAMP WITH TIME ZONE | No | Last update timestamp |
+
+Access is restricted by RLS to the authenticated owner of each row. Authenticated customers may select and insert only their own suggestions, and new customer-created suggestions must start with `Submitted` status. No customer update/delete UI or anonymous/public access is provided in the MVP.
+
+---
+
 ## Table: business_profile_documents
 
 Purpose
@@ -390,6 +434,7 @@ Version 3.8 added helper functions for logo, cover, and gallery uploads. Version
 | 4.24 | Customer supported business nominations | Migration created; apply to Supabase |
 | 4.25 | Support invite published-profile linking RPC | Migration created; apply to Supabase |
 | 4.26 | Customer notifications MVP | Migration created; apply to Supabase |
+| 4.27 | Customer Shape the Platform MVP | Migration created; apply to Supabase |
 | Future | Additional modules | Planned |
 
 Detailed migration SQL should remain inside the `/supabase/migrations` directory.

@@ -12,10 +12,25 @@ import {
   listCustomerBusinessSupports,
   markBusinessSupportShared,
 } from '../lib/customerBusinessSupportService.ts'
+import {
+  CUSTOMER_FEATURE_OPTIONS,
+  createCustomerPlatformSuggestion,
+  listCustomerFeatureVotes,
+  listCustomerPlatformSuggestions,
+  removeFeatureVote,
+  voteForFeature,
+} from '../lib/customerPlatformSuggestionService.ts'
 import type {
   CustomerBusinessSupportRow,
   CustomerBusinessSupportStatus,
 } from '../types/customerBusinessSupport.ts'
+import type {
+  CustomerFeatureKey,
+  CustomerFeatureVoteRow,
+  CustomerPlatformSuggestionRow,
+  CustomerPlatformSuggestionStatus,
+  CustomerPlatformSuggestionType,
+} from '../types/customerPlatformSuggestion.ts'
 
 type CommunityTab = 'impact' | 'support' | 'shape'
 
@@ -32,6 +47,17 @@ interface SupportFormErrors {
   customMessage?: string
 }
 
+interface PlatformSuggestionFormState {
+  suggestionType: CustomerPlatformSuggestionType
+  title: string
+  message: string
+}
+
+interface PlatformSuggestionFormErrors {
+  title?: string
+  message?: string
+}
+
 type FeedbackMessage = {
   kind: 'success' | 'error'
   text: string
@@ -43,6 +69,23 @@ const defaultSupportFormState: SupportFormState = {
   businessLocation: '',
   customMessage: '',
 }
+
+const defaultFeatureSuggestionForm: PlatformSuggestionFormState = {
+  suggestionType: 'Feature Suggestion',
+  title: '',
+  message: '',
+}
+
+const defaultImprovementSuggestionForm: PlatformSuggestionFormState = {
+  suggestionType: 'Category Suggestion',
+  title: '',
+  message: '',
+}
+
+const improvementSuggestionTypes: CustomerPlatformSuggestionType[] = [
+  'Category Suggestion',
+  'Platform Improvement',
+]
 
 function getActiveTab(hash: string): CommunityTab {
   if (hash === '#support') return 'support'
@@ -81,6 +124,25 @@ function statusPillClass(status: CustomerBusinessSupportStatus): string {
     case 'Nominated':
       return 'bg-amber-50 text-amber-700'
   }
+}
+
+function suggestionStatusPillClass(status: CustomerPlatformSuggestionStatus): string {
+  switch (status) {
+    case 'Added':
+      return 'bg-emerald-50 text-emerald-700'
+    case 'Planned':
+      return 'bg-blue-50 text-blue-700'
+    case 'Under Review':
+      return 'bg-amber-50 text-amber-700'
+    case 'Declined':
+      return 'bg-rose-50 text-rose-700'
+    case 'Submitted':
+      return 'bg-slate-100 text-slate-700'
+  }
+}
+
+function getMessagePreview(message: string): string {
+  return message.length > 140 ? `${message.slice(0, 137)}...` : message
 }
 
 function validateSupportForm(formState: SupportFormState): {
@@ -127,6 +189,40 @@ function validateSupportForm(formState: SupportFormState): {
   }
 }
 
+function validatePlatformSuggestionForm(formState: PlatformSuggestionFormState): {
+  errors: PlatformSuggestionFormErrors
+  values: PlatformSuggestionFormState
+} {
+  const title = normalizeText(formState.title)
+  const message = normalizeText(formState.message)
+  const errors: PlatformSuggestionFormErrors = {}
+
+  if (!title) {
+    errors.title = 'Please enter a suggestion title.'
+  } else if (title.length > 80) {
+    errors.title = 'Suggestion title must be 80 characters or fewer.'
+  } else if (containsLink(title)) {
+    errors.title = 'Please remove links from the suggestion title.'
+  }
+
+  if (!message) {
+    errors.message = 'Please enter a suggestion message.'
+  } else if (message.length > 500) {
+    errors.message = 'Suggestion message must be 500 characters or fewer.'
+  } else if (containsLink(message)) {
+    errors.message = 'Please remove links from the suggestion message.'
+  }
+
+  return {
+    errors,
+    values: {
+      suggestionType: formState.suggestionType,
+      title,
+      message,
+    },
+  }
+}
+
 function invitationLinkForSupport(support: CustomerBusinessSupportRow): string {
   return buildInvitationLink(support, window.location.origin)
 }
@@ -148,6 +244,23 @@ function CustomerCommunityPage() {
   const [supportFeedback, setSupportFeedback] = useState<FeedbackMessage>(null)
   const [previewFeedback, setPreviewFeedback] = useState<FeedbackMessage>(null)
   const [sharingSupportId, setSharingSupportId] = useState<string | null>(null)
+  const [featureVotes, setFeatureVotes] = useState<CustomerFeatureVoteRow[]>([])
+  const [platformSuggestions, setPlatformSuggestions] = useState<CustomerPlatformSuggestionRow[]>([])
+  const [loadedShapeCustomerId, setLoadedShapeCustomerId] = useState<string | null>(null)
+  const [isShapeLoading, setIsShapeLoading] = useState(true)
+  const [shapeLoadError, setShapeLoadError] = useState<string | null>(null)
+  const [shapeFeedback, setShapeFeedback] = useState<FeedbackMessage>(null)
+  const [featureSuggestionForm, setFeatureSuggestionForm] = useState<PlatformSuggestionFormState>(
+    defaultFeatureSuggestionForm
+  )
+  const [featureSuggestionErrors, setFeatureSuggestionErrors] = useState<PlatformSuggestionFormErrors>({})
+  const [improvementSuggestionForm, setImprovementSuggestionForm] = useState<PlatformSuggestionFormState>(
+    defaultImprovementSuggestionForm
+  )
+  const [improvementSuggestionErrors, setImprovementSuggestionErrors] = useState<PlatformSuggestionFormErrors>({})
+  const [votingFeatureKey, setVotingFeatureKey] = useState<CustomerFeatureKey | null>(null)
+  const [isSubmittingFeatureSuggestion, setIsSubmittingFeatureSuggestion] = useState(false)
+  const [isSubmittingImprovementSuggestion, setIsSubmittingImprovementSuggestion] = useState(false)
 
   usePageMeta({
     title: 'Your Local Community | Smart Business Profile',
@@ -201,11 +314,48 @@ function CustomerCommunityPage() {
     }
   }, [activeTab, isAuthLoading, userId])
 
+  useEffect(() => {
+    if (activeTab !== 'shape' || isAuthLoading || !userId) return
+
+    let isCurrent = true
+
+    void Promise.all([
+      listCustomerFeatureVotes(userId),
+      listCustomerPlatformSuggestions(userId),
+    ])
+      .then(([votes, suggestions]) => {
+        if (!isCurrent) return
+        setFeatureVotes(votes)
+        setPlatformSuggestions(suggestions)
+        setLoadedShapeCustomerId(userId)
+        setShapeLoadError(null)
+      })
+      .catch((error) => {
+        if (!isCurrent) return
+        console.error('Failed to load customer platform participation:', error)
+        setLoadedShapeCustomerId(userId)
+        setShapeLoadError('We could not load your platform participation right now. Please try again.')
+      })
+      .finally(() => {
+        if (!isCurrent) return
+        setIsShapeLoading(false)
+      })
+
+    return () => {
+      isCurrent = false
+    }
+  }, [activeTab, isAuthLoading, userId])
+
   const impactSummary = calculateCustomerImpactSummary(supportedBusinesses)
   const impactDisplayError =
     !isAuthLoading && !userId ? 'Please sign in to view your local impact.' : supportLoadError
   const supportDisplayError =
     !isAuthLoading && !userId ? 'Please sign in to support a business.' : supportLoadError
+  const shapeDisplayError =
+    !isAuthLoading && !userId ? 'Please sign in to shape the platform.' : shapeLoadError
+  const showShapeLoading =
+    isAuthLoading || Boolean(userId && (isShapeLoading || loadedShapeCustomerId !== userId))
+  const votedFeatureKeys = new Set(featureVotes.map((vote) => vote.feature_key))
 
   const updateSupportInList = (nextSupport: CustomerBusinessSupportRow) => {
     setSupportedBusinesses((currentSupports) =>
@@ -224,6 +374,40 @@ function CustomerCommunityPage() {
 
     if (formErrors[field as keyof SupportFormErrors]) {
       setFormErrors((currentErrors) => ({
+        ...currentErrors,
+        [field]: undefined,
+      }))
+    }
+  }
+
+  const handlePlatformSuggestionFormChange = (
+    formKind: 'feature' | 'improvement',
+    field: keyof PlatformSuggestionFormState,
+    value: string
+  ) => {
+    if (formKind === 'feature') {
+      setFeatureSuggestionForm((currentForm) => ({
+        ...currentForm,
+        [field]: value,
+      }))
+
+      if (featureSuggestionErrors[field as keyof PlatformSuggestionFormErrors]) {
+        setFeatureSuggestionErrors((currentErrors) => ({
+          ...currentErrors,
+          [field]: undefined,
+        }))
+      }
+
+      return
+    }
+
+    setImprovementSuggestionForm((currentForm) => ({
+      ...currentForm,
+      [field]: value,
+    }))
+
+    if (improvementSuggestionErrors[field as keyof PlatformSuggestionFormErrors]) {
+      setImprovementSuggestionErrors((currentErrors) => ({
         ...currentErrors,
         [field]: undefined,
       }))
@@ -260,6 +444,99 @@ function CustomerCommunityPage() {
       setSupportFeedback({ kind: 'error', text: 'We could not save this supported business. Please try again.' })
     } finally {
       setIsSavingSupport(false)
+    }
+  }
+
+  const handleToggleFeatureVote = async (feature: (typeof CUSTOMER_FEATURE_OPTIONS)[number]): Promise<void> => {
+    if (!userId || votingFeatureKey) return
+
+    const hasVoted = votedFeatureKeys.has(feature.key)
+    setVotingFeatureKey(feature.key)
+    setShapeFeedback(null)
+
+    try {
+      if (hasVoted) {
+        await removeFeatureVote(userId, feature.key)
+        setFeatureVotes((currentVotes) =>
+          currentVotes.filter((vote) => vote.feature_key !== feature.key)
+        )
+        return
+      }
+
+      const createdVote = await voteForFeature(userId, feature)
+      setFeatureVotes((currentVotes) => [createdVote, ...currentVotes])
+    } catch (error) {
+      console.error('Failed to update customer feature vote:', error)
+      setShapeFeedback({ kind: 'error', text: 'We could not update your vote right now. Please try again.' })
+    } finally {
+      setVotingFeatureKey(null)
+    }
+  }
+
+  const refreshPlatformSuggestions = async (): Promise<void> => {
+    if (!userId) return
+
+    const suggestions = await listCustomerPlatformSuggestions(userId)
+    setPlatformSuggestions(suggestions)
+  }
+
+  const handleCreatePlatformSuggestion = async (
+    event: FormEvent<HTMLFormElement>,
+    formKind: 'feature' | 'improvement'
+  ): Promise<void> => {
+    event.preventDefault()
+
+    if (!userId) return
+
+    const isFeatureForm = formKind === 'feature'
+    const isSubmitting = isFeatureForm ? isSubmittingFeatureSuggestion : isSubmittingImprovementSuggestion
+    if (isSubmitting) return
+
+    const formState = isFeatureForm ? featureSuggestionForm : improvementSuggestionForm
+    const validation = validatePlatformSuggestionForm(formState)
+    setShapeFeedback(null)
+
+    if (isFeatureForm) {
+      setFeatureSuggestionErrors(validation.errors)
+    } else {
+      setImprovementSuggestionErrors(validation.errors)
+    }
+
+    if (Object.keys(validation.errors).length > 0) {
+      return
+    }
+
+    if (isFeatureForm) {
+      setIsSubmittingFeatureSuggestion(true)
+    } else {
+      setIsSubmittingImprovementSuggestion(true)
+    }
+
+    try {
+      await createCustomerPlatformSuggestion({
+        customerId: userId,
+        suggestionType: validation.values.suggestionType,
+        title: validation.values.title,
+        message: validation.values.message,
+      })
+      await refreshPlatformSuggestions()
+
+      if (isFeatureForm) {
+        setFeatureSuggestionForm(defaultFeatureSuggestionForm)
+      } else {
+        setImprovementSuggestionForm(defaultImprovementSuggestionForm)
+      }
+
+      setShapeFeedback({ kind: 'success', text: 'Suggestion submitted.' })
+    } catch (error) {
+      console.error('Failed to create customer platform suggestion:', error)
+      setShapeFeedback({ kind: 'error', text: 'We could not submit your suggestion. Please try again.' })
+    } finally {
+      if (isFeatureForm) {
+        setIsSubmittingFeatureSuggestion(false)
+      } else {
+        setIsSubmittingImprovementSuggestion(false)
+      }
     }
   }
 
@@ -739,28 +1016,241 @@ function CustomerCommunityPage() {
 
           {activeTab === 'shape' && (
             <section id="shape" className={sectionClassName}>
-              <h2 className="text-lg font-semibold tracking-tight text-black sm:text-xl">Shape the Platform</h2>
-              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-black sm:text-base">
-                Help guide future improvements by previewing the kinds of community feedback the platform will support.
-              </p>
-
-              <div className="mt-5 space-y-3">
-                <div className="rounded-2xl border border-[#c7d2df] bg-[#f8fafc] px-4 py-4">
-                  <p className="text-sm font-medium text-black">Vote on upcoming features</p>
-                </div>
-                <div className="rounded-2xl border border-[#c7d2df] bg-[#f8fafc] px-4 py-4">
-                  <p className="text-sm font-medium text-black">Submit feature suggestions</p>
-                </div>
-                <div className="rounded-2xl border border-[#c7d2df] bg-[#f8fafc] px-4 py-4">
-                  <p className="text-sm font-medium text-black">Suggest categories or improvements</p>
-                </div>
+              <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-4">
+                <h2 className="text-lg font-semibold tracking-tight text-black sm:text-xl">Shape the Platform</h2>
+                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-black">
+                  Vote on upcoming features, suggest improvements, and help us build a better local business network.
+                </p>
               </div>
 
-              <div className="mt-5">
-                <button type="button" className={actionButtonClassName} disabled>
-                  Shape the Platform
-                </button>
-              </div>
+              {shapeFeedback && (
+                <div
+                  className={`mt-5 rounded-2xl border px-4 py-3 text-sm ${
+                    shapeFeedback.kind === 'success'
+                      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                      : 'border-red-200 bg-red-50 text-red-700'
+                  }`}
+                >
+                  {shapeFeedback.text}
+                </div>
+              )}
+
+              {showShapeLoading && !shapeDisplayError && (
+                <div className={`mt-5 ${cardClassName}`}>
+                  <p className="text-sm text-black">Loading platform options...</p>
+                </div>
+              )}
+
+              {shapeDisplayError && (
+                <div className={`mt-5 ${cardClassName}`}>
+                  <p className="text-sm text-red-700">{shapeDisplayError}</p>
+                </div>
+              )}
+
+              {!showShapeLoading && !shapeDisplayError && (
+                <>
+                  <div className="mt-7">
+                    <h3 className="text-base font-semibold text-black">Vote on Upcoming Features</h3>
+                    <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      {CUSTOMER_FEATURE_OPTIONS.map((feature) => {
+                        const hasVoted = votedFeatureKeys.has(feature.key)
+                        const isVoting = votingFeatureKey === feature.key
+
+                        return (
+                          <article key={feature.key} className={cardClassName}>
+                            <div className="flex h-full flex-col justify-between gap-4">
+                              <div>
+                                <h4 className="text-sm font-semibold text-black sm:text-base">{feature.title}</h4>
+                                <p className="mt-2 text-sm leading-relaxed text-black">{feature.description}</p>
+                              </div>
+                              <button
+                                type="button"
+                                className={hasVoted ? secondaryButtonClassName : actionButtonClassName}
+                                onClick={() => void handleToggleFeatureVote(feature)}
+                                disabled={Boolean(votingFeatureKey)}
+                              >
+                                {isVoting ? 'Updating...' : hasVoted ? 'Voted' : 'Vote'}
+                              </button>
+                            </div>
+                          </article>
+                        )
+                      })}
+                    </div>
+                    <p className={helperClassName}>
+                      Your votes are private. Public vote counts and leaderboards are not part of this MVP.
+                    </p>
+                  </div>
+
+                  <form
+                    className="mt-8 rounded-2xl border border-[#c7d2df] bg-[#f8fafc] px-4 py-4"
+                    onSubmit={(event) => void handleCreatePlatformSuggestion(event, 'feature')}
+                  >
+                    <div>
+                      <h3 className="text-base font-semibold text-black">Submit Feature Suggestion</h3>
+                      <p className="mt-1 text-sm text-black">Share one feature idea that would make the platform better.</p>
+                    </div>
+
+                    <div className="mt-5 grid grid-cols-1 gap-5">
+                      <label className="block">
+                        <span className={labelClassName}>Suggestion title</span>
+                        <input
+                          type="text"
+                          value={featureSuggestionForm.title}
+                          onChange={(event) =>
+                            handlePlatformSuggestionFormChange('feature', 'title', event.target.value)
+                          }
+                          placeholder="Example: WhatsApp enquiry button"
+                          maxLength={80}
+                          className={fieldClassName}
+                          aria-invalid={Boolean(featureSuggestionErrors.title)}
+                        />
+                        <p className={helperClassName}>{normalizeText(featureSuggestionForm.title).length}/80 characters. Links are not allowed.</p>
+                        {featureSuggestionErrors.title && <p className={errorClassName}>{featureSuggestionErrors.title}</p>}
+                      </label>
+
+                      <label className="block">
+                        <span className={labelClassName}>Suggestion message</span>
+                        <textarea
+                          value={featureSuggestionForm.message}
+                          onChange={(event) =>
+                            handlePlatformSuggestionFormChange('feature', 'message', event.target.value)
+                          }
+                          placeholder="Describe what the feature should do and why it would help customers."
+                          rows={4}
+                          maxLength={500}
+                          className={fieldClassName}
+                          aria-invalid={Boolean(featureSuggestionErrors.message)}
+                        />
+                        <p className={helperClassName}>{normalizeText(featureSuggestionForm.message).length}/500 characters. Links are not allowed.</p>
+                        {featureSuggestionErrors.message && <p className={errorClassName}>{featureSuggestionErrors.message}</p>}
+                      </label>
+                    </div>
+
+                    <div className="mt-5">
+                      <button
+                        type="submit"
+                        className={actionButtonClassName}
+                        disabled={isSubmittingFeatureSuggestion || !userId}
+                      >
+                        {isSubmittingFeatureSuggestion ? 'Submitting...' : 'Submit Feature Suggestion'}
+                      </button>
+                    </div>
+                  </form>
+
+                  <form
+                    className="mt-5 rounded-2xl border border-[#c7d2df] bg-[#f8fafc] px-4 py-4"
+                    onSubmit={(event) => void handleCreatePlatformSuggestion(event, 'improvement')}
+                  >
+                    <div>
+                      <h3 className="text-base font-semibold text-black">Suggest Category or Improvement</h3>
+                      <p className="mt-1 text-sm text-black">Suggest a missing category or a focused platform improvement.</p>
+                    </div>
+
+                    <div className="mt-5 grid grid-cols-1 gap-5">
+                      <label className="block">
+                        <span className={labelClassName}>Suggestion type</span>
+                        <select
+                          value={improvementSuggestionForm.suggestionType}
+                          onChange={(event) =>
+                            handlePlatformSuggestionFormChange('improvement', 'suggestionType', event.target.value)
+                          }
+                          className={fieldClassName}
+                        >
+                          {improvementSuggestionTypes.map((type) => (
+                            <option key={type} value={type}>
+                              {type}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <label className="block">
+                        <span className={labelClassName}>Title</span>
+                        <input
+                          type="text"
+                          value={improvementSuggestionForm.title}
+                          onChange={(event) =>
+                            handlePlatformSuggestionFormChange('improvement', 'title', event.target.value)
+                          }
+                          placeholder="Example: Pet Grooming"
+                          maxLength={80}
+                          className={fieldClassName}
+                          aria-invalid={Boolean(improvementSuggestionErrors.title)}
+                        />
+                        <p className={helperClassName}>{normalizeText(improvementSuggestionForm.title).length}/80 characters. Links are not allowed.</p>
+                        {improvementSuggestionErrors.title && <p className={errorClassName}>{improvementSuggestionErrors.title}</p>}
+                      </label>
+
+                      <label className="block">
+                        <span className={labelClassName}>Message</span>
+                        <textarea
+                          value={improvementSuggestionForm.message}
+                          onChange={(event) =>
+                            handlePlatformSuggestionFormChange('improvement', 'message', event.target.value)
+                          }
+                          placeholder="Add context for the category or improvement you want to suggest."
+                          rows={4}
+                          maxLength={500}
+                          className={fieldClassName}
+                          aria-invalid={Boolean(improvementSuggestionErrors.message)}
+                        />
+                        <p className={helperClassName}>{normalizeText(improvementSuggestionForm.message).length}/500 characters. Links are not allowed.</p>
+                        {improvementSuggestionErrors.message && <p className={errorClassName}>{improvementSuggestionErrors.message}</p>}
+                      </label>
+                    </div>
+
+                    <div className="mt-5">
+                      <button
+                        type="submit"
+                        className={actionButtonClassName}
+                        disabled={isSubmittingImprovementSuggestion || !userId}
+                      >
+                        {isSubmittingImprovementSuggestion ? 'Submitting...' : 'Submit Suggestion'}
+                      </button>
+                    </div>
+                  </form>
+
+                  <div className="mt-8">
+                    <h3 className="text-base font-semibold text-black">My Suggestions</h3>
+                    <div className="mt-4 space-y-4">
+                      {platformSuggestions.length === 0 && (
+                        <div className={cardClassName}>
+                          <p className="text-sm font-semibold text-black">No suggestions yet</p>
+                          <p className="mt-1 text-sm text-black">
+                            Your submitted ideas and improvements will appear here.
+                          </p>
+                        </div>
+                      )}
+
+                      {platformSuggestions.map((suggestion) => (
+                        <article key={suggestion.id} className={cardClassName}>
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                            <div className="min-w-0">
+                              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                                {suggestion.suggestion_type}
+                              </p>
+                              <h4 className="mt-1 text-base font-semibold text-black">{suggestion.title}</h4>
+                              <p className="mt-2 text-sm leading-relaxed text-black">
+                                {getMessagePreview(suggestion.message)}
+                              </p>
+                              <p className="mt-2 text-sm text-slate-500">
+                                Submitted {formatDate(suggestion.created_at)}
+                              </p>
+                            </div>
+                            <span
+                              className={`inline-flex self-start rounded-full px-3 py-1 text-xs font-semibold ${suggestionStatusPillClass(
+                                suggestion.status
+                              )}`}
+                            >
+                              {suggestion.status}
+                            </span>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
             </section>
           )}
         </div>
