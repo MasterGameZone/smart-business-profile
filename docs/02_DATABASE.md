@@ -356,6 +356,31 @@ Access is restricted by RLS to the authenticated owner of each row. Authenticate
 
 ---
 
+## Table: customer_help_feedback_requests
+
+Purpose
+
+Stores private customer-submitted support requests, problem reports, and general feedback.
+
+### Columns
+
+| Column | Type | Nullable | Description |
+|----------|------|----------|-------------|
+| id | UUID | No | Primary key |
+| customer_id | UUID | No | Reference to `auth.users.id` |
+| request_type | TEXT | No | `Contact Support`, `Problem Report`, or `Feedback` |
+| category | TEXT | Yes | Selected support category, problem category, or feedback type |
+| title | TEXT | No | Subject, short problem description, or derived feedback title |
+| message | TEXT | No | Customer-submitted request details |
+| satisfaction_level | TEXT | Yes | Optional customer satisfaction level for feedback requests |
+| status | TEXT | No | Request status, defaulting to `Submitted` |
+| created_at | TIMESTAMP WITH TIME ZONE | No | Record creation timestamp |
+| updated_at | TIMESTAMP WITH TIME ZONE | No | Last update timestamp |
+
+Access is restricted by RLS to authenticated customer-owned inserts. Customers can submit their own requests with `Submitted` status only. The MVP does not grant customer read/update/delete access and does not expose support ticket history or status tracking UI.
+
+---
+
 ## Table: business_profile_documents
 
 Purpose
@@ -435,6 +460,7 @@ Version 3.8 added helper functions for logo, cover, and gallery uploads. Version
 | 4.25 | Support invite published-profile linking RPC | Migration created; apply to Supabase |
 | 4.26 | Customer notifications MVP | Migration created; apply to Supabase |
 | 4.27 | Customer Shape the Platform MVP | Migration created; apply to Supabase |
+| 4.28 | Customer Help & Feedback MVP | Migration created; apply to Supabase |
 | Future | Additional modules | Planned |
 
 Detailed migration SQL should remain inside the `/supabase/migrations` directory.
