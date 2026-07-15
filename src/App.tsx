@@ -15,6 +15,7 @@ import FavoritesPage from './pages/FavoritesPage.tsx'
 import CustomerProfileSettingsPage from './pages/CustomerProfileSettingsPage.tsx'
 import CustomerMyActivityPage from './pages/CustomerMyActivityPage.tsx'
 import CustomerCommunityPage from './pages/CustomerCommunityPage.tsx'
+import CustomerNotificationsPage from './pages/CustomerNotificationsPage.tsx'
 import ProtectedRoute from './components/ProtectedRoute.tsx'
 
 function App() {
@@ -92,6 +93,14 @@ function App() {
         element={
           <ProtectedRoute>
             <CustomerCommunityPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/customer/notifications"
+        element={
+          <ProtectedRoute>
+            <CustomerNotificationsPage />
           </ProtectedRoute>
         }
       />

@@ -283,7 +283,7 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
   }
 
   const customerPrimaryMenuItems: HomeMenuItem[] = [
-    { label: 'Notifications', disabled: true },
+    { label: 'Notifications', path: '/customer/notifications' },
     { label: 'Saved Businesses', path: '/favorites' },
   ]
 
