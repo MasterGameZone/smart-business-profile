@@ -22,11 +22,6 @@ import type { BusinessProfileRow } from '../types/businessProfile.ts'
 
 type LoadState = 'loading' | 'found' | 'empty' | 'error'
 
-function truncate(text: string, length: number): string {
-  if (text.length <= length) return text
-  return `${text.slice(0, length).trimEnd()}...`
-}
-
 function getInitials(value: string): string {
   const parts = value
     .trim()
@@ -528,119 +523,6 @@ function BusinessHomePage() {
           </div>
         </section>
 
-        <section className="mt-8" aria-labelledby="my-business-profiles-heading">
-          <div className="mb-5 flex items-center justify-between gap-4">
-            <div>
-              <h2 id="my-business-profiles-heading" className="text-xl font-semibold tracking-tight text-black sm:text-2xl">
-                My Business Profiles
-              </h2>
-              <p className="mt-1 text-sm text-black">Profiles created under your account.</p>
-            </div>
-          </div>
-
-          {loadState === 'loading' && (
-            <div className="flex min-h-[16rem] items-center justify-center rounded-3xl border border-[#c7d2df] bg-white px-6 py-10 text-center shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md">
-              <p className="text-sm text-black">Loading your business profiles...</p>
-            </div>
-          )}
-
-          {loadState === 'error' && (
-            <div className="flex min-h-[16rem] items-center justify-center rounded-3xl border border-red-400/20 bg-red-400/10 px-6 py-10 text-center shadow-[0_24px_70px_-38px_rgba(120,53,15,0.45)] backdrop-blur-md">
-              <div>
-                <p className="text-base font-semibold text-red-700">Unable to load your business profiles right now.</p>
-                <button
-                  type="button"
-                  onClick={loadProfiles}
-                  className="mt-4 inline-flex items-center justify-center rounded-full border border-red-300/20 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
-                >
-                  Try Again
-                </button>
-              </div>
-            </div>
-          )}
-
-          {loadState === 'empty' && (
-            <div className="rounded-3xl border border-[#c7d2df] bg-white px-6 py-12 text-center shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md sm:px-8">
-              <h3 className="text-xl font-semibold tracking-tight text-black">No business profiles yet.</h3>
-              <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-black sm:text-base">
-                Create your first business profile to start sharing your business with customers.
-              </p>
-              <button
-                type="button"
-                onClick={handleCreateProfile}
-                className="mt-6 inline-flex items-center justify-center rounded-full border border-sky-400/30 bg-[linear-gradient(135deg,#38bdf8_0%,#2563eb_55%,#0f172a_100%)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_16px_32px_-20px_rgba(56,189,248,0.42)] focus:outline-none focus:ring-2 focus:ring-sky-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
-              >
-                Create Business Profile
-              </button>
-            </div>
-          )}
-
-          {loadState === 'found' && (
-            <div className="grid grid-cols-1 gap-5">
-              {profiles.map((profile) => (
-                <article
-                  key={profile.id}
-                  className="rounded-3xl border border-[#c7d2df] bg-white p-6 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md sm:p-8"
-                >
-                  <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-xl font-semibold tracking-tight text-black">{profile.business_name}</h3>
-                        <span
-                          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                            profile.is_public === false
-                              ? 'bg-slate-200/10 text-black'
-                              : 'bg-emerald-400/12 text-emerald-700'
-                          }`}
-                        >
-                          {profile.is_public === false ? 'Private' : 'Public'}
-                        </span>
-                      </div>
-
-                      {profile.business_category && (
-                        <p className="mt-2 text-sm text-black">{profile.business_category}</p>
-                      )}
-
-                      {profile.address && (
-                        <p className="mt-1 text-sm text-black">{profile.address}</p>
-                      )}
-
-                      {profile.about_business && (
-                        <p className="mt-4 max-w-3xl text-sm leading-relaxed text-black">
-                          {truncate(profile.about_business, 180)}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="mt-6 flex flex-col gap-3 border-t border-white/10 pt-5 sm:flex-row">
-                    <button
-                      type="button"
-                      onClick={() => handleEditProfile(profile)}
-                      className="inline-flex items-center justify-center rounded-full border border-sky-400/30 bg-[linear-gradient(135deg,#38bdf8_0%,#2563eb_55%,#0f172a_100%)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_16px_32px_-20px_rgba(56,189,248,0.42)] focus:outline-none focus:ring-2 focus:ring-sky-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handlePreviewProfile(profile)}
-                      className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
-                    >
-                      Preview
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleCopyProfileLink(profile)}
-                      className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
-                    >
-                      Share / Copy Link
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
       </main>
     </div>
   )
