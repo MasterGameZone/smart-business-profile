@@ -408,6 +408,52 @@ function BusinessHomePage() {
           </section>
         )}
 
+        <section className="mt-8 rounded-3xl border border-[#c7d2df] bg-[linear-gradient(135deg,rgba(255,255,255,0.98)_0%,rgba(232,242,252,0.96)_100%)] p-5 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md sm:p-6">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="text-lg font-semibold tracking-tight text-black sm:text-xl">Profile Completion</h2>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-black">78%</span>
+                <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">
+                  Needs attention
+                </span>
+              </div>
+            </div>
+
+            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
+              <div className="h-full w-[78%] rounded-full bg-[linear-gradient(135deg,#38bdf8_0%,#2563eb_100%)]" />
+            </div>
+
+            <div>
+              <p className="text-sm font-medium text-black">Complete these details to improve your profile:</p>
+              <ul className="mt-3 space-y-2 text-sm text-slate-700">
+                <li className="flex items-start gap-2">
+                  <span className="mt-1 h-1.5 w-1.5 rounded-full bg-sky-500" />
+                  <span>Add gallery images</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="mt-1 h-1.5 w-1.5 rounded-full bg-sky-500" />
+                  <span>Add working hours</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="mt-1 h-1.5 w-1.5 rounded-full bg-sky-500" />
+                  <span>Add services/products</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={() => (featuredProfile ? handleEditProfile(featuredProfile) : handleCreateProfile())}
+                className="inline-flex items-center justify-center rounded-full border border-sky-400/30 bg-[linear-gradient(135deg,#38bdf8_0%,#2563eb_55%,#0f172a_100%)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_16px_32px_-20px_rgba(56,189,248,0.42)] focus:outline-none focus:ring-2 focus:ring-sky-300/80 focus:ring-offset-2 focus:ring-offset-slate-950 sm:px-5"
+              >
+                Complete Profile
+              </button>
+            </div>
+          </div>
+        </section>
+
         <section className="mt-8" aria-labelledby="my-business-profiles-heading">
           <div className="mb-5 flex items-center justify-between gap-4">
             <div>
