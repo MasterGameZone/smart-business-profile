@@ -236,6 +236,28 @@ Access is restricted by RLS to the authenticated owner of each row. Missing rows
 
 ---
 
+## Table: customer_profiles
+
+Purpose
+
+Stores basic customer profile and location preference fields for authenticated users. Account email remains managed by Supabase Auth and is not duplicated in this table.
+
+### Columns
+
+| Column | Type | Nullable | Description |
+|----------|------|----------|-------------|
+| user_id | UUID | No | Primary key and reference to `auth.users.id` |
+| customer_name | TEXT | Yes | Customer display name |
+| phone_number | TEXT | Yes | Customer phone number |
+| preferred_city | TEXT | Yes | Customer preferred city |
+| preferred_area | TEXT | Yes | Customer preferred area or locality |
+| created_at | TIMESTAMP WITH TIME ZONE | No | Record creation timestamp |
+| updated_at | TIMESTAMP WITH TIME ZONE | No | Last update timestamp |
+
+Access is restricted by RLS to the authenticated owner of each row. Authenticated users may select, insert, and update only their own customer profile.
+
+---
+
 ## Table: business_profile_documents
 
 Purpose
@@ -310,6 +332,7 @@ Version 3.8 added helper functions for logo, cover, and gallery uploads. Version
 | 3.8 | Supabase Storage foundation for business-assets bucket | Pending manual review |
 | 4.21 | Persistent user account-mode preferences | Migration created; apply to Supabase |
 | 4.22 | Optional business document display names | Migration created; apply to Supabase |
+| 4.23 | Customer profile and location preferences | Migration created; apply to Supabase |
 | Future | Additional modules | Planned |
 
 Detailed migration SQL should remain inside the `/supabase/migrations` directory.

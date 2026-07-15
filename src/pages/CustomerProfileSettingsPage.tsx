@@ -1,39 +1,115 @@
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.tsx'
 import { usePageMeta } from '../hooks/usePageMeta.ts'
+import { getCustomerProfile, saveCustomerProfile } from '../lib/customerProfileService.ts'
+import type { CustomerProfileFormValues } from '../types/customerProfile.ts'
 
-function getMetadataString(metadata: Record<string, unknown>, keys: string[]): string {
-  for (const key of keys) {
-    const value = metadata[key]
-    if (typeof value === 'string' && value.trim()) {
-      return value.trim()
-    }
-  }
-
-  return ''
+const emptyProfileFormValues: CustomerProfileFormValues = {
+  customerName: '',
+  phoneNumber: '',
+  preferredCity: '',
+  preferredArea: '',
 }
 
 function CustomerProfileSettingsPage() {
   const navigate = useNavigate()
   const { user, isBusinessOwnerEnabled, setPreferredAccountMode } = useAuth()
-  const userMetadata = (user?.user_metadata ?? {}) as Record<string, unknown>
+  const [profileValues, setProfileValues] = useState<CustomerProfileFormValues>(emptyProfileFormValues)
+  const [isProfileLoading, setIsProfileLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
+  const [errorMessage, setErrorMessage] = useState('')
 
   usePageMeta({
     title: 'Profile & Settings | Smart Business Profile',
     description: 'View your customer profile, preferences, and account settings.',
   })
 
-  const customerName =
-    getMetadataString(userMetadata, ['full_name', 'name', 'display_name']) ||
-    (user?.email ? user.email.split('@')[0] : '')
-  const phoneNumber = getMetadataString(userMetadata, ['phone', 'phone_number'])
   const emailAddress = user?.email ?? ''
-  const preferredCity = getMetadataString(userMetadata, ['preferred_city', 'city', 'location'])
-  const preferredArea = getMetadataString(userMetadata, ['preferred_area', 'area', 'locality', 'preferred_locality'])
   const isEmailVerified = Boolean(user?.email_confirmed_at)
 
+  useEffect(() => {
+    let isMounted = true
+
+    const loadProfile = async () => {
+      if (!user) {
+        setProfileValues(emptyProfileFormValues)
+        setIsProfileLoading(false)
+        return
+      }
+
+      setIsProfileLoading(true)
+      setErrorMessage('')
+      setSuccessMessage('')
+
+      try {
+        const profile = await getCustomerProfile(user.id)
+        if (!isMounted) return
+
+        setProfileValues({
+          customerName: profile?.customer_name ?? '',
+          phoneNumber: profile?.phone_number ?? '',
+          preferredCity: profile?.preferred_city ?? '',
+          preferredArea: profile?.preferred_area ?? '',
+        })
+      } catch {
+        if (!isMounted) return
+        setProfileValues(emptyProfileFormValues)
+        setErrorMessage('Unable to load your profile details right now. Please try again.')
+      } finally {
+        if (isMounted) {
+          setIsProfileLoading(false)
+        }
+      }
+    }
+
+    void loadProfile()
+
+    return () => {
+      isMounted = false
+    }
+  }, [user])
+
+  const updateProfileValue = (field: keyof CustomerProfileFormValues, value: string) => {
+    setProfileValues((currentValues) => ({
+      ...currentValues,
+      [field]: value,
+    }))
+    setSuccessMessage('')
+    setErrorMessage('')
+  }
+
+  const handleSaveChanges = async () => {
+    if (!user || isSaving) {
+      return
+    }
+
+    setIsSaving(true)
+    setSuccessMessage('')
+    setErrorMessage('')
+
+    try {
+      const savedProfile = await saveCustomerProfile(user.id, profileValues)
+      setProfileValues({
+        customerName: savedProfile.customer_name ?? '',
+        phoneNumber: savedProfile.phone_number ?? '',
+        preferredCity: savedProfile.preferred_city ?? '',
+        preferredArea: savedProfile.preferred_area ?? '',
+      })
+      setSuccessMessage('Your profile settings have been saved.')
+    } catch {
+      setErrorMessage('Unable to save your profile settings right now. Please try again.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const canSave = Boolean(user) && !isProfileLoading && !isSaving
   const readOnlyFieldClassName =
     'w-full rounded-2xl border border-[#c7d2df] bg-[#f8fafc] px-4 py-3 text-sm text-black placeholder:text-slate-400 focus:outline-none'
+  const editableFieldClassName =
+    'w-full rounded-2xl border border-[#c7d2df] bg-white px-4 py-3 text-sm text-black placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-[#f8fafc] disabled:text-slate-500'
   const secondaryActionClassName =
     'inline-flex min-h-[42px] items-center justify-center rounded-full border border-[#c7d2df] bg-[#f8fafc] px-5 py-2.5 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-50 disabled:cursor-not-allowed disabled:opacity-70'
 
@@ -66,16 +142,42 @@ function CustomerProfileSettingsPage() {
             <h2 className="text-lg font-semibold tracking-tight text-black sm:text-xl">Profile Information</h2>
             <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <label className="mb-2 block text-sm font-medium text-black">Customer name</label>
-                <input className={readOnlyFieldClassName} value={customerName} placeholder="Not available yet" readOnly />
+                <label htmlFor="customerName" className="mb-2 block text-sm font-medium text-black">
+                  Customer name
+                </label>
+                <input
+                  id="customerName"
+                  className={editableFieldClassName}
+                  value={profileValues.customerName}
+                  placeholder={isProfileLoading ? 'Loading...' : 'Enter your name'}
+                  disabled={isProfileLoading || isSaving}
+                  onChange={(event) => updateProfileValue('customerName', event.target.value)}
+                />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-black">Phone number</label>
-                <input className={readOnlyFieldClassName} value={phoneNumber} placeholder="Not available yet" readOnly />
+                <label htmlFor="phoneNumber" className="mb-2 block text-sm font-medium text-black">
+                  Phone number
+                </label>
+                <input
+                  id="phoneNumber"
+                  className={editableFieldClassName}
+                  value={profileValues.phoneNumber}
+                  placeholder={isProfileLoading ? 'Loading...' : 'Enter your phone number'}
+                  disabled={isProfileLoading || isSaving}
+                  onChange={(event) => updateProfileValue('phoneNumber', event.target.value)}
+                />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-black">Email address</label>
-                <input className={readOnlyFieldClassName} value={emailAddress} placeholder="Not available yet" readOnly />
+                <label htmlFor="emailAddress" className="mb-2 block text-sm font-medium text-black">
+                  Email address
+                </label>
+                <input
+                  id="emailAddress"
+                  className={readOnlyFieldClassName}
+                  value={emailAddress}
+                  placeholder="Not available yet"
+                  readOnly
+                />
               </div>
             </div>
           </section>
@@ -84,14 +186,60 @@ function CustomerProfileSettingsPage() {
             <h2 className="text-lg font-semibold tracking-tight text-black sm:text-xl">Location Preferences</h2>
             <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-2 block text-sm font-medium text-black">Preferred city</label>
-                <input className={readOnlyFieldClassName} value={preferredCity} placeholder="Not set yet" readOnly />
+                <label htmlFor="preferredCity" className="mb-2 block text-sm font-medium text-black">
+                  Preferred city
+                </label>
+                <input
+                  id="preferredCity"
+                  className={editableFieldClassName}
+                  value={profileValues.preferredCity}
+                  placeholder={isProfileLoading ? 'Loading...' : 'Enter preferred city'}
+                  disabled={isProfileLoading || isSaving}
+                  onChange={(event) => updateProfileValue('preferredCity', event.target.value)}
+                />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-black">Preferred area/locality</label>
-                <input className={readOnlyFieldClassName} value={preferredArea} placeholder="Not set yet" readOnly />
+                <label htmlFor="preferredArea" className="mb-2 block text-sm font-medium text-black">
+                  Preferred area/locality
+                </label>
+                <input
+                  id="preferredArea"
+                  className={editableFieldClassName}
+                  value={profileValues.preferredArea}
+                  placeholder={isProfileLoading ? 'Loading...' : 'Enter preferred area or locality'}
+                  disabled={isProfileLoading || isSaving}
+                  onChange={(event) => updateProfileValue('preferredArea', event.target.value)}
+                />
               </div>
             </div>
+          </section>
+
+          <section className="rounded-3xl border border-[#c7d2df] bg-white p-6 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] sm:p-8">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold tracking-tight text-black sm:text-xl">Save Changes</h2>
+                <p className="mt-1 text-sm text-black">
+                  {isProfileLoading ? 'Loading your saved profile details.' : 'Save your customer profile and location preferences.'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => void handleSaveChanges()}
+                disabled={!canSave}
+                className="inline-flex min-h-[44px] items-center justify-center rounded-full border border-blue-600 bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:border-blue-300 disabled:bg-blue-300"
+              >
+                {isSaving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+            {(successMessage || errorMessage) && (
+              <p
+                className={`mt-4 rounded-2xl px-4 py-3 text-sm font-medium ${
+                  successMessage ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
+                }`}
+              >
+                {successMessage || errorMessage}
+              </p>
+            )}
           </section>
 
           <section className="rounded-3xl border border-[#c7d2df] bg-white p-6 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] sm:p-8">
