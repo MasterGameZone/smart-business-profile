@@ -1,11 +1,14 @@
 import { supabase } from './supabase.ts'
 import type {
   CreateCustomerBusinessSupportPayload,
+  CustomerImpactProgress,
+  CustomerImpactSummary,
   CustomerBusinessSupportInsert,
   CustomerBusinessSupportRow,
 } from '../types/customerBusinessSupport.ts'
 
 const BUSINESS_SIGNUP_PATH = '/login'
+const RECENT_IMPACT_LIMIT = 5
 
 function normalizeOptionalMessage(value: string | null): string | null {
   const trimmed = value?.trim() ?? ''
@@ -26,6 +29,85 @@ export async function listCustomerBusinessSupports(
   }
 
   return (data ?? []) as CustomerBusinessSupportRow[]
+}
+
+export function calculateSupporterLevel(businessesSupported: number): {
+  badge: string
+  level: string
+} {
+  if (businessesSupported >= 6) {
+    return {
+      badge: 'Local Champion',
+      level: 'Local Champion',
+    }
+  }
+
+  if (businessesSupported >= 3) {
+    return {
+      badge: 'Community Builder',
+      level: 'Community Builder',
+    }
+  }
+
+  if (businessesSupported >= 1) {
+    return {
+      badge: 'Local Supporter',
+      level: 'Local Supporter',
+    }
+  }
+
+  return {
+    badge: 'Getting Started',
+    level: 'Starter',
+  }
+}
+
+export function calculateProgressToNextLevel(businessesSupported: number): CustomerImpactProgress {
+  if (businessesSupported >= 6) {
+    return {
+      percent: 100,
+      text: 'You reached the top MVP supporter level.',
+    }
+  }
+
+  const nextThreshold = businessesSupported >= 3 ? 6 : businessesSupported >= 1 ? 3 : 1
+  const nextLevel = businessesSupported >= 3
+    ? 'Local Champion'
+    : businessesSupported >= 1
+      ? 'Community Builder'
+      : 'Local Supporter'
+
+  return {
+    percent: Math.round((businessesSupported / nextThreshold) * 100),
+    text: `${businessesSupported} / ${nextThreshold} businesses supported to reach ${nextLevel}`,
+  }
+}
+
+export function calculateCustomerImpactSummary(
+  supports: CustomerBusinessSupportRow[]
+): CustomerImpactSummary {
+  const businessesSupported = supports.length
+  const invitationsShared = supports.filter(
+    (support) => support.status === 'Invitation Shared' || support.status === 'Profile Published'
+  ).length
+  const profilesPublished = supports.filter((support) => support.status === 'Profile Published').length
+  const supporterLevel = calculateSupporterLevel(businessesSupported)
+  const progress = calculateProgressToNextLevel(businessesSupported)
+  const recentSupports = supports.slice(0, RECENT_IMPACT_LIMIT)
+
+  return {
+    ...supporterLevel,
+    businessesSupported,
+    invitationsShared,
+    profilesPublished,
+    progress,
+    recentSupports,
+  }
+}
+
+export async function getCustomerImpactSummary(customerId: string): Promise<CustomerImpactSummary> {
+  const supports = await listCustomerBusinessSupports(customerId)
+  return calculateCustomerImpactSummary(supports)
 }
 
 export async function createCustomerBusinessSupport({

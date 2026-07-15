@@ -30,3 +30,18 @@ export interface CreateCustomerBusinessSupportPayload {
   businessLocation: string
   customMessage: string | null
 }
+
+export interface CustomerImpactProgress {
+  percent: number
+  text: string
+}
+
+export interface CustomerImpactSummary {
+  badge: string
+  level: string
+  businessesSupported: number
+  invitationsShared: number
+  profilesPublished: number
+  progress: CustomerImpactProgress
+  recentSupports: CustomerBusinessSupportRow[]
+}

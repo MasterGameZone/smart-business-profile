@@ -7,6 +7,7 @@ import { usePageMeta } from '../hooks/usePageMeta.ts'
 import {
   buildInvitationLink,
   buildInvitationMessage,
+  calculateCustomerImpactSummary,
   createCustomerBusinessSupport,
   listCustomerBusinessSupports,
   markBusinessSupportShared,
@@ -175,7 +176,7 @@ function CustomerCommunityPage() {
   ]
 
   useEffect(() => {
-    if (activeTab !== 'support' || isAuthLoading || !userId) return
+    if ((activeTab !== 'support' && activeTab !== 'impact') || isAuthLoading || !userId) return
 
     let isCurrent = true
 
@@ -200,6 +201,9 @@ function CustomerCommunityPage() {
     }
   }, [activeTab, isAuthLoading, userId])
 
+  const impactSummary = calculateCustomerImpactSummary(supportedBusinesses)
+  const impactDisplayError =
+    !isAuthLoading && !userId ? 'Please sign in to view your local impact.' : supportLoadError
   const supportDisplayError =
     !isAuthLoading && !userId ? 'Please sign in to support a business.' : supportLoadError
 
@@ -383,50 +387,134 @@ function CustomerCommunityPage() {
         <div>
           {activeTab === 'impact' && (
             <section id="impact" className={sectionClassName}>
-              <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <h2 className="text-lg font-semibold tracking-tight text-black sm:text-xl">My Local Impact</h2>
-                  <p className="mt-1 text-sm text-black">
-                    A UI-only preview of how your community support can be recognized over time.
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-                    Local Supporter
-                  </span>
-                  <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                    Level 1
-                  </span>
-                </div>
+              <div>
+                <h2 className="text-lg font-semibold tracking-tight text-black sm:text-xl">My Local Impact</h2>
+                <p className="mt-1 text-sm text-black">
+                  See how the businesses you support contribute to your local community impact.
+                </p>
               </div>
 
-              <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="rounded-2xl border border-[#c7d2df] bg-[#f8fafc] px-4 py-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Current supporter badge</p>
-                  <p className="mt-1 text-sm font-medium text-black">Local Supporter</p>
+              {isSupportsLoading && !impactDisplayError && (
+                <div className={`mt-5 ${cardClassName}`}>
+                  <p className="text-sm text-black">Loading your local impact...</p>
                 </div>
-                <div className="rounded-2xl border border-[#c7d2df] bg-[#f8fafc] px-4 py-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Current supporter level</p>
-                  <p className="mt-1 text-sm font-medium text-black">Level 1</p>
+              )}
+
+              {impactDisplayError && (
+                <div className={`mt-5 ${cardClassName}`}>
+                  <p className="text-sm text-red-700">{impactDisplayError}</p>
                 </div>
-                <div className="rounded-2xl border border-[#c7d2df] bg-[#f8fafc] px-4 py-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Businesses supported</p>
-                  <p className="mt-1 text-sm font-medium text-black">0</p>
-                </div>
-                <div className="rounded-2xl border border-[#c7d2df] bg-[#f8fafc] px-4 py-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Progress toward next level</p>
-                  <p className="mt-1 text-sm font-medium text-black">0%</p>
-                  <div className="mt-3 h-2 rounded-full bg-slate-200">
-                    <div className="h-full w-0 rounded-full bg-blue-600" />
+              )}
+
+              {!isSupportsLoading && !impactDisplayError && impactSummary.businessesSupported === 0 && (
+                <div className={`mt-5 ${cardClassName}`}>
+                  <p className="text-base font-semibold text-black">Start building your local impact</p>
+                  <p className="mt-1 text-sm text-black">
+                    Businesses you support will appear here as part of your local contribution.
+                  </p>
+                  <div className="mt-4">
+                    <button
+                      type="button"
+                      className={actionButtonClassName}
+                      onClick={() => navigate('/customer/community#support')}
+                    >
+                      Support a Business
+                    </button>
                   </div>
                 </div>
-              </div>
+              )}
 
-              <div className="mt-5">
-                <button type="button" className={actionButtonClassName} disabled>
-                  View Impact Details
-                </button>
-              </div>
+              {!isSupportsLoading && !impactDisplayError && impactSummary.businessesSupported > 0 && (
+                <>
+                  <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-4">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-blue-700">
+                          Current supporter badge
+                        </p>
+                        <p className="mt-1 text-xl font-semibold text-black">{impactSummary.badge}</p>
+                        <p className="mt-2 text-sm text-black">
+                          Your support helps trusted local businesses become easier to find online.
+                        </p>
+                      </div>
+                      <span className="inline-flex self-start rounded-full bg-white px-3 py-1 text-xs font-semibold text-blue-700">
+                        {impactSummary.level}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    <div className={cardClassName}>
+                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                        Businesses supported
+                      </p>
+                      <p className="mt-1 text-2xl font-semibold text-black">{impactSummary.businessesSupported}</p>
+                    </div>
+                    <div className={cardClassName}>
+                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                        Invitations shared
+                      </p>
+                      <p className="mt-1 text-2xl font-semibold text-black">{impactSummary.invitationsShared}</p>
+                    </div>
+                    <div className={cardClassName}>
+                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                        Profiles published
+                      </p>
+                      <p className="mt-1 text-2xl font-semibold text-black">{impactSummary.profilesPublished}</p>
+                    </div>
+                  </div>
+
+                  <div className={`mt-5 ${cardClassName}`}>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                          Progress toward next level
+                        </p>
+                        <p className="mt-1 text-sm font-medium text-black">{impactSummary.progress.text}</p>
+                      </div>
+                      <p className="text-sm font-semibold text-blue-700">{impactSummary.progress.percent}%</p>
+                    </div>
+                    <div className="mt-3 h-2 rounded-full bg-slate-200">
+                      <div
+                        className="h-full rounded-full bg-blue-600"
+                        style={{ width: `${impactSummary.progress.percent}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-7">
+                    <h3 className="text-base font-semibold text-black">Recent supported businesses</h3>
+                    <div className="mt-4 space-y-3">
+                      {impactSummary.recentSupports.map((support) => (
+                        <article key={support.id} className={cardClassName}>
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                            <div>
+                              <p className="text-base font-semibold text-black">{support.business_name}</p>
+                              <p className="mt-1 text-sm text-black">{support.business_category}</p>
+                              <p className="mt-1 text-sm text-black">{support.business_location}</p>
+                              <p className="mt-2 text-sm text-slate-500">Submitted {formatDate(support.created_at)}</p>
+                            </div>
+                            <span
+                              className={`inline-flex self-start rounded-full px-3 py-1 text-xs font-semibold ${statusPillClass(
+                                support.status
+                              )}`}
+                            >
+                              {support.status}
+                            </span>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <button type="button" className={secondaryButtonClassName} disabled>
+                      View Impact Details
+                    </button>
+                    <p className="text-sm text-slate-500">Detailed impact insights are coming soon.</p>
+                  </div>
+                </>
+              )}
             </section>
           )}
 
