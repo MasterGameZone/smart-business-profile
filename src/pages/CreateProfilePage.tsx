@@ -28,6 +28,7 @@ import {
   type CreateProfileDraftFileScope,
   type RestoredCreateProfileDraftFile,
 } from '../lib/createProfileDraftFiles.ts'
+import { linkStoredSupportInviteToPublishedProfile } from '../lib/supportInviteLinking.ts'
 import { validateDocumentFile, validateImageFile } from '../lib/storageService.ts'
 import { usePageMeta } from '../hooks/usePageMeta.ts'
 import { ToastContainer, type ToastItem, type ToastType } from '../components/Toast.tsx'
@@ -2421,6 +2422,10 @@ function CreateProfilePage() {
         documentName: '',
         documentFiles: [],
         existingDocuments: profileData.existingDocuments,
+      })
+      await linkStoredSupportInviteToPublishedProfile({
+        profileId: updated.id,
+        isPublic: updated.is_public,
       })
       navigate(accountMode === 'business_owner' ? '/business-home' : '/dashboard', {
         state: { profileUpdated: true },

@@ -9,6 +9,7 @@ export interface CustomerBusinessSupportRow {
   custom_message: string | null
   invitation_token: string
   status: CustomerBusinessSupportStatus
+  published_profile_id: string | null
   invitation_shared_at: string | null
   created_at: string
   updated_at: string

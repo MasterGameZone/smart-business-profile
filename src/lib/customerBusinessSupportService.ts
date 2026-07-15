@@ -173,6 +173,20 @@ export async function markBusinessSupportShared(
   return existingSupport
 }
 
+export async function markSupportInviteProfilePublished(
+  invitationToken: string,
+  profileId: string
+): Promise<void> {
+  const { error } = await supabase.rpc('mark_support_invite_profile_published', {
+    p_invitation_token: invitationToken,
+    p_profile_id: profileId,
+  })
+
+  if (error) {
+    throw error
+  }
+}
+
 export function buildInvitationLink(
   support: CustomerBusinessSupportRow,
   origin: string

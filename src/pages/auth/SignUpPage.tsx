@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import AuthLayout, { authError } from "../../components/AuthLayout.tsx";
 import PasswordField from "../../components/PasswordField.tsx";
 import {
@@ -9,6 +9,7 @@ import {
 } from "../../components/Toast.tsx";
 import { usePageMeta } from "../../hooks/usePageMeta.ts";
 import { signUp } from "../../lib/authService.ts";
+import { captureSupportInviteTokenFromSearch } from "../../lib/supportInviteStorage.ts";
 
 interface FormErrors {
   fullName?: string;
@@ -22,6 +23,8 @@ const authSignUpFieldBase =
   "w-full rounded-xl border border-[#c7d2df] bg-white/[0.08] px-4 py-2.5 text-sm text-black placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-400/70 focus:border-transparent";
 
 function SignUpPage() {
+  const location = useLocation();
+
   usePageMeta({
     title: "Sign Up | Smart Business Profile",
     description:
@@ -36,6 +39,10 @@ function SignUpPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
+
+  useEffect(() => {
+    captureSupportInviteTokenFromSearch(location.search);
+  }, [location.search]);
 
   const showToast = (message: string, type: ToastType = "success") => {
     const id = Date.now();
@@ -107,7 +114,7 @@ function SignUpPage() {
         <p className="text-lg text-black">
           Already have an account?{" "}
           <Link
-            to="/login"
+            to={`/login${location.search}`}
             className="font-semibold text-blue-600 focus:outline-none focus:underline"
           >
             Log in

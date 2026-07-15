@@ -5,6 +5,7 @@ import { removeCreateProfileDraft, useProfile, type ProfileData } from '../conte
 import { useAuth } from '../context/AuthContext.tsx'
 import { insertBusinessProfile } from '../lib/businessProfileService.ts'
 import { clearCreateProfileDraftFiles } from '../lib/createProfileDraftFiles.ts'
+import { linkStoredSupportInviteToPublishedProfile } from '../lib/supportInviteLinking.ts'
 import { usePageMeta } from '../hooks/usePageMeta.ts'
 import { ToastContainer, type ToastItem, type ToastType } from '../components/Toast.tsx'
 import BusinessProfileDisplay, { businessProfileOuterWrapperClassName } from '../components/BusinessProfileDisplay.tsx'
@@ -280,6 +281,10 @@ function ProfilePreviewPage() {
         existingGalleryImageUrls: Array.isArray(saved.gallery_images) ? saved.gallery_images : [],
         documentName: '',
         documentFiles: [],
+      })
+      await linkStoredSupportInviteToPublishedProfile({
+        profileId: saved.id,
+        isPublic: saved.is_public,
       })
       setHasSaved(true)
       navigate(accountMode === 'business_owner' ? '/business-home' : '/dashboard', {

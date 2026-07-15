@@ -6,6 +6,7 @@ import { ToastContainer, type ToastItem, type ToastType } from '../../components
 import { useAuth } from '../../context/AuthContext.tsx'
 import { usePageMeta } from '../../hooks/usePageMeta.ts'
 import { signIn } from '../../lib/authService.ts'
+import { captureSupportInviteTokenFromSearch } from '../../lib/supportInviteStorage.ts'
 
 interface FormErrors {
   email?: string
@@ -33,6 +34,10 @@ function LoginPage() {
   const [errors, setErrors] = useState<FormErrors>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [toasts, setToasts] = useState<ToastItem[]>([])
+
+  useEffect(() => {
+    captureSupportInviteTokenFromSearch(location.search)
+  }, [location.search])
 
   useEffect(() => {
     if (!user || isAuthLoading || isSubmitting) return
@@ -93,7 +98,10 @@ function LoginPage() {
       footer={
         <p className="text-lg text-black">
           Don&apos;t have an account?{' '}
-          <Link to="/signup" className="font-semibold text-blue-600 focus:outline-none focus:underline">
+          <Link
+            to={`/signup${location.search}`}
+            className="font-semibold text-blue-600 focus:outline-none focus:underline"
+          >
             Sign up
           </Link>
         </p>

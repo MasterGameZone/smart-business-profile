@@ -276,11 +276,12 @@ Stores customer-owned nominations/invitations for trusted local businesses. Thes
 | custom_message | TEXT | Yes | Optional invitation message from the customer |
 | invitation_token | UUID | No | Shareable future tracking token |
 | status | TEXT | No | `Nominated`, `Invitation Shared`, or `Profile Published` |
+| published_profile_id | UUID | Yes | Linked published `business_profiles.id`, when an invited owner completes profile publishing |
 | invitation_shared_at | TIMESTAMP WITH TIME ZONE | Yes | Last share/copy timestamp |
 | created_at | TIMESTAMP WITH TIME ZONE | No | Record creation timestamp |
 | updated_at | TIMESTAMP WITH TIME ZONE | No | Last update timestamp |
 
-Access is restricted by RLS to the authenticated owner of each row. Authenticated users may select, insert, and update only their own supported businesses. No public or anonymous read access is granted.
+Access is restricted by RLS to the authenticated owner of each row. Authenticated users may select, insert, and update only their own supported businesses. No public or anonymous read access is granted. A narrow `mark_support_invite_profile_published` RPC validates authenticated profile ownership and public profile state before linking an invitation to a published profile.
 
 ---
 
@@ -360,6 +361,7 @@ Version 3.8 added helper functions for logo, cover, and gallery uploads. Version
 | 4.22 | Optional business document display names | Migration created; apply to Supabase |
 | 4.23 | Customer profile and location preferences | Migration created; apply to Supabase |
 | 4.24 | Customer supported business nominations | Migration created; apply to Supabase |
+| 4.25 | Support invite published-profile linking RPC | Migration created; apply to Supabase |
 | Future | Additional modules | Planned |
 
 Detailed migration SQL should remain inside the `/supabase/migrations` directory.
