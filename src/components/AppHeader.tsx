@@ -279,11 +279,7 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
 
   const customerProfileSettingsItem: HomeMenuItem = {
     label: 'View Profile & Settings',
-    onSelect: () => {
-      const id = Date.now()
-      setToasts((prev) => [...prev, { id, message: 'Profile & Settings is coming soon.', type: 'info' }])
-      setTimeout(() => setToasts((prev) => prev.filter((toast) => toast.id !== id)), 4000)
-    },
+    path: '/customer/profile-settings',
   }
 
   const customerPrimaryMenuItems: HomeMenuItem[] = [

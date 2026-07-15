@@ -12,6 +12,7 @@ import DirectoryPage from './pages/DirectoryPage.tsx'
 import StartBusinessPage from './pages/StartBusinessPage.tsx'
 import BusinessHomePage from './pages/BusinessHomePage.tsx'
 import FavoritesPage from './pages/FavoritesPage.tsx'
+import CustomerProfileSettingsPage from './pages/CustomerProfileSettingsPage.tsx'
 import ProtectedRoute from './components/ProtectedRoute.tsx'
 
 function App() {
@@ -65,6 +66,14 @@ function App() {
         element={
           <ProtectedRoute>
             <FavoritesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/customer/profile-settings"
+        element={
+          <ProtectedRoute>
+            <CustomerProfileSettingsPage />
           </ProtectedRoute>
         }
       />
