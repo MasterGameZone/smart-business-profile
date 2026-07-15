@@ -93,6 +93,8 @@ function CustomerMyActivityPage() {
   const [reviewItems, setReviewItems] = useState<CustomerReviewActivityItem[]>([])
   const [reportItems, setReportItems] = useState<CustomerReportActivityItem[]>([])
   const [isReviewsLoading, setIsReviewsLoading] = useState(false)
+  const [loadedReviewsCustomerId, setLoadedReviewsCustomerId] = useState<string | null>(null)
+  const [loadedReportsCustomerId, setLoadedReportsCustomerId] = useState<string | null>(null)
   const [reviewsError, setReviewsError] = useState<string | null>(null)
   const [reportsError, setReportsError] = useState<string | null>(null)
   const [reviewFeedback, setReviewFeedback] = useState<FeedbackMessage>(null)
@@ -133,8 +135,10 @@ function CustomerMyActivityPage() {
     try {
       const nextReviewItems = await getCustomerReviewActivity(nextUserId)
       setReviewItems(nextReviewItems)
+      setLoadedReviewsCustomerId(nextUserId)
     } catch (error) {
       console.error('Failed to load customer reviews:', error)
+      setLoadedReviewsCustomerId(nextUserId)
       setReviewsError('We could not load your reviews right now. Please try again.')
     } finally {
       setIsReviewsLoading(false)
@@ -151,11 +155,13 @@ function CustomerMyActivityPage() {
       .then((nextReviewItems) => {
         if (!isCurrent) return
         setReviewItems(nextReviewItems)
+        setLoadedReviewsCustomerId(userId)
         setReviewsError(null)
       })
       .catch((error) => {
         if (!isCurrent) return
         console.error('Failed to load customer reviews:', error)
+        setLoadedReviewsCustomerId(userId)
         setReviewsError('We could not load your reviews right now. Please try again.')
       })
 
@@ -174,11 +180,13 @@ function CustomerMyActivityPage() {
       .then((nextReportItems) => {
         if (!isCurrent) return
         setReportItems(nextReportItems)
+        setLoadedReportsCustomerId(userId)
         setReportsError(null)
       })
       .catch((error) => {
         if (!isCurrent) return
         console.error('Failed to load customer reports:', error)
+        setLoadedReportsCustomerId(userId)
         setReportsError('We could not load your reported profiles right now. Please try again.')
       })
 
@@ -256,6 +264,10 @@ function CustomerMyActivityPage() {
     !isAuthLoading && !userId ? 'Please sign in to view your reviews.' : reviewsError
   const reportDisplayError =
     !isAuthLoading && !userId ? 'Please sign in to view your reported profiles.' : reportsError
+  const showReviewsLoading =
+    isAuthLoading || isReviewsLoading || Boolean(userId && loadedReviewsCustomerId !== userId)
+  const showReportsLoading =
+    isAuthLoading || Boolean(userId && loadedReportsCustomerId !== userId)
 
   return (
     <div className="min-h-screen bg-[#eef4fa] text-black">
@@ -311,19 +323,19 @@ function CustomerMyActivityPage() {
               )}
 
               <div className="mt-5 space-y-4">
-                {isReviewsLoading && (
+                {showReviewsLoading && (
                   <div className={itemClassName}>
                     <p className="text-sm text-black">Loading reviews...</p>
                   </div>
                 )}
 
-                {!isReviewsLoading && reviewDisplayError && (
+                {!showReviewsLoading && reviewDisplayError && (
                   <div className={itemClassName}>
                     <p className="text-sm text-red-700">{reviewDisplayError}</p>
                   </div>
                 )}
 
-                {!isReviewsLoading && !reviewDisplayError && reviewItems.length > 0 && (
+                {!showReviewsLoading && !reviewDisplayError && reviewItems.length > 0 && (
                   <>
                     {reviewItems.map((review) => {
                       const isEditing = editingReviewId === review.id
@@ -465,7 +477,7 @@ function CustomerMyActivityPage() {
                   </>
                 )}
 
-                {!isReviewsLoading && !reviewDisplayError && reviewItems.length === 0 && (
+                {!showReviewsLoading && !reviewDisplayError && reviewItems.length === 0 && (
                   <div className={itemClassName}>
                     <p className="text-sm font-semibold text-black">No reviews yet.</p>
                     <p className="mt-1 text-sm text-black">Reviews you submit for businesses will appear here.</p>
@@ -483,13 +495,19 @@ function CustomerMyActivityPage() {
               </div>
 
               <div className="mt-5 space-y-4">
-                {reportDisplayError && (
+                {showReportsLoading && (
+                  <div className={itemClassName}>
+                    <p className="text-sm text-black">Loading reported profiles...</p>
+                  </div>
+                )}
+
+                {!showReportsLoading && reportDisplayError && (
                   <div className={itemClassName}>
                     <p className="text-sm text-red-700">{reportDisplayError}</p>
                   </div>
                 )}
 
-                {!reportDisplayError && reportItems.length > 0 && (
+                {!showReportsLoading && !reportDisplayError && reportItems.length > 0 && (
                   <>
                     {reportItems.map((report) => (
                       <article key={report.id} className={itemClassName}>
@@ -529,7 +547,7 @@ function CustomerMyActivityPage() {
                   </>
                 )}
 
-                {!reportDisplayError && reportItems.length === 0 && (
+                {!showReportsLoading && !reportDisplayError && reportItems.length === 0 && (
                   <div className={itemClassName}>
                     <p className="text-sm font-semibold text-black">No reported profiles yet.</p>
                     <p className="mt-1 text-sm text-black">Profiles you report will appear here.</p>

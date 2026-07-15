@@ -74,6 +74,14 @@ function App() {
         }
       />
       <Route
+        path="/customer/saved-businesses"
+        element={
+          <ProtectedRoute>
+            <FavoritesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/customer/profile-settings"
         element={
           <ProtectedRoute>

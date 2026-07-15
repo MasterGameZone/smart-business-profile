@@ -284,7 +284,7 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
 
   const customerPrimaryMenuItems: HomeMenuItem[] = [
     { label: 'Notifications', path: '/customer/notifications' },
-    { label: 'Saved Businesses', path: '/favorites' },
+    { label: 'Saved Businesses', path: '/customer/saved-businesses' },
   ]
 
   const customerActivityMenuItems: HomeMenuItem[] = [
@@ -874,9 +874,6 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
                             } focus:outline-none`}
                           >
                             <span>{customerProfileSettingsItem.label}</span>
-                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
-                              Coming soon
-                            </span>
                           </button>
                         </div>
 
@@ -946,9 +943,6 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
                                   </span>
                                   <span>{item.label}</span>
                                 </span>
-                                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
-                                  Soon
-                                </span>
                               </button>
                             ))}
                           </div>
@@ -983,9 +977,6 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
                                     )}
                                   </span>
                                   <span>{item.label}</span>
-                                </span>
-                                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
-                                  Soon
                                 </span>
                               </button>
                             ))}
@@ -1044,9 +1035,6 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
                                     )}
                                   </span>
                                   <span>{item.label}</span>
-                                </span>
-                                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
-                                  Soon
                                 </span>
                               </button>
                             ))}

@@ -166,7 +166,7 @@ function FavoritesPage() {
                   </p>
                 )}
 
-                <div className="mt-auto flex flex-col gap-3 border-t border-white/10 pt-4 sm:flex-row">
+                <div className="mt-auto flex flex-col gap-3 border-t border-[#c7d2df] pt-4 sm:flex-row">
                   <button
                     type="button"
                     onClick={() => navigate(`/business/${favorite.business_profile.slug}`)}
@@ -178,7 +178,7 @@ function FavoritesPage() {
                     type="button"
                     onClick={() => handleRemoveFavorite(favorite)}
                     disabled={removingFavoriteId === favorite.id}
-                    className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-white/12 bg-white/[0.04] px-5 py-2 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-950 disabled:cursor-not-allowed disabled:opacity-70"
+                    className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-[#c7d2df] bg-[#f8fafc] px-5 py-2 text-sm font-medium text-black hover:bg-white focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-50 disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     {removingFavoriteId === favorite.id ? 'Removing...' : 'Remove'}
                   </button>
