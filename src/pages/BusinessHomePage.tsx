@@ -95,6 +95,14 @@ function ChartIcon() {
   )
 }
 
+function PlusIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 5v14M5 12h14" />
+    </svg>
+  )
+}
+
 function HelpCardIcon() {
   return (
     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -139,6 +147,7 @@ function BusinessHomePage() {
   const [toasts, setToasts] = useState<ToastItem[]>([])
 
   const featuredProfile = profiles[0] ?? null
+  const hasBusinessProfile = Boolean(featuredProfile && loadState === 'found')
   const ownerName = featuredProfile?.owner_name.trim() || profileData.ownerName.trim() || user?.user_metadata?.full_name?.trim() || 'there'
   const businessName = featuredProfile?.business_name.trim() || profileData.businessName.trim() || 'Business profile'
   const businessCategory = featuredProfile?.business_category.trim() || profileData.businessCategory.trim() || ''
@@ -273,28 +282,50 @@ function BusinessHomePage() {
             </div>
 
             <div className="flex min-w-0 items-center gap-3 rounded-2xl border border-[#d5deea] bg-white/75 px-3 py-3 shadow-[0_10px_30px_-24px_rgba(15,23,42,0.35)] sm:min-w-[16rem] sm:max-w-[18rem] sm:justify-start">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#d5deea] bg-slate-100 text-sm font-semibold text-slate-700">
-                {businessLogoUrl ? (
-                  <img
-                    src={businessLogoUrl}
-                    alt={`${businessName} logo`}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <span aria-hidden="true">{businessInitials}</span>
-                )}
-              </div>
+              {hasBusinessProfile ? (
+                <>
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#d5deea] bg-slate-100 text-sm font-semibold text-slate-700">
+                    {businessLogoUrl ? (
+                      <img
+                        src={businessLogoUrl}
+                        alt={`${businessName} logo`}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span aria-hidden="true">{businessInitials}</span>
+                    )}
+                  </div>
 
-              <div className="min-w-0">
-                <p className="truncate text-base font-semibold tracking-tight text-black sm:text-lg">
-                  {businessName}
-                </p>
-                {businessCategory ? (
-                  <span className="mt-1 inline-flex max-w-full items-center rounded-full bg-sky-100 px-2.5 py-1 text-xs font-semibold text-sky-800">
-                    <span className="truncate">{businessCategory}</span>
+                  <div className="min-w-0">
+                    <p className="truncate text-base font-semibold tracking-tight text-black sm:text-lg">
+                      {businessName}
+                    </p>
+                    {businessCategory ? (
+                      <span className="mt-1 inline-flex max-w-full items-center rounded-full bg-sky-100 px-2.5 py-1 text-xs font-semibold text-sky-800">
+                        <span className="truncate">{businessCategory}</span>
+                      </span>
+                    ) : null}
+                  </div>
+                </>
+              ) : loadState === 'empty' ? (
+                <button
+                  type="button"
+                  onClick={handleCreateProfile}
+                  className="flex w-full items-center gap-3 rounded-xl border border-sky-200 bg-sky-50/70 px-3 py-3 text-left transition hover:bg-sky-50 focus:outline-none focus:ring-2 focus:ring-sky-300/80 focus:ring-offset-2 focus:ring-offset-slate-950 sm:min-w-[16rem]"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-700">
+                    <PlusIcon />
                   </span>
-                ) : null}
-              </div>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold leading-5 text-black">Create Business Profile</span>
+                    <span className="mt-0.5 block text-xs leading-4 text-slate-600">
+                      Create your first profile to start sharing your business with customers.
+                    </span>
+                  </span>
+                </button>
+              ) : (
+                <div className="flex min-h-[3.75rem] w-full min-w-0 items-center rounded-xl border border-dashed border-slate-200 bg-white/50 px-3 py-3 sm:min-w-[16rem]" />
+              )}
             </div>
           </div>
         </section>
