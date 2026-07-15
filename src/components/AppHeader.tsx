@@ -303,9 +303,9 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
   ]
 
   const customerCommunityMenuItems: HomeMenuItem[] = [
-    { label: 'My Local Impact', disabled: true },
-    { label: 'Support a Business', disabled: true },
-    { label: 'Shape the Platform', disabled: true },
+    { label: 'My Local Impact', path: '/customer/community#impact' },
+    { label: 'Support a Business', path: '/customer/community#support' },
+    { label: 'Shape the Platform', path: '/customer/community#shape' },
   ]
 
   const customerHelpMenuItems: HomeMenuItem[] = [

@@ -14,6 +14,7 @@ import BusinessHomePage from './pages/BusinessHomePage.tsx'
 import FavoritesPage from './pages/FavoritesPage.tsx'
 import CustomerProfileSettingsPage from './pages/CustomerProfileSettingsPage.tsx'
 import CustomerMyActivityPage from './pages/CustomerMyActivityPage.tsx'
+import CustomerCommunityPage from './pages/CustomerCommunityPage.tsx'
 import ProtectedRoute from './components/ProtectedRoute.tsx'
 
 function App() {
@@ -83,6 +84,14 @@ function App() {
         element={
           <ProtectedRoute>
             <CustomerMyActivityPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/customer/community"
+        element={
+          <ProtectedRoute>
+            <CustomerCommunityPage />
           </ProtectedRoute>
         }
       />
