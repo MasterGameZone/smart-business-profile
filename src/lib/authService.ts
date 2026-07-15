@@ -72,6 +72,18 @@ export async function resetPassword(email: string): Promise<{ error: string | nu
   return { error: toFriendlyMessage(error) }
 }
 
+export async function resendVerificationEmail(email: string): Promise<{ error: string | null }> {
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email: email.trim(),
+    options: {
+      emailRedirectTo: `${window.location.origin}/customer/profile-settings`,
+    },
+  })
+
+  return { error: toFriendlyMessage(error) }
+}
+
 export async function updatePassword(newPassword: string): Promise<{ error: string | null }> {
   const { error } = await supabase.auth.updateUser({ password: newPassword })
   return { error: toFriendlyMessage(error) }

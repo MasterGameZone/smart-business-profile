@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.tsx'
 import { usePageMeta } from '../hooks/usePageMeta.ts'
+import { getCurrentUser, resendVerificationEmail, resetPassword } from '../lib/authService.ts'
 import { getCustomerProfile, saveCustomerProfile } from '../lib/customerProfileService.ts'
 import type { CustomerProfileFormValues } from '../types/customerProfile.ts'
 
@@ -12,6 +13,8 @@ const emptyProfileFormValues: CustomerProfileFormValues = {
   preferredArea: '',
 }
 
+type SecurityActionState = 'idle' | 'loading' | 'success' | 'error'
+
 function CustomerProfileSettingsPage() {
   const navigate = useNavigate()
   const { user, isBusinessOwnerEnabled, setPreferredAccountMode } = useAuth()
@@ -20,6 +23,11 @@ function CustomerProfileSettingsPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
+  const [isEmailVerified, setIsEmailVerified] = useState(Boolean(user?.email_confirmed_at))
+  const [verificationEmailState, setVerificationEmailState] = useState<SecurityActionState>('idle')
+  const [verificationEmailMessage, setVerificationEmailMessage] = useState('')
+  const [passwordResetState, setPasswordResetState] = useState<SecurityActionState>('idle')
+  const [passwordResetMessage, setPasswordResetMessage] = useState('')
 
   usePageMeta({
     title: 'Profile & Settings | Smart Business Profile',
@@ -27,7 +35,6 @@ function CustomerProfileSettingsPage() {
   })
 
   const emailAddress = user?.email ?? ''
-  const isEmailVerified = Boolean(user?.email_confirmed_at)
 
   useEffect(() => {
     let isMounted = true
@@ -71,6 +78,32 @@ function CustomerProfileSettingsPage() {
     }
   }, [user])
 
+  useEffect(() => {
+    let isMounted = true
+
+    const refreshEmailVerificationStatus = async () => {
+      if (!user) {
+        setIsEmailVerified(false)
+        return
+      }
+
+      setIsEmailVerified(Boolean(user.email_confirmed_at))
+
+      const currentUser = await getCurrentUser()
+      if (!isMounted || currentUser?.id !== user.id) {
+        return
+      }
+
+      setIsEmailVerified(Boolean(currentUser.email_confirmed_at))
+    }
+
+    void refreshEmailVerificationStatus()
+
+    return () => {
+      isMounted = false
+    }
+  }, [user])
+
   const updateProfileValue = (field: keyof CustomerProfileFormValues, value: string) => {
     setProfileValues((currentValues) => ({
       ...currentValues,
@@ -105,13 +138,75 @@ function CustomerProfileSettingsPage() {
     }
   }
 
+  const handleResendVerificationEmail = async () => {
+    if (verificationEmailState === 'loading') {
+      return
+    }
+
+    if (!emailAddress) {
+      setVerificationEmailState('error')
+      setVerificationEmailMessage('No email address is available for this account.')
+      return
+    }
+
+    if (isEmailVerified) {
+      setVerificationEmailState('success')
+      setVerificationEmailMessage('Your email address is already verified.')
+      return
+    }
+
+    setVerificationEmailState('loading')
+    setVerificationEmailMessage('')
+
+    const { error } = await resendVerificationEmail(emailAddress)
+
+    if (error) {
+      setVerificationEmailState('error')
+      setVerificationEmailMessage(error)
+      return
+    }
+
+    setVerificationEmailState('success')
+    setVerificationEmailMessage('Verification email sent. Please check your inbox.')
+  }
+
+  const handleSendPasswordResetEmail = async () => {
+    if (passwordResetState === 'loading') {
+      return
+    }
+
+    if (!emailAddress) {
+      setPasswordResetState('error')
+      setPasswordResetMessage('No email address is available for this account.')
+      return
+    }
+
+    setPasswordResetState('loading')
+    setPasswordResetMessage('')
+
+    const { error } = await resetPassword(emailAddress)
+
+    if (error) {
+      setPasswordResetState('error')
+      setPasswordResetMessage(error)
+      return
+    }
+
+    setPasswordResetState('success')
+    setPasswordResetMessage('Password reset email sent. Please check your inbox.')
+  }
+
   const canSave = Boolean(user) && !isProfileLoading && !isSaving
+  const isVerificationEmailLoading = verificationEmailState === 'loading'
+  const isPasswordResetLoading = passwordResetState === 'loading'
+  const canResendVerificationEmail = !isEmailVerified && !isVerificationEmailLoading
+  const canSendPasswordResetEmail = !isPasswordResetLoading
   const readOnlyFieldClassName =
     'w-full rounded-2xl border border-[#c7d2df] bg-[#f8fafc] px-4 py-3 text-sm text-black placeholder:text-slate-400 focus:outline-none'
   const editableFieldClassName =
     'w-full rounded-2xl border border-[#c7d2df] bg-white px-4 py-3 text-sm text-black placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-[#f8fafc] disabled:text-slate-500'
   const secondaryActionClassName =
-    'inline-flex min-h-[42px] items-center justify-center rounded-full border border-[#c7d2df] bg-[#f8fafc] px-5 py-2.5 text-sm font-medium text-black focus:outline-none focus:ring-2 focus:ring-slate-300/80 focus:ring-offset-2 focus:ring-offset-slate-50 disabled:cursor-not-allowed disabled:opacity-70'
+    'inline-flex min-h-[42px] min-w-[132px] items-center justify-center rounded-full border border-sky-200 bg-blue-50 px-5 py-2.5 text-sm font-semibold text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:border-[#c7d2df] disabled:bg-[#f8fafc] disabled:text-slate-500 disabled:opacity-80'
 
   const handleSwitchToBusinessMode = async () => {
     if (isBusinessOwnerEnabled) {
@@ -257,28 +352,66 @@ function CustomerProfileSettingsPage() {
                     isEmailVerified ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
                   }`}
                 >
-                  {isEmailVerified ? 'Verified' : 'Pending'}
+                  {isEmailVerified ? 'Verified' : 'Not verified'}
                 </span>
               </div>
 
-              <div className="flex flex-col gap-3 rounded-2xl border border-[#c7d2df] bg-[#f8fafc] px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm font-medium text-black">Resend verification email</p>
-                  <p className="mt-1 text-sm text-black">Available in a future update.</p>
+              <div className="rounded-2xl border border-[#c7d2df] bg-[#f8fafc] px-4 py-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-black">Resend verification email</p>
+                    <p className="mt-1 text-sm text-black">
+                      {isEmailVerified
+                        ? 'Your email is already verified.'
+                        : 'Send a new verification email to your account email address.'}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className={secondaryActionClassName}
+                    disabled={!canResendVerificationEmail}
+                    aria-busy={isVerificationEmailLoading}
+                    onClick={() => void handleResendVerificationEmail()}
+                  >
+                    {isEmailVerified ? 'Already Verified' : isVerificationEmailLoading ? 'Sending...' : 'Resend Email'}
+                  </button>
                 </div>
-                <button type="button" className={secondaryActionClassName} disabled>
-                  Coming Soon
-                </button>
+                {verificationEmailMessage && (
+                  <p
+                    className={`mt-3 rounded-2xl px-4 py-3 text-sm font-medium ${
+                      verificationEmailState === 'error' ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'
+                    }`}
+                  >
+                    {verificationEmailMessage}
+                  </p>
+                )}
               </div>
 
-              <div className="flex flex-col gap-3 rounded-2xl border border-[#c7d2df] bg-[#f8fafc] px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm font-medium text-black">Send password reset email</p>
-                  <p className="mt-1 text-sm text-black">Available in a future update.</p>
+              <div className="rounded-2xl border border-[#c7d2df] bg-[#f8fafc] px-4 py-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-black">Send password reset email</p>
+                    <p className="mt-1 text-sm text-black">Send a reset link to your account email address.</p>
+                  </div>
+                  <button
+                    type="button"
+                    className={secondaryActionClassName}
+                    disabled={!canSendPasswordResetEmail}
+                    aria-busy={isPasswordResetLoading}
+                    onClick={() => void handleSendPasswordResetEmail()}
+                  >
+                    {isPasswordResetLoading ? 'Sending...' : 'Send Reset Link'}
+                  </button>
                 </div>
-                <button type="button" className={secondaryActionClassName} disabled>
-                  Coming Soon
-                </button>
+                {passwordResetMessage && (
+                  <p
+                    className={`mt-3 rounded-2xl px-4 py-3 text-sm font-medium ${
+                      passwordResetState === 'error' ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'
+                    }`}
+                  >
+                    {passwordResetMessage}
+                  </p>
+                )}
               </div>
             </div>
           </section>
