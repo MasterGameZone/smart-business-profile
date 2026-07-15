@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import AppHeader from '../components/AppHeader.tsx'
 import { ToastContainer, type ToastItem, type ToastType } from '../components/Toast.tsx'
 import { useAuth } from '../context/AuthContext.tsx'
 import { usePageMeta } from '../hooks/usePageMeta.ts'
@@ -84,7 +83,6 @@ function FavoritesPage() {
   return (
     <div className="min-h-screen bg-[#eef4fa] text-black">
       <ToastContainer toasts={toasts} />
-      <AppHeader />
 
       <main className="mx-auto max-w-5xl px-4 py-10">
         <div className="mb-8">

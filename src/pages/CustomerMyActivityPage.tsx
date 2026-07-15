@@ -1,6 +1,4 @@
-import { useEffect, useState } from 'react'
-import { useLocation } from 'react-router-dom'
-import AppHeader from '../components/AppHeader.tsx'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { usePageMeta } from '../hooks/usePageMeta.ts'
 
 type ActivityTab = 'reviews' | 'reports' | 'corrections'
@@ -84,23 +82,22 @@ function statusPillClass(status: string): string {
   }
 }
 
+function getActiveTab(hash: string): ActivityTab {
+  if (hash === '#reports') return 'reports'
+  if (hash === '#corrections') return 'corrections'
+  return 'reviews'
+}
+
 function CustomerMyActivityPage() {
   const location = useLocation()
+  const navigate = useNavigate()
+
   usePageMeta({
     title: 'My Activity | Smart Business Profile',
     description: 'View your customer reviews, reported profiles, and submitted corrections.',
   })
 
-  const requestedTab = (location.state as { tab?: ActivityTab } | null)?.tab
-  const [activeTab, setActiveTab] = useState<ActivityTab>(
-    requestedTab === 'reports' || requestedTab === 'corrections' ? requestedTab : 'reviews',
-  )
-
-  useEffect(() => {
-    if (requestedTab === 'reviews' || requestedTab === 'reports' || requestedTab === 'corrections') {
-      setActiveTab(requestedTab)
-    }
-  }, [requestedTab])
+  const activeTab = getActiveTab(location.hash)
 
   const sectionClassName =
     'rounded-3xl border border-[#c7d2df] bg-white p-6 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] sm:p-8'
@@ -118,8 +115,6 @@ function CustomerMyActivityPage() {
 
   return (
     <div className="min-h-screen bg-[#eef4fa] text-black">
-      <AppHeader />
-
       <main className="mx-auto max-w-4xl px-4 py-10 sm:py-12">
         <section className="mb-8">
           <div className="inline-flex items-center rounded-full border border-[#c7d2df] bg-white px-3 py-1 text-xs font-semibold text-blue-700">
@@ -130,15 +125,23 @@ function CustomerMyActivityPage() {
             Review your customer-side activity history across ratings, reports, and submitted corrections.
           </p>
           <div className="mt-5 flex flex-wrap gap-2">
-            <button type="button" onClick={() => setActiveTab('reviews')} className={tabClassName('reviews')}>
+            <button
+              type="button"
+              onClick={() => navigate('/customer/my-activity#reviews')}
+              className={tabClassName('reviews')}
+            >
               Ratings & Reviews
             </button>
-            <button type="button" onClick={() => setActiveTab('reports')} className={tabClassName('reports')}>
+            <button
+              type="button"
+              onClick={() => navigate('/customer/my-activity#reports')}
+              className={tabClassName('reports')}
+            >
               Reported Profiles
             </button>
             <button
               type="button"
-              onClick={() => setActiveTab('corrections')}
+              onClick={() => navigate('/customer/my-activity#corrections')}
               className={tabClassName('corrections')}
             >
               Submitted Corrections

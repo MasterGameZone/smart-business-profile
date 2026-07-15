@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router-dom'
-import AppHeader from '../components/AppHeader.tsx'
 import { usePageMeta } from '../hooks/usePageMeta.ts'
 
 type NotificationState = 'read' | 'unread'
@@ -98,8 +97,6 @@ function CustomerNotificationsPage() {
 
   return (
     <div className="min-h-screen bg-[#eef4fa] text-black">
-      <AppHeader />
-
       <main className="mx-auto max-w-4xl px-4 py-10 sm:py-12">
         <section className="mb-8">
           <div className="inline-flex items-center rounded-full border border-[#c7d2df] bg-white px-3 py-1 text-xs font-semibold text-blue-700">

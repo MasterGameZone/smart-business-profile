@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router-dom'
-import AppHeader from '../components/AppHeader.tsx'
 import { useAuth } from '../context/AuthContext.tsx'
 import { usePageMeta } from '../hooks/usePageMeta.ts'
 
@@ -54,8 +53,6 @@ function CustomerProfileSettingsPage() {
 
   return (
     <div className="min-h-screen bg-[#eef4fa] text-black">
-      <AppHeader />
-
       <main className="mx-auto max-w-4xl px-4 py-10 sm:py-12">
         <section className="mb-8">
           <h1 className="text-2xl font-bold tracking-tight text-black sm:text-3xl">Profile & Settings</h1>
