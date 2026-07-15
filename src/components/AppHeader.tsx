@@ -309,10 +309,10 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
   ]
 
   const customerHelpMenuItems: HomeMenuItem[] = [
-    { label: 'Help Articles', disabled: true },
-    { label: 'Contact Support', disabled: true },
-    { label: 'Report a Problem', disabled: true },
-    { label: 'Submit Feedback', disabled: true },
+    { label: 'Help Articles', path: '/customer/help-feedback#help' },
+    { label: 'Contact Support', path: '/customer/help-feedback#help' },
+    { label: 'Report a Problem', path: '/customer/help-feedback#report' },
+    { label: 'Submit Feedback', path: '/customer/help-feedback#feedback' },
   ]
 
   const switchToBusinessModeMenuItem: HomeMenuItem = isBusinessOwnerEnabled

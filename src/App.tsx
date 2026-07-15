@@ -16,6 +16,7 @@ import CustomerProfileSettingsPage from './pages/CustomerProfileSettingsPage.tsx
 import CustomerMyActivityPage from './pages/CustomerMyActivityPage.tsx'
 import CustomerCommunityPage from './pages/CustomerCommunityPage.tsx'
 import CustomerNotificationsPage from './pages/CustomerNotificationsPage.tsx'
+import CustomerHelpFeedbackPage from './pages/CustomerHelpFeedbackPage.tsx'
 import ProtectedRoute from './components/ProtectedRoute.tsx'
 
 function App() {
@@ -101,6 +102,14 @@ function App() {
         element={
           <ProtectedRoute>
             <CustomerNotificationsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/customer/help-feedback"
+        element={
+          <ProtectedRoute>
+            <CustomerHelpFeedbackPage />
           </ProtectedRoute>
         }
       />
