@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useProfile } from '../context/ProfileContext.tsx'
@@ -14,6 +14,7 @@ interface AppHeaderPreviewConfig {
 interface AppHeaderProps {
   previewConfig?: AppHeaderPreviewConfig | null
   variant?: 'default' | 'publicBusinessProfile'
+  businessOwnerMenuState?: BusinessOwnerMenuState | null
 }
 
 interface NavItem {
@@ -28,6 +29,16 @@ interface HomeMenuItem {
   path?: string
   disabled?: boolean
   onSelect?: () => void | Promise<void>
+}
+
+interface BusinessOwnerMenuState {
+  hasBusinessProfile: boolean
+  businessName?: string
+  ownerEmail?: string
+  businessCategory?: string
+  businessLogoUrl?: string | null
+  businessSlug?: string | null
+  profileStatusLabel?: string
 }
 
 let hasPlayedNavbarEntrance = false
@@ -53,16 +64,106 @@ function getMetadataString(metadata: Record<string, unknown>, keys: string[]): s
   return null
 }
 
-function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps) {
+function HomeIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4.5v-6.5h-5V21H5a1 1 0 0 1-1-1v-9.5z" />
+    </svg>
+  )
+}
+
+function ProfileIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 19.5h16M7.5 19.5v-1.25A4.25 4.25 0 0 1 11.75 14h.5A4.25 4.25 0 0 1 16.5 18.25v1.25" />
+      <circle cx="12" cy="8.5" r="3.25" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} />
+    </svg>
+  )
+}
+
+function QrShareIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4.5 4.5h5v5h-5v-5zm10 0h5v5h-5v-5zm0 10h5v5h-5v-5zm-10 0h5v5h-5v-5zm5-5h2v2h-2v-2zm5 0h2v2h-2v-2zm-5 5h2v2h-2v-2zm5-10h2v2h-2v-2z" />
+    </svg>
+  )
+}
+
+function AnalyticsIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 19.5h16M6.5 16V10m5 6V7m5.5 9V12" />
+    </svg>
+  )
+}
+
+function ReportsIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M6 4.5h9l3 3V19.5H6z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 11h6M9 14h4" />
+    </svg>
+  )
+}
+
+function NotificationsIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 17h5l-1.4-1.4a2 2 0 0 1-.6-1.4V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M10 20a2 2 0 0 0 4 0" />
+    </svg>
+  )
+}
+
+function SwitchIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M7 7h11l-2.5-2.5M17.5 5.5 20 8m-1 9H8l2.5 2.5M8.5 18.5 6 16" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M6 8.5a4.5 4.5 0 0 1 4.5-4.5h1.5" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M18 15.5a4.5 4.5 0 0 1-4.5 4.5h-1.5" />
+    </svg>
+  )
+}
+
+function HelpIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 17h.01" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9.09 9a3 3 0 115.82 1c0 2-3 2-3 4" />
+      <circle cx="12" cy="12" r="9" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} />
+    </svg>
+  )
+}
+
+function LogoutIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 17l-4-5 4-5" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M5 12h9" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M14 4.5h3.5A2.5 2.5 0 0 1 20 7v10a2.5 2.5 0 0 1-2.5 2.5H14" />
+    </svg>
+  )
+}
+
+function PlusIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 5v14M5 12h14" />
+    </svg>
+  )
+}
+
+function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMenuState = null }: AppHeaderProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, isLoading, accountMode, isBusinessOwnerEnabled, setPreferredAccountMode } = useAuth()
-  const { clearProfile } = useProfile()
+  const { profileData, clearProfile } = useProfile()
   const [isSigningOut, setIsSigningOut] = useState(false)
   const [isHomeMenuOpen, setIsHomeMenuOpen] = useState(false)
   const [isLandingMobileMenuOpen, setIsLandingMobileMenuOpen] = useState(false)
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const [shouldAnimateEntrance] = useState(() => !hasPlayedNavbarEntrance)
+  const toastIdRef = useRef(0)
   const homeMenuRef = useRef<HTMLDivElement | null>(null)
   const customerMenuOverlayRef = useRef<HTMLDivElement | null>(null)
   const landingMobileMenuRef = useRef<HTMLDivElement | null>(null)
@@ -107,6 +208,31 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
   const navbarInteractionStyle: CSSProperties = {
     WebkitTapHighlightColor: 'transparent',
   }
+  const effectiveBusinessOwnerMenuState =
+    businessOwnerMenuState ??
+    (showBusinessHomeTopBar
+      ? {
+          hasBusinessProfile: Boolean(profileData.id),
+          businessName: profileData.businessName || 'Business Profile',
+          ownerEmail: user?.email ?? 'Owner account',
+          businessCategory: profileData.businessCategory || '',
+          businessLogoUrl: profileData.existingLogoUrl ?? null,
+          businessSlug: profileData.slug,
+          profileStatusLabel: profileData.id ? (profileData.isPublic === false ? 'Hidden' : 'Published') : 'Not created',
+        }
+      : null)
+  const businessOwnerHasProfile = Boolean(effectiveBusinessOwnerMenuState?.hasBusinessProfile)
+  const businessOwnerBusinessName = effectiveBusinessOwnerMenuState?.businessName?.trim() || 'Business Profile'
+  const businessOwnerOwnerEmail = effectiveBusinessOwnerMenuState?.ownerEmail?.trim() || user?.email || 'Owner account'
+  const businessOwnerCategory = effectiveBusinessOwnerMenuState?.businessCategory?.trim() || ''
+  const businessOwnerLogoUrl = effectiveBusinessOwnerMenuState?.businessLogoUrl ?? null
+  const businessOwnerSlug = effectiveBusinessOwnerMenuState?.businessSlug?.trim() || null
+  const businessOwnerStatusLabel =
+    effectiveBusinessOwnerMenuState?.profileStatusLabel?.trim() ||
+    (businessOwnerHasProfile ? (profileData.isPublic === false ? 'Hidden' : 'Published') : 'Not created')
+  const businessOwnerMenuActionLabel = businessOwnerHasProfile ? 'Manage Business Profile' : 'Create Business Profile'
+  const businessOwnerMenuActionPath = businessOwnerHasProfile ? '/business-home' : '/create-profile'
+  const businessOwnerInitials = getInitials(businessOwnerBusinessName)
 
   useEffect(() => {
     if (shouldAnimateEntrance) {
@@ -190,12 +316,16 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
   }, [isLandingMobileMenuOpen, showLandingMobileHamburger])
 
   useEffect(() => {
-    setIsHomeMenuOpen(false)
-    setIsLandingMobileMenuOpen(false)
+    const timeoutId = window.setTimeout(() => {
+      setIsHomeMenuOpen(false)
+      setIsLandingMobileMenuOpen(false)
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
   }, [location.pathname, location.hash])
 
   const showError = (message: string) => {
-    const id = Date.now()
+    const id = ++toastIdRef.current
     setToasts((prev) => [...prev, { id, message, type: 'error' }])
     setTimeout(() => setToasts((prev) => prev.filter((toast) => toast.id !== id)), 4000)
   }
@@ -321,25 +451,6 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
       }
     : { label: 'Switch to Business Mode', path: '/start-business' }
 
-  const businessMenuItems: HomeMenuItem[] = [
-    { label: 'Dashboard', disabled: true },
-    { label: 'My Business Profiles', disabled: true },
-    { label: 'Create Business Profile', onSelect: handleCreateBusinessProfile },
-    {
-      label: 'Switch to Customer',
-      onSelect: async () => {
-        try {
-          await setPreferredAccountMode('customer')
-          navigate('/')
-        } catch (error) {
-          console.error('Failed to switch to Customer mode:', error)
-          showError('Unable to switch to Customer mode. Please try again.')
-        }
-      },
-    },
-    { label: 'Help & Support', disabled: true },
-  ]
-
   const handleHomeMenuItemClick = async (item: HomeMenuItem) => {
     if (item.disabled) {
       return
@@ -355,6 +466,82 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
       navigate(item.path)
     }
   }
+
+  const businessOwnerQuickMenuItems: Array<
+    | {
+        key: string
+        label: string
+        icon: ReactNode
+        onClick?: () => void
+        disabled?: boolean
+        trailingChip?: { label: string; tone: 'premium' | 'soon' }
+      }
+    | { key: string; divider: true }
+  > = [
+    {
+      key: 'business-home',
+      label: 'Business Home',
+      icon: <HomeIcon />,
+      onClick: () => navigate('/business-home'),
+    },
+    {
+      key: 'manage-profile',
+      label: businessOwnerMenuActionLabel,
+      icon: <ProfileIcon />,
+      onClick: () => {
+        setIsHomeMenuOpen(false)
+        navigate(businessOwnerMenuActionPath)
+      },
+    },
+    {
+      key: 'qr-share',
+      label: 'QR Code & Share',
+      icon: <QrShareIcon />,
+      disabled: true,
+    },
+    {
+      key: 'analytics',
+      label: 'Analytics',
+      icon: <AnalyticsIcon />,
+      disabled: true,
+      trailingChip: { label: 'Premium', tone: 'premium' },
+    },
+    {
+      key: 'reviews',
+      label: 'Reviews & Reports',
+      icon: <ReportsIcon />,
+      disabled: true,
+      trailingChip: { label: 'Coming soon', tone: 'soon' },
+    },
+    {
+      key: 'notifications',
+      label: 'Notifications',
+      icon: <NotificationsIcon />,
+      disabled: true,
+    },
+    { key: 'divider-business', divider: true },
+    {
+      key: 'switch-customer',
+      label: 'Switch to Customer',
+      icon: <SwitchIcon />,
+      onClick: async () => {
+        try {
+          await setPreferredAccountMode('customer')
+          navigate('/')
+        } catch (error) {
+          console.error('Failed to switch to Customer mode:', error)
+          showError('Unable to switch to Customer mode. Please try again.')
+        }
+      },
+    },
+    { key: 'divider-help', divider: true },
+    {
+      key: 'help-feedback',
+      label: 'Help & Feedback',
+      icon: <HelpIcon />,
+      onClick: () => navigate('/customer/help-feedback#help'),
+    },
+  ]
 
   const navButtonClass = (item: NavItem) => {
     const isActive =
@@ -594,34 +781,153 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
                 {isHomeMenuOpen && (
                   <div
                     role="menu"
-                    aria-label="Account menu"
-                    className="absolute right-0 top-full z-40 mt-2 w-[18.5rem] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_48px_-28px_rgba(15,23,42,0.45)]"
+                    aria-label="Business owner menu"
+                    className="absolute right-0 top-full z-40 mt-2 w-[min(22rem,calc(100vw-1rem))] max-h-[calc(100vh-5rem)] overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white shadow-[0_24px_48px_-28px_rgba(15,23,42,0.45)]"
                   >
-                    <div className="border-b border-slate-100 px-4 py-3">
-                      <p className="text-sm font-semibold text-[#0f172a]">Menu</p>
-                    </div>
-                    <div className="py-2">
-                      {businessMenuItems.map((item) => (
+                    <div className="border-b border-slate-100 p-3">
+                      {businessOwnerHasProfile ? (
+                        <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
+                          <div className="flex items-start gap-3">
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white text-sm font-semibold text-slate-700">
+                              {businessOwnerLogoUrl ? (
+                                <img
+                                  src={businessOwnerLogoUrl}
+                                  alt={`${businessOwnerBusinessName} logo`}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <span aria-hidden="true">{businessOwnerInitials}</span>
+                              )}
+                            </div>
+
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="min-w-0">
+                                  <p className="truncate text-sm font-semibold text-[#0f172a]">{businessOwnerBusinessName}</p>
+                                  <p className="truncate text-xs text-slate-500">{businessOwnerOwnerEmail}</p>
+                                </div>
+                                <span className="inline-flex shrink-0 items-center rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
+                                  {businessOwnerStatusLabel}
+                                </span>
+                              </div>
+
+                              <div className="mt-2 flex flex-wrap items-center gap-2">
+                                {businessOwnerCategory ? (
+                                  <span className="inline-flex items-center rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-semibold text-sky-800">
+                                    {businessOwnerCategory}
+                                  </span>
+                                ) : null}
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setIsHomeMenuOpen(false)
+                                    if (businessOwnerSlug) {
+                                      navigate(`/business/${businessOwnerSlug}`)
+                                    }
+                                  }}
+                                  disabled={!businessOwnerSlug}
+                                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-[#0f172a] transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                  <span>View Public Profile</span>
+                                  <svg
+                                    aria-hidden="true"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="1.8"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className="h-3.5 w-3.5"
+                                  >
+                                    <path d="M7 17L17 7" />
+                                    <path d="M10 7h7v7" />
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
                         <button
-                          key={item.label}
                           type="button"
-                          role="menuitem"
-                          disabled={item.disabled}
-                          onClick={() => void handleHomeMenuItemClick(item)}
-                          className={`flex w-full items-center justify-between px-4 py-2.5 text-left text-sm ${
-                            item.disabled
-                              ? 'cursor-default text-[#0f172a]'
-                              : 'text-[#0f172a] hover:bg-slate-50 focus:bg-slate-50'
-                          } focus:outline-none`}
+                          onClick={() => {
+                            setIsHomeMenuOpen(false)
+                            handleCreateBusinessProfile()
+                          }}
+                          className="flex w-full items-center gap-3 rounded-2xl border border-sky-200 bg-sky-50/70 p-3 text-left transition hover:bg-sky-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
                         >
-                          <span className="whitespace-nowrap">{item.label}</span>
-                          {item.disabled && (
-                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-[#0f172a]">
-                              Coming soon
+                          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
+                            <PlusIcon />
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-sm font-semibold text-[#0f172a]">Create Business Profile</span>
+                            <span className="mt-0.5 block text-xs text-slate-500">{businessOwnerOwnerEmail}</span>
+                            <span className="mt-1 block text-xs leading-4 text-slate-600">
+                              Create your first profile to start sharing your business with customers.
                             </span>
-                          )}
+                          </span>
+                          <span className="inline-flex shrink-0 items-center rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600">
+                            Not created
+                          </span>
                         </button>
-                      ))}
+                      )}
+                    </div>
+                    <div className="p-2">
+                      <div className="space-y-0">
+                        {businessOwnerQuickMenuItems.map((item, index) => {
+                          if ('divider' in item) {
+                            return <div key={item.key} className="my-2 border-t border-slate-100/90" />
+                          }
+
+                          const nextItem = businessOwnerQuickMenuItems[index + 1]
+                          const hasBottomSeparator = !nextItem || !('divider' in nextItem)
+
+                          return (
+                            <button
+                              key={item.key}
+                              type="button"
+                              role="menuitem"
+                              disabled={item.disabled}
+                              onClick={() => {
+                                setIsHomeMenuOpen(false)
+                                if (item.onClick) {
+                                  void item.onClick()
+                                }
+                              }}
+                              className={`flex w-full items-center justify-between rounded-2xl px-3 py-3 text-left text-sm ${
+                                item.disabled
+                                  ? 'cursor-default text-[#0f172a]'
+                                  : 'text-[#0f172a] transition hover:bg-slate-50 focus:bg-slate-50'
+                              } ${hasBottomSeparator ? 'border-b border-slate-100/90' : ''} focus:outline-none`}
+                            >
+                              <span className="flex items-center gap-3">
+                                <span
+                                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
+                                    item.disabled ? 'bg-slate-100 text-slate-500' : 'bg-slate-100 text-slate-700'
+                                  }`}
+                                >
+                                  {item.icon}
+                                </span>
+                                <span className="font-medium">{item.label}</span>
+                              </span>
+                              <span className="flex items-center gap-2">
+                                {item.trailingChip && (
+                                  <span
+                                    className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                                      item.trailingChip.tone === 'premium'
+                                        ? 'bg-violet-100 text-violet-700'
+                                        : 'bg-slate-100 text-slate-600'
+                                    }`}
+                                  >
+                                    {item.trailingChip.label}
+                                  </span>
+                                )}
+                              </span>
+                            </button>
+                          )
+                        })}
+                      </div>
                     </div>
                     <div className="border-t border-slate-100 p-2">
                       <button
@@ -632,9 +938,14 @@ function AppHeader({ previewConfig = null, variant = 'default' }: AppHeaderProps
                           await handleLogout()
                         }}
                         disabled={isSigningOut}
-                        className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm font-medium text-rose-600 hover:bg-rose-50 focus:bg-rose-50 focus:outline-none disabled:cursor-not-allowed disabled:opacity-70"
+                        className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-left text-sm font-medium text-rose-600 transition hover:bg-rose-50 focus:bg-rose-50 focus:outline-none disabled:cursor-not-allowed disabled:opacity-70"
                       >
-                        <span>{isSigningOut ? 'Logging out...' : 'Log Out'}</span>
+                        <span className="flex items-center gap-3">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600">
+                            <LogoutIcon />
+                          </span>
+                          <span>{isSigningOut ? 'Logging out...' : 'Log Out'}</span>
+                        </span>
                       </button>
                     </div>
                   </div>

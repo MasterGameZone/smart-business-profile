@@ -267,7 +267,24 @@ function BusinessHomePage() {
   return (
     <div className="min-h-screen bg-[#eef4fa] text-black">
       <ToastContainer toasts={toasts} />
-      <AppHeader />
+      <AppHeader
+        businessOwnerMenuState={
+          featuredProfile
+            ? {
+                hasBusinessProfile: true,
+                businessName: featuredProfile.business_name,
+                ownerEmail: user?.email ?? 'Owner account',
+                businessCategory: featuredProfile.business_category,
+                businessLogoUrl: featuredProfile.logo_url,
+                businessSlug: featuredProfile.slug,
+                profileStatusLabel: featuredProfile.is_public === false ? 'Hidden' : 'Published',
+              }
+            : {
+                hasBusinessProfile: false,
+                ownerEmail: user?.email ?? 'Owner account',
+              }
+        }
+      />
 
       <main className="mx-auto max-w-5xl px-4 py-10 sm:py-14">
         <section className="rounded-3xl border border-[#c7d2df] bg-[linear-gradient(135deg,rgba(255,255,255,0.98)_0%,rgba(232,242,252,0.96)_100%)] p-5 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md sm:p-6">
