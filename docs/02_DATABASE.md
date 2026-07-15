@@ -285,6 +285,33 @@ Access is restricted by RLS to the authenticated owner of each row. Authenticate
 
 ---
 
+## Table: customer_notifications
+
+Purpose
+
+Stores private customer-owned notifications for customer activity, supported-business updates, report status updates, and saved-business updates.
+
+### Columns
+
+| Column | Type | Nullable | Description |
+|----------|------|----------|-------------|
+| id | UUID | No | Primary key |
+| customer_id | UUID | No | Reference to `auth.users.id` |
+| type | TEXT | No | Notification type |
+| title | TEXT | No | Short notification title |
+| message | TEXT | No | Notification message |
+| action_label | TEXT | Yes | Optional action label |
+| action_url | TEXT | Yes | Optional internal action URL |
+| related_entity_type | TEXT | Yes | Optional related entity type |
+| related_entity_id | UUID | Yes | Optional related entity id |
+| is_read | BOOLEAN | No | Whether the customer has read the notification |
+| read_at | TIMESTAMP WITH TIME ZONE | Yes | Timestamp when marked read |
+| created_at | TIMESTAMP WITH TIME ZONE | No | Record creation timestamp |
+
+Access is restricted by RLS to the authenticated owner of each row. Authenticated customers may select their own notifications and update only the `is_read` and `read_at` columns on their own notifications. The `mark_support_invite_profile_published` RPC creates deduplicated supported-business profile-published notifications and supporter-level notifications when an invited business publishes its profile.
+
+---
+
 ## Table: business_profile_documents
 
 Purpose
@@ -362,6 +389,7 @@ Version 3.8 added helper functions for logo, cover, and gallery uploads. Version
 | 4.23 | Customer profile and location preferences | Migration created; apply to Supabase |
 | 4.24 | Customer supported business nominations | Migration created; apply to Supabase |
 | 4.25 | Support invite published-profile linking RPC | Migration created; apply to Supabase |
+| 4.26 | Customer notifications MVP | Migration created; apply to Supabase |
 | Future | Additional modules | Planned |
 
 Detailed migration SQL should remain inside the `/supabase/migrations` directory.
