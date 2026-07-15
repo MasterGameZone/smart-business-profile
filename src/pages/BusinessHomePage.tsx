@@ -41,6 +41,65 @@ function getInitials(value: string): string {
     .join('')
 }
 
+function EditIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M16.862 4.487a2.625 2.625 0 113.712 3.712L8.25 20.523 3 21l.477-5.25L16.862 4.487z" />
+    </svg>
+  )
+}
+
+function ViewIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M2.25 12s3.75-7.5 9.75-7.5 9.75 7.5 9.75 7.5-3.75 7.5-9.75 7.5S2.25 12 2.25 12z" />
+      <circle cx="12" cy="12" r="3" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} />
+    </svg>
+  )
+}
+
+function ShareIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M7.5 12.75a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5zm9 5.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5zM16.5 6.75a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9.33 11.17l5.34-2.84M9.33 12.83l5.34 2.84" />
+    </svg>
+  )
+}
+
+function QrIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4.5 4.5h5v5h-5v-5zm0 10h5v5h-5v-5zm10-10h5v5h-5v-5zm0 5h2v2h-2v-2zm-5 5h2v2h-2v-2zm5 5h2v2h-2v-2zm5-5h-2v-2h2v2zm-5 0h-2v-2h2v2z" />
+    </svg>
+  )
+}
+
+function StatusIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  )
+}
+
+function GalleryIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 5.25A1.25 1.25 0 015.25 4h13.5A1.25 1.25 0 0120 5.25v10.5A1.25 1.25 0 0118.75 17H5.25A1.25 1.25 0 014 15.75V5.25z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8.25 10.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM4 14l4.5-4.5 3.75 3.75L15.5 10l4.5 4.5" />
+    </svg>
+  )
+}
+
+function ChartIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 19.5h16M6.5 16V10m5 6V7m5.5 9V12" />
+    </svg>
+  )
+}
+
 function BusinessHomePage() {
   const navigate = useNavigate()
   const { user, accountMode, isLoading } = useAuth()
@@ -61,6 +120,7 @@ function BusinessHomePage() {
   const businessCategory = featuredProfile?.business_category.trim() || profileData.businessCategory.trim() || ''
   const businessLogoUrl = featuredProfile?.logo_url || null
   const businessInitials = getInitials(businessName)
+  const analyticsIsPremium = false
 
   useEffect(() => {
     if (!isLoading && user && accountMode !== 'business_owner') {
@@ -206,6 +266,147 @@ function BusinessHomePage() {
             </div>
           </div>
         </section>
+
+        {loadState === 'found' && profiles.length > 0 && (
+          <section className="mt-8 rounded-3xl border border-[#c7d2df] bg-[linear-gradient(135deg,rgba(255,255,255,0.98)_0%,rgba(235,243,251,0.96)_100%)] p-5 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] backdrop-blur-md sm:p-6">
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="text-lg font-semibold tracking-tight text-black sm:text-xl">Quick Actions</h2>
+            </div>
+
+            {profiles[0] && (
+              <div className="mt-4 space-y-4">
+                <div>
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    Core Profile Actions
+                  </p>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <button
+                      type="button"
+                      onClick={() => handleEditProfile(profiles[0])}
+                      className="flex min-h-[4.25rem] flex-col justify-center rounded-2xl border border-slate-200 bg-white/80 px-3 py-3 text-left shadow-[0_12px_30px_-24px_rgba(15,23,42,0.35)] transition hover:border-sky-200 hover:bg-sky-50/70 focus:outline-none focus:ring-2 focus:ring-sky-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-700">
+                          <EditIcon />
+                        </span>
+                        <span className="text-[13px] font-semibold leading-4 text-black sm:text-sm sm:leading-5">
+                          Edit Profile
+                        </span>
+                      </div>
+                      <span className="mt-1 text-xs leading-4 text-slate-600">Update business details</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handlePreviewProfile(profiles[0])}
+                      className="flex min-h-[4.25rem] flex-col justify-center rounded-2xl border border-slate-200 bg-white/80 px-3 py-3 text-left shadow-[0_12px_30px_-24px_rgba(15,23,42,0.35)] transition hover:border-sky-200 hover:bg-sky-50/70 focus:outline-none focus:ring-2 focus:ring-sky-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-indigo-700">
+                          <ViewIcon />
+                        </span>
+                        <span className="text-[13px] font-semibold leading-4 text-black sm:text-sm sm:leading-5">
+                          View Profile
+                        </span>
+                      </div>
+                      <span className="mt-1 text-xs leading-4 text-slate-600">See public profile</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleCopyProfileLink(profiles[0])}
+                      className="flex min-h-[4.25rem] flex-col justify-center rounded-2xl border border-slate-200 bg-white/80 px-3 py-3 text-left shadow-[0_12px_30px_-24px_rgba(15,23,42,0.35)] transition hover:border-sky-200 hover:bg-sky-50/70 focus:outline-none focus:ring-2 focus:ring-sky-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                          <ShareIcon />
+                        </span>
+                        <span className="text-[13px] font-semibold leading-4 text-black sm:text-sm sm:leading-5">
+                          Share Profile
+                        </span>
+                      </div>
+                      <span className="mt-1 text-xs leading-4 text-slate-600">Share your profile link</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="flex min-h-[4.25rem] flex-col justify-center rounded-2xl border border-slate-200 bg-white/80 px-3 py-3 text-left shadow-[0_12px_30px_-24px_rgba(15,23,42,0.35)] transition hover:border-sky-200 hover:bg-sky-50/70 focus:outline-none focus:ring-2 focus:ring-sky-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-700">
+                          <QrIcon />
+                        </span>
+                        <span className="text-[13px] font-semibold leading-4 text-black sm:text-sm sm:leading-5">
+                          QR Code
+                        </span>
+                      </div>
+                      <span className="mt-1 text-xs leading-4 text-slate-600">View or download QR</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    Business Management Actions
+                  </p>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    <button
+                      type="button"
+                      className="flex min-h-[4.25rem] flex-col justify-center rounded-2xl border border-slate-200 bg-white/80 px-3 py-3 text-left shadow-[0_12px_30px_-24px_rgba(15,23,42,0.35)] transition hover:border-sky-200 hover:bg-sky-50/70 focus:outline-none focus:ring-2 focus:ring-sky-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+                          <StatusIcon />
+                        </span>
+                        <span className="text-[13px] font-semibold leading-4 text-black sm:text-sm sm:leading-5">
+                          Open / Closed
+                        </span>
+                      </div>
+                      <span className="mt-1 text-xs leading-4 text-slate-600">Manage live availability</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="flex min-h-[4.25rem] flex-col justify-center rounded-2xl border border-slate-200 bg-white/80 px-3 py-3 text-left shadow-[0_12px_30px_-24px_rgba(15,23,42,0.35)] transition hover:border-sky-200 hover:bg-sky-50/70 focus:outline-none focus:ring-2 focus:ring-sky-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-pink-100 text-pink-700">
+                          <GalleryIcon />
+                        </span>
+                        <span className="text-[13px] font-semibold leading-4 text-black sm:text-sm sm:leading-5">
+                          Manage Gallery
+                        </span>
+                      </div>
+                      <span className="mt-1 text-xs leading-4 text-slate-600">Update business photos</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="col-span-2 flex min-h-[4.25rem] flex-col justify-center rounded-2xl border border-slate-200 bg-white/80 px-3 py-3 text-left shadow-[0_12px_30px_-24px_rgba(15,23,42,0.35)] transition hover:border-sky-200 hover:bg-sky-50/70 focus:outline-none focus:ring-2 focus:ring-sky-300/80 focus:ring-offset-2 focus:ring-offset-slate-950 sm:col-span-1"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cyan-100 text-cyan-700">
+                          <ChartIcon />
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[13px] font-semibold leading-4 text-black sm:text-sm sm:leading-5">
+                            Analytics
+                          </span>
+                          {!analyticsIsPremium && (
+                            <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] leading-none text-slate-600">
+                              Premium
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <span className="mt-1 text-xs leading-4 text-slate-600">View customer activity</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </section>
+        )}
 
         <section className="mt-8" aria-labelledby="my-business-profiles-heading">
           <div className="mb-5 flex items-center justify-between gap-4">
