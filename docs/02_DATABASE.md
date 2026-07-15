@@ -258,6 +258,32 @@ Access is restricted by RLS to the authenticated owner of each row. Authenticate
 
 ---
 
+## Table: customer_business_supports
+
+Purpose
+
+Stores customer-owned nominations/invitations for trusted local businesses. These records do not create or modify business profiles.
+
+### Columns
+
+| Column | Type | Nullable | Description |
+|----------|------|----------|-------------|
+| id | UUID | No | Primary key |
+| customer_id | UUID | No | Reference to `auth.users.id` |
+| business_name | TEXT | No | Nominated business name |
+| business_category | TEXT | No | Selected category or `Not specified` |
+| business_location | TEXT | No | Single customer-entered location field |
+| custom_message | TEXT | Yes | Optional invitation message from the customer |
+| invitation_token | UUID | No | Shareable future tracking token |
+| status | TEXT | No | `Nominated`, `Invitation Shared`, or `Profile Published` |
+| invitation_shared_at | TIMESTAMP WITH TIME ZONE | Yes | Last share/copy timestamp |
+| created_at | TIMESTAMP WITH TIME ZONE | No | Record creation timestamp |
+| updated_at | TIMESTAMP WITH TIME ZONE | No | Last update timestamp |
+
+Access is restricted by RLS to the authenticated owner of each row. Authenticated users may select, insert, and update only their own supported businesses. No public or anonymous read access is granted.
+
+---
+
 ## Table: business_profile_documents
 
 Purpose
@@ -333,6 +359,7 @@ Version 3.8 added helper functions for logo, cover, and gallery uploads. Version
 | 4.21 | Persistent user account-mode preferences | Migration created; apply to Supabase |
 | 4.22 | Optional business document display names | Migration created; apply to Supabase |
 | 4.23 | Customer profile and location preferences | Migration created; apply to Supabase |
+| 4.24 | Customer supported business nominations | Migration created; apply to Supabase |
 | Future | Additional modules | Planned |
 
 Detailed migration SQL should remain inside the `/supabase/migrations` directory.
