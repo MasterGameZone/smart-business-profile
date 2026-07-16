@@ -21,6 +21,10 @@ import {
   markBusinessOwnerNotificationRead,
 } from '../lib/businessOwnerNotificationService.ts'
 import {
+  getBusinessOwnerNotificationPreference,
+  upsertBusinessOwnerNotificationPreference,
+} from '../lib/businessOwnerNotificationPreferenceService.ts'
+import {
   createBusinessOwnerHelpSuggestion,
   listBusinessOwnerHelpSuggestions,
 } from '../lib/businessOwnerHelpSuggestionService.ts'
@@ -396,6 +400,12 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const [businessOwnerNotificationsError, setBusinessOwnerNotificationsError] = useState('')
   const [loadedBusinessOwnerNotificationsSessionKey, setLoadedBusinessOwnerNotificationsSessionKey] = useState('')
   const [readingBusinessOwnerNotificationId, setReadingBusinessOwnerNotificationId] = useState<string | null>(null)
+  const [businessOwnerNotificationsEnabled, setBusinessOwnerNotificationsEnabled] = useState(true)
+  const [isBusinessOwnerNotificationPreferenceLoading, setIsBusinessOwnerNotificationPreferenceLoading] = useState(false)
+  const [isBusinessOwnerNotificationPreferenceSaving, setIsBusinessOwnerNotificationPreferenceSaving] = useState(false)
+  const [businessOwnerNotificationPreferenceError, setBusinessOwnerNotificationPreferenceError] = useState('')
+  const [businessOwnerNotificationPreferenceFeedback, setBusinessOwnerNotificationPreferenceFeedback] = useState('')
+  const [loadedBusinessOwnerNotificationPreferenceUserId, setLoadedBusinessOwnerNotificationPreferenceUserId] = useState('')
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const [shouldAnimateEntrance] = useState(() => !hasPlayedNavbarEntrance)
   const toastIdRef = useRef(0)
@@ -513,6 +523,15 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     setReadingBusinessOwnerNotificationId(null)
   }
 
+  const resetBusinessOwnerNotificationPreferenceSession = () => {
+    setBusinessOwnerNotificationsEnabled(true)
+    setIsBusinessOwnerNotificationPreferenceLoading(false)
+    setIsBusinessOwnerNotificationPreferenceSaving(false)
+    setBusinessOwnerNotificationPreferenceError('')
+    setBusinessOwnerNotificationPreferenceFeedback('')
+    setLoadedBusinessOwnerNotificationPreferenceUserId('')
+  }
+
   const resetBusinessOwnerSuggestionForm = () => {
     setBusinessOwnerSuggestionForm({
       type: 'suggestion',
@@ -536,6 +555,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
 
   const closeHomeMenu = () => {
     resetBusinessOwnerNotificationsSession()
+    resetBusinessOwnerNotificationPreferenceSession()
     resetBusinessOwnerRecentHelpSuggestions()
     setIsHomeMenuOpen(false)
   }
@@ -677,7 +697,61 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   }, [businessOwnerMenuPanel, user?.id])
 
   useEffect(() => {
+    if (!isHomeMenuOpen || !showBusinessHomeTopBar || !user?.id) {
+      return
+    }
+
+    if (loadedBusinessOwnerNotificationPreferenceUserId === user.id) {
+      return
+    }
+
+    let isActive = true
+
+    const loadBusinessOwnerNotificationPreference = async () => {
+      setIsBusinessOwnerNotificationPreferenceLoading(true)
+      setBusinessOwnerNotificationPreferenceError('')
+      setBusinessOwnerNotificationPreferenceFeedback('')
+
+      try {
+        const preference = await getBusinessOwnerNotificationPreference(user.id)
+        if (!isActive) {
+          return
+        }
+
+        setBusinessOwnerNotificationsEnabled(preference.notifications_enabled)
+        setLoadedBusinessOwnerNotificationPreferenceUserId(user.id)
+      } catch {
+        if (isActive) {
+          setBusinessOwnerNotificationPreferenceError('Could not load notification setting right now.')
+        }
+      } finally {
+        if (isActive) {
+          setIsBusinessOwnerNotificationPreferenceLoading(false)
+        }
+      }
+    }
+
+    void loadBusinessOwnerNotificationPreference()
+
+    return () => {
+      isActive = false
+    }
+  }, [isHomeMenuOpen, loadedBusinessOwnerNotificationPreferenceUserId, showBusinessHomeTopBar, user?.id])
+
+  useEffect(() => {
     if (businessOwnerMenuPanel !== 'notifications' || !user?.id) {
+      return
+    }
+
+    if (isBusinessOwnerNotificationPreferenceLoading || businessOwnerNotificationPreferenceError) {
+      return
+    }
+
+    if (loadedBusinessOwnerNotificationPreferenceUserId !== user.id) {
+      return
+    }
+
+    if (!businessOwnerNotificationsEnabled) {
       return
     }
 
@@ -721,7 +795,17 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     return () => {
       isActive = false
     }
-  }, [businessOwnerMenuPanel, businessOwnerNotificationsSessionKey, businessOwnerProfileForNotifications, loadedBusinessOwnerNotificationsSessionKey, user?.id])
+  }, [
+    businessOwnerMenuPanel,
+    businessOwnerNotificationPreferenceError,
+    businessOwnerNotificationsEnabled,
+    businessOwnerNotificationsSessionKey,
+    businessOwnerProfileForNotifications,
+    isBusinessOwnerNotificationPreferenceLoading,
+    loadedBusinessOwnerNotificationPreferenceUserId,
+    loadedBusinessOwnerNotificationsSessionKey,
+    user?.id,
+  ])
 
   useEffect(() => {
     if (businessOwnerMenuPanel !== 'settings' || businessOwnerSettingsView !== 'recent' || !user?.id) {
@@ -1090,6 +1174,30 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     navigate(notification.action_url)
   }
 
+  const handleBusinessOwnerNotificationPreferenceToggle = async (notificationsEnabled: boolean) => {
+    if (!user?.id || isBusinessOwnerNotificationPreferenceSaving) {
+      return
+    }
+
+    setIsBusinessOwnerNotificationPreferenceSaving(true)
+    setBusinessOwnerNotificationPreferenceError('')
+    setBusinessOwnerNotificationPreferenceFeedback('')
+
+    try {
+      const preference = await upsertBusinessOwnerNotificationPreference(user.id, notificationsEnabled)
+      setBusinessOwnerNotificationsEnabled(preference.notifications_enabled)
+      setLoadedBusinessOwnerNotificationPreferenceUserId(user.id)
+      resetBusinessOwnerNotificationsSession()
+      setBusinessOwnerNotificationPreferenceFeedback(
+        preference.notifications_enabled ? 'Business notifications are on.' : 'Business notifications are off.'
+      )
+    } catch {
+      setBusinessOwnerNotificationPreferenceError('Could not update notification setting right now. Please try again.')
+    } finally {
+      setIsBusinessOwnerNotificationPreferenceSaving(false)
+    }
+  }
+
   const customerDisplayName =
     getMetadataString(userMetadata, ['full_name', 'name', 'display_name']) ??
     (user?.email ? user.email.split('@')[0] : 'Customer')
@@ -1438,7 +1546,33 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       {renderBusinessOwnerPanelHeader('Notifications')}
       <section className={businessOwnerPanelCardClass}>
         <p className="mt-2 text-sm text-slate-600">Stay updated about important business account activity.</p>
-        {isBusinessOwnerNotificationsLoading ? (
+        {isBusinessOwnerNotificationPreferenceLoading ? (
+          <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-3 py-4 text-sm text-slate-600">
+            Loading notification setting...
+          </div>
+        ) : !businessOwnerNotificationsEnabled ? (
+          <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-3 py-4">
+            <p className="text-sm font-semibold text-[#0f172a]">Notifications are turned off</p>
+            <p className="mt-1 text-xs leading-relaxed text-slate-600">
+              Turn on notifications to receive important in-app updates about your business profile, support replies, reviews, reports, and subscription activity.
+            </p>
+            {businessOwnerNotificationPreferenceError ? (
+              <p className="mt-3 text-xs text-rose-700">{businessOwnerNotificationPreferenceError}</p>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => void handleBusinessOwnerNotificationPreferenceToggle(true)}
+              disabled={isBusinessOwnerNotificationPreferenceSaving}
+              className="mt-3 inline-flex rounded-full border border-sky-200 bg-sky-600 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isBusinessOwnerNotificationPreferenceSaving ? 'Turning on...' : 'Turn On Notifications'}
+            </button>
+          </div>
+        ) : businessOwnerNotificationPreferenceError && loadedBusinessOwnerNotificationPreferenceUserId !== user?.id ? (
+          <div className="mt-4 rounded-2xl border border-rose-100 bg-rose-50 px-3 py-4 text-sm text-rose-700">
+            {businessOwnerNotificationPreferenceError}
+          </div>
+        ) : isBusinessOwnerNotificationsLoading ? (
           <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-3 py-4 text-sm text-slate-600">
             Loading notifications...
           </div>
@@ -1767,18 +1901,45 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
             </div>
           ))}
           <div className={businessOwnerPanelCardClass}>
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-semibold text-[#0f172a]">Notifications</h3>
-                <p className="mt-0.5 text-xs text-slate-500">Business account notifications</p>
+            <h3 className="text-sm font-semibold text-[#0f172a]">Notification Settings</h3>
+            <div className="mt-3 flex items-start justify-between gap-3 rounded-xl border border-white/70 bg-white px-3 py-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-[#0f172a]">Business notifications</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                  Receive important in-app updates about your business profile, support replies, reviews, reports, and subscription activity.
+                </p>
               </div>
-              <span className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700">
-                <span className="flex h-6 w-11 items-center rounded-full bg-emerald-500 px-1">
-                  <span className="ml-auto h-4 w-4 rounded-full bg-white shadow-sm" />
+              <button
+                type="button"
+                role="switch"
+                aria-checked={businessOwnerNotificationsEnabled}
+                onClick={() => void handleBusinessOwnerNotificationPreferenceToggle(!businessOwnerNotificationsEnabled)}
+                disabled={
+                  isBusinessOwnerNotificationPreferenceLoading ||
+                  isBusinessOwnerNotificationPreferenceSaving
+                }
+                className="inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                <span
+                  className={`flex h-6 w-11 items-center rounded-full px-1 transition ${
+                    businessOwnerNotificationsEnabled ? 'bg-emerald-500' : 'bg-slate-300'
+                  }`}
+                >
+                  <span
+                    className={`h-4 w-4 rounded-full bg-white shadow-sm transition ${
+                      businessOwnerNotificationsEnabled ? 'ml-auto' : ''
+                    }`}
+                  />
                 </span>
-                On
-              </span>
+                {businessOwnerNotificationsEnabled ? 'On' : 'Off'}
+              </button>
             </div>
+            {businessOwnerNotificationPreferenceFeedback ? (
+              <p className="mt-2 text-xs text-emerald-700">{businessOwnerNotificationPreferenceFeedback}</p>
+            ) : null}
+            {businessOwnerNotificationPreferenceError ? (
+              <p className="mt-2 text-xs text-rose-700">{businessOwnerNotificationPreferenceError}</p>
+            ) : null}
           </div>
           {businessOwnerSettingsSections.slice(1).map((section) => (
             <div

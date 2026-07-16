@@ -364,6 +364,25 @@ Access is restricted by RLS to the authenticated owner of each row. Authenticate
 
 ---
 
+## Table: business_owner_notification_preferences
+
+Purpose
+
+Stores private Business Owner in-app notification On/Off preferences. Missing rows are interpreted by the application as notifications enabled.
+
+### Columns
+
+| Column | Type | Nullable | Description |
+|----------|------|----------|-------------|
+| owner_id | UUID | No | Primary key and reference to `auth.users.id` |
+| notifications_enabled | BOOLEAN | No | Whether Business Owner in-app notifications are enabled |
+| created_at | TIMESTAMP WITH TIME ZONE | No | Record creation timestamp |
+| updated_at | TIMESTAMP WITH TIME ZONE | No | Last update timestamp |
+
+Access is restricted by RLS to the authenticated owner of each row. Authenticated Business Owners may select, insert, and update only their own notification preference row. No customer notification settings are stored in this table.
+
+---
+
 ## Table: business_owner_help_suggestions
 
 Purpose
@@ -537,6 +556,7 @@ Version 3.8 added helper functions for logo, cover, and gallery uploads. Version
 | 4.27 | Customer Shape the Platform MVP | Migration created; apply to Supabase |
 | 4.28 | Customer Help & Feedback MVP | Migration created; apply to Supabase |
 | 4.29 | Business availability manual override | Migration created; apply to Supabase |
+| 4.30 | Business Owner notification preferences | Migration created; apply to Supabase |
 | Future | Additional modules | Planned |
 
 Detailed migration SQL should remain inside the `/supabase/migrations` directory.
