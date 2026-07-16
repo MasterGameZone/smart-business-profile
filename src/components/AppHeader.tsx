@@ -2217,6 +2217,8 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       <div
         className="grid grid-cols-3 gap-1 rounded-full border border-slate-200 bg-white/80 p-1 shadow-[0_14px_34px_-28px_rgba(15,23,42,0.5)]"
         aria-label="Analytics time range"
+        onMouseDownCapture={(event) => event.stopPropagation()}
+        onClick={(event) => event.stopPropagation()}
       >
         {businessOwnerAnalyticsRanges.map((range) => {
           const isSelected = businessOwnerAnalyticsRange === range
@@ -2227,7 +2229,10 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
               type="button"
               aria-label={`Show analytics for ${range}`}
               aria-pressed={isSelected}
-              onClick={() => setBusinessOwnerAnalyticsRange(range)}
+              onClick={(event) => {
+                event.stopPropagation()
+                setBusinessOwnerAnalyticsRange(range)
+              }}
               className={`rounded-full px-3 py-2 text-xs font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 ${
                 isSelected
                   ? 'bg-sky-100 text-sky-800 shadow-[0_10px_20px_-16px_rgba(2,132,199,0.65)]'
