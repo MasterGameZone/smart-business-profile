@@ -434,6 +434,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     isPublicBusinessProfileVariant
   const showLoggedInHomeIcons = showMinimalCustomerTopBar && !showStartBusinessLogoOnly
   const hasTopBarMenu = showLoggedInHomeIcons || showBusinessHomeTopBar
+  const hasOpenMenu = isHomeMenuOpen || isLandingMobileMenuOpen
   const authenticatedHomePath = isCreateProfilePage && accountMode === 'business_owner' ? '/business-home' : '/'
   const useInlineDarkNavbarLayout =
     isProfilePreviewPage || isPublicBusinessProfileVariant || ((isLandingPage || isSimpleDarkNavbarPage) && !user)
@@ -578,7 +579,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   }, [hasTopBarMenu, isHomeMenuOpen, showLoggedInHomeIcons])
 
   useEffect(() => {
-    if (!showLoggedInHomeIcons || !isHomeMenuOpen) {
+    if (!hasOpenMenu) {
       return undefined
     }
 
@@ -592,7 +593,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       document.body.style.overflow = previousBodyOverflow
       document.documentElement.style.overflow = previousHtmlOverflow
     }
-  }, [isHomeMenuOpen, showLoggedInHomeIcons])
+  }, [hasOpenMenu])
 
   useEffect(() => {
     if (!showLandingMobileHamburger || !isLandingMobileMenuOpen) {
@@ -1835,7 +1836,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   }
 
   return (
-    <header className="sticky top-0 z-30 w-full px-3 pt-0 pb-0.5 sm:px-4 sm:pb-1">
+    <header className={`sticky top-0 w-full px-3 pt-0 pb-0.5 sm:px-4 sm:pb-1 ${hasOpenMenu ? 'z-50' : 'z-30'}`}>
       <ToastContainer toasts={toasts} />
       <div className={`mx-auto w-full max-w-[1440px] ${shouldAnimateEntrance ? 'animate-[navFloatIn_620ms_cubic-bezier(0.22,1,0.36,1)]' : ''}`}>
         <div
@@ -2043,14 +2044,24 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
                 </button>
 
                 {isHomeMenuOpen && (
-                  <div
-                    role="menu"
-                    aria-label="Business owner menu"
-                    className="absolute right-0 top-full z-40 mt-2 w-[min(22rem,calc(100vw-1rem))] max-h-[calc(100vh-5rem)] overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white shadow-[0_24px_48px_-28px_rgba(15,23,42,0.45)]"
-                  >
-                    {businessOwnerMenuPanel === 'main' ? renderBusinessOwnerAccountHeader() : null}
-                    <div className="p-3">{renderBusinessOwnerMenuContent()}</div>
-                  </div>
+                  <>
+                    {createPortal(
+                      <div
+                        aria-hidden="true"
+                        className="fixed inset-0 z-40 bg-slate-950/20 backdrop-blur-sm"
+                        onMouseDown={closeHomeMenu}
+                      />,
+                      document.body
+                    )}
+                    <div
+                      role="menu"
+                      aria-label="Business owner menu"
+                      className="absolute right-0 top-full z-50 mt-2 w-[min(22rem,calc(100vw-1rem))] max-h-[calc(100vh-5rem)] overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white shadow-[0_24px_48px_-28px_rgba(15,23,42,0.45)]"
+                    >
+                      {businessOwnerMenuPanel === 'main' ? renderBusinessOwnerAccountHeader() : null}
+                      <div className="p-3">{renderBusinessOwnerMenuContent()}</div>
+                    </div>
+                  </>
                 )}
               </div>
             )}
@@ -2130,25 +2141,35 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
                 </button>
 
                 {isLandingMobileMenuOpen && (
-                  <div
-                    role="menu"
-                    aria-label="Landing page navigation menu"
-                    className="absolute right-0 top-full z-40 mt-2 w-[min(9rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_48px_-28px_rgba(15,23,42,0.45)]"
-                  >
-                    <div className="p-2">
-                      {navItems.map((item) => (
-                        <button
-                          key={item.path}
-                          type="button"
-                          role="menuitem"
-                          onClick={() => handleNavItemClick(item)}
-                          className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm font-medium text-[#0f172a] hover:bg-slate-50 focus:bg-slate-50 focus:outline-none"
-                        >
-                          <span className="truncate">{item.label}</span>
-                        </button>
-                      ))}
+                  <>
+                    {createPortal(
+                      <div
+                        aria-hidden="true"
+                        className="fixed inset-0 z-40 bg-slate-950/20 backdrop-blur-sm"
+                        onMouseDown={() => setIsLandingMobileMenuOpen(false)}
+                      />,
+                      document.body
+                    )}
+                    <div
+                      role="menu"
+                      aria-label="Landing page navigation menu"
+                      className="absolute right-0 top-full z-50 mt-2 w-[min(9rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_48px_-28px_rgba(15,23,42,0.45)]"
+                    >
+                      <div className="p-2">
+                        {navItems.map((item) => (
+                          <button
+                            key={item.path}
+                            type="button"
+                            role="menuitem"
+                            onClick={() => handleNavItemClick(item)}
+                            className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm font-medium text-[#0f172a] hover:bg-slate-50 focus:bg-slate-50 focus:outline-none"
+                          >
+                            <span className="truncate">{item.label}</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  </>
                 )}
               </div>
             )}
