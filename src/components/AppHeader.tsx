@@ -33,6 +33,7 @@ import {
   upsertBusinessOwnerProfile,
 } from '../lib/businessOwnerProfileService.ts'
 import { getBusinessProfileFollowersCount } from '../lib/businessProfileFollowService.ts'
+import { getBusinessProfileViewsCount } from '../lib/businessProfileViewService.ts'
 import type { BusinessProfileRow } from '../types/businessProfile.ts'
 import type {
   BusinessOwnerHelpSuggestionRow,
@@ -465,6 +466,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const [businessOwnerSettingsView, setBusinessOwnerSettingsView] = useState<BusinessOwnerSettingsView>('main')
   const [businessOwnerAnalyticsRange, setBusinessOwnerAnalyticsRange] = useState<BusinessOwnerAnalyticsRange>('30D')
   const [businessOwnerFollowersCount, setBusinessOwnerFollowersCount] = useState<number | null>(null)
+  const [businessOwnerProfileViewsCount, setBusinessOwnerProfileViewsCount] = useState<number | null>(null)
   const [businessOwnerProfileActivityInterval, setBusinessOwnerProfileActivityInterval] =
     useState<BusinessOwnerProfileActivityInterval>('Daily')
   const [openBusinessOwnerFaqQuestion, setOpenBusinessOwnerFaqQuestion] = useState<string | null>(null)
@@ -621,8 +623,8 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const businessOwnerAnalyticsMetrics = [
     {
       label: 'Profile Views',
-      value: '4,782',
-      growth: '+12.6% vs previous 30D',
+      value: formatMetricCount(businessOwnerProfileViewsCount),
+      growth: 'Live total views',
       icon: <EyeMetricIcon />,
       accentClassName: 'bg-sky-100 text-sky-700',
     },
@@ -1057,6 +1059,36 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     }
 
     void loadBusinessOwnerFollowersCount()
+
+    return () => {
+      isActive = false
+    }
+  }, [businessOwnerAnalyticsProfileId, isBusinessOwnerAnalyticsScreenOpen])
+
+  useEffect(() => {
+    let isActive = true
+
+    const loadBusinessOwnerProfileViewsCount = async () => {
+      setBusinessOwnerProfileViewsCount(null)
+
+      if (!isBusinessOwnerAnalyticsScreenOpen || !businessOwnerAnalyticsProfileId) {
+        return
+      }
+
+      try {
+        const profileViewsCount = await getBusinessProfileViewsCount(businessOwnerAnalyticsProfileId)
+        if (isActive) {
+          setBusinessOwnerProfileViewsCount(profileViewsCount)
+        }
+      } catch (error) {
+        console.warn('Failed to load business profile view count:', error)
+        if (isActive) {
+          setBusinessOwnerProfileViewsCount(null)
+        }
+      }
+    }
+
+    void loadBusinessOwnerProfileViewsCount()
 
     return () => {
       isActive = false

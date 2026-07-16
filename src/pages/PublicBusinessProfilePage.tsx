@@ -17,6 +17,7 @@ import { svgContainerToBlob, triggerBlobDownload } from '../utils/qr.ts'
 import AppHeader from '../components/AppHeader.tsx'
 import { useAuth } from '../context/AuthContext.tsx'
 import { saveRecentlyViewedBusiness } from '../utils/recentlyViewed.ts'
+import { trackBusinessProfileView } from '../lib/businessProfileViewService.ts'
 
 type LoadState = 'loading' | 'found' | 'not-found' | 'private' | 'error'
 
@@ -130,6 +131,12 @@ function PublicBusinessProfilePage() {
 
     saveRecentlyViewedBusiness(user.id, profile)
   }, [loadState, profile, user])
+
+  useEffect(() => {
+    if (loadState !== 'found' || !profile?.id) return
+
+    void trackBusinessProfileView(profile.id)
+  }, [loadState, profile?.id])
 
   useEffect(() => {
     let cancelled = false
