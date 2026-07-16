@@ -80,6 +80,8 @@ interface BusinessOwnerMenuState {
 
 type BusinessOwnerMenuPanel = 'main' | 'profile' | 'analytics' | 'notifications' | 'settings'
 type BusinessOwnerSettingsView = 'main' | 'faqs' | 'suggestions' | 'recent'
+type BusinessOwnerPhoneModalMode = 'add' | 'change'
+type BusinessOwnerPhoneModalStep = 'phone' | 'otp' | 'success'
 
 let hasPlayedNavbarEntrance = false
 
@@ -393,6 +395,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const [businessOwnerPhoneValidationMessage, setBusinessOwnerPhoneValidationMessage] = useState('')
   const [isBusinessOwnerProfileLoading, setIsBusinessOwnerProfileLoading] = useState(false)
   const [isBusinessOwnerProfileSaving, setIsBusinessOwnerProfileSaving] = useState(false)
+  const [hasSavedBusinessOwnerPhoneNumber, setHasSavedBusinessOwnerPhoneNumber] = useState(false)
   const [businessOwnerProfileFeedback, setBusinessOwnerProfileFeedback] = useState<{
     type: 'success' | 'error'
     message: string
@@ -401,6 +404,13 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const [businessOwnerChangeEmailValue, setBusinessOwnerChangeEmailValue] = useState('')
   const [businessOwnerChangeEmailError, setBusinessOwnerChangeEmailError] = useState('')
   const [businessOwnerChangeEmailSuccess, setBusinessOwnerChangeEmailSuccess] = useState(false)
+  const [isBusinessOwnerPhoneModalOpen, setIsBusinessOwnerPhoneModalOpen] = useState(false)
+  const [businessOwnerPhoneModalMode, setBusinessOwnerPhoneModalMode] = useState<BusinessOwnerPhoneModalMode>('change')
+  const [businessOwnerPhoneModalStep, setBusinessOwnerPhoneModalStep] = useState<BusinessOwnerPhoneModalStep>('phone')
+  const [businessOwnerPhoneModalPhoneValue, setBusinessOwnerPhoneModalPhoneValue] = useState('')
+  const [businessOwnerPhoneModalOtpValue, setBusinessOwnerPhoneModalOtpValue] = useState('')
+  const [businessOwnerPhoneModalPhoneError, setBusinessOwnerPhoneModalPhoneError] = useState('')
+  const [businessOwnerPhoneModalOtpError, setBusinessOwnerPhoneModalOtpError] = useState('')
   const [businessOwnerNotifications, setBusinessOwnerNotifications] = useState<BusinessOwnerNotificationRow[]>([])
   const [isBusinessOwnerNotificationsLoading, setIsBusinessOwnerNotificationsLoading] = useState(false)
   const [businessOwnerNotificationsError, setBusinessOwnerNotificationsError] = useState('')
@@ -545,6 +555,16 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     setBusinessOwnerChangeEmailSuccess(false)
   }
 
+  const resetBusinessOwnerPhoneModal = () => {
+    setIsBusinessOwnerPhoneModalOpen(false)
+    setBusinessOwnerPhoneModalMode('change')
+    setBusinessOwnerPhoneModalStep('phone')
+    setBusinessOwnerPhoneModalPhoneValue('')
+    setBusinessOwnerPhoneModalOtpValue('')
+    setBusinessOwnerPhoneModalPhoneError('')
+    setBusinessOwnerPhoneModalOtpError('')
+  }
+
   const resetBusinessOwnerSuggestionForm = () => {
     setBusinessOwnerSuggestionForm({
       type: 'suggestion',
@@ -570,6 +590,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     resetBusinessOwnerNotificationsSession()
     resetBusinessOwnerNotificationPreferenceSession()
     resetBusinessOwnerChangeEmailModal()
+    resetBusinessOwnerPhoneModal()
     resetBusinessOwnerRecentHelpSuggestions()
     setIsHomeMenuOpen(false)
   }
@@ -686,6 +707,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
           phoneNumber: profile?.phone_number ?? '',
           preferredCity: profile?.preferred_city ?? '',
         })
+        setHasSavedBusinessOwnerPhoneNumber(Boolean(profile?.phone_number?.trim()))
         setBusinessOwnerPhoneValidationMessage('')
       } catch {
         if (!isActive) {
@@ -1054,7 +1076,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       preferredCity: businessOwnerProfileForm.preferredCity.trim(),
     }
 
-    if (!isValidPhoneNumber(trimmedValues.phoneNumber)) {
+    if (trimmedValues.phoneNumber && !isValidPhoneNumber(trimmedValues.phoneNumber)) {
       setBusinessOwnerPhoneValidationMessage('Please enter exactly 10 digits.')
       return
     }
@@ -1083,6 +1105,18 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       return
     }
 
+    if (!hasSavedBusinessOwnerPhoneNumber && trimmedValues.phoneNumber) {
+      setIsBusinessOwnerPhoneModalOpen(true)
+      setBusinessOwnerPhoneModalMode('add')
+      setBusinessOwnerPhoneModalStep('phone')
+      setBusinessOwnerPhoneModalPhoneValue(trimmedValues.phoneNumber)
+      setBusinessOwnerPhoneModalOtpValue('')
+      setBusinessOwnerPhoneModalPhoneError('')
+      setBusinessOwnerPhoneModalOtpError('')
+      setBusinessOwnerProfileFeedback(null)
+      return
+    }
+
     setIsBusinessOwnerProfileSaving(true)
     setBusinessOwnerProfileFeedback(null)
 
@@ -1093,6 +1127,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
         phoneNumber: savedProfile.phone_number ?? '',
         preferredCity: savedProfile.preferred_city ?? '',
       })
+      setHasSavedBusinessOwnerPhoneNumber(Boolean(savedProfile.phone_number?.trim()))
       setBusinessOwnerProfileFeedback({
         type: 'success',
         message: 'Profile details saved successfully.',
@@ -1230,6 +1265,34 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     setBusinessOwnerChangeEmailValue(trimmedEmail)
     setBusinessOwnerChangeEmailError('')
     setBusinessOwnerChangeEmailSuccess(true)
+  }
+
+  const handleBusinessOwnerPhoneModalSendOtp = () => {
+    const trimmedPhoneNumber = normalizePhoneNumber(businessOwnerPhoneModalPhoneValue.trim())
+
+    if (!isValidPhoneNumber(trimmedPhoneNumber)) {
+      setBusinessOwnerPhoneModalPhoneError('Please enter exactly 10 digits.')
+      return
+    }
+
+    setBusinessOwnerPhoneModalPhoneValue(trimmedPhoneNumber)
+    setBusinessOwnerPhoneModalPhoneError('')
+    setBusinessOwnerPhoneModalOtpError('')
+    setBusinessOwnerPhoneModalOtpValue('')
+    setBusinessOwnerPhoneModalStep('otp')
+  }
+
+  const handleBusinessOwnerPhoneModalVerifyOtp = () => {
+    const normalizedOtpValue = businessOwnerPhoneModalOtpValue.replace(/\D/g, '')
+
+    if (normalizedOtpValue.length !== 6) {
+      setBusinessOwnerPhoneModalOtpError('Please enter the OTP.')
+      return
+    }
+
+    setBusinessOwnerPhoneModalOtpValue(normalizedOtpValue)
+    setBusinessOwnerPhoneModalOtpError('')
+    setBusinessOwnerPhoneModalStep('success')
   }
 
   const customerDisplayName =
@@ -1496,12 +1559,16 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
           <label className="block text-xs font-semibold text-slate-600">
             Phone Number
             <input
-              className={businessOwnerInputClass}
+              className={`${businessOwnerInputClass} ${
+                hasSavedBusinessOwnerPhoneNumber ? 'cursor-default bg-slate-100 text-slate-500' : ''
+              }`}
               value={businessOwnerProfileForm.phoneNumber}
               onChange={handleBusinessOwnerProfileFieldChange('phoneNumber')}
               inputMode="numeric"
               pattern="\d{10}"
               maxLength={10}
+              readOnly={hasSavedBusinessOwnerPhoneNumber}
+              aria-readonly={hasSavedBusinessOwnerPhoneNumber}
               disabled={isBusinessOwnerProfileLoading || isBusinessOwnerProfileSaving}
             />
             {businessOwnerPhoneValidationMessage ? (
@@ -1998,6 +2065,16 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
                             setBusinessOwnerChangeEmailSuccess(false)
                             setIsBusinessOwnerChangeEmailModalOpen(true)
                           }
+                        : item === 'Change phone number'
+                          ? () => {
+                              setBusinessOwnerPhoneModalMode('change')
+                              setBusinessOwnerPhoneModalStep('phone')
+                              setBusinessOwnerPhoneModalPhoneValue('')
+                              setBusinessOwnerPhoneModalOtpValue('')
+                              setBusinessOwnerPhoneModalPhoneError('')
+                              setBusinessOwnerPhoneModalOtpError('')
+                              setIsBusinessOwnerPhoneModalOpen(true)
+                            }
                         : undefined
                     }
                     className={`flex w-full items-center justify-between border-b border-slate-100 px-3 py-2.5 text-left text-sm last:border-b-0 ${
@@ -2042,6 +2119,138 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
 
   return (
     <>
+      {isBusinessOwnerPhoneModalOpen && createPortal(
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/30 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_28px_80px_-40px_rgba(15,23,42,0.5)] sm:p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <h3 className="text-base font-semibold text-[#0f172a]">
+                  {businessOwnerPhoneModalMode === 'add' ? 'Add Phone Number' : 'Change Phone Number'}
+                </h3>
+                <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                  {businessOwnerPhoneModalMode === 'add'
+                    ? 'Enter your phone number. We’ll send an OTP to verify the number.'
+                    : 'Enter your new phone number. We’ll send an OTP to verify the number.'}
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label="Close change phone dialog"
+                onClick={resetBusinessOwnerPhoneModal}
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 6l12 12" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M18 6L6 18" />
+                </svg>
+              </button>
+            </div>
+            <div className="mt-4">
+              {businessOwnerPhoneModalStep === 'phone' ? (
+                <>
+                  <label className="block text-xs font-semibold text-slate-600">
+                    {businessOwnerPhoneModalMode === 'add' ? 'Phone Number' : 'New Phone Number'}
+                    <input
+                      inputMode="numeric"
+                      maxLength={10}
+                      placeholder="9876543210"
+                      value={businessOwnerPhoneModalPhoneValue}
+                      onChange={(event) => {
+                        setBusinessOwnerPhoneModalPhoneValue(normalizePhoneNumber(event.target.value))
+                        setBusinessOwnerPhoneModalPhoneError('')
+                      }}
+                      className={businessOwnerInputClass}
+                    />
+                  </label>
+                  {businessOwnerPhoneModalPhoneError ? (
+                    <p className="mt-1.5 text-xs text-rose-700">{businessOwnerPhoneModalPhoneError}</p>
+                  ) : null}
+                </>
+              ) : businessOwnerPhoneModalStep === 'otp' ? (
+                <>
+                  <div>
+                    <p className="text-sm font-semibold text-[#0f172a]">Enter OTP</p>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                      Enter the OTP sent to your phone number.
+                    </p>
+                  </div>
+                  <label className="mt-3 block text-xs font-semibold text-slate-600">
+                    OTP
+                    <input
+                      inputMode="numeric"
+                      maxLength={6}
+                      placeholder="Enter OTP"
+                      value={businessOwnerPhoneModalOtpValue}
+                      onChange={(event) => {
+                        setBusinessOwnerPhoneModalOtpValue(event.target.value.replace(/\D/g, '').slice(0, 6))
+                        setBusinessOwnerPhoneModalOtpError('')
+                      }}
+                      className={businessOwnerInputClass}
+                    />
+                  </label>
+                  {businessOwnerPhoneModalOtpError ? (
+                    <p className="mt-1.5 text-xs text-rose-700">{businessOwnerPhoneModalOtpError}</p>
+                  ) : null}
+                </>
+              ) : (
+                <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-3 py-3">
+                  <p className="text-sm font-semibold text-emerald-800">Phone number verification UI completed.</p>
+                </div>
+              )}
+            </div>
+            <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              {businessOwnerPhoneModalStep === 'phone' ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={resetBusinessOwnerPhoneModal}
+                    className="inline-flex justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleBusinessOwnerPhoneModalSendOtp}
+                    className="inline-flex justify-center rounded-full border border-sky-200 bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+                  >
+                    Send OTP
+                  </button>
+                </>
+              ) : businessOwnerPhoneModalStep === 'otp' ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBusinessOwnerPhoneModalStep('phone')
+                      setBusinessOwnerPhoneModalOtpValue('')
+                      setBusinessOwnerPhoneModalOtpError('')
+                    }}
+                    className="inline-flex justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleBusinessOwnerPhoneModalVerifyOtp}
+                    className="inline-flex justify-center rounded-full border border-sky-200 bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+                  >
+                    Verify OTP
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={resetBusinessOwnerPhoneModal}
+                  className="inline-flex justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
       {isBusinessOwnerChangeEmailModalOpen && createPortal(
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/30 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_28px_80px_-40px_rgba(15,23,42,0.5)] sm:p-5">
