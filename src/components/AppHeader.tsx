@@ -82,6 +82,7 @@ type BusinessOwnerMenuPanel = 'main' | 'profile' | 'analytics' | 'notifications'
 type BusinessOwnerSettingsView = 'main' | 'faqs' | 'suggestions' | 'recent'
 type BusinessOwnerPhoneModalMode = 'add' | 'change'
 type BusinessOwnerPhoneModalStep = 'phone' | 'otp' | 'success'
+type BusinessOwnerAnalyticsRange = '7D' | '30D' | '90D'
 let hasPlayedNavbarEntrance = false
 
 function getInitials(value: string): string {
@@ -118,6 +119,51 @@ function AnalyticsIcon() {
   return (
     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 19.5h16M6.5 16V10m5 6V7m5.5 9V12" />
+    </svg>
+  )
+}
+
+function CrownIcon() {
+  return (
+    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="m4.5 8.5 4 3.5 3.5-6 3.5 6 4-3.5-1.5 9H6l-1.5-9Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M6.5 20h11" />
+    </svg>
+  )
+}
+
+function EyeMetricIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3.5 12s3.25-5.5 8.5-5.5 8.5 5.5 8.5 5.5-3.25 5.5-8.5 5.5S3.5 12 3.5 12Z" />
+      <circle cx="12" cy="12" r="2.5" strokeWidth={1.8} />
+    </svg>
+  )
+}
+
+function FollowersMetricIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8.5 11.5a3.25 3.25 0 1 0 0-6.5 3.25 3.25 0 0 0 0 6.5Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3.5 19a5 5 0 0 1 10 0" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M16.5 11.5a2.75 2.75 0 1 0 0-5.5" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15.5 14.5A4.25 4.25 0 0 1 20.5 19" />
+    </svg>
+  )
+}
+
+function BookmarkMetricIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M6.5 4.5h11v15L12 16l-5.5 3.5v-15Z" />
+    </svg>
+  )
+}
+
+function ActionMetricIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="m13 2.75-8 11h6l-1 7.5 8-11h-6l1-7.5Z" />
     </svg>
   )
 }
@@ -360,6 +406,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const [isHomeMenuOpen, setIsHomeMenuOpen] = useState(false)
   const [businessOwnerMenuPanel, setBusinessOwnerMenuPanel] = useState<BusinessOwnerMenuPanel>('main')
   const [businessOwnerSettingsView, setBusinessOwnerSettingsView] = useState<BusinessOwnerSettingsView>('main')
+  const [businessOwnerAnalyticsRange, setBusinessOwnerAnalyticsRange] = useState<BusinessOwnerAnalyticsRange>('30D')
   const [openBusinessOwnerFaqQuestion, setOpenBusinessOwnerFaqQuestion] = useState<string | null>(null)
   const [isLandingMobileMenuOpen, setIsLandingMobileMenuOpen] = useState(false)
   const [businessOwnerSuggestionForm, setBusinessOwnerSuggestionForm] = useState<BusinessOwnerSuggestionFormState>({
@@ -507,12 +554,36 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     'flex w-full items-center justify-between border-b border-slate-100/90 px-3 py-3 text-left text-sm text-[#0f172a] transition hover:bg-slate-50 focus:bg-slate-50 focus:outline-none'
   const businessOwnerPanelCardClass = 'rounded-2xl border border-slate-200 bg-slate-50/80 p-3'
   const businessOwnerInputClass = 'mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-[#0f172a] outline-none focus:ring-2 focus:ring-slate-300'
-  const businessOwnerAnalyticsPreviewItems = [
-    'Profile views',
-    'Customer actions',
-    'Calls and WhatsApp clicks',
-    'Direction clicks',
-    'Saved business activity',
+  const businessOwnerAnalyticsRanges: BusinessOwnerAnalyticsRange[] = ['7D', '30D', '90D']
+  const businessOwnerAnalyticsMetrics = [
+    {
+      label: 'Profile Views',
+      value: '4,782',
+      growth: '+12.6% vs previous 30D',
+      icon: <EyeMetricIcon />,
+      accentClassName: 'bg-sky-100 text-sky-700',
+    },
+    {
+      label: 'Followers',
+      value: '1,256',
+      growth: '+8.3% vs previous 30D',
+      icon: <FollowersMetricIcon />,
+      accentClassName: 'bg-violet-100 text-violet-700',
+    },
+    {
+      label: 'Saves',
+      value: '324',
+      growth: '+15.7% vs previous 30D',
+      icon: <BookmarkMetricIcon />,
+      accentClassName: 'bg-emerald-100 text-emerald-700',
+    },
+    {
+      label: 'Total Actions',
+      value: '2,891',
+      growth: '+11.4% vs previous 30D',
+      icon: <ActionMetricIcon />,
+      accentClassName: 'bg-orange-100 text-orange-700',
+    },
   ]
   const businessOwnerSettingsSections = [
     {
@@ -1640,24 +1711,80 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   )
 
   const renderBusinessOwnerAnalyticsPanel = () => (
-    <>
-      {renderBusinessOwnerPanelHeader('Analytics')}
-      <section className={businessOwnerPanelCardClass}>
-        <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">Premium Feature</span>
-        <p className="mt-2 text-sm text-slate-600">Unlock customer activity and profile insights with a premium plan.</p>
-        <ul className="mt-4 space-y-2 text-sm text-slate-700">
-          {businessOwnerAnalyticsPreviewItems.map((item) => (
-            <li key={item} className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-              <span>{item}</span>
-            </li>
-          ))}
-        </ul>
-        <button type="button" className="mt-4 rounded-full border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-semibold text-violet-700">
-          Upgrade to Premium
+    <section className="-m-3 min-w-0 bg-[#eef4fa] p-3">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-start gap-2.5">
+          <button
+            type="button"
+            aria-label="Back to Business Account menu"
+            onClick={() => setBusinessOwnerMenuPanel('main')}
+            className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.42)] transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 6 9 12l6 6" />
+            </svg>
+          </button>
+          <div className="min-w-0">
+            <h2 className="text-lg font-bold leading-tight text-[#0f172a]">Analytics</h2>
+            <p className="mt-1 text-xs leading-relaxed text-slate-600">Track how customers interact with your profile.</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          aria-label="Premium analytics badge"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[11px] font-semibold text-amber-700 shadow-[0_10px_22px_-18px_rgba(180,83,9,0.45)] focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+        >
+          <CrownIcon />
+          <span>Premium</span>
         </button>
+      </div>
+
+      <div
+        className="grid grid-cols-3 gap-1 rounded-full border border-slate-200 bg-white/80 p-1 shadow-[0_14px_34px_-28px_rgba(15,23,42,0.5)]"
+        aria-label="Analytics time range"
+      >
+        {businessOwnerAnalyticsRanges.map((range) => {
+          const isSelected = businessOwnerAnalyticsRange === range
+
+          return (
+            <button
+              key={range}
+              type="button"
+              aria-label={`Show analytics for ${range}`}
+              aria-pressed={isSelected}
+              onClick={() => setBusinessOwnerAnalyticsRange(range)}
+              className={`rounded-full px-3 py-2 text-xs font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 ${
+                isSelected
+                  ? 'bg-sky-100 text-sky-800 shadow-[0_10px_20px_-16px_rgba(2,132,199,0.65)]'
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+              }`}
+            >
+              {range}
+            </button>
+          )
+        })}
+      </div>
+
+      <section className="mt-4 grid min-w-0 grid-cols-2 gap-3" aria-label="Analytics metrics">
+        {businessOwnerAnalyticsMetrics.map((metric) => (
+          <article
+            key={metric.label}
+            className="min-w-0 rounded-2xl border border-white/80 bg-white p-3 shadow-[0_18px_38px_-30px_rgba(15,23,42,0.55)]"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="truncate text-[11px] font-semibold text-slate-500">{metric.label}</p>
+                <p className="mt-2 text-2xl font-bold leading-none text-[#0f172a]">{metric.value}</p>
+              </div>
+              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl ${metric.accentClassName}`}>
+                {metric.icon}
+              </span>
+            </div>
+            <p className="mt-3 text-[11px] font-semibold leading-snug text-emerald-600">{metric.growth}</p>
+          </article>
+        ))}
       </section>
-    </>
+    </section>
   )
 
   const renderBusinessOwnerNotificationsPanel = () => (
