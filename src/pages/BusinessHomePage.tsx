@@ -372,6 +372,7 @@ function BusinessHomePage() {
           featuredProfile
             ? {
                 hasBusinessProfile: true,
+                businessProfile: featuredProfile,
                 businessName: featuredProfile.business_name,
                 ownerEmail: user?.email ?? 'Owner account',
                 businessCategory: featuredProfile.business_category,

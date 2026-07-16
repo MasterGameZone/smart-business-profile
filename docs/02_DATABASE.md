@@ -335,6 +335,35 @@ Access is restricted by RLS to the authenticated owner of each row. Authenticate
 
 ---
 
+## Table: business_owner_notifications
+
+Purpose
+
+Stores private Business Owner notifications for profile update reminders and future support, review/report, and subscription/payment updates. Customer notifications remain separate in `customer_notifications`.
+
+### Columns
+
+| Column | Type | Nullable | Description |
+|----------|------|----------|-------------|
+| id | UUID | No | Primary key |
+| owner_id | UUID | No | Reference to `auth.users.id` |
+| type | TEXT | No | Notification type |
+| title | TEXT | No | Short notification title |
+| message | TEXT | No | Notification message |
+| action_label | TEXT | Yes | Optional action label |
+| action_url | TEXT | Yes | Optional internal action URL |
+| related_entity_type | TEXT | Yes | Optional related entity type |
+| related_entity_id | UUID | Yes | Optional related entity id |
+| dedupe_key | TEXT | Yes | Optional key used to prevent duplicate notification creation |
+| is_read | BOOLEAN | No | Whether the Business Owner has read the notification |
+| read_at | TIMESTAMP WITH TIME ZONE | Yes | Timestamp when marked read |
+| created_at | TIMESTAMP WITH TIME ZONE | No | Record creation timestamp |
+| updated_at | TIMESTAMP WITH TIME ZONE | No | Last update timestamp |
+
+Access is restricted by RLS to the authenticated owner of each row. Authenticated Business Owners may select and insert only their own notifications and update only the `is_read` and `read_at` columns on their own notifications.
+
+---
+
 ## Table: customer_feature_votes
 
 Purpose

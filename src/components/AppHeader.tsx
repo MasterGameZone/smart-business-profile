@@ -1,13 +1,31 @@
 import { useEffect, useRef, useState, type CSSProperties, type ChangeEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { useProfile } from '../context/ProfileContext.tsx'
+import {
+  formatKeywordsForForm,
+  formatServicesForForm,
+  normalizeBusinessProfileDocuments,
+  normalizeFaqItems,
+  normalizeProductItems,
+  normalizeQualificationItems,
+  normalizeSocialLinks,
+  normalizeStringArray,
+  normalizeWorkingHours,
+  useProfile,
+} from '../context/ProfileContext.tsx'
 import { useAuth } from '../context/AuthContext.tsx'
 import { signOut } from '../lib/authService.ts'
+import {
+  ensureProfileUpdateReminderNotification,
+  listBusinessOwnerNotifications,
+  markBusinessOwnerNotificationRead,
+} from '../lib/businessOwnerNotificationService.ts'
 import {
   getBusinessOwnerProfile,
   upsertBusinessOwnerProfile,
 } from '../lib/businessOwnerProfileService.ts'
+import type { BusinessProfileRow } from '../types/businessProfile.ts'
+import type { BusinessOwnerNotificationRow } from '../types/businessOwnerNotification.ts'
 import type { BusinessOwnerProfileFormValues } from '../types/businessOwnerProfile.ts'
 import { ToastContainer, type ToastItem } from './Toast.tsx'
 
@@ -38,6 +56,7 @@ interface HomeMenuItem {
 
 interface BusinessOwnerMenuState {
   hasBusinessProfile: boolean
+  businessProfile?: BusinessProfileRow | null
   businessName?: string
   ownerEmail?: string
   businessCategory?: string
@@ -142,11 +161,25 @@ function isValidPhoneNumber(value: string): boolean {
   return /^\d{10}$/.test(value)
 }
 
+function formatNotificationDate(value: string): string {
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return ''
+  }
+
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+}
+
 function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMenuState = null }: AppHeaderProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, isLoading, accountMode, isBusinessOwnerEnabled, setPreferredAccountMode } = useAuth()
-  const { profileData } = useProfile()
+  const { profileData, setProfileData } = useProfile()
   const [isSigningOut, setIsSigningOut] = useState(false)
   const [isHomeMenuOpen, setIsHomeMenuOpen] = useState(false)
   const [businessOwnerMenuPanel, setBusinessOwnerMenuPanel] = useState<BusinessOwnerMenuPanel>('main')
@@ -163,6 +196,11 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     type: 'success' | 'error'
     message: string
   } | null>(null)
+  const [businessOwnerNotifications, setBusinessOwnerNotifications] = useState<BusinessOwnerNotificationRow[]>([])
+  const [isBusinessOwnerNotificationsLoading, setIsBusinessOwnerNotificationsLoading] = useState(false)
+  const [businessOwnerNotificationsError, setBusinessOwnerNotificationsError] = useState('')
+  const [loadedBusinessOwnerNotificationsSessionKey, setLoadedBusinessOwnerNotificationsSessionKey] = useState('')
+  const [readingBusinessOwnerNotificationId, setReadingBusinessOwnerNotificationId] = useState<string | null>(null)
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const [shouldAnimateEntrance] = useState(() => !hasPlayedNavbarEntrance)
   const toastIdRef = useRef(0)
@@ -215,6 +253,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     (showBusinessHomeTopBar
       ? {
           hasBusinessProfile: Boolean(profileData.id),
+          businessProfile: null,
           businessName: profileData.businessName || 'Business Profile',
           ownerEmail: user?.email ?? 'Owner account',
           businessCategory: profileData.businessCategory || '',
@@ -231,17 +270,12 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const businessOwnerPublicProfilePath = effectiveBusinessOwnerMenuState?.businessSlug?.trim()
     ? `/business/${effectiveBusinessOwnerMenuState.businessSlug.trim()}`
     : null
+  const businessOwnerProfileForNotifications = effectiveBusinessOwnerMenuState?.businessProfile ?? null
+  const businessOwnerNotificationsSessionKey = `${user?.id ?? ''}:${businessOwnerProfileForNotifications?.id ?? ''}`
   const businessOwnerMenuRowClass =
     'flex w-full items-center justify-between border-b border-slate-100/90 px-3 py-3 text-left text-sm text-[#0f172a] transition hover:bg-slate-50 focus:bg-slate-50 focus:outline-none'
   const businessOwnerPanelCardClass = 'rounded-2xl border border-slate-200 bg-slate-50/80 p-3'
   const businessOwnerInputClass = 'mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-[#0f172a] outline-none focus:ring-2 focus:ring-slate-300'
-  const businessOwnerNotificationTypes = [
-    'Open/closed reminder',
-    'Profile update reminders',
-    'Support/help replies',
-    'Review/report updates later',
-    'Subscription/payment updates later',
-  ]
   const businessOwnerAnalyticsPreviewItems = [
     'Profile views',
     'Customer actions',
@@ -275,6 +309,19 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     },
   ]
 
+  const resetBusinessOwnerNotificationsSession = () => {
+    setBusinessOwnerNotifications([])
+    setIsBusinessOwnerNotificationsLoading(false)
+    setBusinessOwnerNotificationsError('')
+    setLoadedBusinessOwnerNotificationsSessionKey('')
+    setReadingBusinessOwnerNotificationId(null)
+  }
+
+  const closeHomeMenu = () => {
+    resetBusinessOwnerNotificationsSession()
+    setIsHomeMenuOpen(false)
+  }
+
   useEffect(() => {
     if (shouldAnimateEntrance) {
       hasPlayedNavbarEntrance = true
@@ -294,13 +341,13 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       }
 
       if (!homeMenuRef.current?.contains(target)) {
-        setIsHomeMenuOpen(false)
+        closeHomeMenu()
       }
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setIsHomeMenuOpen(false)
+        closeHomeMenu()
       }
     }
 
@@ -358,7 +405,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
-      setIsHomeMenuOpen(false)
+      closeHomeMenu()
       setIsLandingMobileMenuOpen(false)
     }, 0)
 
@@ -410,6 +457,53 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       isActive = false
     }
   }, [businessOwnerMenuPanel, user?.id])
+
+  useEffect(() => {
+    if (businessOwnerMenuPanel !== 'notifications' || !user?.id) {
+      return
+    }
+
+    if (loadedBusinessOwnerNotificationsSessionKey === businessOwnerNotificationsSessionKey) {
+      return
+    }
+
+    let isActive = true
+
+    const loadBusinessOwnerNotifications = async () => {
+      setIsBusinessOwnerNotificationsLoading(true)
+      setBusinessOwnerNotificationsError('')
+
+      try {
+        if (businessOwnerProfileForNotifications?.id) {
+          try {
+            await ensureProfileUpdateReminderNotification(user.id, businessOwnerProfileForNotifications)
+          } catch {
+            // Reminder creation is best-effort; the existing notification list should still open.
+          }
+        }
+
+        const nextNotifications = await listBusinessOwnerNotifications(user.id)
+        if (isActive) {
+          setBusinessOwnerNotifications(nextNotifications)
+          setLoadedBusinessOwnerNotificationsSessionKey(businessOwnerNotificationsSessionKey)
+        }
+      } catch {
+        if (isActive) {
+          setBusinessOwnerNotificationsError('Could not load notifications right now.')
+        }
+      } finally {
+        if (isActive) {
+          setIsBusinessOwnerNotificationsLoading(false)
+        }
+      }
+    }
+
+    void loadBusinessOwnerNotifications()
+
+    return () => {
+      isActive = false
+    }
+  }, [businessOwnerMenuPanel, businessOwnerNotificationsSessionKey, businessOwnerProfileForNotifications, loadedBusinessOwnerNotificationsSessionKey, user?.id])
 
   const showError = (message: string) => {
     const id = ++toastIdRef.current
@@ -559,6 +653,87 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     }
   }
 
+  const prepareBusinessProfileEditor = (profile: BusinessProfileRow) => {
+    setProfileData({
+      ...profileData,
+      id: profile.id,
+      slug: profile.slug,
+      ownerId: profile.owner_id,
+      businessName: profile.business_name,
+      ownerName: profile.owner_name,
+      businessCategory: profile.business_category,
+      businessSubcategories: Array.isArray(profile.business_subcategories) ? profile.business_subcategories : [],
+      establishedYear: typeof profile.established_year === 'number' ? String(profile.established_year) : '',
+      yearsOfExperience:
+        typeof profile.years_of_experience === 'number' ? String(profile.years_of_experience) : '',
+      highlights: normalizeStringArray(profile.highlights),
+      faqs: normalizeFaqItems(profile.faqs),
+      productsMenuPackages: normalizeProductItems(profile.products_menu_packages),
+      qualifications: normalizeQualificationItems(profile.qualifications),
+      phoneNumber: profile.phone_number,
+      whatsappNumber: profile.whatsapp_number || '',
+      email: profile.email || '',
+      website: profile.website || '',
+      address: profile.address || '',
+      aboutBusiness: profile.about_business || '',
+      tagline: profile.tagline || '',
+      servicesText: formatServicesForForm(profile.services),
+      workingHours: normalizeWorkingHours(profile.working_hours),
+      googleMapsUrl: profile.google_maps_url || '',
+      socialLinks: normalizeSocialLinks(profile.social_links),
+      keywordsText: formatKeywordsForForm(profile.keywords),
+      isPublic: profile.is_public ?? true,
+      logo: null,
+      existingLogoUrl: profile.logo_url,
+      coverBanner: null,
+      existingCoverBannerUrl: profile.cover_banner_url,
+      galleryImages: [],
+      existingGalleryImageUrls: Array.isArray(profile.gallery_images)
+        ? profile.gallery_images.filter((imageUrl): imageUrl is string => typeof imageUrl === 'string')
+        : [],
+      documentName: '',
+      documentFiles: [],
+      existingDocuments: normalizeBusinessProfileDocuments(profile.business_profile_documents),
+    })
+  }
+
+  const markBusinessOwnerNotificationReadLocally = async (
+    notification: BusinessOwnerNotificationRow
+  ): Promise<BusinessOwnerNotificationRow> => {
+    if (!user?.id || notification.is_read || readingBusinessOwnerNotificationId === notification.id) {
+      return notification
+    }
+
+    setReadingBusinessOwnerNotificationId(notification.id)
+
+    try {
+      const updatedNotification = await markBusinessOwnerNotificationRead(notification.id, user.id)
+      setBusinessOwnerNotifications((currentNotifications) =>
+        currentNotifications.map((item) => (item.id === updatedNotification.id ? updatedNotification : item))
+      )
+      return updatedNotification
+    } catch {
+      return notification
+    } finally {
+      setReadingBusinessOwnerNotificationId(null)
+    }
+  }
+
+  const handleBusinessOwnerNotificationOpen = async (notification: BusinessOwnerNotificationRow) => {
+    await markBusinessOwnerNotificationReadLocally(notification)
+
+    if (!notification.action_url) {
+      return
+    }
+
+    if (notification.type === 'profile_update_reminder' && businessOwnerProfileForNotifications) {
+      prepareBusinessProfileEditor(businessOwnerProfileForNotifications)
+    }
+
+    closeHomeMenu()
+    navigate(notification.action_url)
+  }
+
   const customerDisplayName =
     getMetadataString(userMetadata, ['full_name', 'name', 'display_name']) ??
     (user?.email ? user.email.split('@')[0] : 'Customer')
@@ -615,7 +790,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       return
     }
 
-    setIsHomeMenuOpen(false)
+    closeHomeMenu()
     if (item.onSelect) {
       await item.onSelect()
       return
@@ -675,7 +850,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
         <button
           type="button"
           aria-label="Close business account menu"
-          onClick={() => setIsHomeMenuOpen(false)}
+          onClick={closeHomeMenu}
           className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.32)] transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
         >
           <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
@@ -690,7 +865,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
             return
           }
 
-          setIsHomeMenuOpen(false)
+          closeHomeMenu()
           navigate(businessOwnerPublicProfilePath)
         }}
         disabled={!businessOwnerPublicProfilePath}
@@ -891,13 +1066,66 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       {renderBusinessOwnerPanelHeader('Notifications')}
       <section className={businessOwnerPanelCardClass}>
         <p className="mt-2 text-sm text-slate-600">Stay updated about important business account activity.</p>
-        <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-          {businessOwnerNotificationTypes.map((item) => (
-            <div key={item} className="border-b border-slate-100 px-3 py-3 text-sm text-slate-700 last:border-b-0">
-              {item}
-            </div>
-          ))}
-        </div>
+        {isBusinessOwnerNotificationsLoading ? (
+          <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-3 py-4 text-sm text-slate-600">
+            Loading notifications...
+          </div>
+        ) : businessOwnerNotificationsError ? (
+          <div className="mt-4 rounded-2xl border border-rose-100 bg-rose-50 px-3 py-4 text-sm text-rose-700">
+            {businessOwnerNotificationsError}
+          </div>
+        ) : businessOwnerNotifications.length === 0 ? (
+          <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-3 py-4">
+            <p className="text-sm font-semibold text-[#0f172a]">No notifications yet</p>
+            <p className="mt-1 text-xs leading-relaxed text-slate-600">
+              Important updates about your business profile, support replies, reviews, reports, and subscription activity will appear here.
+            </p>
+          </div>
+        ) : (
+          <div className="mt-4 space-y-2">
+            {businessOwnerNotifications.map((notification) => {
+              const isUnread = !notification.is_read
+              const notificationDate = formatNotificationDate(notification.created_at)
+
+              return (
+                <button
+                  key={notification.id}
+                  type="button"
+                  onClick={() => void handleBusinessOwnerNotificationOpen(notification)}
+                  disabled={readingBusinessOwnerNotificationId === notification.id}
+                  className={`w-full rounded-2xl border px-3 py-3 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 disabled:cursor-wait disabled:opacity-80 ${
+                    isUnread
+                      ? 'border-sky-100 bg-sky-50/80 hover:bg-sky-50'
+                      : 'border-slate-200 bg-white hover:bg-slate-50'
+                  }`}
+                >
+                  <span className="flex items-start gap-3">
+                    <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-slate-700">
+                      <NotificationsIcon />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-start justify-between gap-2">
+                        <span className={`text-sm ${isUnread ? 'font-semibold text-[#0f172a]' : 'font-medium text-slate-700'}`}>
+                          {notification.title}
+                        </span>
+                        {isUnread ? <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-sky-500" /> : null}
+                      </span>
+                      <span className="mt-1 block text-xs leading-relaxed text-slate-600">{notification.message}</span>
+                      <span className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
+                        {notificationDate ? <span>{notificationDate}</span> : null}
+                        {notification.action_label ? (
+                          <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 font-semibold text-slate-700">
+                            {notification.action_label}
+                          </span>
+                        ) : null}
+                      </span>
+                    </span>
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        )}
       </section>
     </>
   )
@@ -1183,8 +1411,10 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
                   onClick={() => {
                     if (!isHomeMenuOpen) {
                       setBusinessOwnerMenuPanel('main')
+                      setIsHomeMenuOpen(true)
+                      return
                     }
-                    setIsHomeMenuOpen((open) => !open)
+                    closeHomeMenu()
                   }}
                   className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/12 bg-white/5 text-[#0f172a] focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
                   style={navbarInteractionStyle}
