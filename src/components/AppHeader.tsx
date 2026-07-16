@@ -571,6 +571,8 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const showLoggedInHomeIcons = showMinimalCustomerTopBar && !showStartBusinessLogoOnly
   const hasTopBarMenu = showLoggedInHomeIcons || showBusinessHomeTopBar
   const hasOpenMenu = isHomeMenuOpen || isLandingMobileMenuOpen
+  const isBusinessOwnerAnalyticsScreenOpen =
+    isHomeMenuOpen && showBusinessHomeTopBar && businessOwnerMenuPanel === 'analytics'
   const authenticatedHomePath = isCreateProfilePage && accountMode === 'business_owner' ? '/business-home' : '/'
   const useInlineDarkNavbarLayout =
     isProfilePreviewPage || isPublicBusinessProfileVariant || ((isLandingPage || isSimpleDarkNavbarPage) && !user)
@@ -711,11 +713,11 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   )
   const businessOwnerProfileActivityChart = {
     width: 320,
-    height: 190,
+    height: 96,
     left: 38,
     right: 14,
-    top: 18,
-    bottom: 34,
+    top: 12,
+    bottom: 24,
   }
   const businessOwnerProfileActivityChartWidth =
     businessOwnerProfileActivityChart.width -
@@ -1921,7 +1923,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   )
 
   const renderBusinessOwnerAnalyticsPanel = () => (
-    <section className="-m-3 min-w-0 bg-[#eef4fa] p-3">
+    <section className="mx-auto w-full max-w-6xl min-w-0 bg-[#eef4fa]">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-2.5">
           <button
@@ -2961,7 +2963,21 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
         </div>,
         document.body
       )}
-      <header className={`sticky top-0 w-full px-3 pt-0 pb-0.5 sm:px-4 sm:pb-1 ${hasOpenMenu ? 'z-50' : 'z-30'}`}>
+      {isBusinessOwnerAnalyticsScreenOpen ? createPortal(
+        <div
+          role="menu"
+          aria-label="Business owner analytics"
+          className="fixed inset-0 z-[90] overflow-y-auto overscroll-contain bg-[#eef4fa] px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8"
+        >
+          {renderBusinessOwnerAnalyticsPanel()}
+        </div>,
+        document.body
+      ) : null}
+      <header
+        className={`sticky top-0 w-full px-3 pt-0 pb-0.5 sm:px-4 sm:pb-1 ${
+          hasOpenMenu ? 'z-50' : 'z-30'
+        } ${isBusinessOwnerAnalyticsScreenOpen ? 'hidden' : ''}`}
+      >
         <ToastContainer toasts={toasts} />
         <div className={`mx-auto w-full max-w-[1440px] ${shouldAnimateEntrance ? 'animate-[navFloatIn_620ms_cubic-bezier(0.22,1,0.36,1)]' : ''}`}>
           <div
@@ -3168,7 +3184,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
                   </svg>
                 </button>
 
-                {isHomeMenuOpen && (
+                {isHomeMenuOpen && businessOwnerMenuPanel !== 'analytics' && (
                   <>
                     {createPortal(
                       <div
