@@ -14,7 +14,7 @@ import {
   useProfile,
 } from '../context/ProfileContext.tsx'
 import { useAuth } from '../context/AuthContext.tsx'
-import { signOut } from '../lib/authService.ts'
+import { requestEmailChange, signOut } from '../lib/authService.ts'
 import {
   ensureProfileUpdateReminderNotification,
   listBusinessOwnerNotifications,
@@ -404,6 +404,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const [businessOwnerChangeEmailValue, setBusinessOwnerChangeEmailValue] = useState('')
   const [businessOwnerChangeEmailError, setBusinessOwnerChangeEmailError] = useState('')
   const [businessOwnerChangeEmailSuccess, setBusinessOwnerChangeEmailSuccess] = useState(false)
+  const [isBusinessOwnerChangeEmailSubmitting, setIsBusinessOwnerChangeEmailSubmitting] = useState(false)
   const [isBusinessOwnerPhoneModalOpen, setIsBusinessOwnerPhoneModalOpen] = useState(false)
   const [businessOwnerPhoneModalMode, setBusinessOwnerPhoneModalMode] = useState<BusinessOwnerPhoneModalMode>('change')
   const [businessOwnerPhoneModalStep, setBusinessOwnerPhoneModalStep] = useState<BusinessOwnerPhoneModalStep>('phone')
@@ -426,6 +427,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const [shouldAnimateEntrance] = useState(() => !hasPlayedNavbarEntrance)
   const toastIdRef = useRef(0)
   const homeMenuRef = useRef<HTMLDivElement | null>(null)
+  const businessOwnerChangeEmailModalRef = useRef<HTMLDivElement | null>(null)
   const customerMenuOverlayRef = useRef<HTMLDivElement | null>(null)
   const landingMobileMenuRef = useRef<HTMLDivElement | null>(null)
   const userMetadata = (user?.user_metadata ?? {}) as Record<string, unknown>
@@ -553,6 +555,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     setBusinessOwnerChangeEmailValue('')
     setBusinessOwnerChangeEmailError('')
     setBusinessOwnerChangeEmailSuccess(false)
+    setIsBusinessOwnerChangeEmailSubmitting(false)
   }
 
   const resetBusinessOwnerPhoneModal = () => {
@@ -610,6 +613,10 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       const target = event.target as Node
 
       if (showLoggedInHomeIcons && customerMenuOverlayRef.current?.contains(target)) {
+        return
+      }
+
+      if (businessOwnerChangeEmailModalRef.current?.contains(target)) {
         return
       }
 
@@ -1247,8 +1254,13 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     }
   }
 
-  const handleBusinessOwnerChangeEmailSubmit = () => {
+  const handleBusinessOwnerChangeEmailSubmit = async () => {
+    if (isBusinessOwnerChangeEmailSubmitting) {
+      return
+    }
+
     const trimmedEmail = businessOwnerChangeEmailValue.trim()
+    const currentEmail = user?.email?.trim().toLowerCase() ?? ''
 
     if (!trimmedEmail) {
       setBusinessOwnerChangeEmailError('Please enter your new email address.')
@@ -1262,9 +1274,29 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       return
     }
 
+    if (trimmedEmail.toLowerCase() === currentEmail) {
+      setBusinessOwnerChangeEmailError('This email is already linked to your account.')
+      setBusinessOwnerChangeEmailSuccess(false)
+      return
+    }
+
     setBusinessOwnerChangeEmailValue(trimmedEmail)
     setBusinessOwnerChangeEmailError('')
-    setBusinessOwnerChangeEmailSuccess(true)
+    setBusinessOwnerChangeEmailSuccess(false)
+    setIsBusinessOwnerChangeEmailSubmitting(true)
+
+    try {
+      const { error } = await requestEmailChange(trimmedEmail)
+
+      if (error) {
+        setBusinessOwnerChangeEmailError('Could not send verification email right now. Please try again.')
+        return
+      }
+
+      setBusinessOwnerChangeEmailSuccess(true)
+    } finally {
+      setIsBusinessOwnerChangeEmailSubmitting(false)
+    }
   }
 
   const handleBusinessOwnerPhoneModalSendOtp = () => {
@@ -2252,7 +2284,10 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
         document.body
       )}
       {isBusinessOwnerChangeEmailModalOpen && createPortal(
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/30 p-4 backdrop-blur-sm">
+        <div
+          ref={businessOwnerChangeEmailModalRef}
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/30 p-4 backdrop-blur-sm"
+        >
           <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_28px_80px_-40px_rgba(15,23,42,0.5)] sm:p-5">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
@@ -2287,6 +2322,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
                       setBusinessOwnerChangeEmailSuccess(false)
                     }
                   }}
+                  disabled={isBusinessOwnerChangeEmailSubmitting}
                   className={businessOwnerInputClass}
                 />
               </label>
@@ -2306,16 +2342,18 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
               <button
                 type="button"
                 onClick={resetBusinessOwnerChangeEmailModal}
+                disabled={isBusinessOwnerChangeEmailSubmitting}
                 className="inline-flex justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                onClick={handleBusinessOwnerChangeEmailSubmit}
-                className="inline-flex justify-center rounded-full border border-sky-200 bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+                onClick={() => void handleBusinessOwnerChangeEmailSubmit()}
+                disabled={isBusinessOwnerChangeEmailSubmitting}
+                className="inline-flex justify-center rounded-full border border-sky-200 bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                Send Verification Email
+                {isBusinessOwnerChangeEmailSubmitting ? 'Sending...' : 'Send Verification Email'}
               </button>
             </div>
           </div>

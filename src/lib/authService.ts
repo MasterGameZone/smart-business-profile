@@ -89,6 +89,15 @@ export async function updatePassword(newPassword: string): Promise<{ error: stri
   return { error: toFriendlyMessage(error) }
 }
 
+export async function requestEmailChange(newEmail: string): Promise<{ error: string | null }> {
+  const { error } = await supabase.auth.updateUser(
+    { email: newEmail.trim() },
+    { emailRedirectTo: `${window.location.origin}/business-home` }
+  )
+
+  return { error: toFriendlyMessage(error) }
+}
+
 export async function getCurrentUser(): Promise<User | null> {
   const { data, error } = await supabase.auth.getUser()
   if (error) {
