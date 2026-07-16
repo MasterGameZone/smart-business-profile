@@ -1674,6 +1674,15 @@ function BusinessProfileDisplay({
           <li key={item.key} className="min-w-0">
             <a
               href={item.href}
+              onClick={
+                item.key === 'website'
+                  ? () => {
+                      if (enableCustomerActionTracking && customerActionTrackingProfileId) {
+                        void trackBusinessProfileCustomerAction(customerActionTrackingProfileId, 'website', 'public_profile')
+                      }
+                    }
+                  : undefined
+              }
               target={item.external ? '_blank' : undefined}
               rel={item.external ? 'noopener noreferrer' : undefined}
               aria-label={item.external ? `Open ${item.value}` : `${item.label} ${item.value}`}

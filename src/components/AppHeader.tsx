@@ -473,6 +473,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const [businessOwnerCallClicksCount, setBusinessOwnerCallClicksCount] = useState<number | null>(null)
   const [businessOwnerWhatsAppClicksCount, setBusinessOwnerWhatsAppClicksCount] = useState<number | null>(null)
   const [businessOwnerDirectionClicksCount, setBusinessOwnerDirectionClicksCount] = useState<number | null>(null)
+  const [businessOwnerWebsiteClicksCount, setBusinessOwnerWebsiteClicksCount] = useState<number | null>(null)
   const [businessOwnerProfileActivityInterval, setBusinessOwnerProfileActivityInterval] =
     useState<BusinessOwnerProfileActivityInterval>('Daily')
   const [openBusinessOwnerFaqQuestion, setOpenBusinessOwnerFaqQuestion] = useState<string | null>(null)
@@ -683,8 +684,8 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     },
     {
       label: 'Website Clicks',
-      value: '231',
-      growth: '-4.3%',
+      value: formatMetricCount(businessOwnerWebsiteClicksCount),
+      growth: 'Live website clicks',
       icon: <GlobeActionIcon />,
       accentClassName: 'bg-violet-100 text-violet-700',
       growthClassName: 'text-rose-600',
@@ -1065,6 +1066,36 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     }
 
     void loadBusinessOwnerFollowersCount()
+
+    return () => {
+      isActive = false
+    }
+  }, [businessOwnerAnalyticsProfileId, isBusinessOwnerAnalyticsScreenOpen])
+
+  useEffect(() => {
+    let isActive = true
+
+    const loadBusinessOwnerWebsiteClicksCount = async () => {
+      setBusinessOwnerWebsiteClicksCount(null)
+
+      if (!isBusinessOwnerAnalyticsScreenOpen || !businessOwnerAnalyticsProfileId) {
+        return
+      }
+
+      try {
+        const websiteClicksCount = await getBusinessProfileActionCount(businessOwnerAnalyticsProfileId, 'website')
+        if (isActive) {
+          setBusinessOwnerWebsiteClicksCount(websiteClicksCount)
+        }
+      } catch (error) {
+        console.warn('Failed to load business profile website clicks count:', error)
+        if (isActive) {
+          setBusinessOwnerWebsiteClicksCount(null)
+        }
+      }
+    }
+
+    void loadBusinessOwnerWebsiteClicksCount()
 
     return () => {
       isActive = false
