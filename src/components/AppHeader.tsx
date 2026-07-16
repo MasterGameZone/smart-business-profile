@@ -20,13 +20,17 @@ import {
   listBusinessOwnerNotifications,
   markBusinessOwnerNotificationRead,
 } from '../lib/businessOwnerNotificationService.ts'
-import { createBusinessOwnerHelpSuggestion } from '../lib/businessOwnerHelpSuggestionService.ts'
+import {
+  createBusinessOwnerHelpSuggestion,
+  listBusinessOwnerHelpSuggestions,
+} from '../lib/businessOwnerHelpSuggestionService.ts'
 import {
   getBusinessOwnerProfile,
   upsertBusinessOwnerProfile,
 } from '../lib/businessOwnerProfileService.ts'
 import type { BusinessProfileRow } from '../types/businessProfile.ts'
 import type {
+  BusinessOwnerHelpSuggestionRow,
   BusinessOwnerHelpSuggestionType,
   CreateBusinessOwnerHelpSuggestionInput,
 } from '../types/businessOwnerHelpSuggestion.ts'
@@ -71,7 +75,7 @@ interface BusinessOwnerMenuState {
 }
 
 type BusinessOwnerMenuPanel = 'main' | 'profile' | 'analytics' | 'notifications' | 'settings'
-type BusinessOwnerSettingsView = 'main' | 'faqs' | 'suggestions'
+type BusinessOwnerSettingsView = 'main' | 'faqs' | 'suggestions' | 'recent'
 
 let hasPlayedNavbarEntrance = false
 
@@ -179,6 +183,36 @@ function formatNotificationDate(value: string): string {
     day: 'numeric',
     year: 'numeric',
   })
+}
+
+function formatBusinessOwnerHelpSuggestionTypeLabel(type: BusinessOwnerHelpSuggestionType): string {
+  switch (type) {
+    case 'suggestion':
+      return 'Suggestion'
+    case 'help_request':
+      return 'Help request'
+    case 'issue_problem':
+      return 'Issue / problem'
+    case 'profile_improvement_help':
+      return 'Profile improvement help'
+    default:
+      return type
+  }
+}
+
+function formatBusinessOwnerHelpSuggestionStatusLabel(status: BusinessOwnerHelpSuggestionRow['status']): string {
+  switch (status) {
+    case 'submitted':
+      return 'Submitted'
+    case 'in_review':
+      return 'In Review'
+    case 'replied':
+      return 'Replied'
+    case 'closed':
+      return 'Closed'
+    default:
+      return status
+  }
 }
 
 const businessOwnerFaqItems = [
@@ -339,6 +373,12 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     message: string
   } | null>(null)
   const [isBusinessOwnerSuggestionSubmitting, setIsBusinessOwnerSuggestionSubmitting] = useState(false)
+  const [businessOwnerRecentHelpSuggestions, setBusinessOwnerRecentHelpSuggestions] = useState<BusinessOwnerHelpSuggestionRow[]>([])
+  const [isBusinessOwnerRecentHelpSuggestionsLoading, setIsBusinessOwnerRecentHelpSuggestionsLoading] = useState(false)
+  const [businessOwnerRecentHelpSuggestionsError, setBusinessOwnerRecentHelpSuggestionsError] = useState('')
+  const [hasLoadedBusinessOwnerRecentHelpSuggestions, setHasLoadedBusinessOwnerRecentHelpSuggestions] = useState(false)
+  const [businessOwnerRecentHelpSuggestionsStale, setBusinessOwnerRecentHelpSuggestionsStale] = useState(false)
+  const [openBusinessOwnerRecentHelpSuggestionId, setOpenBusinessOwnerRecentHelpSuggestionId] = useState<string | null>(null)
   const [businessOwnerProfileForm, setBusinessOwnerProfileForm] = useState<BusinessOwnerProfileFormValues>({
     name: '',
     phoneNumber: '',
@@ -484,8 +524,18 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     setIsBusinessOwnerSuggestionSubmitting(false)
   }
 
+  const resetBusinessOwnerRecentHelpSuggestions = () => {
+    setBusinessOwnerRecentHelpSuggestions([])
+    setIsBusinessOwnerRecentHelpSuggestionsLoading(false)
+    setBusinessOwnerRecentHelpSuggestionsError('')
+    setHasLoadedBusinessOwnerRecentHelpSuggestions(false)
+    setBusinessOwnerRecentHelpSuggestionsStale(false)
+    setOpenBusinessOwnerRecentHelpSuggestionId(null)
+  }
+
   const closeHomeMenu = () => {
     resetBusinessOwnerNotificationsSession()
+    resetBusinessOwnerRecentHelpSuggestions()
     setIsHomeMenuOpen(false)
   }
 
@@ -672,6 +722,52 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     }
   }, [businessOwnerMenuPanel, businessOwnerNotificationsSessionKey, businessOwnerProfileForNotifications, loadedBusinessOwnerNotificationsSessionKey, user?.id])
 
+  useEffect(() => {
+    if (businessOwnerMenuPanel !== 'settings' || businessOwnerSettingsView !== 'recent' || !user?.id) {
+      return
+    }
+
+    if (hasLoadedBusinessOwnerRecentHelpSuggestions && !businessOwnerRecentHelpSuggestionsStale) {
+      return
+    }
+
+    let isActive = true
+
+    const loadBusinessOwnerRecentHelpSuggestions = async () => {
+      setIsBusinessOwnerRecentHelpSuggestionsLoading(true)
+      setBusinessOwnerRecentHelpSuggestionsError('')
+
+      try {
+        const nextSuggestions = await listBusinessOwnerHelpSuggestions(user.id)
+        if (isActive) {
+          setBusinessOwnerRecentHelpSuggestions(nextSuggestions)
+          setHasLoadedBusinessOwnerRecentHelpSuggestions(true)
+          setBusinessOwnerRecentHelpSuggestionsStale(false)
+        }
+      } catch {
+        if (isActive) {
+          setBusinessOwnerRecentHelpSuggestionsError('Could not load recent help & suggestions right now.')
+        }
+      } finally {
+        if (isActive) {
+          setIsBusinessOwnerRecentHelpSuggestionsLoading(false)
+        }
+      }
+    }
+
+    void loadBusinessOwnerRecentHelpSuggestions()
+
+    return () => {
+      isActive = false
+    }
+  }, [
+    businessOwnerMenuPanel,
+    businessOwnerSettingsView,
+    businessOwnerRecentHelpSuggestionsStale,
+    hasLoadedBusinessOwnerRecentHelpSuggestions,
+    user?.id,
+  ])
+
   const showError = (message: string) => {
     const id = ++toastIdRef.current
     setToasts((prev) => [...prev, { id, message, type: 'error' }])
@@ -833,6 +929,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
         customSubject: '',
         message: '',
       })
+      setBusinessOwnerRecentHelpSuggestionsStale(true)
       setBusinessOwnerSuggestionFeedback({
         type: 'success',
         message: 'Thanks, your message has been sent.',
@@ -1542,6 +1639,85 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
           </div>
         </section>
       </>
+    ) : businessOwnerSettingsView === 'recent' ? (
+      <>
+        {renderBusinessOwnerSubPanelHeader('Recent help & suggestions', () => setBusinessOwnerSettingsView('main'))}
+        <section className="space-y-3">
+          <div className={businessOwnerPanelCardClass}>
+            <p className="text-sm leading-relaxed text-slate-600">
+              Review your recent suggestions, help requests, issues, and profile improvement submissions.
+            </p>
+          </div>
+          {isBusinessOwnerRecentHelpSuggestionsLoading ? (
+            <div className="rounded-2xl border border-slate-200 bg-white px-3 py-4 text-sm text-slate-600">
+              Loading recent help & suggestions...
+            </div>
+          ) : businessOwnerRecentHelpSuggestionsError ? (
+            <div className="rounded-2xl border border-rose-100 bg-rose-50 px-3 py-4 text-sm text-rose-700">
+              {businessOwnerRecentHelpSuggestionsError}
+            </div>
+          ) : businessOwnerRecentHelpSuggestions.length === 0 ? (
+            <div className="rounded-2xl border border-slate-200 bg-white px-3 py-4">
+              <p className="text-sm font-semibold text-[#0f172a]">No help or suggestions yet</p>
+              <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                Your submitted suggestions, help requests, issues, and profile improvement requests will appear here.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {businessOwnerRecentHelpSuggestions.map((item) => {
+                const isOpen = openBusinessOwnerRecentHelpSuggestionId === item.id
+                const messagePreview =
+                  item.message.length > 140 ? `${item.message.slice(0, 140)}...` : item.message
+
+                return (
+                  <div key={item.id} className="rounded-2xl border border-slate-200 bg-white px-3 py-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
+                          <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 font-semibold text-slate-700">
+                            {formatBusinessOwnerHelpSuggestionTypeLabel(item.type)}
+                          </span>
+                          <span className="rounded-full border border-sky-100 bg-sky-50 px-2 py-0.5 font-semibold text-sky-700">
+                            {formatBusinessOwnerHelpSuggestionStatusLabel(item.status)}
+                          </span>
+                          <span>{formatNotificationDate(item.created_at)}</span>
+                        </div>
+                        <div className="mt-2 text-sm font-semibold text-[#0f172a]">{item.subject}</div>
+                        <div className="mt-1 text-xs leading-relaxed text-slate-600">
+                          {isOpen ? item.message : messagePreview}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        aria-expanded={isOpen}
+                        aria-label={isOpen ? 'Collapse message details' : 'Expand message details'}
+                        onClick={() =>
+                          setOpenBusinessOwnerRecentHelpSuggestionId((currentId) => (currentId === item.id ? null : item.id))
+                        }
+                        className="mt-0.5 shrink-0 rounded-full border border-slate-200 bg-white p-1.5 text-slate-500 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+                      >
+                        {isOpen ? (
+                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M18 15l-6-6-6 6" />
+                          </svg>
+                        ) : (
+                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                    {isOpen ? (
+                      <div className="mt-3 border-t border-slate-100 pt-0" />
+                    ) : null}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </section>
+      </>
     ) : (
       <>
         {renderBusinessOwnerPanelHeader('Settings')}
@@ -1572,6 +1748,11 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
                               resetBusinessOwnerSuggestionForm()
                               setBusinessOwnerSettingsView('suggestions')
                             }
+                          : item === 'Recent help & suggestions'
+                            ? () => {
+                                setOpenBusinessOwnerRecentHelpSuggestionId(null)
+                                setBusinessOwnerSettingsView('recent')
+                              }
                           : undefined
                     }
                     className={`flex w-full items-center justify-between border-b border-slate-100 px-3 py-2.5 text-left text-sm last:border-b-0 ${
