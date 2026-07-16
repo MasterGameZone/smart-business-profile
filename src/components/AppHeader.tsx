@@ -66,6 +66,7 @@ interface BusinessOwnerMenuState {
 }
 
 type BusinessOwnerMenuPanel = 'main' | 'profile' | 'analytics' | 'notifications' | 'settings'
+type BusinessOwnerSettingsView = 'main' | 'faqs'
 
 let hasPlayedNavbarEntrance = false
 
@@ -175,6 +176,69 @@ function formatNotificationDate(value: string): string {
   })
 }
 
+const businessOwnerFaqItems = [
+  {
+    question: 'How do I complete my business profile?',
+    answer:
+      'Go to Edit Profile and fill in your business details, contact information, location, services, gallery, working hours, and other important sections. A more complete profile helps customers understand and trust your business.',
+  },
+  {
+    question: 'How do I edit my business profile?',
+    answer:
+      'Use the Edit Profile action from your Business Home or business account menu. You can update your business details, contact information, services, images, working hours, and other profile sections.',
+  },
+  {
+    question: 'How do I view my public business profile?',
+    answer:
+      'Use View Profile to open the public version of your business profile. This is the page customers will see when they open your business link or QR code.',
+  },
+  {
+    question: 'How do I share my business profile?',
+    answer:
+      'Use the Share Profile action to copy or share your public business profile link. You can send this link to customers through WhatsApp, messages, social media, or other channels.',
+  },
+  {
+    question: 'How does the QR Code work?',
+    answer:
+      'Your QR Code opens your public business profile. You can download or share it so customers can scan it and quickly view your business details.',
+  },
+  {
+    question: 'How do I update my gallery images?',
+    answer:
+      'Use Manage Gallery or Edit Profile to add, remove, or update business images. Good-quality images help customers understand your work, place, products, or services.',
+  },
+  {
+    question: 'What does Profile Completion mean?',
+    answer:
+      'Profile Completion shows how much important business information you have added. Completing more sections can make your profile more useful and trustworthy for customers.',
+  },
+  {
+    question: 'Why should I add working hours?',
+    answer:
+      'Working hours help customers know when your business is open. They also improve the usefulness of your profile when customers want to call, visit, or contact you.',
+  },
+  {
+    question: 'Why should I add certificates or documents?',
+    answer:
+      'Certificates, licenses, qualifications, or documents can help build trust, especially for professional services, clinics, consultants, tutors, and similar businesses.',
+  },
+  {
+    question: 'Can customers contact me from my profile?',
+    answer:
+      'Yes. Customers can use the contact actions available on your public profile, such as call, WhatsApp, email, directions, website, or other links you have added.',
+  },
+  {
+    question: 'Can I switch back to Customer mode?',
+    answer:
+      'Yes. Use Switch to Customer from the business account menu to browse and interact with businesses as a customer.',
+  },
+  {
+    question: 'Why should I keep my profile updated?',
+    answer:
+      'Updated information helps customers get the correct contact details, services, location, working hours, and business details. This reduces confusion and improves trust.',
+  },
+]
+
 function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMenuState = null }: AppHeaderProps) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -183,6 +247,8 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const [isSigningOut, setIsSigningOut] = useState(false)
   const [isHomeMenuOpen, setIsHomeMenuOpen] = useState(false)
   const [businessOwnerMenuPanel, setBusinessOwnerMenuPanel] = useState<BusinessOwnerMenuPanel>('main')
+  const [businessOwnerSettingsView, setBusinessOwnerSettingsView] = useState<BusinessOwnerSettingsView>('main')
+  const [openBusinessOwnerFaqQuestion, setOpenBusinessOwnerFaqQuestion] = useState<string | null>(null)
   const [isLandingMobileMenuOpen, setIsLandingMobileMenuOpen] = useState(false)
   const [businessOwnerProfileForm, setBusinessOwnerProfileForm] = useState<BusinessOwnerProfileFormValues>({
     name: '',
@@ -899,6 +965,19 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     </div>
   )
 
+  const renderBusinessOwnerSubPanelHeader = (title: string, onBack: () => void) => (
+    <div className="mb-3 flex items-center justify-between gap-3">
+      <h2 className="text-sm font-semibold text-[#0f172a]">{title}</h2>
+      <button
+        type="button"
+        onClick={onBack}
+        className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+      >
+        <span>Back</span>
+      </button>
+    </div>
+  )
+
   const renderBusinessOwnerMainMenu = () => (
     <>
       {renderBusinessOwnerPanelHeader('Business Account')}
@@ -949,7 +1028,10 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
         <button
           type="button"
           role="menuitem"
-          onClick={() => setBusinessOwnerMenuPanel('settings')}
+          onClick={() => {
+            setBusinessOwnerSettingsView('main')
+            setBusinessOwnerMenuPanel('settings')
+          }}
           className={`${businessOwnerMenuRowClass} border-b-0`}
         >
           <span className="flex items-center gap-3">
@@ -1131,92 +1213,147 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   )
 
   const renderBusinessOwnerSettingsPanel = () => (
-    <>
-      {renderBusinessOwnerPanelHeader('Settings')}
-      <section className="space-y-3">
-        {businessOwnerSettingsSections.slice(0, 1).map((section) => (
-          <div
-            key={section.title}
-            className={`rounded-2xl border p-3 ${
-              section.danger ? 'border-rose-100 bg-rose-50/70' : 'border-slate-200 bg-slate-50/80'
-            }`}
-          >
-            <h3 className={`text-sm font-semibold ${section.danger ? 'text-rose-700' : 'text-[#0f172a]'}`}>
-              {section.title}
-            </h3>
-            <div className="mt-2 overflow-hidden rounded-xl border border-white/70 bg-white">
-              {section.items.map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  className={`flex w-full items-center justify-between border-b border-slate-100 px-3 py-2.5 text-left text-sm last:border-b-0 ${
-                    section.danger ? 'text-rose-700' : 'text-slate-700'
-                  }`}
-                >
-                  <span>{item}</span>
-                </button>
-              ))}
-            </div>
+    businessOwnerSettingsView === 'faqs' ? (
+      <>
+        {renderBusinessOwnerSubPanelHeader('Business account FAQs', () => setBusinessOwnerSettingsView('main'))}
+        <section className="space-y-3">
+          <div className={businessOwnerPanelCardClass}>
+            <p className="text-sm leading-relaxed text-slate-600">
+              Quick answers about managing your business account and keeping your public profile useful for customers.
+            </p>
           </div>
-        ))}
-        <div className={businessOwnerPanelCardClass}>
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h3 className="text-sm font-semibold text-[#0f172a]">Notifications</h3>
-              <p className="mt-0.5 text-xs text-slate-500">Business account notifications</p>
+          <div className="space-y-2">
+            {businessOwnerFaqItems.map((item) => (
+              <button
+                key={item.question}
+                type="button"
+                onClick={() =>
+                  setOpenBusinessOwnerFaqQuestion((currentQuestion) =>
+                    currentQuestion === item.question ? null : item.question
+                  )
+                }
+                className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-left transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+              >
+                <span className="flex items-start justify-between gap-3">
+                  <span className="text-sm font-semibold text-[#0f172a]">{item.question}</span>
+                  <span className="mt-0.5 shrink-0 text-slate-500" aria-hidden="true">
+                    {openBusinessOwnerFaqQuestion === item.question ? (
+                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M18 15l-6-6-6 6" />
+                      </svg>
+                    ) : (
+                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
+                      </svg>
+                    )}
+                  </span>
+                </span>
+                {openBusinessOwnerFaqQuestion === item.question ? (
+                  <span className="mt-2 block border-t border-slate-100 pt-2 text-xs leading-relaxed text-slate-600">
+                    {item.answer}
+                  </span>
+                ) : null}
+              </button>
+            ))}
+          </div>
+        </section>
+      </>
+    ) : (
+      <>
+        {renderBusinessOwnerPanelHeader('Settings')}
+        <section className="space-y-3">
+          {businessOwnerSettingsSections.slice(0, 1).map((section) => (
+            <div
+              key={section.title}
+              className={`rounded-2xl border p-3 ${
+                section.danger ? 'border-rose-100 bg-rose-50/70' : 'border-slate-200 bg-slate-50/80'
+              }`}
+            >
+              <h3 className={`text-sm font-semibold ${section.danger ? 'text-rose-700' : 'text-[#0f172a]'}`}>
+                {section.title}
+              </h3>
+              <div className="mt-2 overflow-hidden rounded-xl border border-white/70 bg-white">
+                {section.items.map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={
+                      item === 'Business account FAQs'
+                        ? () => {
+                            setOpenBusinessOwnerFaqQuestion(null)
+                            setBusinessOwnerSettingsView('faqs')
+                          }
+                        : undefined
+                    }
+                    className={`flex w-full items-center justify-between border-b border-slate-100 px-3 py-2.5 text-left text-sm last:border-b-0 ${
+                      section.danger ? 'text-rose-700' : 'text-slate-700'
+                    }`}
+                  >
+                    <span>{item}</span>
+                  </button>
+                ))}
+              </div>
             </div>
-            <span className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700">
-              <span className="flex h-6 w-11 items-center rounded-full bg-emerald-500 px-1">
-                <span className="ml-auto h-4 w-4 rounded-full bg-white shadow-sm" />
+          ))}
+          <div className={businessOwnerPanelCardClass}>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold text-[#0f172a]">Notifications</h3>
+                <p className="mt-0.5 text-xs text-slate-500">Business account notifications</p>
+              </div>
+              <span className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700">
+                <span className="flex h-6 w-11 items-center rounded-full bg-emerald-500 px-1">
+                  <span className="ml-auto h-4 w-4 rounded-full bg-white shadow-sm" />
+                </span>
+                On
               </span>
-              On
-            </span>
-          </div>
-        </div>
-        {businessOwnerSettingsSections.slice(1).map((section) => (
-          <div
-            key={section.title}
-            className={`rounded-2xl border p-3 ${
-              section.danger ? 'border-rose-100 bg-rose-50/70' : 'border-slate-200 bg-slate-50/80'
-            }`}
-          >
-            <h3 className={`text-sm font-semibold ${section.danger ? 'text-rose-700' : 'text-[#0f172a]'}`}>
-              {section.title}
-            </h3>
-            <div className="mt-2 overflow-hidden rounded-xl border border-white/70 bg-white">
-              {section.items.map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  className={`flex w-full items-center justify-between border-b border-slate-100 px-3 py-2.5 text-left text-sm last:border-b-0 ${
-                    section.danger ? 'text-rose-700' : 'text-slate-700'
-                  }`}
-                >
-                  <span>{item}</span>
-                </button>
-              ))}
             </div>
           </div>
-        ))}
-        <button
-          type="button"
-          role="menuitem"
-          onClick={async () => {
-            setIsHomeMenuOpen(false)
-            await handleLogout()
-          }}
-          disabled={isSigningOut}
-          className="flex w-full items-center justify-between rounded-2xl border border-rose-100 bg-rose-50/70 px-3 py-3 text-left text-sm font-medium text-rose-700 transition hover:bg-rose-50 focus:bg-rose-50 focus:outline-none disabled:cursor-not-allowed disabled:opacity-70"
-        >
-          <span className="flex items-center gap-3">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-rose-600">
-              <LogoutIcon />
+          {businessOwnerSettingsSections.slice(1).map((section) => (
+            <div
+              key={section.title}
+              className={`rounded-2xl border p-3 ${
+                section.danger ? 'border-rose-100 bg-rose-50/70' : 'border-slate-200 bg-slate-50/80'
+              }`}
+            >
+              <h3 className={`text-sm font-semibold ${section.danger ? 'text-rose-700' : 'text-[#0f172a]'}`}>
+                {section.title}
+              </h3>
+              <div className="mt-2 overflow-hidden rounded-xl border border-white/70 bg-white">
+                {section.items.map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    className={`flex w-full items-center justify-between border-b border-slate-100 px-3 py-2.5 text-left text-sm last:border-b-0 ${
+                      section.danger ? 'text-rose-700' : 'text-slate-700'
+                    }`}
+                  >
+                    <span>{item}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+          <button
+            type="button"
+            role="menuitem"
+            onClick={async () => {
+              setIsHomeMenuOpen(false)
+              await handleLogout()
+            }}
+            disabled={isSigningOut}
+            className="flex w-full items-center justify-between rounded-2xl border border-rose-100 bg-rose-50/70 px-3 py-3 text-left text-sm font-medium text-rose-700 transition hover:bg-rose-50 focus:bg-rose-50 focus:outline-none disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            <span className="flex items-center gap-3">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-rose-600">
+                <LogoutIcon />
+              </span>
+              <span>{isSigningOut ? 'Logging out...' : 'Log Out'}</span>
             </span>
-            <span>{isSigningOut ? 'Logging out...' : 'Log Out'}</span>
-          </span>
-        </button>
-      </section>
-    </>
+          </button>
+        </section>
+      </>
+    )
   )
 
   const renderBusinessOwnerMenuContent = () => {
