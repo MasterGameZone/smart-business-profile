@@ -357,6 +357,8 @@ function PublicBusinessProfilePage() {
               qrCodeRef={qrCodeRef}
               onDownloadQR={handleDownloadQR}
               onShareQR={handleShareQR}
+              enableCustomerActionTracking={true}
+              customerActionTrackingProfileId={profile.id}
               saveButtonSlot={
                 <button
                   type="button"

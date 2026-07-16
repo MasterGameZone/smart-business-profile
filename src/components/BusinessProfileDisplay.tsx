@@ -7,6 +7,7 @@ import {
   getBusinessProfileFollowSummary,
   toggleBusinessProfileFollow,
 } from '../lib/businessProfileFollowService.ts'
+import { trackBusinessProfileCustomerAction } from '../lib/businessProfileActionService.ts'
 import { getBusinessDocumentViewUrl } from '../lib/storageService.ts'
 import type { BusinessProfileRow, JsonObject, SocialLinks } from '../types/businessProfile.ts'
 
@@ -53,6 +54,8 @@ interface BusinessProfileDisplayProps {
   saveButtonSlot?: ReactNode
   previewActionSlot?: ReactNode
   footerSlot?: ReactNode
+  enableCustomerActionTracking?: boolean
+  customerActionTrackingProfileId?: string
 }
 
 export const businessProfileOuterWrapperClassName =
@@ -775,6 +778,8 @@ function BusinessProfileDisplay({
   saveButtonSlot,
   previewActionSlot,
   footerSlot,
+  enableCustomerActionTracking = false,
+  customerActionTrackingProfileId,
 }: BusinessProfileDisplayProps) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -1265,6 +1270,11 @@ function BusinessProfileDisplay({
           <div className="mt-3 grid grid-cols-4 gap-1.5 sm:mt-3.5 sm:gap-2" role="group" aria-label="Primary profile actions">
             <a
               href={displayPhone ? `tel:${displayPhone}` : undefined}
+              onClick={() => {
+                if (enableCustomerActionTracking && customerActionTrackingProfileId && displayPhone) {
+                  void trackBusinessProfileCustomerAction(customerActionTrackingProfileId, 'call', 'public_profile')
+                }
+              }}
               aria-label="Call business"
               aria-disabled={!displayPhone}
               className={`flex min-h-[4.5rem] min-w-0 flex-col items-center justify-center gap-1 rounded-[0.9rem] border px-1 py-2.5 text-[11px] font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:min-h-[4.875rem] sm:gap-1.5 sm:rounded-[0.95rem] sm:py-3 sm:text-[13px] ${

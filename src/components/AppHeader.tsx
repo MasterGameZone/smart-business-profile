@@ -35,6 +35,7 @@ import {
 import { getBusinessProfileFollowersCount } from '../lib/businessProfileFollowService.ts'
 import { getBusinessProfileViewsCount } from '../lib/businessProfileViewService.ts'
 import { getBusinessProfileSavesCount } from '../lib/favoriteBusinessService.ts'
+import { getBusinessProfileActionCount } from '../lib/businessProfileActionService.ts'
 import type { BusinessProfileRow } from '../types/businessProfile.ts'
 import type {
   BusinessOwnerHelpSuggestionRow,
@@ -469,6 +470,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const [businessOwnerFollowersCount, setBusinessOwnerFollowersCount] = useState<number | null>(null)
   const [businessOwnerProfileViewsCount, setBusinessOwnerProfileViewsCount] = useState<number | null>(null)
   const [businessOwnerSavesCount, setBusinessOwnerSavesCount] = useState<number | null>(null)
+  const [businessOwnerCallClicksCount, setBusinessOwnerCallClicksCount] = useState<number | null>(null)
   const [businessOwnerProfileActivityInterval, setBusinessOwnerProfileActivityInterval] =
     useState<BusinessOwnerProfileActivityInterval>('Daily')
   const [openBusinessOwnerFaqQuestion, setOpenBusinessOwnerFaqQuestion] = useState<string | null>(null)
@@ -655,8 +657,8 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const businessOwnerCustomerActionMetrics = [
     {
       label: 'Call Clicks',
-      value: '612',
-      growth: '+9.7%',
+      value: formatMetricCount(businessOwnerCallClicksCount),
+      growth: 'Live call clicks',
       icon: <PhoneActionIcon />,
       accentClassName: 'bg-sky-100 text-sky-700',
       growthClassName: 'text-emerald-600',
@@ -1061,6 +1063,36 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     }
 
     void loadBusinessOwnerFollowersCount()
+
+    return () => {
+      isActive = false
+    }
+  }, [businessOwnerAnalyticsProfileId, isBusinessOwnerAnalyticsScreenOpen])
+
+  useEffect(() => {
+    let isActive = true
+
+    const loadBusinessOwnerCallClicksCount = async () => {
+      setBusinessOwnerCallClicksCount(null)
+
+      if (!isBusinessOwnerAnalyticsScreenOpen || !businessOwnerAnalyticsProfileId) {
+        return
+      }
+
+      try {
+        const callClicksCount = await getBusinessProfileActionCount(businessOwnerAnalyticsProfileId, 'call')
+        if (isActive) {
+          setBusinessOwnerCallClicksCount(callClicksCount)
+        }
+      } catch (error) {
+        console.warn('Failed to load business profile call clicks count:', error)
+        if (isActive) {
+          setBusinessOwnerCallClicksCount(null)
+        }
+      }
+    }
+
+    void loadBusinessOwnerCallClicksCount()
 
     return () => {
       isActive = false
