@@ -1314,6 +1314,11 @@ function BusinessProfileDisplay({
 
             <a
               href={directionsUrl ?? undefined}
+              onClick={() => {
+                if (enableCustomerActionTracking && customerActionTrackingProfileId && directionsUrl) {
+                  void trackBusinessProfileCustomerAction(customerActionTrackingProfileId, 'directions', 'public_profile')
+                }
+              }}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Open directions"

@@ -472,6 +472,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const [businessOwnerSavesCount, setBusinessOwnerSavesCount] = useState<number | null>(null)
   const [businessOwnerCallClicksCount, setBusinessOwnerCallClicksCount] = useState<number | null>(null)
   const [businessOwnerWhatsAppClicksCount, setBusinessOwnerWhatsAppClicksCount] = useState<number | null>(null)
+  const [businessOwnerDirectionClicksCount, setBusinessOwnerDirectionClicksCount] = useState<number | null>(null)
   const [businessOwnerProfileActivityInterval, setBusinessOwnerProfileActivityInterval] =
     useState<BusinessOwnerProfileActivityInterval>('Daily')
   const [openBusinessOwnerFaqQuestion, setOpenBusinessOwnerFaqQuestion] = useState<string | null>(null)
@@ -674,8 +675,8 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     },
     {
       label: 'Direction Clicks',
-      value: '803',
-      growth: '+7.1%',
+      value: formatMetricCount(businessOwnerDirectionClicksCount),
+      growth: 'Live direction clicks',
       icon: <NavigationActionIcon />,
       accentClassName: 'bg-blue-100 text-blue-700',
       growthClassName: 'text-emerald-600',
@@ -1064,6 +1065,36 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     }
 
     void loadBusinessOwnerFollowersCount()
+
+    return () => {
+      isActive = false
+    }
+  }, [businessOwnerAnalyticsProfileId, isBusinessOwnerAnalyticsScreenOpen])
+
+  useEffect(() => {
+    let isActive = true
+
+    const loadBusinessOwnerDirectionClicksCount = async () => {
+      setBusinessOwnerDirectionClicksCount(null)
+
+      if (!isBusinessOwnerAnalyticsScreenOpen || !businessOwnerAnalyticsProfileId) {
+        return
+      }
+
+      try {
+        const directionClicksCount = await getBusinessProfileActionCount(businessOwnerAnalyticsProfileId, 'directions')
+        if (isActive) {
+          setBusinessOwnerDirectionClicksCount(directionClicksCount)
+        }
+      } catch (error) {
+        console.warn('Failed to load business profile direction clicks count:', error)
+        if (isActive) {
+          setBusinessOwnerDirectionClicksCount(null)
+        }
+      }
+    }
+
+    void loadBusinessOwnerDirectionClicksCount()
 
     return () => {
       isActive = false
