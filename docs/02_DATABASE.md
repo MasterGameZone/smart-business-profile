@@ -101,6 +101,8 @@ Stores the primary business profile for each authenticated user.
 | keywords | TEXT[] | Yes | Business keywords/tags for future discovery |
 | cover_banner_url | TEXT | Yes | Cover banner image URL |
 | gallery_images | TEXT[] | Yes | Gallery image URLs |
+| availability_override | TEXT | Yes | Manual availability override: `open`, `closed`, or null |
+| availability_override_updated_at | TIMESTAMP WITH TIME ZONE | Yes | Last manual availability override update timestamp |
 | is_public | BOOLEAN | Yes | Profile visibility flag |
 | profile_image_url | TEXT | Yes | Business logo/profile image |
 | profile_qr_code | TEXT | Yes | Generated QR code URL |
@@ -461,6 +463,7 @@ Version 3.8 added helper functions for logo, cover, and gallery uploads. Version
 | 4.26 | Customer notifications MVP | Migration created; apply to Supabase |
 | 4.27 | Customer Shape the Platform MVP | Migration created; apply to Supabase |
 | 4.28 | Customer Help & Feedback MVP | Migration created; apply to Supabase |
+| 4.29 | Business availability manual override | Migration created; apply to Supabase |
 | Future | Additional modules | Planned |
 
 Detailed migration SQL should remain inside the `/supabase/migrations` directory.

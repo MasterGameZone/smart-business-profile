@@ -5,6 +5,7 @@
 
 export type JsonObject = Record<string, unknown>
 export type SocialLinks = Record<string, string>
+export type AvailabilityOverride = 'open' | 'closed' | null
 
 export interface BusinessProfileFaqValue {
   question: string
@@ -66,6 +67,8 @@ export interface BusinessProfileRow {
   keywords: string[] | null
   cover_banner_url: string | null
   gallery_images: string[] | null
+  availability_override: AvailabilityOverride
+  availability_override_updated_at: string | null
   is_public: boolean | null
   slug: string
   owner_id: string | null
@@ -101,6 +104,8 @@ export interface BusinessProfileInsert {
   keywords?: string[] | null
   cover_banner_url?: string | null
   gallery_images?: string[] | null
+  availability_override?: AvailabilityOverride
+  availability_override_updated_at?: string | null
   is_public?: boolean | null
   slug: string
   owner_id?: string | null
@@ -134,6 +139,8 @@ export interface BusinessProfileUpdate {
   keywords?: string[] | null
   cover_banner_url?: string | null
   gallery_images?: string[] | null
+  availability_override?: AvailabilityOverride
+  availability_override_updated_at?: string | null
   is_public?: boolean | null
   slug?: string
   owner_id?: string | null

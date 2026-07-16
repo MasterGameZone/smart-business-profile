@@ -27,6 +27,11 @@ import {
 const MAX_GALLERY_IMAGES = 6
 let supportsBusinessSubcategoriesColumnCache: boolean | null = null
 
+type BusinessAvailabilityUpdateResult = Pick<
+  BusinessProfileRow,
+  'id' | 'availability_override' | 'availability_override_updated_at' | 'updated_at'
+>
+
 async function supportsBusinessSubcategoriesColumn(): Promise<boolean> {
   if (supportsBusinessSubcategoriesColumnCache !== null) {
     return supportsBusinessSubcategoriesColumnCache
@@ -632,6 +637,44 @@ export async function updateBusinessProfile(
   await syncBusinessProfileDocuments(user.id, id, data)
 
   return updated
+}
+
+export async function updateBusinessAvailabilityOverride(
+  id: string,
+  availabilityOverride: BusinessProfileRow['availability_override']
+): Promise<BusinessAvailabilityUpdateResult> {
+  const user = await getCurrentUser()
+  if (!user) {
+    throw new Error('You must be logged in to update business availability.')
+  }
+
+  if (
+    availabilityOverride !== null &&
+    availabilityOverride !== 'open' &&
+    availabilityOverride !== 'closed'
+  ) {
+    throw new Error('Invalid business availability status.')
+  }
+
+  const { data, error } = await supabase
+    .from('business_profiles')
+    .update({
+      availability_override: availabilityOverride,
+      availability_override_updated_at: availabilityOverride ? new Date().toISOString() : null,
+    })
+    .eq('id', id)
+    .select('id, availability_override, availability_override_updated_at, updated_at')
+    .single()
+
+  if (error) {
+    throw error
+  }
+
+  if (!data) {
+    throw new Error('Availability update succeeded but no row was returned.')
+  }
+
+  return data
 }
 
 export async function getBusinessProfileBySlug(

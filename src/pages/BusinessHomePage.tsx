@@ -17,7 +17,7 @@ import {
 } from '../context/ProfileContext.tsx'
 import { useAuth } from '../context/AuthContext.tsx'
 import { usePageMeta } from '../hooks/usePageMeta.ts'
-import { getBusinessProfilesByOwner } from '../lib/businessProfileService.ts'
+import { getBusinessProfilesByOwner, updateBusinessAvailabilityOverride } from '../lib/businessProfileService.ts'
 import type { BusinessProfileRow } from '../types/businessProfile.ts'
 
 type LoadState = 'loading' | 'found' | 'empty' | 'error'
@@ -34,6 +34,10 @@ function getInitials(value: string): string {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? '')
     .join('')
+}
+
+function getManualAvailabilityStatus(profile: BusinessProfileRow): 'open' | 'closed' {
+  return profile.availability_override === 'open' ? 'open' : 'closed'
 }
 
 function EditIcon() {
@@ -145,6 +149,7 @@ function BusinessHomePage() {
   const [loadState, setLoadState] = useState<LoadState>('loading')
   const [profiles, setProfiles] = useState<BusinessProfileRow[]>([])
   const [toasts, setToasts] = useState<ToastItem[]>([])
+  const [availabilitySavingProfileId, setAvailabilitySavingProfileId] = useState<string | null>(null)
 
   const featuredProfile = profiles[0] ?? null
   const hasBusinessProfile = Boolean(featuredProfile && loadState === 'found')
@@ -154,6 +159,10 @@ function BusinessHomePage() {
   const businessLogoUrl = featuredProfile?.logo_url || null
   const businessInitials = getInitials(businessName)
   const analyticsIsPremium = false
+  const availabilityStatus = featuredProfile ? getManualAvailabilityStatus(featuredProfile) : 'closed'
+  const isAvailabilityOpen = availabilityStatus === 'open'
+  const availabilityLabel = isAvailabilityOpen ? 'Open' : 'Closed'
+  const isAvailabilitySaving = Boolean(featuredProfile && availabilitySavingProfileId === featuredProfile.id)
 
   useEffect(() => {
     if (!isLoading && user && accountMode !== 'business_owner') {
@@ -312,6 +321,35 @@ function BusinessHomePage() {
       existingDocuments: normalizeBusinessProfileDocuments(profile.business_profile_documents),
     })
     navigate('/create-profile?step=branding-media')
+  }
+
+  const handleToggleBusinessAvailability = async (profile: BusinessProfileRow) => {
+    const currentStatus = getManualAvailabilityStatus(profile)
+    const nextStatus = currentStatus === 'open' ? 'closed' : 'open'
+
+    setAvailabilitySavingProfileId(profile.id)
+
+    try {
+      const updated = await updateBusinessAvailabilityOverride(profile.id, nextStatus)
+      setProfiles((currentProfiles) =>
+        currentProfiles.map((currentProfile) =>
+          currentProfile.id === updated.id
+            ? {
+                ...currentProfile,
+                availability_override: updated.availability_override,
+                availability_override_updated_at: updated.availability_override_updated_at,
+                updated_at: updated.updated_at,
+              }
+            : currentProfile
+        )
+      )
+      showToast(`Business marked ${nextStatus === 'open' ? 'Open' : 'Closed'}.`)
+    } catch (error) {
+      console.error('Failed to update business availability:', error)
+      showToast('Unable to update availability right now.', 'error')
+    } finally {
+      setAvailabilitySavingProfileId(null)
+    }
   }
 
   const handleViewHelp = () => {
@@ -489,8 +527,7 @@ function BusinessHomePage() {
                     Business Management Actions
                   </p>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                    <button
-                      type="button"
+                    <div
                       className="flex min-h-[4.25rem] flex-col justify-center rounded-2xl border border-slate-200 bg-white/80 px-3 py-3 text-left shadow-[0_12px_30px_-24px_rgba(15,23,42,0.35)] transition hover:border-sky-200 hover:bg-sky-50/70 focus:outline-none focus:ring-2 focus:ring-sky-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
                     >
                       <div className="flex items-center gap-3">
@@ -502,7 +539,34 @@ function BusinessHomePage() {
                         </span>
                       </div>
                       <span className="mt-1 text-xs leading-4 text-slate-600">Manage live availability</span>
-                    </button>
+                      <div className="mt-2 flex items-center gap-2">
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={isAvailabilityOpen}
+                          aria-label={`Mark business ${isAvailabilityOpen ? 'closed' : 'open'}`}
+                          disabled={isAvailabilitySaving}
+                          onClick={() => void handleToggleBusinessAvailability(profiles[0])}
+                          className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full px-1 transition focus:outline-none focus:ring-2 focus:ring-sky-300/80 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 ${
+                            isAvailabilityOpen ? 'bg-emerald-500' : 'bg-slate-300'
+                          }`}
+                        >
+                          <span
+                            className={`h-5 w-5 rounded-full bg-white shadow-sm transition ${
+                              isAvailabilityOpen ? 'translate-x-5' : 'translate-x-0'
+                            }`}
+                            aria-hidden="true"
+                          />
+                        </button>
+                        <span
+                          className={`text-xs font-semibold leading-4 ${
+                            isAvailabilityOpen ? 'text-emerald-700' : 'text-slate-700'
+                          }`}
+                        >
+                          {isAvailabilitySaving ? 'Saving...' : availabilityLabel}
+                        </span>
+                      </div>
+                    </div>
 
                     <button
                       type="button"

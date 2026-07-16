@@ -336,6 +336,7 @@ function PublicBusinessProfilePage() {
                 tagline: profile.tagline,
                 services: profile.services,
                 workingHours: profile.working_hours,
+                availabilityOverride: profile.availability_override,
                 googleMapsUrl: profile.google_maps_url,
                 socialLinks: profile.social_links,
                 keywords: profile.keywords,

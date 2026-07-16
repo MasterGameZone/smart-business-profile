@@ -27,6 +27,7 @@ export interface BusinessProfileDisplayData {
   tagline?: string | null
   services?: unknown[] | null
   workingHours?: JsonObject | null
+  availabilityOverride?: BusinessProfileRow['availability_override']
   googleMapsUrl?: string | null
   socialLinks?: SocialLinks | null
   keywords?: string[] | null
@@ -395,7 +396,18 @@ function getNextOpenDetail(value: JsonObject, startIndex: number): string {
   return ''
 }
 
-function getCompactWorkingStatus(value: JsonObject | null | undefined): CompactWorkingStatus {
+function getCompactWorkingStatus(
+  value: JsonObject | null | undefined,
+  availabilityOverride: BusinessProfileRow['availability_override'] | undefined
+): CompactWorkingStatus {
+  if (availabilityOverride === 'open') {
+    return { label: 'Open', detail: '', tone: 'open' }
+  }
+
+  if (availabilityOverride === 'closed') {
+    return { label: 'Closed', detail: '', tone: 'closed' }
+  }
+
   if (!isRecord(value)) {
     return { label: 'Hours unavailable', detail: '', tone: 'unknown' }
   }
@@ -786,7 +798,7 @@ function BusinessProfileDisplay({
   const attachedQualificationItems = qualificationItems.filter((item) => item.hasAttachedDocument)
   const faqItems = normalizeFaqs(profile.faqs)
   const compactLocation = formatCompactLocation(displayAddress)
-  const workingStatus = getCompactWorkingStatus(profile.workingHours)
+  const workingStatus = getCompactWorkingStatus(profile.workingHours, profile.availabilityOverride)
   const experienceText = formatBusinessExperience(profile)
   const whatsappUrl = toWhatsappUrl(displayWhatsApp)
   const rawWhatsappUrl = toWhatsappUrl(displayRawWhatsApp)
