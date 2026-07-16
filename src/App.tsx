@@ -11,6 +11,7 @@ import DashboardPage from './pages/DashboardPage.tsx'
 import DirectoryPage from './pages/DirectoryPage.tsx'
 import StartBusinessPage from './pages/StartBusinessPage.tsx'
 import BusinessHomePage from './pages/BusinessHomePage.tsx'
+import BusinessQrCodePage from './pages/BusinessQrCodePage.tsx'
 import FavoritesPage from './pages/FavoritesPage.tsx'
 import CustomerProfileSettingsPage from './pages/CustomerProfileSettingsPage.tsx'
 import CustomerMyActivityPage from './pages/CustomerMyActivityPage.tsx'
@@ -54,6 +55,14 @@ function App() {
         element={
           <ProtectedRoute>
             <BusinessHomePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/business/qr-code"
+        element={
+          <ProtectedRoute>
+            <BusinessQrCodePage />
           </ProtectedRoute>
         }
       />

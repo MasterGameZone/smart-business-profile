@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import {
   createDefaultSocialLinks,
   CREATE_PROFILE_DRAFT_STORAGE_VERSION,
@@ -101,6 +101,7 @@ const FORM_STEPS = [
 const CREATE_PROFILE_STEP_STORAGE_PREFIX = 'smart-business-profile:create-profile-step'
 const CREATE_PROFILE_DRAFT_DEBOUNCE_MS = 500
 const SINGLE_FILE_DRAFT_ITEM_KEY = 'current'
+const BRANDING_MEDIA_STEP_INDEX = 3
 
 interface DraftFaqItem {
   question: string
@@ -194,6 +195,19 @@ function removeCreateProfileStepIndex(storageKey: string): void {
   } catch {
     // Ignore unavailable sessionStorage during cleanup.
   }
+}
+
+function getRequestedCreateProfileStepIndex(search: string, hash: string): number | null {
+  const params = new URLSearchParams(search)
+  const step = params.get('step')?.trim().toLowerCase()
+  const section = params.get('section')?.trim().toLowerCase()
+  const normalizedHash = hash.trim().toLowerCase()
+
+  if (step === 'branding-media' || step === 'branding' || section === 'gallery' || normalizedHash === '#gallery') {
+    return BRANDING_MEDIA_STEP_INDEX
+  }
+
+  return null
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -1059,6 +1073,7 @@ function StepProgressIndicator({ currentStepIndex, steps }: StepProgressIndicato
 
 function CreateProfilePage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { profileData, setProfileData, clearProfile } = useProfile()
   const { user, accountMode } = useAuth()
 
@@ -1099,6 +1114,7 @@ function CreateProfilePage() {
   const subcategoryDropdownRef = useRef<HTMLDivElement>(null)
   const stepContentRef = useRef<HTMLDivElement>(null)
   const shouldScrollStepIntoViewRef = useRef(false)
+  const appliedStepRequestRef = useRef<string | null>(null)
   const previousProfileIdRef = useRef(profileData.id)
   const hasProcessedDraftRestoreRef = useRef(false)
   const skipNextDraftPersistRef = useRef(false)
@@ -1271,6 +1287,25 @@ function CreateProfilePage() {
       setCurrentStepIndex(readCreateProfileStepIndex(stepStorageKey))
     }
   }, [isEditMode, stepStorageKey])
+
+  useEffect(() => {
+    const requestedStepIndex = getRequestedCreateProfileStepIndex(location.search, location.hash)
+
+    if (requestedStepIndex === null) {
+      appliedStepRequestRef.current = null
+      return
+    }
+
+    const requestKey = `${location.search}|${location.hash}`
+    if (appliedStepRequestRef.current === requestKey) {
+      return
+    }
+
+    appliedStepRequestRef.current = requestKey
+    shouldScrollStepIntoViewRef.current = true
+    writeCreateProfileStepIndex(stepStorageKey, requestedStepIndex)
+    setCurrentStepIndex(requestedStepIndex)
+  }, [location.hash, location.search, stepStorageKey])
 
   useEffect(() => {
     setLogoFileName(profileData.logo?.name ?? '')

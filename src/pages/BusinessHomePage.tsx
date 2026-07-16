@@ -256,6 +256,64 @@ function BusinessHomePage() {
     }
   }
 
+  const handleOpenQrCodePage = (profile: BusinessProfileRow | null) => {
+    navigate('/business/qr-code', {
+      state: profile
+        ? {
+            profile: {
+              business_name: profile.business_name,
+              slug: profile.slug,
+            },
+          }
+        : undefined,
+    })
+  }
+
+  const handleManageGallery = (profile: BusinessProfileRow) => {
+    setProfileData({
+      ...profileData,
+      id: profile.id,
+      slug: profile.slug,
+      ownerId: profile.owner_id,
+      businessName: profile.business_name,
+      ownerName: profile.owner_name,
+      businessCategory: profile.business_category,
+      businessSubcategories: Array.isArray(profile.business_subcategories) ? profile.business_subcategories : [],
+      establishedYear: typeof profile.established_year === 'number' ? String(profile.established_year) : '',
+      yearsOfExperience:
+        typeof profile.years_of_experience === 'number' ? String(profile.years_of_experience) : '',
+      highlights: normalizeStringArray(profile.highlights),
+      faqs: normalizeFaqItems(profile.faqs),
+      productsMenuPackages: normalizeProductItems(profile.products_menu_packages),
+      qualifications: normalizeQualificationItems(profile.qualifications),
+      phoneNumber: profile.phone_number,
+      whatsappNumber: profile.whatsapp_number || '',
+      email: profile.email || '',
+      website: profile.website || '',
+      address: profile.address || '',
+      aboutBusiness: profile.about_business || '',
+      tagline: profile.tagline || '',
+      servicesText: formatServicesForForm(profile.services),
+      workingHours: normalizeWorkingHours(profile.working_hours),
+      googleMapsUrl: profile.google_maps_url || '',
+      socialLinks: normalizeSocialLinks(profile.social_links),
+      keywordsText: formatKeywordsForForm(profile.keywords),
+      isPublic: profile.is_public ?? true,
+      logo: null,
+      existingLogoUrl: profile.logo_url,
+      coverBanner: null,
+      existingCoverBannerUrl: profile.cover_banner_url,
+      galleryImages: [],
+      existingGalleryImageUrls: Array.isArray(profile.gallery_images)
+        ? profile.gallery_images.filter((imageUrl): imageUrl is string => typeof imageUrl === 'string')
+        : [],
+      documentName: '',
+      documentFiles: [],
+      existingDocuments: normalizeBusinessProfileDocuments(profile.business_profile_documents),
+    })
+    navigate('/create-profile?step=branding-media')
+  }
+
   const handleViewHelp = () => {
     navigate('/customer/help-feedback#help')
   }
@@ -410,6 +468,7 @@ function BusinessHomePage() {
 
                     <button
                       type="button"
+                      onClick={() => handleOpenQrCodePage(profiles[0])}
                       className="flex min-h-[4.25rem] flex-col justify-center rounded-2xl border border-slate-200 bg-white/80 px-3 py-3 text-left shadow-[0_12px_30px_-24px_rgba(15,23,42,0.35)] transition hover:border-sky-200 hover:bg-sky-50/70 focus:outline-none focus:ring-2 focus:ring-sky-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
                     >
                       <div className="flex items-center gap-3">
@@ -447,6 +506,7 @@ function BusinessHomePage() {
 
                     <button
                       type="button"
+                      onClick={() => handleManageGallery(profiles[0])}
                       className="flex min-h-[4.25rem] flex-col justify-center rounded-2xl border border-slate-200 bg-white/80 px-3 py-3 text-left shadow-[0_12px_30px_-24px_rgba(15,23,42,0.35)] transition hover:border-sky-200 hover:bg-sky-50/70 focus:outline-none focus:ring-2 focus:ring-sky-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
                     >
                       <div className="flex items-center gap-3">
