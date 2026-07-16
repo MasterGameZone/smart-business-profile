@@ -83,6 +83,8 @@ type BusinessOwnerSettingsView = 'main' | 'faqs' | 'suggestions' | 'recent'
 
 let hasPlayedNavbarEntrance = false
 
+const emailValidationPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 function getInitials(value: string): string {
   return value
     .split(' ')
@@ -395,6 +397,10 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     type: 'success' | 'error'
     message: string
   } | null>(null)
+  const [isBusinessOwnerChangeEmailModalOpen, setIsBusinessOwnerChangeEmailModalOpen] = useState(false)
+  const [businessOwnerChangeEmailValue, setBusinessOwnerChangeEmailValue] = useState('')
+  const [businessOwnerChangeEmailError, setBusinessOwnerChangeEmailError] = useState('')
+  const [businessOwnerChangeEmailSuccess, setBusinessOwnerChangeEmailSuccess] = useState(false)
   const [businessOwnerNotifications, setBusinessOwnerNotifications] = useState<BusinessOwnerNotificationRow[]>([])
   const [isBusinessOwnerNotificationsLoading, setIsBusinessOwnerNotificationsLoading] = useState(false)
   const [businessOwnerNotificationsError, setBusinessOwnerNotificationsError] = useState('')
@@ -532,6 +538,13 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     setLoadedBusinessOwnerNotificationPreferenceUserId('')
   }
 
+  const resetBusinessOwnerChangeEmailModal = () => {
+    setIsBusinessOwnerChangeEmailModalOpen(false)
+    setBusinessOwnerChangeEmailValue('')
+    setBusinessOwnerChangeEmailError('')
+    setBusinessOwnerChangeEmailSuccess(false)
+  }
+
   const resetBusinessOwnerSuggestionForm = () => {
     setBusinessOwnerSuggestionForm({
       type: 'suggestion',
@@ -556,6 +569,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const closeHomeMenu = () => {
     resetBusinessOwnerNotificationsSession()
     resetBusinessOwnerNotificationPreferenceSession()
+    resetBusinessOwnerChangeEmailModal()
     resetBusinessOwnerRecentHelpSuggestions()
     setIsHomeMenuOpen(false)
   }
@@ -1196,6 +1210,26 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     } finally {
       setIsBusinessOwnerNotificationPreferenceSaving(false)
     }
+  }
+
+  const handleBusinessOwnerChangeEmailSubmit = () => {
+    const trimmedEmail = businessOwnerChangeEmailValue.trim()
+
+    if (!trimmedEmail) {
+      setBusinessOwnerChangeEmailError('Please enter your new email address.')
+      setBusinessOwnerChangeEmailSuccess(false)
+      return
+    }
+
+    if (!emailValidationPattern.test(trimmedEmail)) {
+      setBusinessOwnerChangeEmailError('Please enter a valid email address.')
+      setBusinessOwnerChangeEmailSuccess(false)
+      return
+    }
+
+    setBusinessOwnerChangeEmailValue(trimmedEmail)
+    setBusinessOwnerChangeEmailError('')
+    setBusinessOwnerChangeEmailSuccess(true)
   }
 
   const customerDisplayName =
@@ -1956,6 +1990,16 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
                   <button
                     key={item}
                     type="button"
+                    onClick={
+                      item === 'Change email address'
+                        ? () => {
+                            setBusinessOwnerChangeEmailValue('')
+                            setBusinessOwnerChangeEmailError('')
+                            setBusinessOwnerChangeEmailSuccess(false)
+                            setIsBusinessOwnerChangeEmailModalOpen(true)
+                          }
+                        : undefined
+                    }
                     className={`flex w-full items-center justify-between border-b border-slate-100 px-3 py-2.5 text-left text-sm last:border-b-0 ${
                       section.danger ? 'text-rose-700' : 'text-slate-700'
                     }`}
@@ -1997,16 +2041,88 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   }
 
   return (
-    <header className={`sticky top-0 w-full px-3 pt-0 pb-0.5 sm:px-4 sm:pb-1 ${hasOpenMenu ? 'z-50' : 'z-30'}`}>
-      <ToastContainer toasts={toasts} />
-      <div className={`mx-auto w-full max-w-[1440px] ${shouldAnimateEntrance ? 'animate-[navFloatIn_620ms_cubic-bezier(0.22,1,0.36,1)]' : ''}`}>
-        <div
-          className={`rounded-[2rem] px-3 py-1.5 backdrop-blur-xl sm:px-4 sm:py-2 md:px-5 ${
-            useDarkHeaderStyle
-              ? 'border border-[rgba(199,210,223,0.10)] bg-[#f8fafc] shadow-[0_18px_36px_-28px_rgba(2,6,23,0.75)]'
-              : 'border border-[rgba(199,210,223,0.80)] bg-[#f8fafc] shadow-[0_22px_48px_-30px_rgba(15,23,42,0.34),0_14px_24px_-24px_rgba(15,23,42,0.22)]'
-          }`}
-        >
+    <>
+      {isBusinessOwnerChangeEmailModalOpen && createPortal(
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/30 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_28px_80px_-40px_rgba(15,23,42,0.5)] sm:p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <h3 className="text-base font-semibold text-[#0f172a]">Change Email Address</h3>
+                <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                  Enter your new email address. We&apos;ll send a verification email to confirm the change.
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label="Close change email dialog"
+                onClick={resetBusinessOwnerChangeEmailModal}
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 6l12 12" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M18 6L6 18" />
+                </svg>
+              </button>
+            </div>
+            <div className="mt-4">
+              <label className="block text-xs font-semibold text-slate-600">
+                New Email Address
+                <input
+                  type="email"
+                  placeholder="newemail@example.com"
+                  value={businessOwnerChangeEmailValue}
+                  onChange={(event) => {
+                    setBusinessOwnerChangeEmailValue(event.target.value)
+                    setBusinessOwnerChangeEmailError('')
+                    if (businessOwnerChangeEmailSuccess) {
+                      setBusinessOwnerChangeEmailSuccess(false)
+                    }
+                  }}
+                  className={businessOwnerInputClass}
+                />
+              </label>
+              {businessOwnerChangeEmailError ? (
+                <p className="mt-1.5 text-xs text-rose-700">{businessOwnerChangeEmailError}</p>
+              ) : null}
+              {businessOwnerChangeEmailSuccess ? (
+                <div className="mt-3 rounded-2xl border border-emerald-100 bg-emerald-50 px-3 py-3">
+                  <p className="text-sm font-semibold text-emerald-800">Verification email sent</p>
+                  <p className="mt-1 text-xs leading-relaxed text-emerald-700">
+                    Please open your inbox and verify the new email address to complete the change.
+                  </p>
+                </div>
+              ) : null}
+            </div>
+            <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={resetBusinessOwnerChangeEmailModal}
+                className="inline-flex justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleBusinessOwnerChangeEmailSubmit}
+                className="inline-flex justify-center rounded-full border border-sky-200 bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+              >
+                Send Verification Email
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+      <header className={`sticky top-0 w-full px-3 pt-0 pb-0.5 sm:px-4 sm:pb-1 ${hasOpenMenu ? 'z-50' : 'z-30'}`}>
+        <ToastContainer toasts={toasts} />
+        <div className={`mx-auto w-full max-w-[1440px] ${shouldAnimateEntrance ? 'animate-[navFloatIn_620ms_cubic-bezier(0.22,1,0.36,1)]' : ''}`}>
+          <div
+            className={`rounded-[2rem] px-3 py-1.5 backdrop-blur-xl sm:px-4 sm:py-2 md:px-5 ${
+              useDarkHeaderStyle
+                ? 'border border-[rgba(199,210,223,0.10)] bg-[#f8fafc] shadow-[0_18px_36px_-28px_rgba(2,6,23,0.75)]'
+                : 'border border-[rgba(199,210,223,0.80)] bg-[#f8fafc] shadow-[0_22px_48px_-30px_rgba(15,23,42,0.34),0_14px_24px_-24px_rgba(15,23,42,0.22)]'
+            }`}
+          >
           <div
             className={`flex items-center justify-between gap-2 sm:gap-3 ${
               useInlineDarkNavbarLayout ? 'flex-nowrap' : 'flex-wrap'
@@ -2660,7 +2776,8 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
           </div>
         </div>
       </div>
-    </header>
+      </header>
+    </>
   )
 }
 
