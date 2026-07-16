@@ -627,6 +627,15 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const businessOwnerPanelCardClass = 'rounded-2xl border border-slate-200 bg-slate-50/80 p-3'
   const businessOwnerInputClass = 'mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-[#0f172a] outline-none focus:ring-2 focus:ring-slate-300'
   const businessOwnerAnalyticsRanges: BusinessOwnerAnalyticsRange[] = ['7D', '30D', '90D']
+  const businessOwnerActionCounts = [
+    businessOwnerCallClicksCount,
+    businessOwnerWhatsAppClicksCount,
+    businessOwnerDirectionClicksCount,
+    businessOwnerWebsiteClicksCount,
+  ]
+  const businessOwnerTotalActionsCount = businessOwnerActionCounts.every((count): count is number => count !== null)
+    ? businessOwnerActionCounts.reduce((total, count) => total + count, 0)
+    : null
   const businessOwnerAnalyticsMetrics = [
     {
       label: 'Profile Views',
@@ -651,8 +660,8 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     },
     {
       label: 'Total Actions',
-      value: '2,891',
-      growth: '+11.4% vs previous 30D',
+      value: formatMetricCount(businessOwnerTotalActionsCount),
+      growth: 'Live total actions',
       icon: <ActionMetricIcon />,
       accentClassName: 'bg-orange-100 text-orange-700',
     },
