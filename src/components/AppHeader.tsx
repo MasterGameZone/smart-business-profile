@@ -34,6 +34,7 @@ import {
 } from '../lib/businessOwnerProfileService.ts'
 import { getBusinessProfileFollowersCount } from '../lib/businessProfileFollowService.ts'
 import { getBusinessProfileViewsCount } from '../lib/businessProfileViewService.ts'
+import { getBusinessProfileSavesCount } from '../lib/favoriteBusinessService.ts'
 import type { BusinessProfileRow } from '../types/businessProfile.ts'
 import type {
   BusinessOwnerHelpSuggestionRow,
@@ -467,6 +468,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const [businessOwnerAnalyticsRange, setBusinessOwnerAnalyticsRange] = useState<BusinessOwnerAnalyticsRange>('30D')
   const [businessOwnerFollowersCount, setBusinessOwnerFollowersCount] = useState<number | null>(null)
   const [businessOwnerProfileViewsCount, setBusinessOwnerProfileViewsCount] = useState<number | null>(null)
+  const [businessOwnerSavesCount, setBusinessOwnerSavesCount] = useState<number | null>(null)
   const [businessOwnerProfileActivityInterval, setBusinessOwnerProfileActivityInterval] =
     useState<BusinessOwnerProfileActivityInterval>('Daily')
   const [openBusinessOwnerFaqQuestion, setOpenBusinessOwnerFaqQuestion] = useState<string | null>(null)
@@ -637,8 +639,8 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     },
     {
       label: 'Saves',
-      value: '324',
-      growth: '+15.7% vs previous 30D',
+      value: formatMetricCount(businessOwnerSavesCount),
+      growth: 'Live total saves',
       icon: <BookmarkMetricIcon />,
       accentClassName: 'bg-emerald-100 text-emerald-700',
     },
@@ -1089,6 +1091,36 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     }
 
     void loadBusinessOwnerProfileViewsCount()
+
+    return () => {
+      isActive = false
+    }
+  }, [businessOwnerAnalyticsProfileId, isBusinessOwnerAnalyticsScreenOpen])
+
+  useEffect(() => {
+    let isActive = true
+
+    const loadBusinessOwnerSavesCount = async () => {
+      setBusinessOwnerSavesCount(null)
+
+      if (!isBusinessOwnerAnalyticsScreenOpen || !businessOwnerAnalyticsProfileId) {
+        return
+      }
+
+      try {
+        const savesCount = await getBusinessProfileSavesCount(businessOwnerAnalyticsProfileId)
+        if (isActive) {
+          setBusinessOwnerSavesCount(savesCount)
+        }
+      } catch (error) {
+        console.warn('Failed to load business profile saves count:', error)
+        if (isActive) {
+          setBusinessOwnerSavesCount(null)
+        }
+      }
+    }
+
+    void loadBusinessOwnerSavesCount()
 
     return () => {
       isActive = false

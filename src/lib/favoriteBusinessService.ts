@@ -11,6 +11,29 @@ function isDuplicateFavoriteError(error: PostgrestError | null): boolean {
   return error?.code === '23505'
 }
 
+export async function getBusinessProfileSavesCount(profileId: string): Promise<number> {
+  if (!profileId) {
+    return 0
+  }
+
+  try {
+    const { data, error } = await supabase.rpc('get_business_profile_saves_count', {
+      target_profile_id: profileId,
+    })
+
+    if (error) {
+      console.warn('Failed to load business profile saves count.', error)
+      return 0
+    }
+
+    const count = typeof data === 'number' ? data : Number(data)
+    return Number.isFinite(count) ? count : 0
+  } catch (error) {
+    console.warn('Failed to load business profile saves count.', error)
+    return 0
+  }
+}
+
 export async function getFavoriteBusiness(
   userId: string,
   businessProfileId: string
