@@ -101,6 +101,7 @@ const FORM_STEPS = [
 const CREATE_PROFILE_STEP_STORAGE_PREFIX = 'smart-business-profile:create-profile-step'
 const CREATE_PROFILE_DRAFT_DEBOUNCE_MS = 500
 const SINGLE_FILE_DRAFT_ITEM_KEY = 'current'
+const BASIC_DETAILS_STEP_INDEX = 0
 const BRANDING_MEDIA_STEP_INDEX = 3
 
 interface DraftFaqItem {
@@ -202,6 +203,10 @@ function getRequestedCreateProfileStepIndex(search: string, hash: string): numbe
   const step = params.get('step')?.trim().toLowerCase()
   const section = params.get('section')?.trim().toLowerCase()
   const normalizedHash = hash.trim().toLowerCase()
+
+  if (step === 'basic' || step === 'basic-details' || step === 'basic-business-details') {
+    return BASIC_DETAILS_STEP_INDEX
+  }
 
   if (step === 'branding-media' || step === 'branding' || section === 'gallery' || normalizedHash === '#gallery') {
     return BRANDING_MEDIA_STEP_INDEX

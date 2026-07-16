@@ -200,7 +200,7 @@ function BusinessHomePage() {
     navigate('/create-profile')
   }
 
-  const handleEditProfile = (profile: BusinessProfileRow) => {
+  const handleEditProfile = (profile: BusinessProfileRow, options?: { startAtFirstStep?: boolean }) => {
     setProfileData({
       ...profileData,
       id: profile.id,
@@ -242,7 +242,7 @@ function BusinessHomePage() {
       documentFiles: [],
       existingDocuments: normalizeBusinessProfileDocuments(profile.business_profile_documents),
     })
-    navigate('/create-profile')
+    navigate(options?.startAtFirstStep ? '/create-profile?step=basic' : '/create-profile')
   }
 
   const handlePreviewProfile = (profile: BusinessProfileRow) => {
@@ -458,7 +458,7 @@ function BusinessHomePage() {
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                     <button
                       type="button"
-                      onClick={() => handleEditProfile(profiles[0])}
+                      onClick={() => handleEditProfile(profiles[0], { startAtFirstStep: true })}
                       className="flex min-h-[4.25rem] flex-col justify-center rounded-2xl border border-slate-200 bg-white/80 px-3 py-3 text-left shadow-[0_12px_30px_-24px_rgba(15,23,42,0.35)] transition hover:border-sky-200 hover:bg-sky-50/70 focus:outline-none focus:ring-2 focus:ring-sky-300/80 focus:ring-offset-2 focus:ring-offset-slate-950"
                     >
                       <div className="flex items-center gap-3">
