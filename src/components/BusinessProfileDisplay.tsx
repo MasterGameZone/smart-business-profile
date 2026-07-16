@@ -1291,6 +1291,11 @@ function BusinessProfileDisplay({
 
             <a
               href={whatsappUrl ?? undefined}
+              onClick={() => {
+                if (enableCustomerActionTracking && customerActionTrackingProfileId && whatsappUrl) {
+                  void trackBusinessProfileCustomerAction(customerActionTrackingProfileId, 'whatsapp', 'public_profile')
+                }
+              }}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Open WhatsApp"

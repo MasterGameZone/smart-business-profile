@@ -471,6 +471,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const [businessOwnerProfileViewsCount, setBusinessOwnerProfileViewsCount] = useState<number | null>(null)
   const [businessOwnerSavesCount, setBusinessOwnerSavesCount] = useState<number | null>(null)
   const [businessOwnerCallClicksCount, setBusinessOwnerCallClicksCount] = useState<number | null>(null)
+  const [businessOwnerWhatsAppClicksCount, setBusinessOwnerWhatsAppClicksCount] = useState<number | null>(null)
   const [businessOwnerProfileActivityInterval, setBusinessOwnerProfileActivityInterval] =
     useState<BusinessOwnerProfileActivityInterval>('Daily')
   const [openBusinessOwnerFaqQuestion, setOpenBusinessOwnerFaqQuestion] = useState<string | null>(null)
@@ -665,8 +666,8 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     },
     {
       label: 'WhatsApp Clicks',
-      value: '1,245',
-      growth: '+18.9%',
+      value: formatMetricCount(businessOwnerWhatsAppClicksCount),
+      growth: 'Live WhatsApp clicks',
       icon: <MessageActionIcon />,
       accentClassName: 'bg-emerald-100 text-emerald-700',
       growthClassName: 'text-emerald-600',
@@ -1063,6 +1064,36 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     }
 
     void loadBusinessOwnerFollowersCount()
+
+    return () => {
+      isActive = false
+    }
+  }, [businessOwnerAnalyticsProfileId, isBusinessOwnerAnalyticsScreenOpen])
+
+  useEffect(() => {
+    let isActive = true
+
+    const loadBusinessOwnerWhatsAppClicksCount = async () => {
+      setBusinessOwnerWhatsAppClicksCount(null)
+
+      if (!isBusinessOwnerAnalyticsScreenOpen || !businessOwnerAnalyticsProfileId) {
+        return
+      }
+
+      try {
+        const whatsAppClicksCount = await getBusinessProfileActionCount(businessOwnerAnalyticsProfileId, 'whatsapp')
+        if (isActive) {
+          setBusinessOwnerWhatsAppClicksCount(whatsAppClicksCount)
+        }
+      } catch (error) {
+        console.warn('Failed to load business profile WhatsApp clicks count:', error)
+        if (isActive) {
+          setBusinessOwnerWhatsAppClicksCount(null)
+        }
+      }
+    }
+
+    void loadBusinessOwnerWhatsAppClicksCount()
 
     return () => {
       isActive = false
