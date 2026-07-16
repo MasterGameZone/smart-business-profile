@@ -203,6 +203,15 @@ function GlobeActionIcon() {
   )
 }
 
+function TrendInsightIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 17.5 9 12l4 3 6.5-8" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15.5 6.5h4v4" />
+    </svg>
+  )
+}
+
 function ChevronRightIcon() {
   return (
     <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -746,6 +755,45 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     businessOwnerProfileActivityMaxValue,
     Math.round((businessOwnerProfileActivityMaxValue + businessOwnerProfileActivityMinValue) / 2),
     businessOwnerProfileActivityMinValue,
+  ]
+  const businessOwnerInsights = [
+    {
+      ariaLabel: 'Most used action WhatsApp insight',
+      icon: <MessageActionIcon />,
+      accentClassName: 'bg-emerald-100 text-emerald-700',
+      title: (
+        <>
+          Most used action: <span className="text-emerald-600">WhatsApp</span>
+        </>
+      ),
+      description: (
+        <>
+          <span className="font-semibold text-emerald-600">68%</span> of total actions came from WhatsApp clicks.
+        </>
+      ),
+    },
+    {
+      ariaLabel: 'Profile views increased this week insight',
+      icon: <TrendInsightIcon />,
+      accentClassName: 'bg-sky-100 text-sky-700',
+      title: <>Profile views increased this week</>,
+      description: (
+        <>
+          You had <span className="font-semibold text-emerald-600">24%</span> more views compared to last week.
+        </>
+      ),
+    },
+    {
+      ariaLabel: 'Followers grew steadily this month insight',
+      icon: <FollowersMetricIcon />,
+      accentClassName: 'bg-violet-100 text-violet-700',
+      title: <>Followers grew steadily this month</>,
+      description: (
+        <>
+          You gained <span className="font-semibold text-emerald-600">96</span> new followers in the last 30 days.
+        </>
+      ),
+    },
   ]
   const businessOwnerSettingsSections = [
     {
@@ -2070,6 +2118,46 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
               </g>
             ))}
           </svg>
+        </div>
+      </section>
+
+      <section
+        className="mt-4 min-w-0 rounded-2xl border border-white/80 bg-white p-3 shadow-[0_18px_38px_-30px_rgba(15,23,42,0.55)]"
+        aria-label="Business analytics insights"
+      >
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-sm font-bold text-[#0f172a]">Insights</h3>
+          <button
+            type="button"
+            className="inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold text-sky-700 transition hover:bg-sky-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
+          >
+            <span>See all insights</span>
+            <ChevronRightIcon />
+          </button>
+        </div>
+
+        <div className="mt-3 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50/50">
+          {businessOwnerInsights.map((insight, index) => (
+            <button
+              key={insight.ariaLabel}
+              type="button"
+              aria-label={insight.ariaLabel}
+              className={`flex w-full min-w-0 items-center gap-3 bg-white/70 px-3 py-3 text-left transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-300 ${
+                index === businessOwnerInsights.length - 1 ? '' : 'border-b border-slate-100'
+              }`}
+            >
+              <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${insight.accentClassName}`}>
+                {insight.icon}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-xs font-bold leading-snug text-[#0f172a]">{insight.title}</span>
+                <span className="mt-1 block text-[11px] leading-snug text-slate-500">{insight.description}</span>
+              </span>
+              <span className="shrink-0 text-slate-300" aria-hidden="true">
+                <ChevronRightIcon />
+              </span>
+            </button>
+          ))}
         </div>
       </section>
     </section>
