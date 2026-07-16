@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useProfile } from '../context/ProfileContext.tsx'
@@ -41,6 +41,8 @@ interface BusinessOwnerMenuState {
   profileStatusLabel?: string
 }
 
+type BusinessOwnerMenuPanel = 'main' | 'profile' | 'analytics' | 'notifications' | 'settings'
+
 let hasPlayedNavbarEntrance = false
 
 function getInitials(value: string): string {
@@ -64,27 +66,11 @@ function getMetadataString(metadata: Record<string, unknown>, keys: string[]): s
   return null
 }
 
-function HomeIcon() {
-  return (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4.5v-6.5h-5V21H5a1 1 0 0 1-1-1v-9.5z" />
-    </svg>
-  )
-}
-
 function ProfileIcon() {
   return (
     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 19.5h16M7.5 19.5v-1.25A4.25 4.25 0 0 1 11.75 14h.5A4.25 4.25 0 0 1 16.5 18.25v1.25" />
       <circle cx="12" cy="8.5" r="3.25" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} />
-    </svg>
-  )
-}
-
-function QrShareIcon() {
-  return (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4.5 4.5h5v5h-5v-5zm10 0h5v5h-5v-5zm0 10h5v5h-5v-5zm-10 0h5v5h-5v-5zm5-5h2v2h-2v-2zm5 0h2v2h-2v-2zm-5 5h2v2h-2v-2zm5-10h2v2h-2v-2z" />
     </svg>
   )
 }
@@ -97,20 +83,20 @@ function AnalyticsIcon() {
   )
 }
 
-function ReportsIcon() {
-  return (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M6 4.5h9l3 3V19.5H6z" />
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 11h6M9 14h4" />
-    </svg>
-  )
-}
-
 function NotificationsIcon() {
   return (
     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 17h5l-1.4-1.4a2 2 0 0 1-.6-1.4V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5" />
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M10 20a2 2 0 0 0 4 0" />
+    </svg>
+  )
+}
+
+function SettingsIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 15.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19.4 15a1.8 1.8 0 00.36 1.98l.05.05a2 2 0 01-2.83 2.83l-.05-.05A1.8 1.8 0 0015 19.4a1.8 1.8 0 00-1.1 1.65V21a2 2 0 01-4 0v-.07A1.8 1.8 0 008.8 19.3a1.8 1.8 0 00-1.98.36l-.05.05a2 2 0 01-2.83-2.83l.05-.05A1.8 1.8 0 004.6 15a1.8 1.8 0 00-1.65-1.1H3a2 2 0 010-4h.07A1.8 1.8 0 004.7 8.8a1.8 1.8 0 00-.36-1.98l-.05-.05a2 2 0 012.83-2.83l.05.05A1.8 1.8 0 009 4.6a1.8 1.8 0 001.1-1.65V3a2 2 0 014 0v.07A1.8 1.8 0 0015.2 4.7a1.8 1.8 0 001.98-.36l.05-.05a2 2 0 012.83 2.83l-.05.05A1.8 1.8 0 0019.4 9c.7.25 1.6.7 1.6 1.65v2.7c0 .95-.9 1.4-1.6 1.65z" />
     </svg>
   )
 }
@@ -125,16 +111,6 @@ function SwitchIcon() {
   )
 }
 
-function HelpIcon() {
-  return (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 17h.01" />
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9.09 9a3 3 0 115.82 1c0 2-3 2-3 4" />
-      <circle cx="12" cy="12" r="9" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} />
-    </svg>
-  )
-}
-
 function LogoutIcon() {
   return (
     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -145,21 +121,14 @@ function LogoutIcon() {
   )
 }
 
-function PlusIcon() {
-  return (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 5v14M5 12h14" />
-    </svg>
-  )
-}
-
 function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMenuState = null }: AppHeaderProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, isLoading, accountMode, isBusinessOwnerEnabled, setPreferredAccountMode } = useAuth()
-  const { profileData, clearProfile } = useProfile()
+  const { profileData } = useProfile()
   const [isSigningOut, setIsSigningOut] = useState(false)
   const [isHomeMenuOpen, setIsHomeMenuOpen] = useState(false)
+  const [businessOwnerMenuPanel, setBusinessOwnerMenuPanel] = useState<BusinessOwnerMenuPanel>('main')
   const [isLandingMobileMenuOpen, setIsLandingMobileMenuOpen] = useState(false)
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const [shouldAnimateEntrance] = useState(() => !hasPlayedNavbarEntrance)
@@ -221,18 +190,59 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
           profileStatusLabel: profileData.id ? (profileData.isPublic === false ? 'Hidden' : 'Published') : 'Not created',
         }
       : null)
-  const businessOwnerHasProfile = Boolean(effectiveBusinessOwnerMenuState?.hasBusinessProfile)
-  const businessOwnerBusinessName = effectiveBusinessOwnerMenuState?.businessName?.trim() || 'Business Profile'
   const businessOwnerOwnerEmail = effectiveBusinessOwnerMenuState?.ownerEmail?.trim() || user?.email || 'Owner account'
-  const businessOwnerCategory = effectiveBusinessOwnerMenuState?.businessCategory?.trim() || ''
-  const businessOwnerLogoUrl = effectiveBusinessOwnerMenuState?.businessLogoUrl ?? null
-  const businessOwnerSlug = effectiveBusinessOwnerMenuState?.businessSlug?.trim() || null
-  const businessOwnerStatusLabel =
-    effectiveBusinessOwnerMenuState?.profileStatusLabel?.trim() ||
-    (businessOwnerHasProfile ? (profileData.isPublic === false ? 'Hidden' : 'Published') : 'Not created')
-  const businessOwnerMenuActionLabel = businessOwnerHasProfile ? 'Manage Business Profile' : 'Create Business Profile'
-  const businessOwnerMenuActionPath = businessOwnerHasProfile ? '/business-home' : '/create-profile'
-  const businessOwnerInitials = getInitials(businessOwnerBusinessName)
+  const businessOwnerAccountName =
+    getMetadataString(userMetadata, ['full_name', 'name', 'display_name']) ??
+    (user?.email ? user.email.split('@')[0] : 'Business Owner')
+  const businessOwnerAccountInitials = getInitials(businessOwnerAccountName || 'Business Owner') || 'BO'
+  const businessOwnerPublicProfilePath = effectiveBusinessOwnerMenuState?.businessSlug?.trim()
+    ? `/business/${effectiveBusinessOwnerMenuState.businessSlug.trim()}`
+    : null
+  const businessOwnerPhone = getMetadataString(userMetadata, ['phone', 'phone_number']) ?? ''
+  const businessOwnerPreferredCity = getMetadataString(userMetadata, ['preferred_city', 'preferred_location', 'city', 'location']) ?? ''
+  const businessOwnerMenuRowClass =
+    'flex w-full items-center justify-between border-b border-slate-100/90 px-3 py-3 text-left text-sm text-[#0f172a] transition hover:bg-slate-50 focus:bg-slate-50 focus:outline-none'
+  const businessOwnerPanelCardClass = 'rounded-2xl border border-slate-200 bg-slate-50/80 p-3'
+  const businessOwnerInputClass = 'mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-[#0f172a] outline-none focus:ring-2 focus:ring-slate-300'
+  const businessOwnerNotificationTypes = [
+    'Open/closed reminder',
+    'Profile update reminders',
+    'Support/help replies',
+    'Review/report updates later',
+    'Subscription/payment updates later',
+  ]
+  const businessOwnerAnalyticsPreviewItems = [
+    'Profile views',
+    'Customer actions',
+    'Calls and WhatsApp clicks',
+    'Direction clicks',
+    'Saved business activity',
+  ]
+  const businessOwnerSettingsSections = [
+    {
+      title: 'Help & Suggestions',
+      items: [
+        'Business account FAQs',
+        'Suggestions',
+        'Recent help & suggestions',
+      ],
+    },
+    {
+      title: 'Security',
+      items: [
+        'Verify phone number',
+        'Verify email address',
+        'Change phone number',
+        'Change email address',
+        'Change password',
+      ],
+    },
+    {
+      title: 'Delete Account',
+      items: ['Delete business profile', 'Delete business account'],
+      danger: true,
+    },
+  ]
 
   useEffect(() => {
     if (shouldAnimateEntrance) {
@@ -395,11 +405,6 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     navigate(item.path)
   }
 
-  const handleCreateBusinessProfile = () => {
-    clearProfile()
-    navigate('/create-profile')
-  }
-
   const customerDisplayName =
     getMetadataString(userMetadata, ['full_name', 'name', 'display_name']) ??
     (user?.email ? user.email.split('@')[0] : 'Customer')
@@ -467,82 +472,6 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     }
   }
 
-  const businessOwnerQuickMenuItems: Array<
-    | {
-        key: string
-        label: string
-        icon: ReactNode
-        onClick?: () => void
-        disabled?: boolean
-        trailingChip?: { label: string; tone: 'premium' | 'soon' }
-      }
-    | { key: string; divider: true }
-  > = [
-    {
-      key: 'business-home',
-      label: 'Business Home',
-      icon: <HomeIcon />,
-      onClick: () => navigate('/business-home'),
-    },
-    {
-      key: 'manage-profile',
-      label: businessOwnerMenuActionLabel,
-      icon: <ProfileIcon />,
-      onClick: () => {
-        setIsHomeMenuOpen(false)
-        navigate(businessOwnerMenuActionPath)
-      },
-    },
-    {
-      key: 'qr-share',
-      label: 'QR Code & Share',
-      icon: <QrShareIcon />,
-      disabled: true,
-    },
-    {
-      key: 'analytics',
-      label: 'Analytics',
-      icon: <AnalyticsIcon />,
-      disabled: true,
-      trailingChip: { label: 'Premium', tone: 'premium' },
-    },
-    {
-      key: 'reviews',
-      label: 'Reviews & Reports',
-      icon: <ReportsIcon />,
-      disabled: true,
-      trailingChip: { label: 'Coming soon', tone: 'soon' },
-    },
-    {
-      key: 'notifications',
-      label: 'Notifications',
-      icon: <NotificationsIcon />,
-      disabled: true,
-    },
-    { key: 'divider-business', divider: true },
-    {
-      key: 'switch-customer',
-      label: 'Switch to Customer',
-      icon: <SwitchIcon />,
-      onClick: async () => {
-        try {
-          await setPreferredAccountMode('customer')
-          navigate('/')
-        } catch (error) {
-          console.error('Failed to switch to Customer mode:', error)
-          showError('Unable to switch to Customer mode. Please try again.')
-        }
-      },
-    },
-    { key: 'divider-help', divider: true },
-    {
-      key: 'help-feedback',
-      label: 'Help & Feedback',
-      icon: <HelpIcon />,
-      onClick: () => navigate('/customer/help-feedback#help'),
-    },
-  ]
-
   const navButtonClass = (item: NavItem) => {
     const isActive =
       item.type === 'scroll'
@@ -576,6 +505,301 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
         ? 'cursor-not-allowed text-slate-500'
         : 'text-[#0f172a] transition hover:bg-slate-50 focus:bg-slate-50'
     } focus:outline-none`
+
+  const renderBusinessOwnerAccountHeader = () => (
+    <div className="border-b border-slate-100 bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)] p-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-start gap-3">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-sky-100 bg-sky-50 text-sm font-semibold text-sky-700">
+            {businessOwnerAccountInitials}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-[#0f172a]">{businessOwnerAccountName || 'Business Owner'}</p>
+            <p className="truncate text-xs text-slate-500">{businessOwnerOwnerEmail || 'Owner account'}</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          aria-label="Close business account menu"
+          onClick={() => setIsHomeMenuOpen(false)}
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.32)] transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+        >
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
+      </div>
+      <button
+        type="button"
+        onClick={() => {
+          if (!businessOwnerPublicProfilePath) {
+            return
+          }
+
+          setIsHomeMenuOpen(false)
+          navigate(businessOwnerPublicProfilePath)
+        }}
+        disabled={!businessOwnerPublicProfilePath}
+        className={`mt-3 flex w-full items-center justify-between rounded-2xl border px-3 py-2.5 text-left text-sm font-medium shadow-[0_10px_22px_-18px_rgba(15,23,42,0.32)] focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 ${
+          businessOwnerPublicProfilePath
+            ? 'border-slate-200 bg-white text-[#0f172a] transition hover:bg-slate-50'
+            : 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
+        }`}
+      >
+        <span>View Business Profile</span>
+      </button>
+    </div>
+  )
+
+  const renderBusinessOwnerPanelHeader = (title: string) => (
+    <div className="mb-3 flex items-center justify-between gap-3">
+      {businessOwnerMenuPanel === 'main' ? (
+        <h2 className="text-sm font-semibold text-[#0f172a]">Business Account</h2>
+      ) : (
+        <>
+          <h2 className="text-sm font-semibold text-[#0f172a]">{title}</h2>
+          <button
+            type="button"
+            onClick={() => setBusinessOwnerMenuPanel('main')}
+            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+          >
+            <span>Back</span>
+          </button>
+        </>
+      )}
+    </div>
+  )
+
+  const renderBusinessOwnerMainMenu = () => (
+    <>
+      {renderBusinessOwnerPanelHeader('Business Account')}
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+        {[
+          { key: 'profile', label: 'Profile', icon: <ProfileIcon /> },
+          { key: 'analytics', label: 'Analytics', icon: <AnalyticsIcon /> },
+          { key: 'notifications', label: 'Notifications', icon: <NotificationsIcon /> },
+        ].map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            role="menuitem"
+            onClick={() => setBusinessOwnerMenuPanel(item.key as BusinessOwnerMenuPanel)}
+            className={businessOwnerMenuRowClass}
+          >
+            <span className="flex items-center gap-3">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+                {item.icon}
+              </span>
+              <span className="font-medium">{item.label}</span>
+            </span>
+            <span className="text-slate-400" aria-hidden="true">&gt;</span>
+          </button>
+        ))}
+        <button
+          type="button"
+          role="menuitem"
+          onClick={async () => {
+            setIsHomeMenuOpen(false)
+            try {
+              await setPreferredAccountMode('customer')
+              navigate('/')
+            } catch (error) {
+              console.error('Failed to switch to Customer mode:', error)
+              showError('Unable to switch to Customer mode. Please try again.')
+            }
+          }}
+          className={businessOwnerMenuRowClass}
+        >
+          <span className="flex items-center gap-3">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+              <SwitchIcon />
+            </span>
+            <span className="font-medium">Switch to Customer</span>
+          </span>
+        </button>
+        <button
+          type="button"
+          role="menuitem"
+          onClick={() => setBusinessOwnerMenuPanel('settings')}
+          className={`${businessOwnerMenuRowClass} border-b-0`}
+        >
+          <span className="flex items-center gap-3">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+              <SettingsIcon />
+            </span>
+            <span className="font-medium">Settings</span>
+          </span>
+          <span className="text-slate-400" aria-hidden="true">&gt;</span>
+        </button>
+      </div>
+    </>
+  )
+
+  const renderBusinessOwnerProfilePanel = () => (
+    <>
+      {renderBusinessOwnerPanelHeader('Profile')}
+      <section className={businessOwnerPanelCardClass}>
+        <div className="mt-4 space-y-3">
+          <label className="block text-xs font-semibold text-slate-600">
+            Name
+            <input className={businessOwnerInputClass} defaultValue={businessOwnerAccountName} />
+          </label>
+          <label className="block text-xs font-semibold text-slate-600">
+            Phone Number
+            <input className={businessOwnerInputClass} defaultValue={businessOwnerPhone} />
+          </label>
+          <label className="block text-xs font-semibold text-slate-600">
+            Email Address
+            <input className={businessOwnerInputClass} defaultValue={businessOwnerOwnerEmail} />
+          </label>
+          <label className="block text-xs font-semibold text-slate-600">
+            Preferred City
+            <input className={businessOwnerInputClass} defaultValue={businessOwnerPreferredCity} />
+          </label>
+          <button
+            type="button"
+            className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700"
+          >
+            Save
+          </button>
+        </div>
+      </section>
+    </>
+  )
+
+  const renderBusinessOwnerAnalyticsPanel = () => (
+    <>
+      {renderBusinessOwnerPanelHeader('Analytics')}
+      <section className={businessOwnerPanelCardClass}>
+        <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">Premium Feature</span>
+        <p className="mt-2 text-sm text-slate-600">Unlock customer activity and profile insights with a premium plan.</p>
+        <ul className="mt-4 space-y-2 text-sm text-slate-700">
+          {businessOwnerAnalyticsPreviewItems.map((item) => (
+            <li key={item} className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+        <button type="button" className="mt-4 rounded-full border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-semibold text-violet-700">
+          Upgrade to Premium
+        </button>
+      </section>
+    </>
+  )
+
+  const renderBusinessOwnerNotificationsPanel = () => (
+    <>
+      {renderBusinessOwnerPanelHeader('Notifications')}
+      <section className={businessOwnerPanelCardClass}>
+        <p className="mt-2 text-sm text-slate-600">Stay updated about important business account activity.</p>
+        <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          {businessOwnerNotificationTypes.map((item) => (
+            <div key={item} className="border-b border-slate-100 px-3 py-3 text-sm text-slate-700 last:border-b-0">
+              {item}
+            </div>
+          ))}
+        </div>
+      </section>
+    </>
+  )
+
+  const renderBusinessOwnerSettingsPanel = () => (
+    <>
+      {renderBusinessOwnerPanelHeader('Settings')}
+      <section className="space-y-3">
+        {businessOwnerSettingsSections.slice(0, 1).map((section) => (
+          <div
+            key={section.title}
+            className={`rounded-2xl border p-3 ${
+              section.danger ? 'border-rose-100 bg-rose-50/70' : 'border-slate-200 bg-slate-50/80'
+            }`}
+          >
+            <h3 className={`text-sm font-semibold ${section.danger ? 'text-rose-700' : 'text-[#0f172a]'}`}>
+              {section.title}
+            </h3>
+            <div className="mt-2 overflow-hidden rounded-xl border border-white/70 bg-white">
+              {section.items.map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  className={`flex w-full items-center justify-between border-b border-slate-100 px-3 py-2.5 text-left text-sm last:border-b-0 ${
+                    section.danger ? 'text-rose-700' : 'text-slate-700'
+                  }`}
+                >
+                  <span>{item}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+        <div className={businessOwnerPanelCardClass}>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-semibold text-[#0f172a]">Notifications</h3>
+              <p className="mt-0.5 text-xs text-slate-500">Business account notifications</p>
+            </div>
+            <span className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700">
+              <span className="flex h-6 w-11 items-center rounded-full bg-emerald-500 px-1">
+                <span className="ml-auto h-4 w-4 rounded-full bg-white shadow-sm" />
+              </span>
+              On
+            </span>
+          </div>
+        </div>
+        {businessOwnerSettingsSections.slice(1).map((section) => (
+          <div
+            key={section.title}
+            className={`rounded-2xl border p-3 ${
+              section.danger ? 'border-rose-100 bg-rose-50/70' : 'border-slate-200 bg-slate-50/80'
+            }`}
+          >
+            <h3 className={`text-sm font-semibold ${section.danger ? 'text-rose-700' : 'text-[#0f172a]'}`}>
+              {section.title}
+            </h3>
+            <div className="mt-2 overflow-hidden rounded-xl border border-white/70 bg-white">
+              {section.items.map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  className={`flex w-full items-center justify-between border-b border-slate-100 px-3 py-2.5 text-left text-sm last:border-b-0 ${
+                    section.danger ? 'text-rose-700' : 'text-slate-700'
+                  }`}
+                >
+                  <span>{item}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+        <button
+          type="button"
+          role="menuitem"
+          onClick={async () => {
+            setIsHomeMenuOpen(false)
+            await handleLogout()
+          }}
+          disabled={isSigningOut}
+          className="flex w-full items-center justify-between rounded-2xl border border-rose-100 bg-rose-50/70 px-3 py-3 text-left text-sm font-medium text-rose-700 transition hover:bg-rose-50 focus:bg-rose-50 focus:outline-none disabled:cursor-not-allowed disabled:opacity-70"
+        >
+          <span className="flex items-center gap-3">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-rose-600">
+              <LogoutIcon />
+            </span>
+            <span>{isSigningOut ? 'Logging out...' : 'Log Out'}</span>
+          </span>
+        </button>
+      </section>
+    </>
+  )
+
+  const renderBusinessOwnerMenuContent = () => {
+    if (businessOwnerMenuPanel === 'profile') return renderBusinessOwnerProfilePanel()
+    if (businessOwnerMenuPanel === 'analytics') return renderBusinessOwnerAnalyticsPanel()
+    if (businessOwnerMenuPanel === 'notifications') return renderBusinessOwnerNotificationsPanel()
+    if (businessOwnerMenuPanel === 'settings') return renderBusinessOwnerSettingsPanel()
+    return renderBusinessOwnerMainMenu()
+  }
 
   return (
     <header className="sticky top-0 z-30 w-full px-3 pt-0 pb-0.5 sm:px-4 sm:pb-1">
@@ -758,7 +982,12 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
                   aria-label={isHomeMenuOpen ? 'Close account menu' : 'Open account menu'}
                   aria-expanded={isHomeMenuOpen}
                   aria-haspopup="menu"
-                  onClick={() => setIsHomeMenuOpen((open) => !open)}
+                  onClick={() => {
+                    if (!isHomeMenuOpen) {
+                      setBusinessOwnerMenuPanel('main')
+                    }
+                    setIsHomeMenuOpen((open) => !open)
+                  }}
                   className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/12 bg-white/5 text-[#0f172a] focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
                   style={navbarInteractionStyle}
                 >
@@ -784,170 +1013,8 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
                     aria-label="Business owner menu"
                     className="absolute right-0 top-full z-40 mt-2 w-[min(22rem,calc(100vw-1rem))] max-h-[calc(100vh-5rem)] overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white shadow-[0_24px_48px_-28px_rgba(15,23,42,0.45)]"
                   >
-                    <div className="border-b border-slate-100 p-3">
-                      {businessOwnerHasProfile ? (
-                        <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
-                          <div className="flex items-start gap-3">
-                            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white text-sm font-semibold text-slate-700">
-                              {businessOwnerLogoUrl ? (
-                                <img
-                                  src={businessOwnerLogoUrl}
-                                  alt={`${businessOwnerBusinessName} logo`}
-                                  className="h-full w-full object-cover"
-                                />
-                              ) : (
-                                <span aria-hidden="true">{businessOwnerInitials}</span>
-                              )}
-                            </div>
-
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="min-w-0">
-                                  <p className="truncate text-sm font-semibold text-[#0f172a]">{businessOwnerBusinessName}</p>
-                                  <p className="truncate text-xs text-slate-500">{businessOwnerOwnerEmail}</p>
-                                </div>
-                                <span className="inline-flex shrink-0 items-center rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
-                                  {businessOwnerStatusLabel}
-                                </span>
-                              </div>
-
-                              <div className="mt-2 flex flex-wrap items-center gap-2">
-                                {businessOwnerCategory ? (
-                                  <span className="inline-flex items-center rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-semibold text-sky-800">
-                                    {businessOwnerCategory}
-                                  </span>
-                                ) : null}
-
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setIsHomeMenuOpen(false)
-                                    if (businessOwnerSlug) {
-                                      navigate(`/business/${businessOwnerSlug}`)
-                                    }
-                                  }}
-                                  disabled={!businessOwnerSlug}
-                                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-[#0f172a] transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 disabled:cursor-not-allowed disabled:opacity-60"
-                                >
-                                  <span>View Public Profile</span>
-                                  <svg
-                                    aria-hidden="true"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="1.8"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    className="h-3.5 w-3.5"
-                                  >
-                                    <path d="M7 17L17 7" />
-                                    <path d="M10 7h7v7" />
-                                  </svg>
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIsHomeMenuOpen(false)
-                            handleCreateBusinessProfile()
-                          }}
-                          className="flex w-full items-center gap-3 rounded-2xl border border-sky-200 bg-sky-50/70 p-3 text-left transition hover:bg-sky-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
-                        >
-                          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
-                            <PlusIcon />
-                          </span>
-                          <span className="min-w-0 flex-1">
-                            <span className="block text-sm font-semibold text-[#0f172a]">Create Business Profile</span>
-                            <span className="mt-0.5 block text-xs text-slate-500">{businessOwnerOwnerEmail}</span>
-                            <span className="mt-1 block text-xs leading-4 text-slate-600">
-                              Create your first profile to start sharing your business with customers.
-                            </span>
-                          </span>
-                          <span className="inline-flex shrink-0 items-center rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600">
-                            Not created
-                          </span>
-                        </button>
-                      )}
-                    </div>
-                    <div className="p-2">
-                      <div className="space-y-0">
-                        {businessOwnerQuickMenuItems.map((item, index) => {
-                          if ('divider' in item) {
-                            return <div key={item.key} className="my-2 border-t border-slate-100/90" />
-                          }
-
-                          const nextItem = businessOwnerQuickMenuItems[index + 1]
-                          const hasBottomSeparator = !nextItem || !('divider' in nextItem)
-
-                          return (
-                            <button
-                              key={item.key}
-                              type="button"
-                              role="menuitem"
-                              disabled={item.disabled}
-                              onClick={() => {
-                                setIsHomeMenuOpen(false)
-                                if (item.onClick) {
-                                  void item.onClick()
-                                }
-                              }}
-                              className={`flex w-full items-center justify-between rounded-2xl px-3 py-3 text-left text-sm ${
-                                item.disabled
-                                  ? 'cursor-default text-[#0f172a]'
-                                  : 'text-[#0f172a] transition hover:bg-slate-50 focus:bg-slate-50'
-                              } ${hasBottomSeparator ? 'border-b border-slate-100/90' : ''} focus:outline-none`}
-                            >
-                              <span className="flex items-center gap-3">
-                                <span
-                                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
-                                    item.disabled ? 'bg-slate-100 text-slate-500' : 'bg-slate-100 text-slate-700'
-                                  }`}
-                                >
-                                  {item.icon}
-                                </span>
-                                <span className="font-medium">{item.label}</span>
-                              </span>
-                              <span className="flex items-center gap-2">
-                                {item.trailingChip && (
-                                  <span
-                                    className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                                      item.trailingChip.tone === 'premium'
-                                        ? 'bg-violet-100 text-violet-700'
-                                        : 'bg-slate-100 text-slate-600'
-                                    }`}
-                                  >
-                                    {item.trailingChip.label}
-                                  </span>
-                                )}
-                              </span>
-                            </button>
-                          )
-                        })}
-                      </div>
-                    </div>
-                    <div className="border-t border-slate-100 p-2">
-                      <button
-                        type="button"
-                        role="menuitem"
-                        onClick={async () => {
-                          setIsHomeMenuOpen(false)
-                          await handleLogout()
-                        }}
-                        disabled={isSigningOut}
-                        className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-left text-sm font-medium text-rose-600 transition hover:bg-rose-50 focus:bg-rose-50 focus:outline-none disabled:cursor-not-allowed disabled:opacity-70"
-                      >
-                        <span className="flex items-center gap-3">
-                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600">
-                            <LogoutIcon />
-                          </span>
-                          <span>{isSigningOut ? 'Logging out...' : 'Log Out'}</span>
-                        </span>
-                      </button>
-                    </div>
+                    {businessOwnerMenuPanel === 'main' ? renderBusinessOwnerAccountHeader() : null}
+                    <div className="p-3">{renderBusinessOwnerMenuContent()}</div>
                   </div>
                 )}
               </div>
