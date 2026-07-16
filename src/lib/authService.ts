@@ -86,7 +86,28 @@ export async function resendVerificationEmail(email: string): Promise<{ error: s
 
 export async function updatePassword(newPassword: string): Promise<{ error: string | null }> {
   const { error } = await supabase.auth.updateUser({ password: newPassword })
-  return { error: toFriendlyMessage(error) }
+  if (!error) {
+    return { error: null }
+  }
+
+  const message = error.message.toLowerCase()
+
+  if (
+    message.includes('auth session missing') ||
+    message.includes('session') ||
+    message.includes('reauthentication') ||
+    message.includes('re-authentication') ||
+    message.includes('recent login') ||
+    message.includes('log in again')
+  ) {
+    return { error: 'For security, please log out and log in again before changing your password.' }
+  }
+
+  if (message.includes('password should be at least') || message.includes('weak password')) {
+    return { error: 'Please choose a stronger password.' }
+  }
+
+  return { error: 'Could not update password right now. Please try again.' }
 }
 
 export async function requestEmailChange(newEmail: string): Promise<{ error: string | null }> {

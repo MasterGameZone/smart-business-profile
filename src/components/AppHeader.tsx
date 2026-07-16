@@ -14,7 +14,7 @@ import {
   useProfile,
 } from '../context/ProfileContext.tsx'
 import { useAuth } from '../context/AuthContext.tsx'
-import { signOut } from '../lib/authService.ts'
+import { signOut, updatePassword } from '../lib/authService.ts'
 import {
   ensureProfileUpdateReminderNotification,
   listBusinessOwnerNotifications,
@@ -397,6 +397,16 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     type: 'success' | 'error'
     message: string
   } | null>(null)
+  const [isBusinessOwnerChangePasswordModalOpen, setIsBusinessOwnerChangePasswordModalOpen] = useState(false)
+  const [businessOwnerNewPasswordValue, setBusinessOwnerNewPasswordValue] = useState('')
+  const [businessOwnerConfirmPasswordValue, setBusinessOwnerConfirmPasswordValue] = useState('')
+  const [businessOwnerChangePasswordErrors, setBusinessOwnerChangePasswordErrors] = useState<{
+    newPassword?: string
+    confirmPassword?: string
+    submit?: string
+  }>({})
+  const [businessOwnerChangePasswordSuccess, setBusinessOwnerChangePasswordSuccess] = useState(false)
+  const [isBusinessOwnerChangePasswordSubmitting, setIsBusinessOwnerChangePasswordSubmitting] = useState(false)
   const [isBusinessOwnerChangeEmailModalOpen] = useState(false)
   const [businessOwnerChangeEmailValue, setBusinessOwnerChangeEmailValue] = useState('')
   const [businessOwnerChangeEmailError, setBusinessOwnerChangeEmailError] = useState('')
@@ -570,6 +580,15 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     setBusinessOwnerChangeEmailValue('')
     setBusinessOwnerChangeEmailError('')
     setBusinessOwnerChangeEmailSuccess(false)
+  }
+
+  const resetBusinessOwnerChangePasswordModal = () => {
+    setBusinessOwnerNewPasswordValue('')
+    setBusinessOwnerConfirmPasswordValue('')
+    setBusinessOwnerChangePasswordErrors({})
+    setBusinessOwnerChangePasswordSuccess(false)
+    setIsBusinessOwnerChangePasswordSubmitting(false)
+    setIsBusinessOwnerChangePasswordModalOpen(false)
   }
 
   const resetBusinessOwnerPhoneModal = () => {
@@ -1229,6 +1248,58 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
 
   const handleBusinessOwnerChangeEmailSubmit = () => {
     resetBusinessOwnerChangeEmailModal()
+  }
+
+  const handleBusinessOwnerChangePasswordSubmit = async () => {
+    const nextErrors: {
+      newPassword?: string
+      confirmPassword?: string
+      submit?: string
+    } = {}
+    const trimmedNewPassword = businessOwnerNewPasswordValue.trim()
+    const trimmedConfirmPassword = businessOwnerConfirmPasswordValue.trim()
+
+    if (!trimmedNewPassword) {
+      nextErrors.newPassword = 'Please enter a new password.'
+    } else if (trimmedNewPassword.length < 8) {
+      nextErrors.newPassword = 'Password must be at least 8 characters.'
+    }
+
+    if (!trimmedConfirmPassword) {
+      nextErrors.confirmPassword = 'Please confirm your new password.'
+    } else if (!nextErrors.newPassword && trimmedNewPassword !== trimmedConfirmPassword) {
+      nextErrors.confirmPassword = 'Passwords do not match.'
+    }
+
+    if (Object.keys(nextErrors).length > 0) {
+      setBusinessOwnerChangePasswordErrors(nextErrors)
+      setBusinessOwnerChangePasswordSuccess(false)
+      return
+    }
+
+    setBusinessOwnerChangePasswordErrors({})
+    setBusinessOwnerChangePasswordSuccess(false)
+    setIsBusinessOwnerChangePasswordSubmitting(true)
+
+    try {
+      const { error } = await updatePassword(trimmedNewPassword)
+
+      if (error) {
+        setBusinessOwnerChangePasswordErrors({ submit: error })
+        return
+      }
+
+      setBusinessOwnerNewPasswordValue('')
+      setBusinessOwnerConfirmPasswordValue('')
+      setBusinessOwnerChangePasswordErrors({})
+      setBusinessOwnerChangePasswordSuccess(true)
+    } catch {
+      setBusinessOwnerChangePasswordErrors({
+        submit: 'Could not update password right now. Please try again.',
+      })
+    } finally {
+      setIsBusinessOwnerChangePasswordSubmitting(false)
+    }
   }
 
   const handleBusinessOwnerPhoneModalSendOtp = () => {
@@ -2001,19 +2072,36 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
               </h3>
               <div className="mt-2 overflow-hidden rounded-xl border border-white/70 bg-white">
                 {section.items.map((item) => (
-                  <div
-                    key={item}
-                    className={`flex w-full items-center justify-between border-b border-slate-100 px-3 py-2.5 text-left text-sm last:border-b-0 ${
-                      section.danger ? 'text-rose-700' : 'text-slate-700'
-                    } ${item === 'Change email address' || item === 'Change phone number' ? 'opacity-80' : ''}`}
-                  >
-                    <span>{item}</span>
-                    {item === 'Change email address' || item === 'Change phone number' ? (
-                      <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold text-slate-500">
-                        Coming Soon
-                      </span>
-                    ) : null}
-                  </div>
+                  item === 'Change password' ? (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => {
+                        setBusinessOwnerChangePasswordErrors({})
+                        setBusinessOwnerChangePasswordSuccess(false)
+                        setIsBusinessOwnerChangePasswordModalOpen(true)
+                      }}
+                      className={`flex w-full items-center justify-between border-b border-slate-100 px-3 py-2.5 text-left text-sm transition hover:bg-slate-50 focus:bg-slate-50 focus:outline-none last:border-b-0 ${
+                        section.danger ? 'text-rose-700' : 'text-slate-700'
+                      }`}
+                    >
+                      <span>{item}</span>
+                    </button>
+                  ) : (
+                    <div
+                      key={item}
+                      className={`flex w-full items-center justify-between border-b border-slate-100 px-3 py-2.5 text-left text-sm last:border-b-0 ${
+                        section.danger ? 'text-rose-700' : 'text-slate-700'
+                      } ${item === 'Change email address' || item === 'Change phone number' ? 'opacity-80' : ''}`}
+                    >
+                      <span>{item}</span>
+                      {item === 'Change email address' || item === 'Change phone number' ? (
+                        <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold text-slate-500">
+                          Coming Soon
+                        </span>
+                      ) : null}
+                    </div>
+                  )
                 ))}
               </div>
             </div>
@@ -2255,6 +2343,117 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
                 {isBusinessOwnerChangeEmailSubmitting ? 'Sending...' : 'Send Verification Email'}
               </button>
             </div>
+          </div>
+        </div>,
+        document.body
+      )}
+      {isBusinessOwnerChangePasswordModalOpen && createPortal(
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/30 p-4 backdrop-blur-sm">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="business-owner-change-password-title"
+            className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_28px_80px_-40px_rgba(15,23,42,0.5)] sm:p-5"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <h3 id="business-owner-change-password-title" className="text-base font-semibold text-[#0f172a]">
+                  Change Password
+                </h3>
+                <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                  Create a new password for your account.
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label="Close change password dialog"
+                onClick={resetBusinessOwnerChangePasswordModal}
+                disabled={isBusinessOwnerChangePasswordSubmitting}
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 6l12 12" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M18 6L6 18" />
+                </svg>
+              </button>
+            </div>
+            <form
+              className="mt-4"
+              onSubmit={(event) => {
+                event.preventDefault()
+                void handleBusinessOwnerChangePasswordSubmit()
+              }}
+            >
+              <label className="block text-xs font-semibold text-slate-600">
+                New Password
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  value={businessOwnerNewPasswordValue}
+                  onChange={(event) => {
+                    setBusinessOwnerNewPasswordValue(event.target.value)
+                    setBusinessOwnerChangePasswordErrors((current) => ({ ...current, newPassword: undefined, submit: undefined }))
+                    if (businessOwnerChangePasswordSuccess) {
+                      setBusinessOwnerChangePasswordSuccess(false)
+                    }
+                  }}
+                  disabled={isBusinessOwnerChangePasswordSubmitting}
+                  className={businessOwnerInputClass}
+                />
+              </label>
+              {businessOwnerChangePasswordErrors.newPassword ? (
+                <p className="mt-1.5 text-xs text-rose-700">{businessOwnerChangePasswordErrors.newPassword}</p>
+              ) : null}
+              <label className="mt-4 block text-xs font-semibold text-slate-600">
+                Confirm New Password
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  value={businessOwnerConfirmPasswordValue}
+                  onChange={(event) => {
+                    setBusinessOwnerConfirmPasswordValue(event.target.value)
+                    setBusinessOwnerChangePasswordErrors((current) => ({ ...current, confirmPassword: undefined, submit: undefined }))
+                    if (businessOwnerChangePasswordSuccess) {
+                      setBusinessOwnerChangePasswordSuccess(false)
+                    }
+                  }}
+                  disabled={isBusinessOwnerChangePasswordSubmitting}
+                  className={businessOwnerInputClass}
+                />
+              </label>
+              {businessOwnerChangePasswordErrors.confirmPassword ? (
+                <p className="mt-1.5 text-xs text-rose-700">{businessOwnerChangePasswordErrors.confirmPassword}</p>
+              ) : null}
+              {businessOwnerChangePasswordErrors.submit ? (
+                <p className="mt-3 text-xs text-rose-700">{businessOwnerChangePasswordErrors.submit}</p>
+              ) : null}
+              {businessOwnerChangePasswordSuccess ? (
+                <div className="mt-3 rounded-2xl border border-emerald-100 bg-emerald-50 px-3 py-3">
+                  <p className="text-sm font-semibold text-emerald-800">Password updated successfully.</p>
+                  <p className="mt-1 text-xs leading-relaxed text-emerald-700">
+                    Please use your new password the next time you sign in.
+                  </p>
+                </div>
+              ) : null}
+              <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={resetBusinessOwnerChangePasswordModal}
+                  disabled={isBusinessOwnerChangePasswordSubmitting}
+                  className="inline-flex justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isBusinessOwnerChangePasswordSubmitting}
+                  className="inline-flex justify-center rounded-full border border-sky-200 bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {isBusinessOwnerChangePasswordSubmitting ? 'Updating...' : 'Update Password'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>,
         document.body
