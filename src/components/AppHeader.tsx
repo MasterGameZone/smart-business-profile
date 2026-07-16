@@ -32,6 +32,7 @@ import {
   getBusinessOwnerProfile,
   upsertBusinessOwnerProfile,
 } from '../lib/businessOwnerProfileService.ts'
+import { getBusinessProfileFollowersCount } from '../lib/businessProfileFollowService.ts'
 import type { BusinessProfileRow } from '../types/businessProfile.ts'
 import type {
   BusinessOwnerHelpSuggestionRow,
@@ -318,6 +319,10 @@ function formatBusinessOwnerHelpSuggestionStatusLabel(status: BusinessOwnerHelpS
   }
 }
 
+function formatMetricCount(value: number | null): string {
+  return value === null ? '—' : value.toLocaleString()
+}
+
 const businessOwnerFaqItems = [
   {
     question: 'How do I complete my business profile?',
@@ -459,6 +464,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const [businessOwnerMenuPanel, setBusinessOwnerMenuPanel] = useState<BusinessOwnerMenuPanel>('main')
   const [businessOwnerSettingsView, setBusinessOwnerSettingsView] = useState<BusinessOwnerSettingsView>('main')
   const [businessOwnerAnalyticsRange, setBusinessOwnerAnalyticsRange] = useState<BusinessOwnerAnalyticsRange>('30D')
+  const [businessOwnerFollowersCount, setBusinessOwnerFollowersCount] = useState<number | null>(null)
   const [businessOwnerProfileActivityInterval, setBusinessOwnerProfileActivityInterval] =
     useState<BusinessOwnerProfileActivityInterval>('Daily')
   const [openBusinessOwnerFaqQuestion, setOpenBusinessOwnerFaqQuestion] = useState<string | null>(null)
@@ -604,6 +610,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const businessOwnerPublicProfilePath = effectiveBusinessOwnerMenuState?.businessSlug?.trim()
     ? `/business/${effectiveBusinessOwnerMenuState.businessSlug.trim()}`
     : null
+  const businessOwnerAnalyticsProfileId = businessOwnerMenuState?.businessProfile?.id ?? null
   const businessOwnerProfileForNotifications = effectiveBusinessOwnerMenuState?.businessProfile ?? null
   const businessOwnerNotificationsSessionKey = `${user?.id ?? ''}:${businessOwnerProfileForNotifications?.id ?? ''}`
   const businessOwnerMenuRowClass =
@@ -621,8 +628,8 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     },
     {
       label: 'Followers',
-      value: '1,256',
-      growth: '+8.3% vs previous 30D',
+      value: formatMetricCount(businessOwnerFollowersCount),
+      growth: 'Live total followers',
       icon: <FollowersMetricIcon />,
       accentClassName: 'bg-violet-100 text-violet-700',
     },
@@ -1025,6 +1032,36 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       isActive = false
     }
   }, [businessOwnerMenuPanel, user?.id])
+
+  useEffect(() => {
+    let isActive = true
+
+    const loadBusinessOwnerFollowersCount = async () => {
+      setBusinessOwnerFollowersCount(null)
+
+      if (!isBusinessOwnerAnalyticsScreenOpen || !businessOwnerAnalyticsProfileId) {
+        return
+      }
+
+      try {
+        const followersCount = await getBusinessProfileFollowersCount(businessOwnerAnalyticsProfileId)
+        if (isActive) {
+          setBusinessOwnerFollowersCount(followersCount)
+        }
+      } catch (error) {
+        console.warn('Failed to load business profile follower count:', error)
+        if (isActive) {
+          setBusinessOwnerFollowersCount(null)
+        }
+      }
+    }
+
+    void loadBusinessOwnerFollowersCount()
+
+    return () => {
+      isActive = false
+    }
+  }, [businessOwnerAnalyticsProfileId, isBusinessOwnerAnalyticsScreenOpen])
 
   useEffect(() => {
     if (!isHomeMenuOpen || !showBusinessHomeTopBar || !user?.id) {
