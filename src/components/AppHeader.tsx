@@ -20,11 +20,16 @@ import {
   listBusinessOwnerNotifications,
   markBusinessOwnerNotificationRead,
 } from '../lib/businessOwnerNotificationService.ts'
+import { createBusinessOwnerHelpSuggestion } from '../lib/businessOwnerHelpSuggestionService.ts'
 import {
   getBusinessOwnerProfile,
   upsertBusinessOwnerProfile,
 } from '../lib/businessOwnerProfileService.ts'
 import type { BusinessProfileRow } from '../types/businessProfile.ts'
+import type {
+  BusinessOwnerHelpSuggestionType,
+  CreateBusinessOwnerHelpSuggestionInput,
+} from '../types/businessOwnerHelpSuggestion.ts'
 import type { BusinessOwnerNotificationRow } from '../types/businessOwnerNotification.ts'
 import type { BusinessOwnerProfileFormValues } from '../types/businessOwnerProfile.ts'
 import { ToastContainer, type ToastItem } from './Toast.tsx'
@@ -66,7 +71,7 @@ interface BusinessOwnerMenuState {
 }
 
 type BusinessOwnerMenuPanel = 'main' | 'profile' | 'analytics' | 'notifications' | 'settings'
-type BusinessOwnerSettingsView = 'main' | 'faqs'
+type BusinessOwnerSettingsView = 'main' | 'faqs' | 'suggestions'
 
 let hasPlayedNavbarEntrance = false
 
@@ -239,6 +244,74 @@ const businessOwnerFaqItems = [
   },
 ]
 
+const businessOwnerSuggestionTypeOptions: Array<{
+  value: BusinessOwnerHelpSuggestionType
+  label: string
+}> = [
+  { value: 'suggestion', label: 'Suggestion' },
+  { value: 'help_request', label: 'Help request' },
+  { value: 'issue_problem', label: 'Issue / problem' },
+  { value: 'profile_improvement_help', label: 'Profile improvement help' },
+]
+
+const businessOwnerSuggestionSubjectOptionsByType: Record<BusinessOwnerHelpSuggestionType, string[]> = {
+  suggestion: [
+    'New feature suggestion',
+    'Improve business profile design',
+    'Improve QR Code feature',
+    'Improve profile sharing',
+    'Improve customer contact options',
+    'Improve gallery/images section',
+    'Improve business search/directory',
+    'Improve business account menu',
+    'Improve notifications',
+    'Others',
+  ],
+  help_request: [
+    'Help completing my business profile',
+    'Help editing business details',
+    'Help adding services/products',
+    'Help adding gallery/images',
+    'Help adding working hours',
+    'Help with QR Code',
+    'Help sharing my profile',
+    'Help switching account mode',
+    'Help understanding profile completion',
+    'Others',
+  ],
+  issue_problem: [
+    'Profile is not saving',
+    'Images are not uploading',
+    'Gallery is not updating',
+    'QR Code is not working',
+    'Public profile is not opening',
+    'Business details are showing incorrectly',
+    'Contact buttons are not working',
+    'Notifications are not loading correctly',
+    'Account/menu issue',
+    'Others',
+  ],
+  profile_improvement_help: [
+    'Improve my profile content',
+    'Improve my business description',
+    'Improve services/products section',
+    'Improve gallery/images',
+    'Improve working hours/contact details',
+    'Improve trust with certificates/documents',
+    'Improve profile completion score',
+    'Improve customer conversion',
+    'Improve profile presentation/design',
+    'Others',
+  ],
+}
+
+interface BusinessOwnerSuggestionFormState {
+  type: BusinessOwnerHelpSuggestionType
+  subject: string
+  customSubject: string
+  message: string
+}
+
 function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMenuState = null }: AppHeaderProps) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -250,6 +323,22 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const [businessOwnerSettingsView, setBusinessOwnerSettingsView] = useState<BusinessOwnerSettingsView>('main')
   const [openBusinessOwnerFaqQuestion, setOpenBusinessOwnerFaqQuestion] = useState<string | null>(null)
   const [isLandingMobileMenuOpen, setIsLandingMobileMenuOpen] = useState(false)
+  const [businessOwnerSuggestionForm, setBusinessOwnerSuggestionForm] = useState<BusinessOwnerSuggestionFormState>({
+    type: 'suggestion',
+    subject: '',
+    customSubject: '',
+    message: '',
+  })
+  const [businessOwnerSuggestionErrors, setBusinessOwnerSuggestionErrors] = useState<{
+    type?: string
+    subject?: string
+    message?: string
+  }>({})
+  const [businessOwnerSuggestionFeedback, setBusinessOwnerSuggestionFeedback] = useState<{
+    type: 'success' | 'error'
+    message: string
+  } | null>(null)
+  const [isBusinessOwnerSuggestionSubmitting, setIsBusinessOwnerSuggestionSubmitting] = useState(false)
   const [businessOwnerProfileForm, setBusinessOwnerProfileForm] = useState<BusinessOwnerProfileFormValues>({
     name: '',
     phoneNumber: '',
@@ -381,6 +470,18 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     setBusinessOwnerNotificationsError('')
     setLoadedBusinessOwnerNotificationsSessionKey('')
     setReadingBusinessOwnerNotificationId(null)
+  }
+
+  const resetBusinessOwnerSuggestionForm = () => {
+    setBusinessOwnerSuggestionForm({
+      type: 'suggestion',
+      subject: '',
+      customSubject: '',
+      message: '',
+    })
+    setBusinessOwnerSuggestionErrors({})
+    setBusinessOwnerSuggestionFeedback(null)
+    setIsBusinessOwnerSuggestionSubmitting(false)
   }
 
   const closeHomeMenu = () => {
@@ -654,6 +755,97 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       }
       setBusinessOwnerProfileForm((prev) => ({ ...prev, [field]: value }))
     }
+
+  const handleBusinessOwnerSuggestionFieldChange =
+    (field: keyof CreateBusinessOwnerHelpSuggestionInput) =>
+    (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+      const value = event.target.value
+      setBusinessOwnerSuggestionFeedback(null)
+      setBusinessOwnerSuggestionErrors((currentErrors) => ({ ...currentErrors, [field]: undefined }))
+      setBusinessOwnerSuggestionForm((prev) => {
+        if (field === 'type') {
+          return {
+            ...prev,
+            type: value as BusinessOwnerHelpSuggestionType,
+            subject: '',
+            customSubject: '',
+          }
+        }
+
+        return { ...prev, [field]: value }
+      })
+    }
+
+  const handleBusinessOwnerSuggestionSubmit = async () => {
+    if (!user?.id || isBusinessOwnerSuggestionSubmitting) {
+      return
+    }
+
+    const finalSubject =
+      businessOwnerSuggestionForm.subject === 'Others'
+        ? businessOwnerSuggestionForm.customSubject.trim()
+        : businessOwnerSuggestionForm.subject.trim()
+
+    const trimmedValues: CreateBusinessOwnerHelpSuggestionInput = {
+      type: businessOwnerSuggestionForm.type,
+      subject: finalSubject,
+      message: businessOwnerSuggestionForm.message.trim(),
+    }
+
+    const nextErrors: {
+      type?: string
+      subject?: string
+      message?: string
+    } = {}
+
+    if (!trimmedValues.type) {
+      nextErrors.type = 'Please select a type.'
+    }
+
+    if (!businessOwnerSuggestionForm.subject) {
+      nextErrors.subject = 'Please select a subject.'
+    } else if (businessOwnerSuggestionForm.subject === 'Others' && !trimmedValues.subject) {
+      nextErrors.subject = 'Please specify the subject.'
+    } else if (trimmedValues.subject.length > 80) {
+      nextErrors.subject = 'Subject must be 80 characters or fewer.'
+    }
+
+    if (!trimmedValues.message) {
+      nextErrors.message = 'Please enter a message.'
+    } else if (trimmedValues.message.length > 1000) {
+      nextErrors.message = 'Message must be 1000 characters or fewer.'
+    }
+
+    if (Object.keys(nextErrors).length > 0) {
+      setBusinessOwnerSuggestionErrors(nextErrors)
+      return
+    }
+
+    setBusinessOwnerSuggestionErrors({})
+    setBusinessOwnerSuggestionFeedback(null)
+    setIsBusinessOwnerSuggestionSubmitting(true)
+
+    try {
+      await createBusinessOwnerHelpSuggestion(user.id, trimmedValues)
+      setBusinessOwnerSuggestionForm({
+        type: 'suggestion',
+        subject: '',
+        customSubject: '',
+        message: '',
+      })
+      setBusinessOwnerSuggestionFeedback({
+        type: 'success',
+        message: 'Thanks, your message has been sent.',
+      })
+    } catch {
+      setBusinessOwnerSuggestionFeedback({
+        type: 'error',
+        message: 'Could not send your message right now. Please try again.',
+      })
+    } finally {
+      setIsBusinessOwnerSuggestionSubmitting(false)
+    }
+  }
 
   const handleBusinessOwnerProfileSave = async () => {
     if (!user?.id || isBusinessOwnerProfileSaving) {
@@ -1258,6 +1450,98 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
           </div>
         </section>
       </>
+    ) : businessOwnerSettingsView === 'suggestions' ? (
+      <>
+        {renderBusinessOwnerSubPanelHeader('Suggestions', () => setBusinessOwnerSettingsView('main'))}
+        <section className="space-y-3">
+          <div className={businessOwnerPanelCardClass}>
+            <p className="text-sm leading-relaxed text-slate-600">
+              Share feedback, report an issue, or ask for help improving your business account.
+            </p>
+          </div>
+          <div className={`${businessOwnerPanelCardClass} space-y-3`}>
+            <label className="block text-xs font-semibold text-slate-600">
+              Type
+              <select
+                className={businessOwnerInputClass}
+                value={businessOwnerSuggestionForm.type}
+                onChange={handleBusinessOwnerSuggestionFieldChange('type')}
+                disabled={isBusinessOwnerSuggestionSubmitting}
+              >
+                {businessOwnerSuggestionTypeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              {businessOwnerSuggestionErrors.type ? (
+                <p className="mt-1.5 text-xs text-rose-700">{businessOwnerSuggestionErrors.type}</p>
+              ) : null}
+            </label>
+            <label className="block text-xs font-semibold text-slate-600">
+              Subject
+              <select
+                className={businessOwnerInputClass}
+                value={businessOwnerSuggestionForm.subject}
+                onChange={handleBusinessOwnerSuggestionFieldChange('subject')}
+                disabled={isBusinessOwnerSuggestionSubmitting}
+              >
+                <option value="">Select subject</option>
+                {businessOwnerSuggestionSubjectOptionsByType[businessOwnerSuggestionForm.type].map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+              {businessOwnerSuggestionErrors.subject ? (
+                <p className="mt-1.5 text-xs text-rose-700">{businessOwnerSuggestionErrors.subject}</p>
+              ) : null}
+            </label>
+            {businessOwnerSuggestionForm.subject === 'Others' ? (
+              <label className="block text-xs font-semibold text-slate-600">
+                Please specify subject
+                <input
+                  className={businessOwnerInputClass}
+                  value={businessOwnerSuggestionForm.customSubject}
+                  onChange={handleBusinessOwnerSuggestionFieldChange('customSubject' as keyof CreateBusinessOwnerHelpSuggestionInput)}
+                  maxLength={80}
+                  disabled={isBusinessOwnerSuggestionSubmitting}
+                />
+              </label>
+            ) : null}
+            <label className="block text-xs font-semibold text-slate-600">
+              Message
+              <textarea
+                className={`${businessOwnerInputClass} min-h-28 resize-y`}
+                value={businessOwnerSuggestionForm.message}
+                onChange={handleBusinessOwnerSuggestionFieldChange('message')}
+                maxLength={1000}
+                disabled={isBusinessOwnerSuggestionSubmitting}
+              />
+              {businessOwnerSuggestionErrors.message ? (
+                <p className="mt-1.5 text-xs text-rose-700">{businessOwnerSuggestionErrors.message}</p>
+              ) : null}
+            </label>
+            {businessOwnerSuggestionFeedback ? (
+              <p
+                className={`text-xs ${
+                  businessOwnerSuggestionFeedback.type === 'success' ? 'text-emerald-700' : 'text-rose-700'
+                }`}
+              >
+                {businessOwnerSuggestionFeedback.message}
+              </p>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => void handleBusinessOwnerSuggestionSubmit()}
+              disabled={isBusinessOwnerSuggestionSubmitting}
+              className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isBusinessOwnerSuggestionSubmitting ? 'Sending...' : 'Send suggestion'}
+            </button>
+          </div>
+        </section>
+      </>
     ) : (
       <>
         {renderBusinessOwnerPanelHeader('Settings')}
@@ -1283,7 +1567,12 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
                             setOpenBusinessOwnerFaqQuestion(null)
                             setBusinessOwnerSettingsView('faqs')
                           }
-                        : undefined
+                        : item === 'Suggestions'
+                          ? () => {
+                              resetBusinessOwnerSuggestionForm()
+                              setBusinessOwnerSettingsView('suggestions')
+                            }
+                          : undefined
                     }
                     className={`flex w-full items-center justify-between border-b border-slate-100 px-3 py-2.5 text-left text-sm last:border-b-0 ${
                       section.danger ? 'text-rose-700' : 'text-slate-700'

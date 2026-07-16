@@ -364,6 +364,29 @@ Access is restricted by RLS to the authenticated owner of each row. Authenticate
 
 ---
 
+## Table: business_owner_help_suggestions
+
+Purpose
+
+Stores private Business Owner suggestions, help requests, issue reports, and profile-improvement help submissions from the Business Account menu.
+
+### Columns
+
+| Column | Type | Nullable | Description |
+|----------|------|----------|-------------|
+| id | UUID | No | Primary key |
+| owner_id | UUID | No | Reference to `auth.users.id` |
+| type | TEXT | No | `suggestion`, `help_request`, `issue_problem`, or `profile_improvement_help` |
+| subject | TEXT | No | Submission subject |
+| message | TEXT | No | Submission message |
+| status | TEXT | No | Submission status, defaulting to `submitted` |
+| created_at | TIMESTAMP WITH TIME ZONE | No | Record creation timestamp |
+| updated_at | TIMESTAMP WITH TIME ZONE | No | Last update timestamp |
+
+Access is restricted by RLS to the authenticated owner of each row. Authenticated Business Owners may insert and select only their own submissions. The MVP does not provide update/delete UI or reply/status tracking inside the menu.
+
+---
+
 ## Table: customer_feature_votes
 
 Purpose
