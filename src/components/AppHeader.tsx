@@ -14,7 +14,7 @@ import {
   useProfile,
 } from '../context/ProfileContext.tsx'
 import { useAuth } from '../context/AuthContext.tsx'
-import { requestEmailChange, signOut } from '../lib/authService.ts'
+import { signOut } from '../lib/authService.ts'
 import {
   ensureProfileUpdateReminderNotification,
   listBusinessOwnerNotifications,
@@ -82,10 +82,7 @@ type BusinessOwnerMenuPanel = 'main' | 'profile' | 'analytics' | 'notifications'
 type BusinessOwnerSettingsView = 'main' | 'faqs' | 'suggestions' | 'recent'
 type BusinessOwnerPhoneModalMode = 'add' | 'change'
 type BusinessOwnerPhoneModalStep = 'phone' | 'otp' | 'success'
-
 let hasPlayedNavbarEntrance = false
-
-const emailValidationPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function getInitials(value: string): string {
   return value
@@ -400,13 +397,13 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     type: 'success' | 'error'
     message: string
   } | null>(null)
-  const [isBusinessOwnerChangeEmailModalOpen, setIsBusinessOwnerChangeEmailModalOpen] = useState(false)
+  const [isBusinessOwnerChangeEmailModalOpen] = useState(false)
   const [businessOwnerChangeEmailValue, setBusinessOwnerChangeEmailValue] = useState('')
   const [businessOwnerChangeEmailError, setBusinessOwnerChangeEmailError] = useState('')
   const [businessOwnerChangeEmailSuccess, setBusinessOwnerChangeEmailSuccess] = useState(false)
-  const [isBusinessOwnerChangeEmailSubmitting, setIsBusinessOwnerChangeEmailSubmitting] = useState(false)
-  const [isBusinessOwnerPhoneModalOpen, setIsBusinessOwnerPhoneModalOpen] = useState(false)
-  const [businessOwnerPhoneModalMode, setBusinessOwnerPhoneModalMode] = useState<BusinessOwnerPhoneModalMode>('change')
+  const [isBusinessOwnerChangeEmailSubmitting] = useState(false)
+  const [isBusinessOwnerPhoneModalOpen] = useState(false)
+  const [businessOwnerPhoneModalMode] = useState<BusinessOwnerPhoneModalMode>('change')
   const [businessOwnerPhoneModalStep, setBusinessOwnerPhoneModalStep] = useState<BusinessOwnerPhoneModalStep>('phone')
   const [businessOwnerPhoneModalPhoneValue, setBusinessOwnerPhoneModalPhoneValue] = useState('')
   const [businessOwnerPhoneModalOtpValue, setBusinessOwnerPhoneModalOtpValue] = useState('')
@@ -519,8 +516,6 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     {
       title: 'Security',
       items: [
-        'Verify phone number',
-        'Verify email address',
         'Change phone number',
         'Change email address',
         'Change password',
@@ -550,24 +545,6 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     setLoadedBusinessOwnerNotificationPreferenceUserId('')
   }
 
-  const resetBusinessOwnerChangeEmailModal = () => {
-    setIsBusinessOwnerChangeEmailModalOpen(false)
-    setBusinessOwnerChangeEmailValue('')
-    setBusinessOwnerChangeEmailError('')
-    setBusinessOwnerChangeEmailSuccess(false)
-    setIsBusinessOwnerChangeEmailSubmitting(false)
-  }
-
-  const resetBusinessOwnerPhoneModal = () => {
-    setIsBusinessOwnerPhoneModalOpen(false)
-    setBusinessOwnerPhoneModalMode('change')
-    setBusinessOwnerPhoneModalStep('phone')
-    setBusinessOwnerPhoneModalPhoneValue('')
-    setBusinessOwnerPhoneModalOtpValue('')
-    setBusinessOwnerPhoneModalPhoneError('')
-    setBusinessOwnerPhoneModalOtpError('')
-  }
-
   const resetBusinessOwnerSuggestionForm = () => {
     setBusinessOwnerSuggestionForm({
       type: 'suggestion',
@@ -589,11 +566,23 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     setOpenBusinessOwnerRecentHelpSuggestionId(null)
   }
 
+  const resetBusinessOwnerChangeEmailModal = () => {
+    setBusinessOwnerChangeEmailValue('')
+    setBusinessOwnerChangeEmailError('')
+    setBusinessOwnerChangeEmailSuccess(false)
+  }
+
+  const resetBusinessOwnerPhoneModal = () => {
+    setBusinessOwnerPhoneModalPhoneValue('')
+    setBusinessOwnerPhoneModalOtpValue('')
+    setBusinessOwnerPhoneModalPhoneError('')
+    setBusinessOwnerPhoneModalOtpError('')
+    setBusinessOwnerPhoneModalStep('phone')
+  }
+
   const closeHomeMenu = () => {
     resetBusinessOwnerNotificationsSession()
     resetBusinessOwnerNotificationPreferenceSession()
-    resetBusinessOwnerChangeEmailModal()
-    resetBusinessOwnerPhoneModal()
     resetBusinessOwnerRecentHelpSuggestions()
     setIsHomeMenuOpen(false)
   }
@@ -613,10 +602,6 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       const target = event.target as Node
 
       if (showLoggedInHomeIcons && customerMenuOverlayRef.current?.contains(target)) {
-        return
-      }
-
-      if (businessOwnerChangeEmailModalRef.current?.contains(target)) {
         return
       }
 
@@ -1112,18 +1097,6 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       return
     }
 
-    if (!hasSavedBusinessOwnerPhoneNumber && trimmedValues.phoneNumber) {
-      setIsBusinessOwnerPhoneModalOpen(true)
-      setBusinessOwnerPhoneModalMode('add')
-      setBusinessOwnerPhoneModalStep('phone')
-      setBusinessOwnerPhoneModalPhoneValue(trimmedValues.phoneNumber)
-      setBusinessOwnerPhoneModalOtpValue('')
-      setBusinessOwnerPhoneModalPhoneError('')
-      setBusinessOwnerPhoneModalOtpError('')
-      setBusinessOwnerProfileFeedback(null)
-      return
-    }
-
     setIsBusinessOwnerProfileSaving(true)
     setBusinessOwnerProfileFeedback(null)
 
@@ -1254,75 +1227,17 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     }
   }
 
-  const handleBusinessOwnerChangeEmailSubmit = async () => {
-    if (isBusinessOwnerChangeEmailSubmitting) {
-      return
-    }
-
-    const trimmedEmail = businessOwnerChangeEmailValue.trim()
-    const currentEmail = user?.email?.trim().toLowerCase() ?? ''
-
-    if (!trimmedEmail) {
-      setBusinessOwnerChangeEmailError('Please enter your new email address.')
-      setBusinessOwnerChangeEmailSuccess(false)
-      return
-    }
-
-    if (!emailValidationPattern.test(trimmedEmail)) {
-      setBusinessOwnerChangeEmailError('Please enter a valid email address.')
-      setBusinessOwnerChangeEmailSuccess(false)
-      return
-    }
-
-    if (trimmedEmail.toLowerCase() === currentEmail) {
-      setBusinessOwnerChangeEmailError('This email is already linked to your account.')
-      setBusinessOwnerChangeEmailSuccess(false)
-      return
-    }
-
-    setBusinessOwnerChangeEmailValue(trimmedEmail)
-    setBusinessOwnerChangeEmailError('')
-    setBusinessOwnerChangeEmailSuccess(false)
-    setIsBusinessOwnerChangeEmailSubmitting(true)
-
-    try {
-      const { error } = await requestEmailChange(trimmedEmail)
-
-      if (error) {
-        setBusinessOwnerChangeEmailError('Could not send verification email right now. Please try again.')
-        return
-      }
-
-      setBusinessOwnerChangeEmailSuccess(true)
-    } finally {
-      setIsBusinessOwnerChangeEmailSubmitting(false)
-    }
+  const handleBusinessOwnerChangeEmailSubmit = () => {
+    resetBusinessOwnerChangeEmailModal()
   }
 
   const handleBusinessOwnerPhoneModalSendOtp = () => {
-    const trimmedPhoneNumber = normalizePhoneNumber(businessOwnerPhoneModalPhoneValue.trim())
-
-    if (!isValidPhoneNumber(trimmedPhoneNumber)) {
-      setBusinessOwnerPhoneModalPhoneError('Please enter exactly 10 digits.')
-      return
-    }
-
-    setBusinessOwnerPhoneModalPhoneValue(trimmedPhoneNumber)
     setBusinessOwnerPhoneModalPhoneError('')
     setBusinessOwnerPhoneModalOtpError('')
-    setBusinessOwnerPhoneModalOtpValue('')
-    setBusinessOwnerPhoneModalStep('otp')
+    setBusinessOwnerPhoneModalStep('phone')
   }
 
   const handleBusinessOwnerPhoneModalVerifyOtp = () => {
-    const normalizedOtpValue = businessOwnerPhoneModalOtpValue.replace(/\D/g, '')
-
-    if (normalizedOtpValue.length !== 6) {
-      setBusinessOwnerPhoneModalOtpError('Please enter the OTP.')
-      return
-    }
-
-    setBusinessOwnerPhoneModalOtpValue(normalizedOtpValue)
     setBusinessOwnerPhoneModalOtpError('')
     setBusinessOwnerPhoneModalStep('success')
   }
@@ -2086,35 +2001,19 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
               </h3>
               <div className="mt-2 overflow-hidden rounded-xl border border-white/70 bg-white">
                 {section.items.map((item) => (
-                  <button
+                  <div
                     key={item}
-                    type="button"
-                    onClick={
-                      item === 'Change email address'
-                        ? () => {
-                            setBusinessOwnerChangeEmailValue('')
-                            setBusinessOwnerChangeEmailError('')
-                            setBusinessOwnerChangeEmailSuccess(false)
-                            setIsBusinessOwnerChangeEmailModalOpen(true)
-                          }
-                        : item === 'Change phone number'
-                          ? () => {
-                              setBusinessOwnerPhoneModalMode('change')
-                              setBusinessOwnerPhoneModalStep('phone')
-                              setBusinessOwnerPhoneModalPhoneValue('')
-                              setBusinessOwnerPhoneModalOtpValue('')
-                              setBusinessOwnerPhoneModalPhoneError('')
-                              setBusinessOwnerPhoneModalOtpError('')
-                              setIsBusinessOwnerPhoneModalOpen(true)
-                            }
-                        : undefined
-                    }
                     className={`flex w-full items-center justify-between border-b border-slate-100 px-3 py-2.5 text-left text-sm last:border-b-0 ${
                       section.danger ? 'text-rose-700' : 'text-slate-700'
-                    }`}
+                    } ${item === 'Change email address' || item === 'Change phone number' ? 'opacity-80' : ''}`}
                   >
                     <span>{item}</span>
-                  </button>
+                    {item === 'Change email address' || item === 'Change phone number' ? (
+                      <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold text-slate-500">
+                        Coming Soon
+                      </span>
+                    ) : null}
+                  </div>
                 ))}
               </div>
             </div>
