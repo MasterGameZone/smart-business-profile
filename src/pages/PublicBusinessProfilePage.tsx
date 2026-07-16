@@ -315,6 +315,8 @@ function PublicBusinessProfilePage() {
           <div className={businessProfileOuterWrapperClassName}>
             <BusinessProfileDisplay
               profile={{
+                id: profile.id,
+                ownerId: profile.owner_id,
                 businessName: profile.business_name,
                 ownerName: profile.owner_name,
                 businessCategory: profile.business_category,

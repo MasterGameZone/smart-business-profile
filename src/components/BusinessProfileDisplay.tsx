@@ -1,11 +1,18 @@
 import { cloneElement, isValidElement, useEffect, useRef, useState, type ReactElement, type ReactNode, type RefObject } from 'react'
 import { createPortal } from 'react-dom'
 import QRCode from 'react-qr-code'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.tsx'
+import {
+  getBusinessProfileFollowSummary,
+  toggleBusinessProfileFollow,
+} from '../lib/businessProfileFollowService.ts'
 import { getBusinessDocumentViewUrl } from '../lib/storageService.ts'
 import type { BusinessProfileRow, JsonObject, SocialLinks } from '../types/businessProfile.ts'
 
 export interface BusinessProfileDisplayData {
+  id?: string | null
+  ownerId?: string | null
   businessName: string
   ownerName: string
   businessCategory: string
@@ -32,6 +39,7 @@ export interface BusinessProfileDisplayData {
   socialLinks?: SocialLinks | null
   keywords?: string[] | null
   galleryImages?: string[] | null
+  followersCount?: number | null
 }
 
 interface BusinessProfileDisplayProps {
@@ -106,6 +114,14 @@ function normalizeStringArray(value: unknown[] | string[] | null | undefined): s
 
     return items
   }, [])
+}
+
+function formatFollowersCount(value: number): string {
+  return `${value.toLocaleString()} ${value === 1 ? 'follower' : 'followers'}`
+}
+
+function toSafeFollowersCount(value: number | null | undefined): number {
+  return typeof value === 'number' && Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0
 }
 
 function normalizeProductOfferings(value: BusinessProfileDisplayData['products_menu_packages']): DisplayOfferingItem[] {
@@ -760,11 +776,17 @@ function BusinessProfileDisplay({
   previewActionSlot,
   footerSlot,
 }: BusinessProfileDisplayProps) {
-  const { isLoading: isAuthLoading, session } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { isLoading: isAuthLoading, session, user } = useAuth()
   const [isExpanded, setIsExpanded] = useState(false)
   const [isWorkingHoursExpanded, setIsWorkingHoursExpanded] = useState(false)
   const [isFaqsExpanded, setIsFaqsExpanded] = useState(false)
   const [isQrModalOpen, setIsQrModalOpen] = useState(false)
+  const [isFollowing, setIsFollowing] = useState(false)
+  const [followersCount, setFollowersCount] = useState(0)
+  const [isFollowLoading, setIsFollowLoading] = useState(false)
+  const [followFeedback, setFollowFeedback] = useState('')
   const [openFaqKey, setOpenFaqKey] = useState<string | null>(null)
   const [addressCopied, setAddressCopied] = useState(false)
   const [logoFailed, setLogoFailed] = useState(false)
@@ -800,6 +822,13 @@ function BusinessProfileDisplay({
   const compactLocation = formatCompactLocation(displayAddress)
   const workingStatus = getCompactWorkingStatus(profile.workingHours, profile.availabilityOverride)
   const experienceText = formatBusinessExperience(profile)
+  const profileId = trimText(profile.id)
+  const profileOwnerId = trimText(profile.ownerId)
+  const isOwnBusinessProfile = Boolean(user?.id && profileOwnerId && user.id === profileOwnerId)
+  const showFollowControls = !isOwnBusinessProfile
+  const fallbackFollowersCount = toSafeFollowersCount(profile.followersCount)
+  const displayedFollowersCount = showFollowControls ? (profileId ? followersCount : fallbackFollowersCount) : 0
+  const displayedIsFollowing = Boolean(profileId && isFollowing)
   const whatsappUrl = toWhatsappUrl(displayWhatsApp)
   const rawWhatsappUrl = toWhatsappUrl(displayRawWhatsApp)
   const websiteUrl = toValidUrl(displayWebsite)
@@ -861,6 +890,41 @@ function BusinessProfileDisplay({
   useEffect(() => {
     setLogoFailed(false)
   }, [profile.logoUrl])
+
+  useEffect(() => {
+    let isCurrent = true
+
+    const loadFollowSummary = async () => {
+      if (!profileId || isOwnBusinessProfile) {
+        return
+      }
+
+      try {
+        const summary = await getBusinessProfileFollowSummary(profileId, user?.id)
+        if (!isCurrent) {
+          return
+        }
+
+        setFollowersCount(summary.followersCount)
+        setIsFollowing(summary.isFollowing)
+        setFollowFeedback('')
+      } catch (error) {
+        if (!isCurrent) {
+          return
+        }
+
+        console.error('Failed to load business profile follow summary:', error)
+        setFollowersCount(fallbackFollowersCount)
+        setIsFollowing(false)
+      }
+    }
+
+    void loadFollowSummary()
+
+    return () => {
+      isCurrent = false
+    }
+  }, [fallbackFollowersCount, isOwnBusinessProfile, profileId, user?.id])
 
   useEffect(() => {
     setFailedOfferingImageKeys(new Set())
@@ -984,6 +1048,36 @@ function BusinessProfileDisplay({
     setIsFaqsExpanded((current) => !current)
   }
 
+  const handleFollowToggle = async () => {
+    if (isOwnBusinessProfile || isFollowLoading) {
+      return
+    }
+
+    if (!user) {
+      navigate('/login', { state: { from: location } })
+      return
+    }
+
+    if (!profileId) {
+      setFollowFeedback('Could not update follow status right now.')
+      return
+    }
+
+    setIsFollowLoading(true)
+    setFollowFeedback('')
+
+    try {
+      const summary = await toggleBusinessProfileFollow(profileId, user.id, isFollowing)
+      setFollowersCount(summary.followersCount)
+      setIsFollowing(summary.isFollowing)
+    } catch (error) {
+      console.error('Failed to update business profile follow status:', error)
+      setFollowFeedback('Could not update follow status right now.')
+    } finally {
+      setIsFollowLoading(false)
+    }
+  }
+
   const handleOpenGalleryImage = (imageUrl: string) => {
     window.open(imageUrl, '_blank', 'noopener,noreferrer')
   }
@@ -1041,7 +1135,7 @@ function BusinessProfileDisplay({
         </div>
 
         <div className="px-3.5 pb-3.5 sm:px-5 sm:pb-4">
-          <div className="-mt-10 flex items-end justify-between gap-3 sm:-mt-11">
+          <div className="-mt-10 flex min-w-0 items-end gap-2.5 sm:-mt-11 sm:gap-3">
             <div
               className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-white shadow-xl ring-1 ring-slate-100 sm:h-24 sm:w-24"
               aria-label={displayLogoUrl ? 'Business logo' : `${businessInitials} logo placeholder`}
@@ -1057,6 +1151,38 @@ function BusinessProfileDisplay({
                 <span className="select-none text-xl font-bold text-blue-700 sm:text-2xl">{businessInitials}</span>
               )}
             </div>
+            {showFollowControls && (
+              <div className="mb-1 flex min-w-0 flex-wrap items-center gap-2.5 pt-1 sm:gap-3">
+                <span className="shrink-0 text-[11px] font-medium leading-none text-slate-600 sm:text-xs">
+                  {formatFollowersCount(displayedFollowersCount)}
+                </span>
+                <button
+                  type="button"
+                  aria-pressed={displayedIsFollowing}
+                  onClick={() => void handleFollowToggle()}
+                  disabled={isFollowLoading}
+                  className={`inline-flex h-7 shrink-0 items-center justify-center gap-1.5 rounded-full border px-3 text-[11px] font-semibold leading-none shadow-sm transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 sm:h-8 sm:px-3.5 sm:text-xs ${
+                    displayedIsFollowing
+                      ? 'border-slate-900 bg-slate-900 text-white shadow-slate-200 hover:border-slate-950 hover:bg-slate-950'
+                      : 'border-blue-600 bg-blue-600 text-white shadow-blue-200 hover:border-blue-700 hover:bg-blue-700'
+                  }`}
+                >
+                  <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    {displayedIsFollowing ? (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.25} d="M5 13l4 4L19 7" />
+                    ) : (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.25} d="M12 5v14M5 12h14" />
+                    )}
+                  </svg>
+                  {isFollowLoading ? '...' : displayedIsFollowing ? 'Following' : 'Follow'}
+                </button>
+                {followFeedback && (
+                  <span className="basis-full text-[10px] font-medium leading-tight text-rose-600">
+                    {followFeedback}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="mt-2.5 flex min-w-0 items-center gap-2">

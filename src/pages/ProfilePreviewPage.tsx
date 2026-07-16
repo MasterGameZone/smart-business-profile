@@ -408,6 +408,8 @@ function ProfilePreviewPage() {
           <div className={businessProfileOuterWrapperClassName}>
             <BusinessProfileDisplay
               profile={{
+                id: profileData.id || null,
+                ownerId: profileData.ownerId || null,
                 businessName: profileData.businessName,
                 ownerName: profileData.ownerName,
                 businessCategory: profileData.businessCategory,

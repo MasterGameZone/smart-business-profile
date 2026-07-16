@@ -40,6 +40,13 @@ export interface BusinessProfileDocumentRow {
   created_at: string
 }
 
+export interface BusinessProfileFollowerRow {
+  id: string
+  profile_id: string
+  user_id: string
+  created_at: string
+}
+
 export interface BusinessProfileRow {
   id: string
   business_name: string
@@ -174,6 +181,11 @@ export interface Database {
         Row: BusinessProfileDocumentRow
         Insert: Omit<BusinessProfileDocumentRow, 'id' | 'created_at'>
         Update: Partial<Omit<BusinessProfileDocumentRow, 'id' | 'created_at'>>
+      }
+      business_profile_followers: {
+        Row: BusinessProfileFollowerRow
+        Insert: Omit<BusinessProfileFollowerRow, 'id' | 'created_at'>
+        Update: Partial<Omit<BusinessProfileFollowerRow, 'id' | 'created_at'>>
       }
     }
   }

@@ -498,6 +498,25 @@ Access is restricted by RLS to the owner of the connected business profile.
 
 ---
 
+## Table: business_profile_followers
+
+Purpose
+
+Stores authenticated user follows for public business profiles. Follow is separate from Saved Businesses/Favorites and is intended for follower counts and future business updates.
+
+### Columns
+
+| Column | Type | Nullable | Description |
+|----------|------|----------|-------------|
+| id | UUID | No | Primary key |
+| profile_id | UUID | No | Reference to `business_profiles.id` |
+| user_id | UUID | No | Reference to `auth.users.id` |
+| created_at | TIMESTAMP WITH TIME ZONE | No | Record creation timestamp |
+
+Each user may follow a business profile once through a unique `(profile_id, user_id)` constraint. Authenticated users may select and delete only their own follow records and may insert only their own follow records for public profiles they do not own. Anonymous users cannot insert or delete follows. A narrow `get_business_profile_followers_count` RPC returns public follower counts without exposing follower rows.
+
+---
+
 ## Bucket: business-assets
 
 Purpose
@@ -557,6 +576,7 @@ Version 3.8 added helper functions for logo, cover, and gallery uploads. Version
 | 4.28 | Customer Help & Feedback MVP | Migration created; apply to Supabase |
 | 4.29 | Business availability manual override | Migration created; apply to Supabase |
 | 4.30 | Business Owner notification preferences | Migration created; apply to Supabase |
+| 4.31 | Business profile followers | Migration created; apply to Supabase |
 | Future | Additional modules | Planned |
 
 Detailed migration SQL should remain inside the `/supabase/migrations` directory.
