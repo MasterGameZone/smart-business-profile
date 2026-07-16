@@ -1,9 +1,14 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type ChangeEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useProfile } from '../context/ProfileContext.tsx'
 import { useAuth } from '../context/AuthContext.tsx'
 import { signOut } from '../lib/authService.ts'
+import {
+  getBusinessOwnerProfile,
+  upsertBusinessOwnerProfile,
+} from '../lib/businessOwnerProfileService.ts'
+import type { BusinessOwnerProfileFormValues } from '../types/businessOwnerProfile.ts'
 import { ToastContainer, type ToastItem } from './Toast.tsx'
 
 interface AppHeaderPreviewConfig {
@@ -121,6 +126,22 @@ function LogoutIcon() {
   )
 }
 
+function containsLink(value: string): boolean {
+  return /(https?:\/\/|www\.)/i.test(value)
+}
+
+function normalizePhoneNumber(value: string): string {
+  return value.replace(/\D/g, '')
+}
+
+function isValidPhoneNumber(value: string): boolean {
+  if (!value) {
+    return true
+  }
+
+  return /^\d{10}$/.test(value)
+}
+
 function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMenuState = null }: AppHeaderProps) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -130,6 +151,18 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const [isHomeMenuOpen, setIsHomeMenuOpen] = useState(false)
   const [businessOwnerMenuPanel, setBusinessOwnerMenuPanel] = useState<BusinessOwnerMenuPanel>('main')
   const [isLandingMobileMenuOpen, setIsLandingMobileMenuOpen] = useState(false)
+  const [businessOwnerProfileForm, setBusinessOwnerProfileForm] = useState<BusinessOwnerProfileFormValues>({
+    name: '',
+    phoneNumber: '',
+    preferredCity: '',
+  })
+  const [businessOwnerPhoneValidationMessage, setBusinessOwnerPhoneValidationMessage] = useState('')
+  const [isBusinessOwnerProfileLoading, setIsBusinessOwnerProfileLoading] = useState(false)
+  const [isBusinessOwnerProfileSaving, setIsBusinessOwnerProfileSaving] = useState(false)
+  const [businessOwnerProfileFeedback, setBusinessOwnerProfileFeedback] = useState<{
+    type: 'success' | 'error'
+    message: string
+  } | null>(null)
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const [shouldAnimateEntrance] = useState(() => !hasPlayedNavbarEntrance)
   const toastIdRef = useRef(0)
@@ -198,8 +231,6 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const businessOwnerPublicProfilePath = effectiveBusinessOwnerMenuState?.businessSlug?.trim()
     ? `/business/${effectiveBusinessOwnerMenuState.businessSlug.trim()}`
     : null
-  const businessOwnerPhone = getMetadataString(userMetadata, ['phone', 'phone_number']) ?? ''
-  const businessOwnerPreferredCity = getMetadataString(userMetadata, ['preferred_city', 'preferred_location', 'city', 'location']) ?? ''
   const businessOwnerMenuRowClass =
     'flex w-full items-center justify-between border-b border-slate-100/90 px-3 py-3 text-left text-sm text-[#0f172a] transition hover:bg-slate-50 focus:bg-slate-50 focus:outline-none'
   const businessOwnerPanelCardClass = 'rounded-2xl border border-slate-200 bg-slate-50/80 p-3'
@@ -334,6 +365,52 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     return () => window.clearTimeout(timeoutId)
   }, [location.pathname, location.hash])
 
+  useEffect(() => {
+    if (businessOwnerMenuPanel !== 'profile' || !user?.id) {
+      return
+    }
+
+    let isActive = true
+
+    const loadBusinessOwnerProfile = async () => {
+      setIsBusinessOwnerProfileLoading(true)
+      setBusinessOwnerProfileFeedback(null)
+
+      try {
+        const profile = await getBusinessOwnerProfile(user.id)
+        if (!isActive) {
+          return
+        }
+
+        setBusinessOwnerProfileForm({
+          name: profile?.name ?? '',
+          phoneNumber: profile?.phone_number ?? '',
+          preferredCity: profile?.preferred_city ?? '',
+        })
+        setBusinessOwnerPhoneValidationMessage('')
+      } catch {
+        if (!isActive) {
+          return
+        }
+
+        setBusinessOwnerProfileFeedback({
+          type: 'error',
+          message: 'Unable to load your profile details right now.',
+        })
+      } finally {
+        if (isActive) {
+          setIsBusinessOwnerProfileLoading(false)
+        }
+      }
+    }
+
+    void loadBusinessOwnerProfile()
+
+    return () => {
+      isActive = false
+    }
+  }, [businessOwnerMenuPanel, user?.id])
+
   const showError = (message: string) => {
     const id = ++toastIdRef.current
     setToasts((prev) => [...prev, { id, message, type: 'error' }])
@@ -403,6 +480,83 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     }
 
     navigate(item.path)
+  }
+
+  const handleBusinessOwnerProfileFieldChange =
+    (field: keyof BusinessOwnerProfileFormValues) => (event: ChangeEvent<HTMLInputElement>) => {
+      const value = field === 'phoneNumber' ? normalizePhoneNumber(event.target.value) : event.target.value
+      setBusinessOwnerProfileFeedback(null)
+      if (field === 'phoneNumber') {
+        const normalizedValue = normalizePhoneNumber(value.trim())
+        setBusinessOwnerPhoneValidationMessage(
+          !isValidPhoneNumber(normalizedValue) ? 'Please enter exactly 10 digits.' : ''
+        )
+      }
+      setBusinessOwnerProfileForm((prev) => ({ ...prev, [field]: value }))
+    }
+
+  const handleBusinessOwnerProfileSave = async () => {
+    if (!user?.id || isBusinessOwnerProfileSaving) {
+      return
+    }
+
+    const trimmedValues = {
+      name: businessOwnerProfileForm.name.trim(),
+      phoneNumber: normalizePhoneNumber(businessOwnerProfileForm.phoneNumber.trim()),
+      preferredCity: businessOwnerProfileForm.preferredCity.trim(),
+    }
+
+    if (!isValidPhoneNumber(trimmedValues.phoneNumber)) {
+      setBusinessOwnerPhoneValidationMessage('Please enter exactly 10 digits.')
+      return
+    }
+
+    setBusinessOwnerPhoneValidationMessage('')
+
+    if (trimmedValues.name.length > 80) {
+      setBusinessOwnerProfileFeedback({ type: 'error', message: 'Name must be 80 characters or fewer.' })
+      return
+    }
+
+    if (trimmedValues.preferredCity.length > 80) {
+      setBusinessOwnerProfileFeedback({ type: 'error', message: 'Preferred City must be 80 characters or fewer.' })
+      return
+    }
+
+    if (
+      containsLink(trimmedValues.name) ||
+      containsLink(trimmedValues.phoneNumber) ||
+      containsLink(trimmedValues.preferredCity)
+    ) {
+      setBusinessOwnerProfileFeedback({
+        type: 'error',
+        message: 'Links are not allowed in these profile fields.',
+      })
+      return
+    }
+
+    setIsBusinessOwnerProfileSaving(true)
+    setBusinessOwnerProfileFeedback(null)
+
+    try {
+      const savedProfile = await upsertBusinessOwnerProfile(user.id, trimmedValues)
+      setBusinessOwnerProfileForm({
+        name: savedProfile.name ?? '',
+        phoneNumber: savedProfile.phone_number ?? '',
+        preferredCity: savedProfile.preferred_city ?? '',
+      })
+      setBusinessOwnerProfileFeedback({
+        type: 'success',
+        message: 'Profile details saved successfully.',
+      })
+    } catch {
+      setBusinessOwnerProfileFeedback({
+        type: 'error',
+        message: 'Unable to save your profile details right now.',
+      })
+    } finally {
+      setIsBusinessOwnerProfileSaving(false)
+    }
   }
 
   const customerDisplayName =
@@ -639,28 +793,72 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     <>
       {renderBusinessOwnerPanelHeader('Profile')}
       <section className={businessOwnerPanelCardClass}>
-        <div className="mt-4 space-y-3">
+        <div className="space-y-3">
           <label className="block text-xs font-semibold text-slate-600">
             Name
-            <input className={businessOwnerInputClass} defaultValue={businessOwnerAccountName} />
+            <input
+              className={businessOwnerInputClass}
+              value={businessOwnerProfileForm.name}
+              onChange={handleBusinessOwnerProfileFieldChange('name')}
+              maxLength={80}
+              disabled={isBusinessOwnerProfileLoading || isBusinessOwnerProfileSaving}
+            />
           </label>
           <label className="block text-xs font-semibold text-slate-600">
             Phone Number
-            <input className={businessOwnerInputClass} defaultValue={businessOwnerPhone} />
+            <input
+              className={businessOwnerInputClass}
+              value={businessOwnerProfileForm.phoneNumber}
+              onChange={handleBusinessOwnerProfileFieldChange('phoneNumber')}
+              inputMode="numeric"
+              pattern="\d{10}"
+              maxLength={10}
+              disabled={isBusinessOwnerProfileLoading || isBusinessOwnerProfileSaving}
+            />
+            {businessOwnerPhoneValidationMessage ? (
+              <p className="mt-1.5 text-xs text-rose-700">{businessOwnerPhoneValidationMessage}</p>
+            ) : null}
           </label>
           <label className="block text-xs font-semibold text-slate-600">
             Email Address
-            <input className={businessOwnerInputClass} defaultValue={businessOwnerOwnerEmail} />
+            <input
+              className={`${businessOwnerInputClass} cursor-default bg-slate-100 text-slate-500`}
+              value={businessOwnerOwnerEmail}
+              readOnly
+              aria-readonly="true"
+              tabIndex={-1}
+            />
           </label>
           <label className="block text-xs font-semibold text-slate-600">
             Preferred City
-            <input className={businessOwnerInputClass} defaultValue={businessOwnerPreferredCity} />
+            <input
+              className={businessOwnerInputClass}
+              value={businessOwnerProfileForm.preferredCity}
+              onChange={handleBusinessOwnerProfileFieldChange('preferredCity')}
+              maxLength={80}
+              disabled={isBusinessOwnerProfileLoading || isBusinessOwnerProfileSaving}
+            />
           </label>
+          {businessOwnerProfileFeedback ? (
+            <p
+              className={`text-xs ${
+                businessOwnerProfileFeedback.type === 'success' ? 'text-emerald-700' : 'text-rose-700'
+              }`}
+            >
+              {businessOwnerProfileFeedback.message}
+            </p>
+          ) : null}
           <button
             type="button"
-            className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700"
+            onClick={() => void handleBusinessOwnerProfileSave()}
+            disabled={
+              isBusinessOwnerProfileLoading ||
+              isBusinessOwnerProfileSaving ||
+              Boolean(businessOwnerPhoneValidationMessage)
+            }
+            className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            Save
+            {isBusinessOwnerProfileLoading ? 'Loading...' : isBusinessOwnerProfileSaving ? 'Saving...' : 'Save'}
           </button>
         </div>
       </section>

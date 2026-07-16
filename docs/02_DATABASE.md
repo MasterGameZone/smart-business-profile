@@ -260,6 +260,27 @@ Access is restricted by RLS to the authenticated owner of each row. Authenticate
 
 ---
 
+## Table: business_owner_profiles
+
+Purpose
+
+Stores personal Business Owner account details for authenticated users inside the Business Account menu. Account email remains managed by Supabase Auth and is not duplicated in this table.
+
+### Columns
+
+| Column | Type | Nullable | Description |
+|----------|------|----------|-------------|
+| user_id | UUID | No | Primary key and reference to `auth.users.id` |
+| name | TEXT | Yes | Business Owner display name |
+| phone_number | TEXT | Yes | Business Owner phone number |
+| preferred_city | TEXT | Yes | Business Owner preferred city |
+| created_at | TIMESTAMP WITH TIME ZONE | No | Record creation timestamp |
+| updated_at | TIMESTAMP WITH TIME ZONE | No | Last update timestamp |
+
+Access is restricted by RLS to the authenticated owner of each row. Authenticated users may select, insert, and update only their own Business Owner profile.
+
+---
+
 ## Table: customer_business_supports
 
 Purpose
