@@ -361,7 +361,7 @@ function BusinessHomePage() {
   }
 
   const handleContactSupport = () => {
-    navigate('/customer/help-feedback#help')
+    navigate('/customer/help-feedback#report')
   }
 
   return (
