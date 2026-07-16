@@ -38,6 +38,10 @@ import {
   getBusinessProfileViewsCount,
   type BusinessProfileViewActivityPoint,
 } from '../lib/businessProfileViewService.ts'
+import {
+  getBusinessProfileInsights,
+  type BusinessProfileInsight,
+} from '../lib/businessProfileInsightsService.ts'
 import { getBusinessProfileSavesCount } from '../lib/favoriteBusinessService.ts'
 import { getBusinessProfileActionCount } from '../lib/businessProfileActionService.ts'
 import type { BusinessProfileRow } from '../types/businessProfile.ts'
@@ -326,6 +330,38 @@ function formatBusinessOwnerHelpSuggestionStatusLabel(status: BusinessOwnerHelpS
   }
 }
 
+function getBusinessOwnerInsightIcon(insightType: string) {
+  switch (insightType) {
+    case 'most_used_action':
+      return <MessageActionIcon />
+    case 'followers_30d':
+      return <FollowersMetricIcon />
+    case 'profile_views_weekly':
+    default:
+      return <TrendInsightIcon />
+  }
+}
+
+function getBusinessOwnerInsightAccentClassName(insight: BusinessProfileInsight): string {
+  if (insight.insight_type === 'followers_30d') {
+    return 'bg-violet-100 text-violet-700'
+  }
+
+  if (insight.insight_type === 'most_used_action') {
+    return insight.trend === 'positive' ? 'bg-emerald-100 text-emerald-700' : 'bg-sky-100 text-sky-700'
+  }
+
+  if (insight.trend === 'negative') {
+    return 'bg-rose-100 text-rose-700'
+  }
+
+  if (insight.trend === 'positive') {
+    return 'bg-sky-100 text-sky-700'
+  }
+
+  return 'bg-slate-100 text-slate-600'
+}
+
 function formatMetricCount(value: number | null): string {
   return value === null ? '—' : value.toLocaleString()
 }
@@ -482,6 +518,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     useState<BusinessOwnerProfileActivityInterval>('Daily')
   const [businessOwnerProfileActivityPoints, setBusinessOwnerProfileActivityPoints] =
     useState<BusinessProfileViewActivityPoint[] | null>(null)
+  const [businessOwnerInsightRows, setBusinessOwnerInsightRows] = useState<BusinessProfileInsight[] | null>(null)
   const [openBusinessOwnerFaqQuestion, setOpenBusinessOwnerFaqQuestion] = useState<string | null>(null)
   const [isLandingMobileMenuOpen, setIsLandingMobileMenuOpen] = useState(false)
   const [businessOwnerSuggestionForm, setBusinessOwnerSuggestionForm] = useState<BusinessOwnerSuggestionFormState>({
@@ -767,45 +804,13 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     Math.round((businessOwnerProfileActivityMaxValue + businessOwnerProfileActivityMinValue) / 2),
     businessOwnerProfileActivityMinValue,
   ]
-  const businessOwnerInsights = [
-    {
-      ariaLabel: 'Most used action WhatsApp insight',
-      icon: <MessageActionIcon />,
-      accentClassName: 'bg-emerald-100 text-emerald-700',
-      title: (
-        <>
-          Most used action: <span className="text-emerald-600">WhatsApp</span>
-        </>
-      ),
-      description: (
-        <>
-          <span className="font-semibold text-emerald-600">68%</span> of total actions came from WhatsApp clicks.
-        </>
-      ),
-    },
-    {
-      ariaLabel: 'Profile views increased this week insight',
-      icon: <TrendInsightIcon />,
-      accentClassName: 'bg-sky-100 text-sky-700',
-      title: <>Profile views increased this week</>,
-      description: (
-        <>
-          You had <span className="font-semibold text-emerald-600">24%</span> more views compared to last week.
-        </>
-      ),
-    },
-    {
-      ariaLabel: 'Followers grew steadily this month insight',
-      icon: <FollowersMetricIcon />,
-      accentClassName: 'bg-violet-100 text-violet-700',
-      title: <>Followers grew steadily this month</>,
-      description: (
-        <>
-          You gained <span className="font-semibold text-emerald-600">96</span> new followers in the last 30 days.
-        </>
-      ),
-    },
-  ]
+  const businessOwnerInsights = businessOwnerInsightRows?.map((insight) => ({
+    ariaLabel: `${insight.title || 'Business insight'} insight`,
+    icon: getBusinessOwnerInsightIcon(insight.insight_type),
+    accentClassName: getBusinessOwnerInsightAccentClassName(insight),
+    title: insight.title || 'Business insight',
+    description: insight.description,
+  }))
   const businessOwnerSettingsSections = [
     {
       title: 'Help & Suggestions',
@@ -1283,6 +1288,43 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     }
 
     void loadBusinessOwnerSavesCount()
+
+    return () => {
+      isActive = false
+    }
+  }, [businessOwnerAnalyticsProfileId, isBusinessOwnerAnalyticsScreenOpen])
+
+  useEffect(() => {
+    let isActive = true
+
+    const loadBusinessOwnerInsights = async () => {
+      setBusinessOwnerInsightRows(null)
+
+      if (!isBusinessOwnerAnalyticsScreenOpen) {
+        return
+      }
+
+      if (!businessOwnerAnalyticsProfileId) {
+        if (isActive) {
+          setBusinessOwnerInsightRows([])
+        }
+        return
+      }
+
+      try {
+        const insights = await getBusinessProfileInsights(businessOwnerAnalyticsProfileId)
+        if (isActive) {
+          setBusinessOwnerInsightRows(insights)
+        }
+      } catch (error) {
+        console.warn('Failed to load business profile insights:', error)
+        if (isActive) {
+          setBusinessOwnerInsightRows([])
+        }
+      }
+    }
+
+    void loadBusinessOwnerInsights()
 
     return () => {
       isActive = false
@@ -2422,29 +2464,39 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
           </button>
         </div>
 
-        <div className="mt-3 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50/50">
-          {businessOwnerInsights.map((insight, index) => (
-            <button
-              key={insight.ariaLabel}
-              type="button"
-              aria-label={insight.ariaLabel}
-              className={`flex w-full min-w-0 items-center gap-3 bg-white/70 px-3 py-3 text-left transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-300 ${
-                index === businessOwnerInsights.length - 1 ? '' : 'border-b border-slate-100'
-              }`}
-            >
-              <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${insight.accentClassName}`}>
-                {insight.icon}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-xs font-bold leading-snug text-[#0f172a]">{insight.title}</span>
-                <span className="mt-1 block text-[11px] leading-snug text-slate-500">{insight.description}</span>
-              </span>
-              <span className="shrink-0 text-slate-300" aria-hidden="true">
-                <ChevronRightIcon />
-              </span>
-            </button>
-          ))}
-        </div>
+        {businessOwnerInsights === undefined ? (
+          <div className="mt-3 rounded-2xl border border-slate-100 bg-slate-50/50 px-3 py-4 text-[11px] font-semibold text-slate-500">
+            Loading insights...
+          </div>
+        ) : businessOwnerInsights.length === 0 ? (
+          <div className="mt-3 rounded-2xl border border-slate-100 bg-slate-50/50 px-3 py-4 text-[11px] font-semibold text-slate-500">
+            Insights will appear as customers interact with your profile.
+          </div>
+        ) : (
+          <div className="mt-3 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50/50">
+            {businessOwnerInsights.map((insight, index) => (
+              <button
+                key={insight.ariaLabel}
+                type="button"
+                aria-label={insight.ariaLabel}
+                className={`flex w-full min-w-0 items-center gap-3 bg-white/70 px-3 py-3 text-left transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-300 ${
+                  index === businessOwnerInsights.length - 1 ? '' : 'border-b border-slate-100'
+                }`}
+              >
+                <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${insight.accentClassName}`}>
+                  {insight.icon}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-xs font-bold leading-snug text-[#0f172a]">{insight.title}</span>
+                  <span className="mt-1 block text-[11px] leading-snug text-slate-500">{insight.description}</span>
+                </span>
+                <span className="shrink-0 text-slate-300" aria-hidden="true">
+                  <ChevronRightIcon />
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
       </section>
     </section>
   )
