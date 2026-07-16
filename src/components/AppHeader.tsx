@@ -168,6 +168,48 @@ function ActionMetricIcon() {
   )
 }
 
+function PhoneActionIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M6.75 4.5 9 8.75l-1.8 1.8a12.5 12.5 0 0 0 6.25 6.25L15.25 15l4.25 2.25v2.25a2 2 0 0 1-2.18 2A16.75 16.75 0 0 1 2.5 6.68a2 2 0 0 1 2-2.18h2.25Z" />
+    </svg>
+  )
+}
+
+function MessageActionIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M5 5.75A3.25 3.25 0 0 1 8.25 2.5h7.5A3.25 3.25 0 0 1 19 5.75v5.5a3.25 3.25 0 0 1-3.25 3.25H11l-4.5 4v-4.15A3.25 3.25 0 0 1 5 11.25v-5.5Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8.5 7.5h7M8.5 10.5h4.5" />
+    </svg>
+  )
+}
+
+function NavigationActionIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M20.5 3.5 11.25 20l-1.75-7.5L2 10.75 20.5 3.5Z" />
+    </svg>
+  )
+}
+
+function GlobeActionIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="8.5" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3.5 12h17M12 3.5c2.25 2.3 3.35 5.13 3.35 8.5S14.25 18.2 12 20.5C9.75 18.2 8.65 15.37 8.65 12S9.75 5.8 12 3.5Z" />
+    </svg>
+  )
+}
+
+function ChevronRightIcon() {
+  return (
+    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="m9 6 6 6-6 6" />
+    </svg>
+  )
+}
+
 function NotificationsIcon() {
   return (
     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -583,6 +625,40 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       growth: '+11.4% vs previous 30D',
       icon: <ActionMetricIcon />,
       accentClassName: 'bg-orange-100 text-orange-700',
+    },
+  ]
+  const businessOwnerCustomerActionMetrics = [
+    {
+      label: 'Call Clicks',
+      value: '612',
+      growth: '+9.7%',
+      icon: <PhoneActionIcon />,
+      accentClassName: 'bg-sky-100 text-sky-700',
+      growthClassName: 'text-emerald-600',
+    },
+    {
+      label: 'WhatsApp Clicks',
+      value: '1,245',
+      growth: '+18.9%',
+      icon: <MessageActionIcon />,
+      accentClassName: 'bg-emerald-100 text-emerald-700',
+      growthClassName: 'text-emerald-600',
+    },
+    {
+      label: 'Direction Clicks',
+      value: '803',
+      growth: '+7.1%',
+      icon: <NavigationActionIcon />,
+      accentClassName: 'bg-blue-100 text-blue-700',
+      growthClassName: 'text-emerald-600',
+    },
+    {
+      label: 'Website Clicks',
+      value: '231',
+      growth: '-4.3%',
+      icon: <GlobeActionIcon />,
+      accentClassName: 'bg-violet-100 text-violet-700',
+      growthClassName: 'text-rose-600',
     },
   ]
   const businessOwnerSettingsSections = [
@@ -1783,6 +1859,35 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
             <p className="mt-3 text-[11px] font-semibold leading-snug text-emerald-600">{metric.growth}</p>
           </article>
         ))}
+      </section>
+
+      <section
+        className="mt-4 min-w-0 rounded-2xl border border-white/80 bg-white p-3 shadow-[0_18px_38px_-30px_rgba(15,23,42,0.55)]"
+        aria-label={`Customer action metrics for ${businessOwnerAnalyticsRange}`}
+      >
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-sm font-bold text-[#0f172a]">Customer Actions</h3>
+          <button
+            type="button"
+            className="inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold text-sky-700 transition hover:bg-sky-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
+          >
+            <span>View all</span>
+            <ChevronRightIcon />
+          </button>
+        </div>
+
+        <div className="mt-3 grid min-w-0 grid-cols-4 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50/60 divide-x divide-slate-100">
+          {businessOwnerCustomerActionMetrics.map((metric) => (
+            <div key={metric.label} className="min-w-0 px-1.5 py-3 text-center">
+              <span className={`mx-auto flex h-8 w-8 items-center justify-center rounded-2xl ${metric.accentClassName}`}>
+                {metric.icon}
+              </span>
+              <p className="mt-2 text-[10px] font-semibold leading-tight text-slate-500">{metric.label}</p>
+              <p className="mt-1 text-base font-bold leading-none text-[#0f172a]">{metric.value}</p>
+              <p className={`mt-1 text-[10px] font-semibold leading-none ${metric.growthClassName}`}>{metric.growth}</p>
+            </div>
+          ))}
+        </div>
       </section>
     </section>
   )
