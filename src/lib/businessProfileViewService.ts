@@ -3,6 +3,24 @@ import { supabase } from './supabase.ts'
 const VISITOR_KEY_STORAGE_KEY = 'sb_profile_view_visitor_key'
 let memoryVisitorKey: string | null = null
 
+export type BusinessProfileViewActivityInterval = 'Daily' | 'Weekly' | 'Monthly'
+
+export interface BusinessProfileViewActivityPoint {
+  label: string
+  value: number
+}
+
+const businessProfileViewActivityIntervalMap: Record<BusinessProfileViewActivityInterval, string> = {
+  Daily: 'daily',
+  Weekly: 'weekly',
+  Monthly: 'monthly',
+}
+
+interface BusinessProfileViewActivityRpcRow {
+  label?: unknown
+  value?: unknown
+}
+
 function generateVisitorKey(): string {
   if (globalThis.crypto?.randomUUID) {
     return globalThis.crypto.randomUUID()
@@ -78,5 +96,45 @@ export async function getBusinessProfileViewsCount(profileId: string): Promise<n
   } catch (error) {
     console.warn('Failed to load business profile view count.', error)
     return 0
+  }
+}
+
+export async function getBusinessProfileViewActivity(
+  profileId: string,
+  interval: BusinessProfileViewActivityInterval
+): Promise<BusinessProfileViewActivityPoint[]> {
+  if (!profileId) return []
+
+  try {
+    const { data, error } = await supabase.rpc('get_business_profile_view_activity', {
+      target_profile_id: profileId,
+      activity_interval: businessProfileViewActivityIntervalMap[interval],
+    })
+
+    if (error) {
+      console.warn('Failed to load business profile view activity.', error)
+      return []
+    }
+
+    if (!Array.isArray(data)) {
+      return []
+    }
+
+    return data.reduce<BusinessProfileViewActivityPoint[]>((points, row: BusinessProfileViewActivityRpcRow) => {
+      if (typeof row.label !== 'string') {
+        return points
+      }
+
+      const value = typeof row.value === 'number' ? row.value : Number(row.value)
+      points.push({
+        label: row.label,
+        value: Number.isFinite(value) ? value : 0,
+      })
+
+      return points
+    }, [])
+  } catch (error) {
+    console.warn('Failed to load business profile view activity.', error)
+    return []
   }
 }

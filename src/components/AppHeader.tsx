@@ -33,7 +33,11 @@ import {
   upsertBusinessOwnerProfile,
 } from '../lib/businessOwnerProfileService.ts'
 import { getBusinessProfileFollowersCount } from '../lib/businessProfileFollowService.ts'
-import { getBusinessProfileViewsCount } from '../lib/businessProfileViewService.ts'
+import {
+  getBusinessProfileViewActivity,
+  getBusinessProfileViewsCount,
+  type BusinessProfileViewActivityPoint,
+} from '../lib/businessProfileViewService.ts'
 import { getBusinessProfileSavesCount } from '../lib/favoriteBusinessService.ts'
 import { getBusinessProfileActionCount } from '../lib/businessProfileActionService.ts'
 import type { BusinessProfileRow } from '../types/businessProfile.ts'
@@ -476,6 +480,8 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const [businessOwnerWebsiteClicksCount, setBusinessOwnerWebsiteClicksCount] = useState<number | null>(null)
   const [businessOwnerProfileActivityInterval, setBusinessOwnerProfileActivityInterval] =
     useState<BusinessOwnerProfileActivityInterval>('Daily')
+  const [businessOwnerProfileActivityPoints, setBusinessOwnerProfileActivityPoints] =
+    useState<BusinessProfileViewActivityPoint[] | null>(null)
   const [openBusinessOwnerFaqQuestion, setOpenBusinessOwnerFaqQuestion] = useState<string | null>(null)
   const [isLandingMobileMenuOpen, setIsLandingMobileMenuOpen] = useState(false)
   const [businessOwnerSuggestionForm, setBusinessOwnerSuggestionForm] = useState<BusinessOwnerSuggestionFormState>({
@@ -701,37 +707,15 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     },
   ]
   const businessOwnerProfileActivityOptions: BusinessOwnerProfileActivityInterval[] = ['Daily', 'Weekly', 'Monthly']
-  const businessOwnerProfileActivityData: Record<BusinessOwnerProfileActivityInterval, { label: string; value: number }[]> = {
-    Daily: [
-      { label: 'May 3', value: 280 },
-      { label: 'May 8', value: 440 },
-      { label: 'May 13', value: 320 },
-      { label: 'May 18', value: 500 },
-      { label: 'May 20', value: 530 },
-      { label: 'May 23', value: 700 },
-      { label: 'May 28', value: 430 },
-      { label: 'Jun 1', value: 620 },
-    ],
-    Weekly: [
-      { label: 'Week 1', value: 1200 },
-      { label: 'Week 2', value: 1850 },
-      { label: 'Week 3', value: 1600 },
-      { label: 'Week 4', value: 2300 },
-      { label: 'Week 5', value: 2100 },
-    ],
-    Monthly: [
-      { label: 'Jan', value: 4200 },
-      { label: 'Feb', value: 5100 },
-      { label: 'Mar', value: 4800 },
-      { label: 'Apr', value: 6200 },
-      { label: 'May', value: 7100 },
-      { label: 'Jun', value: 6800 },
-    ],
-  }
-  const businessOwnerProfileActivityPoints = businessOwnerProfileActivityData[businessOwnerProfileActivityInterval]
-  const businessOwnerProfileActivityValues = businessOwnerProfileActivityPoints.map((point) => point.value)
-  const businessOwnerProfileActivityMinValue = Math.min(...businessOwnerProfileActivityValues)
-  const businessOwnerProfileActivityMaxValue = Math.max(...businessOwnerProfileActivityValues)
+  const businessOwnerProfileActivityChartPoints = businessOwnerProfileActivityPoints ?? []
+  const hasBusinessOwnerProfileActivityChartPoints = businessOwnerProfileActivityChartPoints.length > 0
+  const businessOwnerProfileActivityValues = businessOwnerProfileActivityChartPoints.map((point) => point.value)
+  const businessOwnerProfileActivityMinValue = hasBusinessOwnerProfileActivityChartPoints
+    ? Math.min(...businessOwnerProfileActivityValues)
+    : 0
+  const businessOwnerProfileActivityMaxValue = hasBusinessOwnerProfileActivityChartPoints
+    ? Math.max(...businessOwnerProfileActivityValues)
+    : 0
   const businessOwnerProfileActivityRange = Math.max(
     businessOwnerProfileActivityMaxValue - businessOwnerProfileActivityMinValue,
     1
@@ -752,12 +736,12 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     businessOwnerProfileActivityChart.height -
     businessOwnerProfileActivityChart.top -
     businessOwnerProfileActivityChart.bottom
-  const businessOwnerProfileActivityCoordinates = businessOwnerProfileActivityPoints.map((point, index) => {
+  const businessOwnerProfileActivityCoordinates = businessOwnerProfileActivityChartPoints.map((point, index) => {
     const x =
       businessOwnerProfileActivityChart.left +
-      (businessOwnerProfileActivityPoints.length === 1
+      (businessOwnerProfileActivityChartPoints.length === 1
         ? businessOwnerProfileActivityChartWidth / 2
-        : (index / (businessOwnerProfileActivityPoints.length - 1)) * businessOwnerProfileActivityChartWidth)
+        : (index / (businessOwnerProfileActivityChartPoints.length - 1)) * businessOwnerProfileActivityChartWidth)
     const y =
       businessOwnerProfileActivityChart.top +
       ((businessOwnerProfileActivityMaxValue - point.value) / businessOwnerProfileActivityRange) *
@@ -1230,6 +1214,50 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       isActive = false
     }
   }, [businessOwnerAnalyticsProfileId, isBusinessOwnerAnalyticsScreenOpen])
+
+  useEffect(() => {
+    let isActive = true
+
+    const loadBusinessOwnerProfileActivity = async () => {
+      setBusinessOwnerProfileActivityPoints(null)
+
+      if (!isBusinessOwnerAnalyticsScreenOpen) {
+        return
+      }
+
+      if (!businessOwnerAnalyticsProfileId) {
+        if (isActive) {
+          setBusinessOwnerProfileActivityPoints([])
+        }
+        return
+      }
+
+      try {
+        const activityPoints = await getBusinessProfileViewActivity(
+          businessOwnerAnalyticsProfileId,
+          businessOwnerProfileActivityInterval
+        )
+        if (isActive) {
+          setBusinessOwnerProfileActivityPoints(activityPoints)
+        }
+      } catch (error) {
+        console.warn('Failed to load business profile view activity:', error)
+        if (isActive) {
+          setBusinessOwnerProfileActivityPoints([])
+        }
+      }
+    }
+
+    void loadBusinessOwnerProfileActivity()
+
+    return () => {
+      isActive = false
+    }
+  }, [
+    businessOwnerAnalyticsProfileId,
+    businessOwnerProfileActivityInterval,
+    isBusinessOwnerAnalyticsScreenOpen,
+  ])
 
   useEffect(() => {
     let isActive = true
@@ -2267,23 +2295,29 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       >
         <div className="flex items-center justify-between gap-3">
           <h3 className="text-sm font-bold text-[#0f172a]">Profile Activity</h3>
-          <label className="sr-only" htmlFor="business-owner-profile-activity-interval">
-            Profile activity interval
-          </label>
-          <select
-            id="business-owner-profile-activity-interval"
-            value={businessOwnerProfileActivityInterval}
-            onChange={(event) =>
-              setBusinessOwnerProfileActivityInterval(event.target.value as BusinessOwnerProfileActivityInterval)
-            }
-            className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-sky-300"
+          <div
+            onMouseDownCapture={(event) => event.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
           >
-            {businessOwnerProfileActivityOptions.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+            <label className="sr-only" htmlFor="business-owner-profile-activity-interval">
+              Profile activity interval
+            </label>
+            <select
+              id="business-owner-profile-activity-interval"
+              value={businessOwnerProfileActivityInterval}
+              onChange={(event) => {
+                event.stopPropagation()
+                setBusinessOwnerProfileActivityInterval(event.target.value as BusinessOwnerProfileActivityInterval)
+              }}
+              className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-sky-300"
+            >
+              {businessOwnerProfileActivityOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div className="mt-3 rounded-2xl border border-slate-100 bg-slate-50/50 p-3">
@@ -2291,70 +2325,80 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
             <span className="h-2 w-5 rounded-full bg-sky-500" aria-hidden="true" />
             <span className="text-[11px] font-semibold text-slate-600">Profile Views</span>
           </div>
-          <svg
-            className="h-auto w-full overflow-visible"
-            viewBox={`0 0 ${businessOwnerProfileActivityChart.width} ${businessOwnerProfileActivityChart.height}`}
-            role="img"
-            aria-label={`Profile views activity chart, ${businessOwnerProfileActivityInterval}`}
-          >
-            <defs>
-              <linearGradient id="business-owner-profile-activity-fill" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.24" />
-                <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.02" />
-              </linearGradient>
-            </defs>
-            {businessOwnerProfileActivityYAxisValues.map((value, index) => {
-              const y =
-                businessOwnerProfileActivityChart.top +
-                (index / (businessOwnerProfileActivityYAxisValues.length - 1)) *
-                  businessOwnerProfileActivityChartHeight
+          {businessOwnerProfileActivityPoints === null ? (
+            <div className="flex min-h-[96px] items-center justify-center rounded-xl text-[11px] font-semibold text-slate-500">
+              Loading profile views...
+            </div>
+          ) : hasBusinessOwnerProfileActivityChartPoints ? (
+            <svg
+              className="h-auto w-full overflow-visible"
+              viewBox={`0 0 ${businessOwnerProfileActivityChart.width} ${businessOwnerProfileActivityChart.height}`}
+              role="img"
+              aria-label={`Profile views activity chart, ${businessOwnerProfileActivityInterval}`}
+            >
+              <defs>
+                <linearGradient id="business-owner-profile-activity-fill" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.24" />
+                  <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.02" />
+                </linearGradient>
+              </defs>
+              {businessOwnerProfileActivityYAxisValues.map((value, index) => {
+                const y =
+                  businessOwnerProfileActivityChart.top +
+                  (index / (businessOwnerProfileActivityYAxisValues.length - 1)) *
+                    businessOwnerProfileActivityChartHeight
 
-              return (
-                <g key={value}>
+                return (
+                  <g key={value}>
+                    <text
+                      x={businessOwnerProfileActivityChart.left - 8}
+                      y={y + 3}
+                      textAnchor="end"
+                      className="fill-slate-400 text-[9px] font-semibold"
+                    >
+                      {value.toLocaleString()}
+                    </text>
+                    <line
+                      x1={businessOwnerProfileActivityChart.left}
+                      x2={businessOwnerProfileActivityChart.width - businessOwnerProfileActivityChart.right}
+                      y1={y}
+                      y2={y}
+                      stroke="#cbd5e1"
+                      strokeDasharray="4 5"
+                      strokeWidth="1"
+                      opacity="0.7"
+                    />
+                  </g>
+                )
+              })}
+              <path d={businessOwnerProfileActivityAreaPath} fill="url(#business-owner-profile-activity-fill)" />
+              <path
+                d={businessOwnerProfileActivityLinePath}
+                fill="none"
+                stroke="#0ea5e9"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="3"
+              />
+              {businessOwnerProfileActivityCoordinates.map((point) => (
+                <g key={point.label}>
+                  <circle cx={point.x} cy={point.y} r="4" fill="#ffffff" stroke="#0ea5e9" strokeWidth="2.4" />
                   <text
-                    x={businessOwnerProfileActivityChart.left - 8}
-                    y={y + 3}
-                    textAnchor="end"
-                    className="fill-slate-400 text-[9px] font-semibold"
+                    x={point.x}
+                    y={businessOwnerProfileActivityChart.height - 10}
+                    textAnchor="middle"
+                    className="fill-slate-400 text-[8px] font-semibold"
                   >
-                    {value.toLocaleString()}
+                    {point.label}
                   </text>
-                  <line
-                    x1={businessOwnerProfileActivityChart.left}
-                    x2={businessOwnerProfileActivityChart.width - businessOwnerProfileActivityChart.right}
-                    y1={y}
-                    y2={y}
-                    stroke="#cbd5e1"
-                    strokeDasharray="4 5"
-                    strokeWidth="1"
-                    opacity="0.7"
-                  />
                 </g>
-              )
-            })}
-            <path d={businessOwnerProfileActivityAreaPath} fill="url(#business-owner-profile-activity-fill)" />
-            <path
-              d={businessOwnerProfileActivityLinePath}
-              fill="none"
-              stroke="#0ea5e9"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="3"
-            />
-            {businessOwnerProfileActivityCoordinates.map((point) => (
-              <g key={point.label}>
-                <circle cx={point.x} cy={point.y} r="4" fill="#ffffff" stroke="#0ea5e9" strokeWidth="2.4" />
-                <text
-                  x={point.x}
-                  y={businessOwnerProfileActivityChart.height - 10}
-                  textAnchor="middle"
-                  className="fill-slate-400 text-[8px] font-semibold"
-                >
-                  {point.label}
-                </text>
-              </g>
-            ))}
-          </svg>
+              ))}
+            </svg>
+          ) : (
+            <div className="flex min-h-[96px] items-center justify-center rounded-xl text-[11px] font-semibold text-slate-500">
+              No profile views yet
+            </div>
+          )}
         </div>
       </section>
 
