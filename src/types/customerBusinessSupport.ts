@@ -11,6 +11,8 @@ export interface CustomerBusinessSupportRow {
   status: CustomerBusinessSupportStatus
   published_profile_id: string | null
   invitation_shared_at: string | null
+  invitation_opened_at: string | null
+  invitation_open_count: number
   created_at: string
   updated_at: string
 }
@@ -42,6 +44,7 @@ export interface CustomerImpactSummary {
   level: string
   businessesSupported: number
   invitationsShared: number
+  linksOpened: number
   profilesPublished: number
   progress: CustomerImpactProgress
   recentSupports: CustomerBusinessSupportRow[]

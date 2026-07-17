@@ -1,4 +1,7 @@
+import { markSupportInviteOpened } from './customerBusinessSupportService.ts'
+
 const SUPPORT_INVITE_TOKEN_STORAGE_KEY = 'smart-business-profile:support-invite-token'
+const SUPPORT_INVITE_OPEN_TRACKED_STORAGE_PREFIX = 'smart-business-profile:support-invite-open-tracked:'
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 export function isValidSupportInviteToken(value: string | null | undefined): value is string {
@@ -8,6 +11,22 @@ export function isValidSupportInviteToken(value: string | null | undefined): val
 export function storeSupportInviteToken(token: string): void {
   if (!isValidSupportInviteToken(token) || typeof window === 'undefined') return
   window.localStorage.setItem(SUPPORT_INVITE_TOKEN_STORAGE_KEY, token)
+}
+
+function trackSupportInviteOpen(token: string): void {
+  if (!isValidSupportInviteToken(token)) return
+
+  if (typeof window !== 'undefined') {
+    const trackedStorageKey = `${SUPPORT_INVITE_OPEN_TRACKED_STORAGE_PREFIX}${token}`
+    try {
+      if (window.sessionStorage.getItem(trackedStorageKey) === 'true') return
+      window.sessionStorage.setItem(trackedStorageKey, 'true')
+    } catch {
+      // Continue without dedupe if session storage is unavailable.
+    }
+  }
+
+  void markSupportInviteOpened(token)
 }
 
 export function getStoredSupportInviteToken(): string | null {
@@ -32,5 +51,6 @@ export function captureSupportInviteTokenFromSearch(search: string): string | nu
   if (!isValidSupportInviteToken(token)) return null
 
   storeSupportInviteToken(token)
+  trackSupportInviteOpen(token)
   return token
 }

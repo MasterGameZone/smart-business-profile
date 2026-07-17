@@ -90,6 +90,7 @@ export function calculateCustomerImpactSummary(
   const invitationsShared = supports.filter(
     (support) => support.status === 'Invitation Shared' || support.status === 'Profile Published'
   ).length
+  const linksOpened = supports.filter((support) => Boolean(support.invitation_opened_at)).length
   const profilesPublished = supports.filter((support) => support.status === 'Profile Published').length
   const supporterLevel = calculateSupporterLevel(businessesSupported)
   const progress = calculateProgressToNextLevel(businessesSupported)
@@ -99,6 +100,7 @@ export function calculateCustomerImpactSummary(
     ...supporterLevel,
     businessesSupported,
     invitationsShared,
+    linksOpened,
     profilesPublished,
     progress,
     recentSupports,
@@ -184,6 +186,23 @@ export async function markSupportInviteProfilePublished(
 
   if (error) {
     throw error
+  }
+}
+
+export async function markSupportInviteOpened(invitationToken: string): Promise<void> {
+  const trimmedToken = invitationToken.trim()
+  if (!trimmedToken) return
+
+  try {
+    const { error } = await supabase.rpc('mark_support_invite_opened', {
+      invite_token: trimmedToken,
+    })
+
+    if (error) {
+      console.warn('Support invite open tracking failed.')
+    }
+  } catch {
+    console.warn('Support invite open tracking failed.')
   }
 }
 

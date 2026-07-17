@@ -659,7 +659,7 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
     },
     {
       label: 'Links Opened',
-      value: sharedSupports.length,
+      value: impactSummary.linksOpened,
       icon: <ImpactLinkIcon />,
       iconWrapClassName: 'bg-violet-50 text-violet-700',
     },
