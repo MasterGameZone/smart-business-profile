@@ -21,6 +21,14 @@ import {
   markBusinessOwnerNotificationRead,
 } from '../lib/businessOwnerNotificationService.ts'
 import {
+  listCustomerNotifications,
+  markCustomerNotificationRead,
+} from '../lib/customerNotificationService.ts'
+import {
+  getCustomerProfile,
+  saveCustomerProfile,
+} from '../lib/customerProfileService.ts'
+import {
   getBusinessOwnerNotificationPreference,
   upsertBusinessOwnerNotificationPreference,
 } from '../lib/businessOwnerNotificationPreferenceService.ts'
@@ -42,7 +50,11 @@ import {
   getBusinessProfileInsights,
   type BusinessProfileInsight,
 } from '../lib/businessProfileInsightsService.ts'
-import { getBusinessProfileSavesCount } from '../lib/favoriteBusinessService.ts'
+import {
+  getBusinessProfileSavesCount,
+  getFavoriteBusinessesByUser,
+  removeFavoriteBusiness,
+} from '../lib/favoriteBusinessService.ts'
 import { getBusinessProfileActionCount } from '../lib/businessProfileActionService.ts'
 import type { BusinessProfileRow } from '../types/businessProfile.ts'
 import type {
@@ -52,6 +64,9 @@ import type {
 } from '../types/businessOwnerHelpSuggestion.ts'
 import type { BusinessOwnerNotificationRow } from '../types/businessOwnerNotification.ts'
 import type { BusinessOwnerProfileFormValues } from '../types/businessOwnerProfile.ts'
+import type { CustomerNotificationRow } from '../types/customerNotification.ts'
+import type { CustomerProfileFormValues } from '../types/customerProfile.ts'
+import type { FavoriteBusinessWithProfileRow } from '../types/favoriteBusiness.ts'
 import { ToastContainer, type ToastItem } from './Toast.tsx'
 
 interface AppHeaderPreviewConfig {
@@ -102,7 +117,8 @@ type BusinessOwnerPhoneModalMode = 'add' | 'change'
 type BusinessOwnerPhoneModalStep = 'phone' | 'otp' | 'success'
 type BusinessOwnerAnalyticsRange = '7D' | '30D' | '90D'
 type BusinessOwnerProfileActivityInterval = 'Daily' | 'Weekly' | 'Monthly'
-type CustomerMenuPanel = 'main' | 'activity' | 'community' | 'settings'
+type CustomerMenuPanel = 'main' | 'profile' | 'notifications' | 'saved' | 'activity' | 'community' | 'settings'
+type CustomerSavedBusinessesLoadState = 'idle' | 'loading' | 'found' | 'empty' | 'error'
 let hasPlayedNavbarEntrance = false
 
 function getInitials(value: string): string {
@@ -373,6 +389,11 @@ function formatMetricCount(value: number | null): string {
   return value === null ? '—' : value.toLocaleString()
 }
 
+function truncateCustomerSavedBusinessText(text: string, length: number): string {
+  if (text.length <= length) return text
+  return `${text.slice(0, length).trimEnd()}...`
+}
+
 const businessOwnerFaqItems = [
   {
     question: 'How do I complete my business profile?',
@@ -497,6 +518,14 @@ const businessOwnerSuggestionSubjectOptionsByType: Record<BusinessOwnerHelpSugge
   ],
 }
 
+const CUSTOMER_SAVED_BUSINESS_ABOUT_TRUNCATE_LENGTH = 160
+const emptyCustomerProfileFormValues: CustomerProfileFormValues = {
+  customerName: '',
+  phoneNumber: '',
+  preferredCity: '',
+  preferredArea: '',
+}
+
 interface BusinessOwnerSuggestionFormState {
   type: BusinessOwnerHelpSuggestionType
   subject: string
@@ -597,6 +626,21 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const [businessOwnerNotificationPreferenceError, setBusinessOwnerNotificationPreferenceError] = useState('')
   const [businessOwnerNotificationPreferenceFeedback, setBusinessOwnerNotificationPreferenceFeedback] = useState('')
   const [loadedBusinessOwnerNotificationPreferenceUserId, setLoadedBusinessOwnerNotificationPreferenceUserId] = useState('')
+  const [customerNotifications, setCustomerNotifications] = useState<CustomerNotificationRow[]>([])
+  const [customerNotificationsError, setCustomerNotificationsError] = useState('')
+  const [loadedCustomerNotificationsUserId, setLoadedCustomerNotificationsUserId] = useState('')
+  const [readingCustomerNotificationId, setReadingCustomerNotificationId] = useState<string | null>(null)
+  const [customerSavedBusinesses, setCustomerSavedBusinesses] = useState<FavoriteBusinessWithProfileRow[]>([])
+  const [customerSavedBusinessesLoadState, setCustomerSavedBusinessesLoadState] =
+    useState<CustomerSavedBusinessesLoadState>('idle')
+  const [removingCustomerSavedBusinessId, setRemovingCustomerSavedBusinessId] = useState<string | null>(null)
+  const [customerSavedBusinessesReloadKey, setCustomerSavedBusinessesReloadKey] = useState(0)
+  const [customerProfileForm, setCustomerProfileForm] =
+    useState<CustomerProfileFormValues>(emptyCustomerProfileFormValues)
+  const [loadedCustomerProfileUserId, setLoadedCustomerProfileUserId] = useState('')
+  const [customerProfileError, setCustomerProfileError] = useState('')
+  const [customerProfileSuccess, setCustomerProfileSuccess] = useState('')
+  const [isCustomerProfileSaving, setIsCustomerProfileSaving] = useState(false)
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const [shouldAnimateEntrance] = useState(() => !hasPlayedNavbarEntrance)
   const toastIdRef = useRef(0)
@@ -1484,10 +1528,106 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     user?.id,
   ])
 
-  const showError = (message: string) => {
+  useEffect(() => {
+    if (!isHomeMenuOpen || customerMenuPanel !== 'notifications' || !user?.id) {
+      return undefined
+    }
+
+    if (loadedCustomerNotificationsUserId === user.id) {
+      return undefined
+    }
+
+    let isActive = true
+
+    void listCustomerNotifications(user.id)
+      .then((nextNotifications) => {
+        if (!isActive) return
+        setCustomerNotifications(nextNotifications)
+        setLoadedCustomerNotificationsUserId(user.id)
+        setCustomerNotificationsError('')
+      })
+      .catch((error) => {
+        if (!isActive) return
+        console.error('Failed to load customer notifications:', error)
+        setCustomerNotifications([])
+        setLoadedCustomerNotificationsUserId(user.id)
+        setCustomerNotificationsError('We could not load your notifications right now. Please try again.')
+      })
+    return () => {
+      isActive = false
+    }
+  }, [customerMenuPanel, isHomeMenuOpen, loadedCustomerNotificationsUserId, user?.id])
+
+  useEffect(() => {
+    if (!isHomeMenuOpen || customerMenuPanel !== 'profile' || !user?.id) {
+      return undefined
+    }
+
+    if (loadedCustomerProfileUserId === user.id) {
+      return undefined
+    }
+
+    let isActive = true
+
+    void getCustomerProfile(user.id)
+      .then((profile) => {
+        if (!isActive) return
+        setCustomerProfileForm({
+          customerName: profile?.customer_name ?? '',
+          phoneNumber: profile?.phone_number ?? '',
+          preferredCity: profile?.preferred_city ?? '',
+          preferredArea: profile?.preferred_area ?? '',
+        })
+        setLoadedCustomerProfileUserId(user.id)
+        setCustomerProfileError('')
+        setCustomerProfileSuccess('')
+      })
+      .catch(() => {
+        if (!isActive) return
+        setCustomerProfileForm(emptyCustomerProfileFormValues)
+        setLoadedCustomerProfileUserId(user.id)
+        setCustomerProfileError('Unable to load your profile details right now. Please try again.')
+        setCustomerProfileSuccess('')
+      })
+
+    return () => {
+      isActive = false
+    }
+  }, [customerMenuPanel, isHomeMenuOpen, loadedCustomerProfileUserId, user?.id])
+
+  useEffect(() => {
+    if (!isHomeMenuOpen || customerMenuPanel !== 'saved' || !user?.id) {
+      return undefined
+    }
+
+    let isActive = true
+
+    void getFavoriteBusinessesByUser(user.id)
+      .then((nextFavorites) => {
+        if (!isActive) return
+        setCustomerSavedBusinesses(nextFavorites)
+        setCustomerSavedBusinessesLoadState(nextFavorites.length > 0 ? 'found' : 'empty')
+      })
+      .catch((error) => {
+        if (!isActive) return
+        console.error('Failed to load favorite businesses:', error)
+        setCustomerSavedBusinesses([])
+        setCustomerSavedBusinessesLoadState('error')
+      })
+
+    return () => {
+      isActive = false
+    }
+  }, [customerMenuPanel, customerSavedBusinessesReloadKey, isHomeMenuOpen, user?.id])
+
+  const showToast = (message: string, type: ToastItem['type'] = 'success') => {
     const id = ++toastIdRef.current
-    setToasts((prev) => [...prev, { id, message, type: 'error' }])
+    setToasts((prev) => [...prev, { id, message, type }])
     setTimeout(() => setToasts((prev) => prev.filter((toast) => toast.id !== id)), 4000)
+  }
+
+  const showError = (message: string) => {
+    showToast(message, 'error')
   }
 
   const navItems: NavItem[] = isSimpleDarkNavbarPage
@@ -1851,6 +1991,101 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     }
   }
 
+  const markCustomerNotificationReadLocally = async (
+    notification: CustomerNotificationRow
+  ): Promise<CustomerNotificationRow> => {
+    if (!user?.id || notification.is_read || readingCustomerNotificationId === notification.id) {
+      return notification
+    }
+
+    setReadingCustomerNotificationId(notification.id)
+
+    try {
+      const updatedNotification = await markCustomerNotificationRead(notification.id, user.id)
+      setCustomerNotifications((currentNotifications) =>
+        currentNotifications.map((item) => (item.id === updatedNotification.id ? updatedNotification : item))
+      )
+      return updatedNotification
+    } catch (error) {
+      console.error('Failed to mark customer notification read:', error)
+      return notification
+    } finally {
+      setReadingCustomerNotificationId(null)
+    }
+  }
+
+  const handleCustomerNotificationOpen = async (notification: CustomerNotificationRow) => {
+    const updatedNotification = await markCustomerNotificationReadLocally(notification)
+
+    if (updatedNotification.action_url) {
+      closeHomeMenu()
+      navigate(updatedNotification.action_url)
+    }
+  }
+
+  const handleCustomerSavedBusinessRemove = async (favorite: FavoriteBusinessWithProfileRow) => {
+    if (!user?.id || removingCustomerSavedBusinessId) {
+      return
+    }
+
+    setRemovingCustomerSavedBusinessId(favorite.id)
+
+    try {
+      await removeFavoriteBusiness(user.id, favorite.business_profile_id)
+      const nextSavedBusinesses = customerSavedBusinesses.filter((item) => item.id !== favorite.id)
+      setCustomerSavedBusinesses(nextSavedBusinesses)
+      setCustomerSavedBusinessesLoadState(nextSavedBusinesses.length > 0 ? 'found' : 'empty')
+      showToast('Saved business removed.')
+    } catch (error) {
+      console.error('Failed to remove saved business:', error)
+      showError('Unable to remove this saved business right now.')
+    } finally {
+      setRemovingCustomerSavedBusinessId(null)
+    }
+  }
+
+  const handleCustomerSavedBusinessesRetry = () => {
+    setCustomerSavedBusinessesLoadState('idle')
+    setCustomerSavedBusinessesReloadKey((currentKey) => currentKey + 1)
+  }
+
+  const handleCustomerProfileFieldChange = (field: keyof CustomerProfileFormValues) => (
+    event: ChangeEvent<HTMLInputElement>
+  ) => {
+    setCustomerProfileForm((currentValues) => ({
+      ...currentValues,
+      [field]: event.target.value,
+    }))
+    setCustomerProfileError('')
+    setCustomerProfileSuccess('')
+  }
+
+  const handleCustomerProfileSave = async () => {
+    if (!user?.id || isCustomerProfileSaving) {
+      return
+    }
+
+    setIsCustomerProfileSaving(true)
+    setCustomerProfileError('')
+    setCustomerProfileSuccess('')
+
+    try {
+      const savedProfile = await saveCustomerProfile(user.id, customerProfileForm)
+      setCustomerProfileForm({
+        customerName: savedProfile.customer_name ?? '',
+        phoneNumber: savedProfile.phone_number ?? '',
+        preferredCity: savedProfile.preferred_city ?? '',
+        preferredArea: savedProfile.preferred_area ?? '',
+      })
+      setLoadedCustomerProfileUserId(user.id)
+      setCustomerProfileSuccess('Your profile settings have been saved.')
+    } catch {
+      setCustomerProfileError('Unable to save your profile settings right now. Please try again.')
+    } finally {
+      setIsCustomerProfileSaving(false)
+    }
+  }
+
   const handleBusinessOwnerChangeEmailSubmit = () => {
     resetBusinessOwnerChangeEmailModal()
   }
@@ -1926,14 +2161,9 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const customerAvatarUrl = getMetadataString(userMetadata, ['avatar_url', 'picture'])
 
   const customerProfileSettingsItem: HomeMenuItem = {
-    label: 'View Profile & Settings',
-    path: '/customer/profile-settings',
+    label: 'View Customer Profile',
+    onSelect: () => setCustomerMenuPanel('profile'),
   }
-
-  const customerPrimaryMenuItems: HomeMenuItem[] = [
-    { label: 'Notifications', path: '/customer/notifications' },
-    { label: 'Saved Businesses', path: '/customer/saved-businesses' },
-  ]
 
   const customerActivityMenuItems: HomeMenuItem[] = [
     { label: 'Ratings & Reviews', path: '/customer/my-activity#reviews' },
@@ -2125,7 +2355,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
         type="button"
         role="menuitem"
         disabled={customerProfileSettingsItem.disabled}
-        onClick={() => void handleHomeMenuItemClick(customerProfileSettingsItem)}
+        onClick={() => setCustomerMenuPanel('profile')}
         className={`mt-3 flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-left text-sm font-medium shadow-[0_10px_22px_-18px_rgba(15,23,42,0.32)] focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 ${
           customerProfileSettingsItem.disabled
             ? 'cursor-not-allowed text-slate-500'
@@ -2143,19 +2373,19 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   )
 
   const customerPrimaryRenderItems: CustomerMenuRenderItem[] = [
-    { ...customerPrimaryMenuItems[0], icon: <NotificationsIcon />, showChevron: true },
-    { ...customerPrimaryMenuItems[1], icon: <BookmarkMetricIcon />, showChevron: true },
-    {
-      label: 'My Activity',
-      icon: <MessageActionIcon />,
-      showChevron: true,
-      panel: 'activity',
-    },
     {
       label: 'Community',
       icon: <FollowersMetricIcon />,
       showChevron: true,
       panel: 'community',
+    },
+    { label: 'Notifications', icon: <NotificationsIcon />, showChevron: true, panel: 'notifications' },
+    { label: 'Saved Businesses', icon: <BookmarkMetricIcon />, showChevron: true, panel: 'saved' },
+    {
+      label: 'My Activity',
+      icon: <MessageActionIcon />,
+      showChevron: true,
+      panel: 'activity',
     },
   ]
   const customerActivityRenderItems: CustomerMenuRenderItem[] = [
@@ -2175,9 +2405,301 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     { ...customerHelpMenuItems[3], icon: <MessageActionIcon />, showChevron: true },
   ]
   const customerSettingsRenderItems: CustomerMenuRenderItem[] = [
-    { ...customerProfileSettingsItem, label: 'Profile & Settings', icon: <ProfileIcon />, showChevron: true },
     ...customerHelpRenderItems,
   ]
+  const customerMenuUserId = user?.id ?? ''
+  const isCustomerNotificationsPanelLoading =
+    Boolean(customerMenuUserId) &&
+    customerMenuPanel === 'notifications' &&
+    loadedCustomerNotificationsUserId !== customerMenuUserId &&
+    !customerNotificationsError
+  const isCustomerProfileLoading =
+    Boolean(customerMenuUserId) &&
+    customerMenuPanel === 'profile' &&
+    loadedCustomerProfileUserId !== customerMenuUserId &&
+    !customerProfileError
+  const canSaveCustomerProfile = Boolean(user?.id) && !isCustomerProfileLoading && !isCustomerProfileSaving
+  const customerProfileInputClass =
+    'mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-[#0f172a] outline-none focus:ring-2 focus:ring-slate-300 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500'
+  const customerProfileReadOnlyInputClass =
+    'mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-[#0f172a] outline-none'
+
+  const renderCustomerProfilePanel = () => (
+    <>
+      {renderCustomerPanelHeader('Profile')}
+      <div className="space-y-3">
+        <section className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
+          <h3 className="text-sm font-semibold text-[#0f172a]">Profile Information</h3>
+          <div className="mt-3 space-y-3">
+            <label className="block text-xs font-semibold text-slate-600">
+              Customer name
+              <input
+                className={customerProfileInputClass}
+                value={customerProfileForm.customerName}
+                placeholder={isCustomerProfileLoading ? 'Loading...' : 'Enter your name'}
+                disabled={isCustomerProfileLoading || isCustomerProfileSaving}
+                onChange={handleCustomerProfileFieldChange('customerName')}
+              />
+            </label>
+            <label className="block text-xs font-semibold text-slate-600">
+              Phone number
+              <input
+                className={customerProfileInputClass}
+                value={customerProfileForm.phoneNumber}
+                placeholder={isCustomerProfileLoading ? 'Loading...' : 'Enter your phone number'}
+                disabled={isCustomerProfileLoading || isCustomerProfileSaving}
+                onChange={handleCustomerProfileFieldChange('phoneNumber')}
+              />
+            </label>
+            <label className="block text-xs font-semibold text-slate-600">
+              Email address
+              <input
+                className={customerProfileReadOnlyInputClass}
+                value={customerEmail}
+                placeholder="Not available yet"
+                readOnly
+              />
+            </label>
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
+          <h3 className="text-sm font-semibold text-[#0f172a]">Location Preferences</h3>
+          <div className="mt-3 space-y-3">
+            <label className="block text-xs font-semibold text-slate-600">
+              Preferred city
+              <input
+                className={customerProfileInputClass}
+                value={customerProfileForm.preferredCity}
+                placeholder={isCustomerProfileLoading ? 'Loading...' : 'Enter preferred city'}
+                disabled={isCustomerProfileLoading || isCustomerProfileSaving}
+                onChange={handleCustomerProfileFieldChange('preferredCity')}
+              />
+            </label>
+            <label className="block text-xs font-semibold text-slate-600">
+              Preferred area/locality
+              <input
+                className={customerProfileInputClass}
+                value={customerProfileForm.preferredArea}
+                placeholder={isCustomerProfileLoading ? 'Loading...' : 'Enter preferred area or locality'}
+                disabled={isCustomerProfileLoading || isCustomerProfileSaving}
+                onChange={handleCustomerProfileFieldChange('preferredArea')}
+              />
+            </label>
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-[#0f172a]">Save Changes</p>
+              <p className="mt-1 text-xs text-slate-500">
+                {isCustomerProfileLoading ? 'Loading your saved profile details.' : 'Save your profile and location preferences.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void handleCustomerProfileSave()}
+              disabled={!canSaveCustomerProfile}
+              className="inline-flex items-center justify-center rounded-full bg-[#0f172a] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isCustomerProfileSaving ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+          {(customerProfileSuccess || customerProfileError) && (
+            <p
+              className={`mt-3 rounded-xl px-3 py-2 text-xs font-medium ${
+                customerProfileSuccess ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
+              }`}
+            >
+              {customerProfileSuccess || customerProfileError}
+            </p>
+          )}
+        </section>
+      </div>
+    </>
+  )
+
+  const renderCustomerNotificationsPanel = () => (
+    <>
+      {renderCustomerPanelHeader('Notifications')}
+      {isCustomerNotificationsPanelLoading ? (
+        <section className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
+          <p className="text-sm text-[#0f172a]">Loading notifications...</p>
+        </section>
+      ) : customerNotificationsError ? (
+        <section className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
+          <p className="text-sm text-rose-700">{customerNotificationsError}</p>
+        </section>
+      ) : customerNotifications.length === 0 ? (
+        <section className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-center">
+          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-white text-slate-600">
+            <NotificationsIcon />
+          </div>
+          <p className="mt-3 text-sm font-semibold text-[#0f172a]">No notifications yet</p>
+          <p className="mt-1 text-xs leading-relaxed text-slate-500">
+            Important updates about your activity, saved businesses, and community contributions will appear here.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              closeHomeMenu()
+              navigate('/directory')
+            }}
+            className="mt-3 inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+          >
+            Explore Businesses
+          </button>
+        </section>
+      ) : (
+        <section className="space-y-3">
+          {customerNotifications.map((notification) => {
+            const isUnread = !notification.is_read
+
+            return (
+              <article
+                key={notification.id}
+                className={`rounded-2xl border p-3 ${
+                  isUnread ? 'border-sky-200 bg-sky-50/70' : 'border-slate-200 bg-white'
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => void handleCustomerNotificationOpen(notification)}
+                  disabled={readingCustomerNotificationId === notification.id}
+                  className="block w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 disabled:cursor-wait"
+                >
+                  <div className="flex gap-3">
+                    <span
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                        isUnread ? 'bg-white text-sky-700' : 'bg-slate-100 text-slate-600'
+                      }`}
+                    >
+                      <NotificationsIcon />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-start justify-between gap-3">
+                        <span className="min-w-0">
+                          <span className="flex items-center gap-2">
+                            {isUnread && <span className="h-2 w-2 shrink-0 rounded-full bg-sky-600" aria-hidden="true" />}
+                            <span className="block text-sm font-semibold text-[#0f172a]">{notification.title}</span>
+                          </span>
+                          <span className="mt-1 block text-xs leading-relaxed text-slate-600">{notification.message}</span>
+                        </span>
+                        <span className="shrink-0 text-[11px] font-medium text-slate-500">
+                          {formatNotificationDate(notification.created_at)}
+                        </span>
+                      </span>
+                    </span>
+                  </div>
+                </button>
+                {notification.action_label && notification.action_url ? (
+                  <button
+                    type="button"
+                    onClick={() => void handleCustomerNotificationOpen(notification)}
+                    disabled={readingCustomerNotificationId === notification.id}
+                    className="ml-12 mt-3 inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 disabled:cursor-wait disabled:opacity-70"
+                  >
+                    {notification.action_label}
+                  </button>
+                ) : null}
+              </article>
+            )
+          })}
+        </section>
+      )}
+    </>
+  )
+
+  const renderCustomerSavedBusinessesPanel = () => (
+    <>
+      {renderCustomerPanelHeader('Saved Businesses')}
+      {customerSavedBusinessesLoadState === 'loading' || customerSavedBusinessesLoadState === 'idle' ? (
+        <section className="flex min-h-32 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
+          <svg className="h-5 w-5 animate-spin text-sky-500" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          <span className="sr-only">Loading saved businesses...</span>
+        </section>
+      ) : customerSavedBusinessesLoadState === 'error' ? (
+        <section className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-center">
+          <p className="text-sm font-medium text-[#0f172a]">Unable to load saved businesses right now.</p>
+          <button
+            type="button"
+            onClick={handleCustomerSavedBusinessesRetry}
+            className="mt-3 inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+          >
+            Try Again
+          </button>
+        </section>
+      ) : customerSavedBusinessesLoadState === 'empty' ? (
+        <section className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-center">
+          <p className="text-sm font-semibold text-[#0f172a]">No saved businesses yet.</p>
+          <p className="mt-1 text-xs text-slate-500">Save businesses you want to revisit later.</p>
+        </section>
+      ) : (
+        <section className="space-y-3">
+          {customerSavedBusinesses.map((favorite) => (
+            <article key={favorite.id} className="rounded-2xl border border-slate-200 bg-white p-3">
+              <div className="flex items-start gap-3">
+                {favorite.business_profile.logo_url ? (
+                  <img
+                    src={favorite.business_profile.logo_url}
+                    alt={`${favorite.business_profile.business_name} logo`}
+                    className="h-11 w-11 shrink-0 rounded-xl border border-slate-100 object-cover"
+                  />
+                ) : (
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+                    <ProfileIcon />
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-[#0f172a]">
+                    {favorite.business_profile.business_name}
+                  </p>
+                  {favorite.business_profile.business_category && (
+                    <p className="text-xs text-slate-600">{favorite.business_profile.business_category}</p>
+                  )}
+                  {favorite.business_profile.address && (
+                    <p className="mt-0.5 text-xs text-slate-500">{favorite.business_profile.address}</p>
+                  )}
+                </div>
+              </div>
+              {favorite.business_profile.about_business && (
+                <p className="mt-3 text-xs leading-relaxed text-slate-600">
+                  {truncateCustomerSavedBusinessText(
+                    favorite.business_profile.about_business,
+                    CUSTOMER_SAVED_BUSINESS_ABOUT_TRUNCATE_LENGTH
+                  )}
+                </p>
+              )}
+              <div className="mt-3 flex flex-col gap-2 border-t border-slate-100 pt-3 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeHomeMenu()
+                    navigate(`/business/${favorite.business_profile.slug}`)
+                  }}
+                  className="inline-flex items-center justify-center rounded-full bg-[#0f172a] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+                >
+                  View Profile
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleCustomerSavedBusinessRemove(favorite)}
+                  disabled={removingCustomerSavedBusinessId === favorite.id}
+                  className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {removingCustomerSavedBusinessId === favorite.id ? 'Removing...' : 'Remove'}
+                </button>
+              </div>
+            </article>
+          ))}
+        </section>
+      )}
+    </>
+  )
 
   const customerMenuMainContent = (
     <div className="space-y-3">
@@ -2238,6 +2760,18 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   )
 
   const renderCustomerMenuContent = () => {
+    if (customerMenuPanel === 'profile') {
+      return renderCustomerProfilePanel()
+    }
+
+    if (customerMenuPanel === 'notifications') {
+      return renderCustomerNotificationsPanel()
+    }
+
+    if (customerMenuPanel === 'saved') {
+      return renderCustomerSavedBusinessesPanel()
+    }
+
     if (customerMenuPanel === 'activity') {
       return (
         <>
