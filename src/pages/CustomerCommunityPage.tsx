@@ -265,6 +265,7 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
     defaultImprovementSuggestionForm
   )
   const [improvementSuggestionErrors, setImprovementSuggestionErrors] = useState<PlatformSuggestionFormErrors>({})
+  const [selectedFeatureKey, setSelectedFeatureKey] = useState<CustomerFeatureKey | null>(null)
   const [votingFeatureKey, setVotingFeatureKey] = useState<CustomerFeatureKey | null>(null)
   const [isSubmittingFeatureSuggestion, setIsSubmittingFeatureSuggestion] = useState(false)
   const [isSubmittingImprovementSuggestion, setIsSubmittingImprovementSuggestion] = useState(false)
@@ -340,6 +341,7 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
       .then(([votes, suggestions]) => {
         if (!isCurrent) return
         setFeatureVotes(votes)
+        setSelectedFeatureKey(votes[0]?.feature_key ?? null)
         setPlatformSuggestions(suggestions)
         setLoadedShapeCustomerId(userId)
         setShapeLoadError(null)
@@ -373,7 +375,11 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
   const supportedBusinessCount = impactSummary.businessesSupported
   const canVoteOnFeatures = supportedBusinessCount >= 1
   const canSubmitFeatureSuggestion = supportedBusinessCount >= 3
-  const votedFeatureKeys = new Set(featureVotes.map((vote) => vote.feature_key))
+  const savedFeatureKey = featureVotes[0]?.feature_key ?? null
+  const hasMultipleSavedFeatureVotes = featureVotes.length > 1
+  const isFeatureVoteUnchanged = Boolean(
+    savedFeatureKey && selectedFeatureKey === savedFeatureKey && !hasMultipleSavedFeatureVotes
+  )
 
   const updateSupportInList = (nextSupport: CustomerBusinessSupportRow) => {
     setSupportedBusinesses((currentSupports) =>
@@ -465,24 +471,23 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
     }
   }
 
-  const handleToggleFeatureVote = async (feature: (typeof CUSTOMER_FEATURE_OPTIONS)[number]): Promise<void> => {
-    if (!userId || votingFeatureKey) return
+  const handleSubmitFeatureVote = async (): Promise<void> => {
+    if (!userId || !selectedFeatureKey || votingFeatureKey) return
 
-    const hasVoted = votedFeatureKeys.has(feature.key)
-    setVotingFeatureKey(feature.key)
+    const selectedFeature = CUSTOMER_FEATURE_OPTIONS.find((feature) => feature.key === selectedFeatureKey)
+    if (!selectedFeature) return
+
+    setVotingFeatureKey(selectedFeatureKey)
     setShapeFeedback(null)
 
     try {
-      if (hasVoted) {
-        await removeFeatureVote(userId, feature.key)
-        setFeatureVotes((currentVotes) =>
-          currentVotes.filter((vote) => vote.feature_key !== feature.key)
-        )
-        return
-      }
+      const existingFeatureKeys = Array.from(new Set(featureVotes.map((vote) => vote.feature_key)))
+      await Promise.all(existingFeatureKeys.map((featureKey) => removeFeatureVote(userId, featureKey)))
 
-      const createdVote = await voteForFeature(userId, feature)
-      setFeatureVotes((currentVotes) => [createdVote, ...currentVotes])
+      const createdVote = await voteForFeature(userId, selectedFeature)
+      setFeatureVotes([createdVote])
+      setSelectedFeatureKey(createdVote.feature_key)
+      setShapeFeedback({ kind: 'success', text: 'Your vote has been saved.' })
     } catch (error) {
       console.error('Failed to update customer feature vote:', error)
       setShapeFeedback({ kind: 'error', text: 'We could not update your vote right now. Please try again.' })
@@ -1086,38 +1091,58 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                     {canVoteOnFeatures ? (
                       <>
                         <div className={`mt-4 ${lockedCardClassName}`}>
-                          <div className="space-y-3">
-                          {CUSTOMER_FEATURE_OPTIONS.map((feature) => {
-                            const hasVoted = votedFeatureKeys.has(feature.key)
-                            const isVoting = votingFeatureKey === feature.key
+                          <div className="space-y-2">
+                            {CUSTOMER_FEATURE_OPTIONS.map((feature) => {
+                              const isSelected = selectedFeatureKey === feature.key
 
-                            return (
-                              <article
-                                key={feature.key}
-                                className="rounded-2xl border border-[#dbe3ec] bg-[#f8fafc] px-4 py-4"
-                              >
-                                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                  <div className="min-w-0">
-                                    <h4 className="text-sm font-semibold text-black sm:text-base">{feature.title}</h4>
-                                    <p className="mt-2 text-sm leading-relaxed text-black">{feature.description}</p>
-                                  </div>
-                                  <button
-                                    type="button"
-                                    className={hasVoted ? secondaryButtonClassName : actionButtonClassName}
-                                    onClick={() => void handleToggleFeatureVote(feature)}
-                                    disabled={Boolean(votingFeatureKey)}
+                              return (
+                                <label
+                                  key={feature.key}
+                                  className={`flex min-h-[44px] cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold transition-colors ${
+                                    isSelected
+                                      ? 'border-blue-200 bg-blue-50 text-blue-700'
+                                      : 'border-[#dbe3ec] bg-[#f8fafc] text-black'
+                                  }`}
+                                >
+                                  <input
+                                    type="radio"
+                                    name="customer-shape-feature-vote"
+                                    value={feature.key}
+                                    checked={isSelected}
+                                    onChange={() => setSelectedFeatureKey(feature.key)}
+                                    className="sr-only"
+                                  />
+                                  <span
+                                    className={`flex size-5 shrink-0 items-center justify-center rounded-full border ${
+                                      isSelected ? 'border-blue-600 bg-blue-600' : 'border-slate-400 bg-white'
+                                    }`}
+                                    aria-hidden="true"
                                   >
-                                    {isVoting ? 'Updating...' : hasVoted ? 'Voted' : 'Vote'}
-                                  </button>
-                                </div>
-                              </article>
-                            )
-                          })}
+                                    {isSelected && <span className="size-2 rounded-full bg-white" />}
+                                  </span>
+                                  <span className="min-w-0">{feature.title}</span>
+                                </label>
+                              )
+                            })}
+                          </div>
+
+                          <div className="mt-4">
+                            <button
+                              type="button"
+                              className={actionButtonClassName}
+                              onClick={() => void handleSubmitFeatureVote()}
+                              disabled={!selectedFeatureKey || Boolean(votingFeatureKey) || isFeatureVoteUnchanged}
+                            >
+                              {votingFeatureKey
+                                ? 'Saving...'
+                                : isFeatureVoteUnchanged
+                                  ? 'Vote Submitted'
+                                  : savedFeatureKey
+                                    ? 'Update Vote'
+                                    : 'Submit Vote'}
+                            </button>
                           </div>
                         </div>
-                        <p className={helperClassName}>
-                          Your votes are private. Public vote counts and leaderboards are not part of this MVP.
-                        </p>
                       </>
                     ) : (
                       <div className={`mt-4 ${lockedCardClassName}`}>
