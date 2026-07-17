@@ -69,6 +69,8 @@ type FeedbackMessage = {
   text: string
 } | null
 
+type CustomerSupporterLevelIcon = 'new' | 'supporter' | 'builder' | 'champion'
+
 interface CustomerSupporterLevel {
   levelName: string
   description: string
@@ -77,6 +79,8 @@ interface CustomerSupporterLevel {
   progressText: string
   progressPercent: number
   isMaxLevel: boolean
+  icon: CustomerSupporterLevelIcon
+  iconWrapClassName: string
 }
 
 function getCustomerSupporterLevel(supportedBusinessCount: number): CustomerSupporterLevel {
@@ -89,6 +93,8 @@ function getCustomerSupporterLevel(supportedBusinessCount: number): CustomerSupp
       progressText: 'You reached Local Champion. Next level coming soon.',
       progressPercent: 100,
       isMaxLevel: true,
+      icon: 'champion',
+      iconWrapClassName: 'bg-amber-100 text-amber-700',
     }
   }
 
@@ -101,6 +107,8 @@ function getCustomerSupporterLevel(supportedBusinessCount: number): CustomerSupp
       progressText: `${supportedBusinessCount} / 6 businesses supported to reach Local Champion`,
       progressPercent: Math.min(100, Math.round((supportedBusinessCount / 6) * 100)),
       isMaxLevel: false,
+      icon: 'builder',
+      iconWrapClassName: 'bg-indigo-100 text-indigo-700',
     }
   }
 
@@ -113,6 +121,8 @@ function getCustomerSupporterLevel(supportedBusinessCount: number): CustomerSupp
       progressText: `${supportedBusinessCount} / 3 businesses supported to reach Community Builder`,
       progressPercent: Math.min(100, Math.round((supportedBusinessCount / 3) * 100)),
       isMaxLevel: false,
+      icon: 'supporter',
+      iconWrapClassName: 'bg-emerald-100 text-emerald-700',
     }
   }
 
@@ -124,6 +134,21 @@ function getCustomerSupporterLevel(supportedBusinessCount: number): CustomerSupp
     progressText: '0 / 1 business supported to reach Local Supporter',
     progressPercent: 0,
     isMaxLevel: false,
+    icon: 'new',
+    iconWrapClassName: 'bg-blue-100 text-blue-700',
+  }
+}
+
+function getSupporterLevelIcon(icon: CustomerSupporterLevelIcon) {
+  switch (icon) {
+    case 'new':
+      return <ImpactUserPlusIcon />
+    case 'supporter':
+      return <ImpactShareIcon />
+    case 'builder':
+      return <SupporterBadgeIcon />
+    case 'champion':
+      return <ImpactCheckIcon />
   }
 }
 
@@ -1033,8 +1058,10 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                       <p className="text-xs font-semibold text-blue-700">Current Supporter Badge</p>
                       <div className="mt-1 inline-flex max-w-full items-center gap-2">
                         <p className="min-w-0 text-lg font-semibold text-black">{supporterLevel.levelName}</p>
-                        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white">
-                          <SupporterBadgeIcon />
+                        <span
+                          className={`flex size-8 shrink-0 items-center justify-center rounded-full ${supporterLevel.iconWrapClassName}`}
+                        >
+                          {getSupporterLevelIcon(supporterLevel.icon)}
                         </span>
                       </div>
                       <p className="mt-1 text-sm leading-relaxed text-black">
