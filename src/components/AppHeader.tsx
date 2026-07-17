@@ -2836,7 +2836,15 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       return (
         <>
           {renderCustomerPanelHeader('My Local Impact', 'community')}
-          <CustomerCommunityPage mode="menu" activeView="impact" />
+          <CustomerCommunityPage
+            mode="menu"
+            activeView="impact"
+            onSelectTab={(tab) => {
+              if (tab === 'support') {
+                setCustomerMenuPanel('communitySupport')
+              }
+            }}
+          />
         </>
       )
     }

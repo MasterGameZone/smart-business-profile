@@ -37,6 +37,7 @@ type CommunityTab = 'impact' | 'support' | 'shape'
 interface CustomerCommunityPageProps {
   activeView?: CommunityTab
   mode?: 'page' | 'menu'
+  onSelectTab?: (tab: CommunityTab) => void
 }
 
 interface SupportFormState {
@@ -232,7 +233,7 @@ function invitationLinkForSupport(support: CustomerBusinessSupportRow): string {
   return buildInvitationLink(support, window.location.origin)
 }
 
-function CustomerCommunityPage({ activeView, mode = 'page' }: CustomerCommunityPageProps) {
+function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: CustomerCommunityPageProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, isLoading: isAuthLoading } = useAuth()
@@ -703,7 +704,14 @@ function CustomerCommunityPage({ activeView, mode = 'page' }: CustomerCommunityP
                     <button
                       type="button"
                       className={actionButtonClassName}
-                      onClick={() => navigate('/customer/community#support')}
+                      onClick={() => {
+                        if (isMenuMode && onSelectTab) {
+                          onSelectTab('support')
+                          return
+                        }
+
+                        navigate('/customer/community#support')
+                      }}
                     >
                       Support a Business
                     </button>
