@@ -96,6 +96,7 @@ export function calculateCustomerImpactSummary(
     (support) => support.status === 'Invitation Shared' || support.status === 'Profile Published'
   ).length
   const linksOpened = supports.filter((support) => Boolean(support.invitation_opened_at)).length
+  const businessesSignedUp = supports.filter((support) => Boolean(support.business_signed_up_at)).length
   const profilesPublished = supports.filter((support) => support.status === 'Profile Published').length
   const supporterLevel = calculateSupporterLevel(businessesSupported)
   const progress = calculateProgressToNextLevel(businessesSupported)
@@ -106,6 +107,7 @@ export function calculateCustomerImpactSummary(
     businessesSupported,
     invitationsShared,
     linksOpened,
+    businessesSignedUp,
     profilesPublished,
     progress,
     recentSupports,
@@ -208,6 +210,27 @@ export async function markSupportInviteOpened(invitationToken: string): Promise<
     }
   } catch {
     console.warn('Support invite open tracking failed.')
+  }
+}
+
+export async function markSupportInviteBusinessSignedUp(invitationToken: string): Promise<boolean> {
+  const trimmedToken = invitationToken.trim()
+  if (!trimmedToken) return false
+
+  try {
+    const { data, error } = await supabase.rpc('mark_support_invite_business_signed_up', {
+      invite_token: trimmedToken,
+    })
+
+    if (error) {
+      console.warn('Support invite business signup tracking failed.')
+      return false
+    }
+
+    return data === true
+  } catch {
+    console.warn('Support invite business signup tracking failed.')
+    return false
   }
 }
 

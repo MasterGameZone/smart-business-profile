@@ -6,6 +6,7 @@ import { ToastContainer, type ToastItem, type ToastType } from '../../components
 import { useAuth } from '../../context/AuthContext.tsx'
 import { usePageMeta } from '../../hooks/usePageMeta.ts'
 import { signIn } from '../../lib/authService.ts'
+import { markStoredSupportInviteBusinessSignedUp } from '../../lib/supportInviteLinking.ts'
 import { captureSupportInviteTokenFromSearch } from '../../lib/supportInviteStorage.ts'
 
 interface FormErrors {
@@ -88,6 +89,7 @@ function LoginPage() {
       return
     }
 
+    void markStoredSupportInviteBusinessSignedUp()
   }
 
   return (

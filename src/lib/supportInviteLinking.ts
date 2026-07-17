@@ -1,8 +1,18 @@
-import { markSupportInviteProfilePublished } from './customerBusinessSupportService.ts'
+import {
+  markSupportInviteBusinessSignedUp,
+  markSupportInviteProfilePublished,
+} from './customerBusinessSupportService.ts'
 import {
   clearStoredSupportInviteToken,
   getStoredSupportInviteToken,
 } from './supportInviteStorage.ts'
+
+export async function markStoredSupportInviteBusinessSignedUp(): Promise<void> {
+  const invitationToken = getStoredSupportInviteToken()
+  if (!invitationToken) return
+
+  await markSupportInviteBusinessSignedUp(invitationToken)
+}
 
 export async function linkStoredSupportInviteToPublishedProfile({
   profileId,

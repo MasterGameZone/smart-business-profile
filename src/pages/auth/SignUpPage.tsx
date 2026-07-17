@@ -9,6 +9,7 @@ import {
 } from "../../components/Toast.tsx";
 import { usePageMeta } from "../../hooks/usePageMeta.ts";
 import { signUp } from "../../lib/authService.ts";
+import { markStoredSupportInviteBusinessSignedUp } from "../../lib/supportInviteLinking.ts";
 import { captureSupportInviteTokenFromSearch } from "../../lib/supportInviteStorage.ts";
 
 interface FormErrors {
@@ -102,6 +103,7 @@ function SignUpPage() {
       return;
     }
 
+    void markStoredSupportInviteBusinessSignedUp();
     setSubmitted(true);
   };
 

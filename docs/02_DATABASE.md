@@ -298,15 +298,17 @@ Stores customer-owned nominations/invitations for trusted local businesses. Thes
 | business_location | TEXT | No | Single customer-entered location field |
 | custom_message | TEXT | Yes | Optional invitation message from the customer |
 | invitation_token | UUID | No | Shareable future tracking token |
-| status | TEXT | No | `Nominated`, `Invitation Shared`, or `Profile Published` |
+| status | TEXT | No | `Nominated`, `Invitation Shared`, `Business Signed Up`, or `Profile Published` |
 | published_profile_id | UUID | Yes | Linked published `business_profiles.id`, when an invited owner completes profile publishing |
 | invitation_shared_at | TIMESTAMP WITH TIME ZONE | Yes | Last share/copy timestamp |
 | invitation_opened_at | TIMESTAMP WITH TIME ZONE | Yes | First timestamp when the public support invitation link was opened |
 | invitation_open_count | INTEGER | No | Total public opens recorded for the support invitation link |
+| invited_owner_user_id | UUID | Yes | Authenticated invited business owner account that claimed the support invitation |
+| business_signed_up_at | TIMESTAMP WITH TIME ZONE | Yes | First timestamp when the support invitation was claimed by an authenticated account |
 | created_at | TIMESTAMP WITH TIME ZONE | No | Record creation timestamp |
 | updated_at | TIMESTAMP WITH TIME ZONE | No | Last update timestamp |
 
-Access is restricted by RLS to the authenticated owner of each row. Authenticated users may select, insert, and update only their own supported businesses. No public or anonymous read access is granted. A narrow `mark_support_invite_profile_published` RPC validates authenticated profile ownership and public profile state before linking an invitation to a published profile. A public-safe `mark_support_invite_opened` RPC updates only invitation open tracking fields for a matching invitation token and returns no customer private data. A public-safe `get_support_invite_preview` RPC returns only the inviter display name for the invite landing page.
+Access is restricted by RLS to the authenticated owner of each row. Authenticated users may select, insert, and update only their own supported businesses. No public or anonymous read access is granted. A narrow `mark_support_invite_profile_published` RPC validates authenticated profile ownership and public profile state before linking an invitation to a published profile. A public-safe `mark_support_invite_opened` RPC updates only invitation open tracking fields for a matching invitation token and returns no customer private data. A public-safe `get_support_invite_preview` RPC returns only the inviter display name for the invite landing page. An authenticated-only `mark_support_invite_business_signed_up` RPC claims a matching invitation token for the current user without exposing private customer data or overwriting another linked invited owner.
 
 ---
 

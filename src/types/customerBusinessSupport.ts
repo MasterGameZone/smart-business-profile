@@ -1,4 +1,8 @@
-export type CustomerBusinessSupportStatus = 'Nominated' | 'Invitation Shared' | 'Profile Published'
+export type CustomerBusinessSupportStatus =
+  | 'Nominated'
+  | 'Invitation Shared'
+  | 'Business Signed Up'
+  | 'Profile Published'
 
 export interface CustomerBusinessSupportRow {
   id: string
@@ -13,6 +17,8 @@ export interface CustomerBusinessSupportRow {
   invitation_shared_at: string | null
   invitation_opened_at: string | null
   invitation_open_count: number
+  invited_owner_user_id: string | null
+  business_signed_up_at: string | null
   created_at: string
   updated_at: string
 }
@@ -49,6 +55,7 @@ export interface CustomerImpactSummary {
   businessesSupported: number
   invitationsShared: number
   linksOpened: number
+  businessesSignedUp: number
   profilesPublished: number
   progress: CustomerImpactProgress
   recentSupports: CustomerBusinessSupportRow[]

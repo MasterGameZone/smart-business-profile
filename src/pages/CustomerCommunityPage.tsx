@@ -369,6 +369,8 @@ function statusPillClass(status: CustomerBusinessSupportStatus): string {
   switch (status) {
     case 'Profile Published':
       return 'bg-emerald-50 text-emerald-700'
+    case 'Business Signed Up':
+      return 'bg-green-50 text-green-700'
     case 'Invitation Shared':
       return 'bg-blue-50 text-blue-700'
     case 'Nominated':
@@ -380,6 +382,8 @@ function supportedBusinessIconClass(status: CustomerBusinessSupportStatus): stri
   switch (status) {
     case 'Profile Published':
       return 'bg-emerald-50 text-emerald-700'
+    case 'Business Signed Up':
+      return 'bg-green-50 text-green-700'
     case 'Invitation Shared':
       return 'bg-blue-50 text-blue-700'
     case 'Nominated':
@@ -671,7 +675,7 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
     },
     {
       label: 'Businesses Signed Up',
-      value: publishedSupports.length,
+      value: impactSummary.businessesSignedUp,
       icon: <ImpactUserPlusIcon />,
       iconWrapClassName: 'bg-green-50 text-green-700',
     },
