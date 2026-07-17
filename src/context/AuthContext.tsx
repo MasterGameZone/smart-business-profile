@@ -8,10 +8,12 @@ interface AuthContextValue {
   user: User | null
   session: Session | null
   isLoading: boolean
+  isLoggingOut: boolean
   accountMode: PreferredAccountMode
   isBusinessOwnerEnabled: boolean
   setPreferredAccountMode: (mode: PreferredAccountMode) => Promise<void>
   enableBusinessOwner: () => Promise<void>
+  setLogoutInProgress: (value: boolean) => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -24,6 +26,7 @@ const defaultAccountMode: AccountModeState = {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [accountModeState, setAccountModeState] = useState<AccountModeState>(defaultAccountMode)
   const loadedAccountModeUserIdRef = useRef<string | null>(null)
   const loadingAccountModeRef = useRef<{
@@ -156,10 +159,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user: session?.user ?? null,
         session,
         isLoading,
+        isLoggingOut,
         accountMode: accountModeState.preferredMode,
         isBusinessOwnerEnabled: accountModeState.ownerEnabled,
         setPreferredAccountMode: persistPreferredAccountMode,
         enableBusinessOwner,
+        setLogoutInProgress: setIsLoggingOut,
       }}
     >
       {children}

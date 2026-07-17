@@ -500,7 +500,7 @@ interface BusinessOwnerSuggestionFormState {
 function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMenuState = null }: AppHeaderProps) {
   const navigate = useNavigate()
   const location = useLocation()
-  const { user, isLoading, accountMode, isBusinessOwnerEnabled, setPreferredAccountMode } = useAuth()
+  const { user, isLoading, accountMode, isBusinessOwnerEnabled, setPreferredAccountMode, setLogoutInProgress } = useAuth()
   const { profileData, setProfileData } = useProfile()
   const [isSigningOut, setIsSigningOut] = useState(false)
   const [isHomeMenuOpen, setIsHomeMenuOpen] = useState(false)
@@ -1516,6 +1516,27 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     }
 
     navigate('/')
+  }
+
+  const handleBusinessOwnerLogout = async () => {
+    if (isSigningOut) return
+
+    closeHomeMenu()
+    setLogoutInProgress(true)
+    setIsSigningOut(true)
+    const { error } = await signOut()
+    setIsSigningOut(false)
+
+    if (error) {
+      setLogoutInProgress(false)
+      showError(error)
+      return
+    }
+
+    navigate('/', { replace: true })
+    window.setTimeout(() => {
+      setLogoutInProgress(false)
+    }, 0)
   }
 
   const handleBrandClick = () => {
@@ -2957,10 +2978,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
           <button
             type="button"
             role="menuitem"
-            onClick={async () => {
-              setIsHomeMenuOpen(false)
-              await handleLogout()
-            }}
+            onClick={() => void handleBusinessOwnerLogout()}
             disabled={isSigningOut}
             className="flex w-full items-center justify-between rounded-2xl border border-rose-100 bg-rose-50/70 px-3 py-3 text-left text-sm font-medium text-rose-700 transition hover:bg-rose-50 focus:bg-rose-50 focus:outline-none disabled:cursor-not-allowed disabled:opacity-70"
           >

@@ -9,10 +9,10 @@ import { useAuth } from '../context/AuthContext.tsx'
  * returned there after a successful login.
  */
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuth()
+  const { user, isLoading, isLoggingOut } = useAuth()
   const location = useLocation()
 
-  if (isLoading) {
+  if (isLoading || isLoggingOut) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#eef4fa]" role="status" aria-live="polite">
         <svg className="w-6 h-6 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24" aria-hidden="true">
