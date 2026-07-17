@@ -86,6 +86,63 @@ function SupporterBadgeIcon() {
   )
 }
 
+function ImpactBriefcaseIcon() {
+  return (
+    <svg className="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="4" y="7" width="16" height="11" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M9 7V5.8A1.8 1.8 0 0 1 10.8 4h2.4A1.8 1.8 0 0 1 15 5.8V7" stroke="currentColor" strokeWidth="1.8" />
+    </svg>
+  )
+}
+
+function ImpactShareIcon() {
+  return (
+    <svg className="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M15 6h4v4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M10 14 19 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M18 13v4a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function ImpactLinkIcon() {
+  return (
+    <svg className="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M10 8H8a4 4 0 0 0 0 8h2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M14 8h2a4 4 0 0 1 0 8h-2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M9 12h6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function ImpactUserPlusIcon() {
+  return (
+    <svg className="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="10" cy="8" r="3" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M4.5 18a5.5 5.5 0 0 1 11 0" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M18 8v6M15 11h6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function ImpactClockIcon() {
+  return (
+    <svg className="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="7.5" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M12 8v4l2.5 1.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function ImpactCheckIcon() {
+  return (
+    <svg className="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="7.5" stroke="currentColor" strokeWidth="1.8" />
+      <path d="m8.5 12 2.2 2.2 4.8-4.8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 const defaultSupportFormState: SupportFormState = {
   businessName: '',
   businessCategory: '',
@@ -384,6 +441,49 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
   const showShapeLoading =
     isAuthLoading ||
     Boolean(userId && (isShapeLoading || isSupportsLoading || loadedShapeCustomerId !== userId))
+  const sharedSupports = supportedBusinesses.filter(
+    (support) => support.status === 'Invitation Shared' || support.status === 'Profile Published'
+  )
+  const publishedSupports = supportedBusinesses.filter((support) => support.status === 'Profile Published')
+  const profilesInProgressCount = Math.max(sharedSupports.length - publishedSupports.length, 0)
+  const impactStats = [
+    {
+      label: 'Businesses Supported',
+      value: impactSummary.businessesSupported,
+      icon: <ImpactBriefcaseIcon />,
+      iconWrapClassName: 'bg-blue-50 text-blue-700',
+    },
+    {
+      label: 'Invitations Shared',
+      value: impactSummary.invitationsShared,
+      icon: <ImpactShareIcon />,
+      iconWrapClassName: 'bg-emerald-50 text-emerald-700',
+    },
+    {
+      label: 'Links Opened',
+      value: sharedSupports.length,
+      icon: <ImpactLinkIcon />,
+      iconWrapClassName: 'bg-violet-50 text-violet-700',
+    },
+    {
+      label: 'Businesses Signed Up',
+      value: publishedSupports.length,
+      icon: <ImpactUserPlusIcon />,
+      iconWrapClassName: 'bg-green-50 text-green-700',
+    },
+    {
+      label: 'Profiles In Progress',
+      value: profilesInProgressCount,
+      icon: <ImpactClockIcon />,
+      iconWrapClassName: 'bg-orange-50 text-orange-700',
+    },
+    {
+      label: 'Profiles Published',
+      value: impactSummary.profilesPublished,
+      icon: <ImpactCheckIcon />,
+      iconWrapClassName: 'bg-cyan-50 text-cyan-700',
+    },
+  ]
   const supportedBusinessCount = impactSummary.businessesSupported
   const canVoteOnFeatures = supportedBusinessCount >= 1
   const canSubmitFeatureSuggestion = supportedBusinessCount >= 3
@@ -766,35 +866,33 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                     </div>
                   </div>
 
-                  <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    <div className={cardClassName}>
-                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                        Businesses supported
-                      </p>
-                      <p className="mt-1 text-2xl font-semibold text-black">{impactSummary.businessesSupported}</p>
-                    </div>
-                    <div className={cardClassName}>
-                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                        Invitations shared
-                      </p>
-                      <p className="mt-1 text-2xl font-semibold text-black">{impactSummary.invitationsShared}</p>
-                    </div>
-                    <div className={cardClassName}>
-                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                        Profiles published
-                      </p>
-                      <p className="mt-1 text-2xl font-semibold text-black">{impactSummary.profilesPublished}</p>
+                  <div className="mt-5">
+                    <h3 className="text-base font-semibold text-black">Your Impact Summary</h3>
+                    <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    {impactStats.map((stat) => (
+                      <div
+                        key={stat.label}
+                        className="rounded-2xl border border-[#c7d2df] bg-[#f8fafc] p-3"
+                      >
+                        <div className="flex items-center gap-2.5 px-1">
+                          <span
+                            className={`flex size-8 shrink-0 items-center justify-center rounded-full ${stat.iconWrapClassName}`}
+                          >
+                            {stat.icon}
+                          </span>
+                          <span className="text-xl font-semibold text-black">{stat.value}</span>
+                        </div>
+                        <p className="mt-1 whitespace-nowrap text-[8px] font-medium leading-none text-slate-500">
+                          {stat.label}
+                        </p>
+                      </div>
+                    ))}
                     </div>
                   </div>
 
                   <div className={`mt-5 ${cardClassName}`}>
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                          Progress toward next level
-                        </p>
-                        <p className="mt-1 text-sm font-medium text-black">{impactSummary.progress.text}</p>
-                      </div>
+                      <p className="text-sm font-medium text-black">{impactSummary.progress.text}</p>
                       <p className="text-sm font-semibold text-blue-700">{impactSummary.progress.percent}%</p>
                     </div>
                     <div className="mt-3 h-2 rounded-full bg-slate-200">
