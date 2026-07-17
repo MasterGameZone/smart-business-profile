@@ -5,10 +5,15 @@ import type {
   CustomerImpactSummary,
   CustomerBusinessSupportInsert,
   CustomerBusinessSupportRow,
+  CustomerSupportInvitePreview,
 } from '../types/customerBusinessSupport.ts'
 
-const BUSINESS_SIGNUP_PATH = '/login'
+const BUSINESS_INVITE_PATH = '/invite'
 const RECENT_IMPACT_LIMIT = 5
+
+type SupportInvitePreviewRpcRow = {
+  customer_name: string | null
+}
 
 function normalizeOptionalMessage(value: string | null): string | null {
   const trimmed = value?.trim() ?? ''
@@ -206,12 +211,39 @@ export async function markSupportInviteOpened(invitationToken: string): Promise<
   }
 }
 
+export async function getSupportInvitePreview(invitationToken: string): Promise<CustomerSupportInvitePreview | null> {
+  const trimmedToken = invitationToken.trim()
+  if (!trimmedToken) return null
+
+  try {
+    const { data, error } = await supabase
+      .rpc('get_support_invite_preview', {
+        invite_token: trimmedToken,
+      })
+      .maybeSingle()
+
+    if (error) {
+      console.warn('Support invite preview failed.')
+      return null
+    }
+
+    const preview = data as SupportInvitePreviewRpcRow | null
+    const customerName = typeof preview?.customer_name === 'string' ? preview.customer_name.trim() : ''
+
+    return {
+      customerName: customerName || null,
+    }
+  } catch {
+    console.warn('Support invite preview failed.')
+    return null
+  }
+}
+
 export function buildInvitationLink(
   support: CustomerBusinessSupportRow,
   origin: string
 ): string {
-  const url = new URL(BUSINESS_SIGNUP_PATH, origin)
-  url.searchParams.set('supportInvite', support.invitation_token)
+  const url = new URL(`${BUSINESS_INVITE_PATH}/${support.invitation_token}`, origin)
   return url.toString()
 }
 

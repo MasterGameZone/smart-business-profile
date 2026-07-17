@@ -3,6 +3,7 @@ import LandingPage from './pages/LandingPage.tsx'
 import CreateProfilePage from './pages/CreateProfilePage.tsx'
 import ProfilePreviewPage from './pages/ProfilePreviewPage.tsx'
 import PublicBusinessProfilePage from './pages/PublicBusinessProfilePage.tsx'
+import BusinessInvitePage from './pages/BusinessInvitePage.tsx'
 import LoginPage from './pages/auth/LoginPage.tsx'
 import SignUpPage from './pages/auth/SignUpPage.tsx'
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage.tsx'
@@ -41,6 +42,8 @@ function App() {
         }
       />
       <Route path="/business/:slug" element={<PublicBusinessProfilePage />} />
+      <Route path="/invite" element={<BusinessInvitePage />} />
+      <Route path="/invite/:token" element={<BusinessInvitePage />} />
       <Route path="/directory" element={<DirectoryPage />} />
       <Route
         path="/start-business"

@@ -306,7 +306,7 @@ Stores customer-owned nominations/invitations for trusted local businesses. Thes
 | created_at | TIMESTAMP WITH TIME ZONE | No | Record creation timestamp |
 | updated_at | TIMESTAMP WITH TIME ZONE | No | Last update timestamp |
 
-Access is restricted by RLS to the authenticated owner of each row. Authenticated users may select, insert, and update only their own supported businesses. No public or anonymous read access is granted. A narrow `mark_support_invite_profile_published` RPC validates authenticated profile ownership and public profile state before linking an invitation to a published profile. A public-safe `mark_support_invite_opened` RPC updates only invitation open tracking fields for a matching invitation token and returns no customer private data.
+Access is restricted by RLS to the authenticated owner of each row. Authenticated users may select, insert, and update only their own supported businesses. No public or anonymous read access is granted. A narrow `mark_support_invite_profile_published` RPC validates authenticated profile ownership and public profile state before linking an invitation to a published profile. A public-safe `mark_support_invite_opened` RPC updates only invitation open tracking fields for a matching invitation token and returns no customer private data. A public-safe `get_support_invite_preview` RPC returns only the inviter display name for the invite landing page.
 
 ---
 

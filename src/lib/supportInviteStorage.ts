@@ -13,7 +13,7 @@ export function storeSupportInviteToken(token: string): void {
   window.localStorage.setItem(SUPPORT_INVITE_TOKEN_STORAGE_KEY, token)
 }
 
-function trackSupportInviteOpen(token: string): void {
+export function trackSupportInviteOpen(token: string): void {
   if (!isValidSupportInviteToken(token)) return
 
   if (typeof window !== 'undefined') {

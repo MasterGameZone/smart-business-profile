@@ -34,6 +34,10 @@ export interface CreateCustomerBusinessSupportPayload {
   customMessage: string | null
 }
 
+export interface CustomerSupportInvitePreview {
+  customerName: string | null
+}
+
 export interface CustomerImpactProgress {
   percent: number
   text: string
