@@ -1008,6 +1008,21 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                   </div>
 
                   <div className="mt-5">
+                    <div className={cardClassName}>
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                        <p className="text-sm font-medium text-black">{impactSummary.progress.text}</p>
+                        <p className="text-sm font-semibold text-blue-700">{impactSummary.progress.percent}%</p>
+                      </div>
+                      <div className="mt-3 h-2 rounded-full bg-slate-200">
+                        <div
+                          className="h-full rounded-full bg-blue-600"
+                          style={{ width: `${impactSummary.progress.percent}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-5">
                     <h3 className="text-base font-semibold text-black">Community Privileges</h3>
                     <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
                       {communityPrivileges.map((privilege) => (
@@ -1055,19 +1070,6 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                           </div>
                         </article>
                       ))}
-                    </div>
-                  </div>
-
-                  <div className={`mt-5 ${cardClassName}`}>
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                      <p className="text-sm font-medium text-black">{impactSummary.progress.text}</p>
-                      <p className="text-sm font-semibold text-blue-700">{impactSummary.progress.percent}%</p>
-                    </div>
-                    <div className="mt-3 h-2 rounded-full bg-slate-200">
-                      <div
-                        className="h-full rounded-full bg-blue-600"
-                        style={{ width: `${impactSummary.progress.percent}%` }}
-                      />
                     </div>
                   </div>
 
