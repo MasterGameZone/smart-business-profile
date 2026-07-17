@@ -143,6 +143,59 @@ function ImpactCheckIcon() {
   )
 }
 
+function PrivilegeVoteIcon() {
+  return (
+    <svg className="size-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="5" y="4.5" width="14" height="16" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
+      <path d="m9 11.5 2 2 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9 8h6M9 16h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function PrivilegeSuggestionIcon() {
+  return (
+    <svg className="size-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M7 6.5h10A2.5 2.5 0 0 1 19.5 9v6A2.5 2.5 0 0 1 17 17.5h-5.2L8 20v-2.5H7A2.5 2.5 0 0 1 4.5 15V9A2.5 2.5 0 0 1 7 6.5Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path d="M8.5 10h7M8.5 13h5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function PrivilegeUnlockedStatusIcon() {
+  return (
+    <svg className="size-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.8" />
+      <path
+        d="m8.8 12 2.1 2.1 4.3-4.3"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function PrivilegeLockedStatusIcon() {
+  return (
+    <svg className="size-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="7" y="10" width="10" height="8" rx="2" stroke="currentColor" strokeWidth="1.8" />
+      <path
+        d="M9 10V8.5A3 3 0 0 1 12 5.5a3 3 0 0 1 3 3V10"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
 const defaultSupportFormState: SupportFormState = {
   businessName: '',
   businessCategory: '',
@@ -487,6 +540,22 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
   const supportedBusinessCount = impactSummary.businessesSupported
   const canVoteOnFeatures = supportedBusinessCount >= 1
   const canSubmitFeatureSuggestion = supportedBusinessCount >= 3
+  const communityPrivileges = [
+    {
+      title: 'Vote on Next Features',
+      description: 'Help shape the platform by voting on upcoming features.',
+      unlocked: canVoteOnFeatures,
+      icon: <PrivilegeVoteIcon />,
+      iconWrapClassName: 'bg-blue-50 text-blue-700',
+    },
+    {
+      title: 'Submit a Feature Suggestion',
+      description: 'Share focused ideas for features you want to see next.',
+      unlocked: canSubmitFeatureSuggestion,
+      icon: <PrivilegeSuggestionIcon />,
+      iconWrapClassName: 'bg-emerald-50 text-emerald-700',
+    },
+  ]
   const savedFeatureKey = featureVotes[0]?.feature_key ?? null
   const hasMultipleSavedFeatureVotes = featureVotes.length > 1
   const isFeatureVoteUnchanged = Boolean(
@@ -887,6 +956,57 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                         </p>
                       </div>
                     ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-5">
+                    <h3 className="text-base font-semibold text-black">Community Privileges</h3>
+                    <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
+                      {communityPrivileges.map((privilege) => (
+                        <article
+                          key={privilege.title}
+                          className="w-[210px] min-w-[210px] max-w-[210px] shrink-0 rounded-2xl border border-[#c7d2df] bg-[#f8fafc] p-2.5"
+                        >
+                          <div className="flex items-start gap-3">
+                            <span
+                              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${privilege.iconWrapClassName}`}
+                            >
+                              {privilege.icon}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <div className="inline-flex max-w-full items-center gap-1">
+                                <p className="whitespace-nowrap text-[9px] font-semibold text-black">
+                                  {privilege.title}
+                                </p>
+                                <span
+                                  className={`flex size-4 shrink-0 items-center justify-center rounded-full ${
+                                    privilege.unlocked
+                                      ? 'bg-emerald-50 text-emerald-700'
+                                      : 'bg-slate-200 text-slate-600'
+                                  }`}
+                                >
+                                  {privilege.unlocked ? (
+                                    <PrivilegeUnlockedStatusIcon />
+                                  ) : (
+                                    <PrivilegeLockedStatusIcon />
+                                  )}
+                                </span>
+                              </div>
+                              <p
+                                className="mt-1 w-full overflow-hidden text-[9px] font-normal leading-snug text-slate-600"
+                                style={{
+                                  display: '-webkit-box',
+                                  WebkitBoxOrient: 'vertical',
+                                  WebkitLineClamp: 2,
+                                  overflow: 'hidden',
+                                }}
+                              >
+                                {privilege.description}
+                              </p>
+                            </div>
+                          </div>
+                        </article>
+                      ))}
                     </div>
                   </div>
 
