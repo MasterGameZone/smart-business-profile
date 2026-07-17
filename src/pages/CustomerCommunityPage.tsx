@@ -619,6 +619,7 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
   const impactSummary = calculateCustomerImpactSummary(supportedBusinesses)
   const supportedBusinessCount = impactSummary.businessesSupported
   const supporterLevel = getCustomerSupporterLevel(supportedBusinessCount)
+  const supporterProgressPercent = Math.max(0, Math.min(100, supporterLevel.progressPercent))
   const impactDisplayError =
     !isAuthLoading && !userId ? 'Please sign in to view your local impact.' : supportLoadError
   const supportDisplayError =
@@ -1097,13 +1098,13 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                   <div className="mt-5">
                     <div className={cardClassName}>
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                        <p className="text-sm font-medium text-black">{impactSummary.progress.text}</p>
-                        <p className="text-sm font-semibold text-blue-700">{impactSummary.progress.percent}%</p>
+                        <p className="text-sm font-medium text-black">{supporterLevel.progressText}</p>
+                        <p className="text-sm font-semibold text-blue-700">{supporterProgressPercent}%</p>
                       </div>
                       <div className="mt-3 h-2 rounded-full bg-slate-200">
                         <div
                           className="h-full rounded-full bg-blue-600"
-                          style={{ width: `${impactSummary.progress.percent}%` }}
+                          style={{ width: `${supporterProgressPercent}%` }}
                         />
                       </div>
                     </div>
