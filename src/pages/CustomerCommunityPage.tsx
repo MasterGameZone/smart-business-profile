@@ -69,7 +69,7 @@ type FeedbackMessage = {
   text: string
 } | null
 
-type ImpactView = 'summary' | 'supportedBusinesses'
+type ImpactView = 'summary' | 'supportedBusinesses' | 'invitationsShared'
 
 type CustomerSupporterLevelIcon = 'new' | 'supporter' | 'builder' | 'champion'
 
@@ -633,6 +633,12 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
   const sharedSupports = supportedBusinesses.filter(
     (support) => support.status === 'Invitation Shared' || support.status === 'Profile Published'
   )
+  const sharedInvitationSupports = supportedBusinesses.filter(
+    (support) =>
+      (support.status === 'Invitation Shared' || Boolean(support.invitation_shared_at)) &&
+      support.status !== 'Profile Published' &&
+      !support.published_profile_id
+  )
   const publishedSupports = supportedBusinesses.filter((support) => support.status === 'Profile Published')
   const publishedProfilesCount = publishedSupports.length
   const supporterLevel = getCustomerSupporterLevel(publishedProfilesCount)
@@ -977,11 +983,15 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
   const activeInvitationMessage = activeSupport
     ? buildInvitationMessage(activeSupport, activeInvitationLink)
     : ''
-  const renderSupportedBusinessesList = (supports: CustomerBusinessSupportRow[]) => (
+  const renderSupportedBusinessesList = (
+    supports: CustomerBusinessSupportRow[],
+    emptyMessage = 'No supported businesses yet.',
+    statusLabelOverride?: CustomerBusinessSupportStatus
+  ) => (
     <div className="overflow-hidden rounded-2xl border border-[#c7d2df] bg-white">
       {supports.length === 0 && (
         <div className="px-3 py-3">
-          <p className="text-sm text-slate-600">No supported businesses yet.</p>
+          <p className="text-sm text-slate-600">{emptyMessage}</p>
         </div>
       )}
 
@@ -1010,10 +1020,10 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
             <div className="flex shrink-0 items-center gap-1.5">
               <span
                 className={`inline-flex shrink-0 whitespace-nowrap rounded-full px-2 py-1 text-[8px] font-medium leading-none ${statusPillClass(
-                  support.status
+                  statusLabelOverride ?? support.status
                 )}`}
               >
-                {support.status}
+                {statusLabelOverride ?? support.status}
               </span>
               <span className="shrink-0 text-slate-400">
                 <ChevronRightSmallIcon />
@@ -1097,6 +1107,29 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                 </>
               )}
 
+              {!isSupportsLoading && !impactDisplayError && impactView === 'invitationsShared' && (
+                <>
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="text-base font-semibold text-black">Invitations Shared</h3>
+                    <button
+                      type="button"
+                      className={secondaryButtonClassName}
+                      onClick={() => setImpactView('summary')}
+                    >
+                      Back
+                    </button>
+                  </div>
+
+                  <div className="mt-4">
+                    {renderSupportedBusinessesList(
+                      sharedInvitationSupports,
+                      'No shared invitations yet.',
+                      'Invitation Shared'
+                    )}
+                  </div>
+                </>
+              )}
+
               {!isSupportsLoading &&
                 !impactDisplayError &&
                 impactView === 'summary' &&
@@ -1167,13 +1200,16 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                         </>
                       )
 
-                      if (stat.label === 'Businesses Supported') {
+                      if (stat.label === 'Businesses Supported' || stat.label === 'Invitations Shared') {
+                        const nextImpactView =
+                          stat.label === 'Businesses Supported' ? 'supportedBusinesses' : 'invitationsShared'
+
                         return (
                           <button
                             key={stat.label}
                             type="button"
                             className="rounded-2xl border border-[#c7d2df] bg-[#f8fafc] p-3 text-left"
-                            onClick={() => setImpactView('supportedBusinesses')}
+                            onClick={() => setImpactView(nextImpactView)}
                           >
                             {chipContent}
                           </button>
