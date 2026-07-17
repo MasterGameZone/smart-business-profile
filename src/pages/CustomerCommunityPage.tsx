@@ -69,6 +69,8 @@ type FeedbackMessage = {
   text: string
 } | null
 
+type ImpactView = 'summary' | 'supportedBusinesses'
+
 type CustomerSupporterLevelIcon = 'new' | 'supporter' | 'builder' | 'champion'
 
 interface CustomerSupporterLevel {
@@ -520,6 +522,7 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
   const [improvementSuggestionErrors, setImprovementSuggestionErrors] = useState<PlatformSuggestionFormErrors>({})
   const [selectedFeatureKey, setSelectedFeatureKey] = useState<CustomerFeatureKey | null>(null)
   const [votingFeatureKey, setVotingFeatureKey] = useState<CustomerFeatureKey | null>(null)
+  const [impactView, setImpactView] = useState<ImpactView>('summary')
   const [isSubmittingFeatureSuggestion, setIsSubmittingFeatureSuggestion] = useState(false)
   const [isSubmittingImprovementSuggestion, setIsSubmittingImprovementSuggestion] = useState(false)
 
@@ -974,6 +977,53 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
   const activeInvitationMessage = activeSupport
     ? buildInvitationMessage(activeSupport, activeInvitationLink)
     : ''
+  const renderSupportedBusinessesList = (supports: CustomerBusinessSupportRow[]) => (
+    <div className="overflow-hidden rounded-2xl border border-[#c7d2df] bg-white">
+      {supports.length === 0 && (
+        <div className="px-3 py-3">
+          <p className="text-sm text-slate-600">No supported businesses yet.</p>
+        </div>
+      )}
+
+      {supports.map((support, index) => (
+        <article
+          key={support.id}
+          className={`${index > 0 ? 'border-t border-slate-200' : ''}`}
+        >
+          <div className="flex items-center gap-2 px-3 py-2">
+            <span
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${supportedBusinessIconClass(
+                support.status
+              )}`}
+            >
+              <SupportedBusinessIcon />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[11px] font-semibold text-slate-950">{support.business_name}</p>
+              <p className="truncate text-[9px] leading-tight text-slate-600">
+                {support.business_category} {' • '} {support.business_location}
+              </p>
+              <p className="truncate text-[9px] leading-tight text-slate-500">
+                Submitted {formatCompactDate(support.created_at)}
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <span
+                className={`inline-flex shrink-0 whitespace-nowrap rounded-full px-2 py-1 text-[8px] font-medium leading-none ${statusPillClass(
+                  support.status
+                )}`}
+              >
+                {support.status}
+              </span>
+              <span className="shrink-0 text-slate-400">
+                <ChevronRightSmallIcon />
+              </span>
+            </div>
+          </div>
+        </article>
+      ))}
+    </div>
+  )
 
   return (
     <div className={isMenuMode ? 'text-black' : 'min-h-screen bg-[#eef4fa] text-black'}>
@@ -1028,7 +1078,29 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                 </div>
               )}
 
-              {!isSupportsLoading && !impactDisplayError && impactSummary.businessesSupported === 0 && (
+              {!isSupportsLoading && !impactDisplayError && impactView === 'supportedBusinesses' && (
+                <>
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="text-base font-semibold text-black">Supported Businesses</h3>
+                    <button
+                      type="button"
+                      className={secondaryButtonClassName}
+                      onClick={() => setImpactView('summary')}
+                    >
+                      Back
+                    </button>
+                  </div>
+
+                  <div className="mt-4">
+                    {renderSupportedBusinessesList(supportedBusinesses)}
+                  </div>
+                </>
+              )}
+
+              {!isSupportsLoading &&
+                !impactDisplayError &&
+                impactView === 'summary' &&
+                impactSummary.businessesSupported === 0 && (
                 <div className={`mt-5 ${cardClassName}`}>
                   <p className="text-base font-semibold text-black">Start building your local impact</p>
                   <p className="mt-1 text-sm text-black">
@@ -1053,7 +1125,10 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                 </div>
               )}
 
-              {!isSupportsLoading && !impactDisplayError && impactSummary.businessesSupported > 0 && (
+              {!isSupportsLoading &&
+                !impactDisplayError &&
+                impactView === 'summary' &&
+                impactSummary.businessesSupported > 0 && (
                 <>
                   <div className="rounded-2xl border border-[#c7d2df] bg-white px-4 py-4 shadow-[0_18px_48px_-34px_rgba(2,12,27,0.55)]">
                     <div className="min-w-0">
@@ -1075,24 +1150,45 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                   <div className="mt-5">
                     <h3 className="text-base font-semibold text-black">Your Impact Summary</h3>
                     <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                    {impactStats.map((stat) => (
-                      <div
-                        key={stat.label}
-                        className="rounded-2xl border border-[#c7d2df] bg-[#f8fafc] p-3"
-                      >
-                        <div className="flex items-center gap-2.5 px-1">
-                          <span
-                            className={`flex size-8 shrink-0 items-center justify-center rounded-full ${stat.iconWrapClassName}`}
+                    {impactStats.map((stat) => {
+                      const chipContent = (
+                        <>
+                          <div className="flex items-center gap-2.5 px-1">
+                            <span
+                              className={`flex size-8 shrink-0 items-center justify-center rounded-full ${stat.iconWrapClassName}`}
+                            >
+                              {stat.icon}
+                            </span>
+                            <span className="text-xl font-semibold text-black">{stat.value}</span>
+                          </div>
+                          <p className="mt-1 whitespace-nowrap text-[8px] font-medium leading-none text-slate-500">
+                            {stat.label}
+                          </p>
+                        </>
+                      )
+
+                      if (stat.label === 'Businesses Supported') {
+                        return (
+                          <button
+                            key={stat.label}
+                            type="button"
+                            className="rounded-2xl border border-[#c7d2df] bg-[#f8fafc] p-3 text-left"
+                            onClick={() => setImpactView('supportedBusinesses')}
                           >
-                            {stat.icon}
-                          </span>
-                          <span className="text-xl font-semibold text-black">{stat.value}</span>
+                            {chipContent}
+                          </button>
+                        )
+                      }
+
+                      return (
+                        <div
+                          key={stat.label}
+                          className="rounded-2xl border border-[#c7d2df] bg-[#f8fafc] p-3"
+                        >
+                          {chipContent}
                         </div>
-                        <p className="mt-1 whitespace-nowrap text-[8px] font-medium leading-none text-slate-500">
-                          {stat.label}
-                        </p>
-                      </div>
-                    ))}
+                      )
+                    })}
                     </div>
                   </div>
 
@@ -1164,44 +1260,8 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
 
                   <div className="mt-7">
                     <h3 className="text-base font-semibold text-black">Supported Businesses</h3>
-                    <div className="mt-4 overflow-hidden rounded-2xl border border-[#c7d2df] bg-white">
-                      {impactSummary.recentSupports.map((support, index) => (
-                        <article
-                          key={support.id}
-                          className={`${index > 0 ? 'border-t border-slate-200' : ''}`}
-                        >
-                          <div className="flex items-center gap-2 px-3 py-2">
-                            <span
-                              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${supportedBusinessIconClass(
-                                support.status
-                              )}`}
-                            >
-                              <SupportedBusinessIcon />
-                            </span>
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-[11px] font-semibold text-slate-950">{support.business_name}</p>
-                              <p className="truncate text-[9px] leading-tight text-slate-600">
-                                {support.business_category} {' • '} {support.business_location}
-                              </p>
-                              <p className="truncate text-[9px] leading-tight text-slate-500">
-                                Submitted {formatCompactDate(support.created_at)}
-                              </p>
-                            </div>
-                            <div className="flex shrink-0 items-center gap-1.5">
-                              <span
-                                className={`inline-flex shrink-0 whitespace-nowrap rounded-full px-2 py-1 text-[8px] font-medium leading-none ${statusPillClass(
-                                  support.status
-                                )}`}
-                              >
-                                {support.status}
-                              </span>
-                              <span className="shrink-0 text-slate-400">
-                                <ChevronRightSmallIcon />
-                              </span>
-                            </div>
-                          </div>
-                        </article>
-                      ))}
+                    <div className="mt-4">
+                      {renderSupportedBusinessesList(impactSummary.recentSupports)}
                     </div>
                   </div>
 
