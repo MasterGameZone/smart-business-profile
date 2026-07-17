@@ -447,6 +447,7 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
 
   const sectionClassName =
     'rounded-3xl border border-[#c7d2df] bg-white p-6 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] sm:p-8'
+  const impactSectionClassName = isMenuMode ? 'px-2 pb-2' : sectionClassName
   const actionButtonClassName =
     'inline-flex min-h-[42px] items-center justify-center rounded-full border border-sky-200 bg-blue-50 px-5 py-2.5 text-sm font-semibold text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70'
   const secondaryButtonClassName =
@@ -928,7 +929,7 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
 
         <div>
           {activeTab === 'impact' && (
-            <section id="impact" className={sectionClassName}>
+            <section id="impact" className={impactSectionClassName}>
               {isSupportsLoading && !impactDisplayError && (
                 <div className={`mt-5 ${cardClassName}`}>
                   <p className="text-sm text-black">Loading your local impact...</p>
