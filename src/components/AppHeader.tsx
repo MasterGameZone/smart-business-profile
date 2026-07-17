@@ -91,7 +91,7 @@ interface BusinessOwnerMenuState {
 }
 
 type BusinessOwnerMenuPanel = 'main' | 'profile' | 'analytics' | 'notifications' | 'settings'
-type BusinessOwnerSettingsView = 'main' | 'faqs' | 'suggestions' | 'recent'
+type BusinessOwnerSettingsView = 'main' | 'help' | 'notifications' | 'security' | 'faqs' | 'suggestions' | 'recent'
 type BusinessOwnerPhoneModalMode = 'add' | 'change'
 type BusinessOwnerPhoneModalStep = 'phone' | 'otp' | 'success'
 type BusinessOwnerAnalyticsRange = '7D' | '30D' | '90D'
@@ -811,28 +811,15 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     title: insight.title || 'Business insight',
     description: insight.description,
   }))
-  const businessOwnerSettingsSections = [
-    {
-      title: 'Help & Suggestions',
-      items: [
-        'Business account FAQs',
-        'Suggestions',
-        'Recent help & suggestions',
-      ],
-    },
-    {
-      title: 'Security',
-      items: [
-        'Change phone number',
-        'Change email address',
-        'Change password',
-      ],
-    },
-    {
-      title: 'Delete Account',
-      items: ['Delete business profile', 'Delete business account'],
-      danger: true,
-    },
+  const businessOwnerHelpSettingsItems = [
+    'Business account FAQs',
+    'Suggestions',
+    'Recent help & suggestions',
+  ]
+  const businessOwnerSecuritySettingsItems = [
+    'Change phone number',
+    'Change email address',
+    'Change password',
   ]
 
   const resetBusinessOwnerNotificationsSession = () => {
@@ -2599,7 +2586,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const renderBusinessOwnerSettingsPanel = () => (
     businessOwnerSettingsView === 'faqs' ? (
       <>
-        {renderBusinessOwnerSubPanelHeader('Business account FAQs', () => setBusinessOwnerSettingsView('main'))}
+        {renderBusinessOwnerSubPanelHeader('Business account FAQs', () => setBusinessOwnerSettingsView('help'))}
         <section className="space-y-3">
           <div className={businessOwnerPanelCardClass}>
             <p className="text-sm leading-relaxed text-slate-600">
@@ -2644,7 +2631,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       </>
     ) : businessOwnerSettingsView === 'suggestions' ? (
       <>
-        {renderBusinessOwnerSubPanelHeader('Suggestions', () => setBusinessOwnerSettingsView('main'))}
+        {renderBusinessOwnerSubPanelHeader('Suggestions', () => setBusinessOwnerSettingsView('help'))}
         <section className="space-y-3">
           <div className={businessOwnerPanelCardClass}>
             <p className="text-sm leading-relaxed text-slate-600">
@@ -2736,7 +2723,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       </>
     ) : businessOwnerSettingsView === 'recent' ? (
       <>
-        {renderBusinessOwnerSubPanelHeader('Recent help & suggestions', () => setBusinessOwnerSettingsView('main'))}
+        {renderBusinessOwnerSubPanelHeader('Recent help & suggestions', () => setBusinessOwnerSettingsView('help'))}
         <section className="space-y-3">
           <div className={businessOwnerPanelCardClass}>
             <p className="text-sm leading-relaxed text-slate-600">
@@ -2813,56 +2800,46 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
           )}
         </section>
       </>
-    ) : (
+    ) : businessOwnerSettingsView === 'help' ? (
       <>
-        {renderBusinessOwnerPanelHeader('Settings')}
+        {renderBusinessOwnerSubPanelHeader('Help & Suggestions', () => setBusinessOwnerSettingsView('main'))}
         <section className="space-y-3">
-          {businessOwnerSettingsSections.slice(0, 1).map((section) => (
-            <div
-              key={section.title}
-              className={`rounded-2xl border p-3 ${
-                section.danger ? 'border-rose-100 bg-rose-50/70' : 'border-slate-200 bg-slate-50/80'
-              }`}
-            >
-              <h3 className={`text-sm font-semibold ${section.danger ? 'text-rose-700' : 'text-[#0f172a]'}`}>
-                {section.title}
-              </h3>
-              <div className="mt-2 overflow-hidden rounded-xl border border-white/70 bg-white">
-                {section.items.map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={
-                      item === 'Business account FAQs'
-                        ? () => {
-                            setOpenBusinessOwnerFaqQuestion(null)
-                            setBusinessOwnerSettingsView('faqs')
-                          }
-                        : item === 'Suggestions'
-                          ? () => {
-                              resetBusinessOwnerSuggestionForm()
-                              setBusinessOwnerSettingsView('suggestions')
-                            }
-                          : item === 'Recent help & suggestions'
-                            ? () => {
-                                setOpenBusinessOwnerRecentHelpSuggestionId(null)
-                                setBusinessOwnerSettingsView('recent')
-                              }
-                          : undefined
-                    }
-                    className={`flex w-full items-center justify-between border-b border-slate-100 px-3 py-2.5 text-left text-sm last:border-b-0 ${
-                      section.danger ? 'text-rose-700' : 'text-slate-700'
-                    }`}
-                  >
-                    <span>{item}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+            {businessOwnerHelpSettingsItems.map((item) => (
+              <button
+                key={item}
+                type="button"
+                onClick={
+                  item === 'Business account FAQs'
+                    ? () => {
+                        setOpenBusinessOwnerFaqQuestion(null)
+                        setBusinessOwnerSettingsView('faqs')
+                      }
+                    : item === 'Suggestions'
+                      ? () => {
+                          resetBusinessOwnerSuggestionForm()
+                          setBusinessOwnerSettingsView('suggestions')
+                        }
+                      : () => {
+                          setOpenBusinessOwnerRecentHelpSuggestionId(null)
+                          setBusinessOwnerSettingsView('recent')
+                        }
+                }
+                className={businessOwnerMenuRowClass}
+              >
+                <span className="font-medium text-[#0f172a]">{item}</span>
+                <span className="text-slate-400" aria-hidden="true">&gt;</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      </>
+    ) : businessOwnerSettingsView === 'notifications' ? (
+      <>
+        {renderBusinessOwnerSubPanelHeader('Notification Settings', () => setBusinessOwnerSettingsView('main'))}
+        <section className="space-y-3">
           <div className={businessOwnerPanelCardClass}>
-            <h3 className="text-sm font-semibold text-[#0f172a]">Notification Settings</h3>
-            <div className="mt-3 flex items-start justify-between gap-3 rounded-xl border border-white/70 bg-white px-3 py-3">
+            <div className="flex items-start justify-between gap-3 rounded-xl border border-white/70 bg-white px-3 py-3">
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-[#0f172a]">Business notifications</p>
                 <p className="mt-1 text-xs leading-relaxed text-slate-500">
@@ -2901,52 +2878,82 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
               <p className="mt-2 text-xs text-rose-700">{businessOwnerNotificationPreferenceError}</p>
             ) : null}
           </div>
-          {businessOwnerSettingsSections.slice(1).map((section) => (
-            <div
-              key={section.title}
-              className={`rounded-2xl border p-3 ${
-                section.danger ? 'border-rose-100 bg-rose-50/70' : 'border-slate-200 bg-slate-50/80'
-              }`}
-            >
-              <h3 className={`text-sm font-semibold ${section.danger ? 'text-rose-700' : 'text-[#0f172a]'}`}>
-                {section.title}
-              </h3>
-              <div className="mt-2 overflow-hidden rounded-xl border border-white/70 bg-white">
-                {section.items.map((item) => (
-                  item === 'Change password' ? (
-                    <button
-                      key={item}
-                      type="button"
-                      onClick={() => {
-                        setBusinessOwnerChangePasswordErrors({})
-                        setBusinessOwnerChangePasswordSuccess(false)
-                        setIsBusinessOwnerChangePasswordModalOpen(true)
-                      }}
-                      className={`flex w-full items-center justify-between border-b border-slate-100 px-3 py-2.5 text-left text-sm transition hover:bg-slate-50 focus:bg-slate-50 focus:outline-none last:border-b-0 ${
-                        section.danger ? 'text-rose-700' : 'text-slate-700'
-                      }`}
-                    >
-                      <span>{item}</span>
-                    </button>
-                  ) : (
-                    <div
-                      key={item}
-                      className={`flex w-full items-center justify-between border-b border-slate-100 px-3 py-2.5 text-left text-sm last:border-b-0 ${
-                        section.danger ? 'text-rose-700' : 'text-slate-700'
-                      } ${item === 'Change email address' || item === 'Change phone number' ? 'opacity-80' : ''}`}
-                    >
-                      <span>{item}</span>
-                      {item === 'Change email address' || item === 'Change phone number' ? (
-                        <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold text-slate-500">
-                          Coming Soon
-                        </span>
-                      ) : null}
-                    </div>
-                  )
-                ))}
+        </section>
+      </>
+    ) : businessOwnerSettingsView === 'security' ? (
+      <>
+        {renderBusinessOwnerSubPanelHeader('Security', () => setBusinessOwnerSettingsView('main'))}
+        <section className="space-y-3">
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+            {businessOwnerSecuritySettingsItems.map((item) => (
+              item === 'Change password' ? (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => {
+                    setBusinessOwnerChangePasswordErrors({})
+                    setBusinessOwnerChangePasswordSuccess(false)
+                    setIsBusinessOwnerChangePasswordModalOpen(true)
+                  }}
+                  className={businessOwnerMenuRowClass}
+                >
+                  <span className="font-medium text-[#0f172a]">{item}</span>
+                </button>
+              ) : (
+                <div
+                  key={item}
+                  className={`${businessOwnerMenuRowClass} opacity-80`}
+                >
+                  <span className="font-medium text-[#0f172a]">{item}</span>
+                  <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold text-slate-500">
+                    Coming Soon
+                  </span>
+                </div>
+              )
+            ))}
+          </div>
+          <div className="rounded-2xl border border-rose-100 bg-rose-50/70 p-3">
+            <div className="overflow-hidden rounded-xl border border-rose-100/80 bg-white/90">
+              <div className="flex w-full items-center justify-between px-3 py-2.5 text-left text-sm text-rose-700">
+                <span className="font-medium">Delete Account</span>
+                <span className="rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-600">
+                  Coming Soon
+                </span>
               </div>
             </div>
-          ))}
+          </div>
+        </section>
+      </>
+    ) : (
+      <>
+        {renderBusinessOwnerPanelHeader('Settings')}
+        <section className="space-y-3">
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+            <button
+              type="button"
+              onClick={() => setBusinessOwnerSettingsView('help')}
+              className={businessOwnerMenuRowClass}
+            >
+              <span className="font-medium text-[#0f172a]">Help & Suggestions</span>
+              <span className="text-slate-400" aria-hidden="true">&gt;</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setBusinessOwnerSettingsView('notifications')}
+              className={businessOwnerMenuRowClass}
+            >
+              <span className="font-medium text-[#0f172a]">Notification Settings</span>
+              <span className="text-slate-400" aria-hidden="true">&gt;</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setBusinessOwnerSettingsView('security')}
+              className={`${businessOwnerMenuRowClass} border-b-0`}
+            >
+              <span className="font-medium text-[#0f172a]">Security</span>
+              <span className="text-slate-400" aria-hidden="true">&gt;</span>
+            </button>
+          </div>
           <button
             type="button"
             role="menuitem"
