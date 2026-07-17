@@ -69,7 +69,7 @@ type FeedbackMessage = {
   text: string
 } | null
 
-type ImpactView = 'summary' | 'supportedBusinesses' | 'invitationsShared'
+type ImpactView = 'summary' | 'supportedBusinesses' | 'invitationsShared' | 'linksOpened'
 
 type CustomerSupporterLevelIcon = 'new' | 'supporter' | 'builder' | 'champion'
 
@@ -639,6 +639,12 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
       support.status !== 'Profile Published' &&
       !support.published_profile_id
   )
+  const openedInviteSupports = supportedBusinesses.filter(
+    (support) =>
+      Boolean(support.invitation_opened_at) &&
+      support.status !== 'Profile Published' &&
+      !support.published_profile_id
+  )
   const publishedSupports = supportedBusinesses.filter((support) => support.status === 'Profile Published')
   const publishedProfilesCount = publishedSupports.length
   const supporterLevel = getCustomerSupporterLevel(publishedProfilesCount)
@@ -986,7 +992,9 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
   const renderSupportedBusinessesList = (
     supports: CustomerBusinessSupportRow[],
     emptyMessage = 'No supported businesses yet.',
-    statusLabelOverride?: CustomerBusinessSupportStatus
+    statusLabelOverride?: string,
+    statusClassNameOverride?: string,
+    dateLabelForSupport?: (support: CustomerBusinessSupportRow) => string
   ) => (
     <div className="overflow-hidden rounded-2xl border border-[#c7d2df] bg-white">
       {supports.length === 0 && (
@@ -1014,14 +1022,14 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                 {support.business_category} {' • '} {support.business_location}
               </p>
               <p className="truncate text-[9px] leading-tight text-slate-500">
-                Submitted {formatCompactDate(support.created_at)}
+                {dateLabelForSupport ? dateLabelForSupport(support) : `Submitted ${formatCompactDate(support.created_at)}`}
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-1.5">
               <span
-                className={`inline-flex shrink-0 whitespace-nowrap rounded-full px-2 py-1 text-[8px] font-medium leading-none ${statusPillClass(
-                  statusLabelOverride ?? support.status
-                )}`}
+                className={`inline-flex shrink-0 whitespace-nowrap rounded-full px-2 py-1 text-[8px] font-medium leading-none ${
+                  statusClassNameOverride ?? statusPillClass(support.status)
+                }`}
               >
                 {statusLabelOverride ?? support.status}
               </span>
@@ -1124,7 +1132,33 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                     {renderSupportedBusinessesList(
                       sharedInvitationSupports,
                       'No shared invitations yet.',
-                      'Invitation Shared'
+                      'Invitation Shared',
+                      statusPillClass('Invitation Shared')
+                    )}
+                  </div>
+                </>
+              )}
+
+              {!isSupportsLoading && !impactDisplayError && impactView === 'linksOpened' && (
+                <>
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="text-base font-semibold text-black">Links Opened</h3>
+                    <button
+                      type="button"
+                      className={secondaryButtonClassName}
+                      onClick={() => setImpactView('summary')}
+                    >
+                      Back
+                    </button>
+                  </div>
+
+                  <div className="mt-4">
+                    {renderSupportedBusinessesList(
+                      openedInviteSupports,
+                      'No opened invite links yet.',
+                      'Link Opened',
+                      'bg-violet-50 text-violet-700',
+                      (support) => `Opened ${formatCompactDate(support.invitation_opened_at ?? support.created_at)}`
                     )}
                   </div>
                 </>
@@ -1200,9 +1234,17 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                         </>
                       )
 
-                      if (stat.label === 'Businesses Supported' || stat.label === 'Invitations Shared') {
+                      if (
+                        stat.label === 'Businesses Supported' ||
+                        stat.label === 'Invitations Shared' ||
+                        stat.label === 'Links Opened'
+                      ) {
                         const nextImpactView =
-                          stat.label === 'Businesses Supported' ? 'supportedBusinesses' : 'invitationsShared'
+                          stat.label === 'Businesses Supported'
+                            ? 'supportedBusinesses'
+                            : stat.label === 'Invitations Shared'
+                              ? 'invitationsShared'
+                              : 'linksOpened'
 
                         return (
                           <button
