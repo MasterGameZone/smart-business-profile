@@ -10,6 +10,7 @@ import {
   calculateCustomerImpactSummary,
   createCustomerBusinessSupport,
   listCustomerBusinessSupports,
+  listCustomerSupportInviteProfileStates,
   markBusinessSupportShared,
 } from '../lib/customerBusinessSupportService.ts'
 import {
@@ -69,7 +70,7 @@ type FeedbackMessage = {
   text: string
 } | null
 
-type ImpactView = 'summary' | 'supportedBusinesses' | 'invitationsShared' | 'linksOpened'
+type ImpactView = 'summary' | 'supportedBusinesses' | 'invitationsShared' | 'linksOpened' | 'businessSignedUp'
 
 type CustomerSupporterLevelIcon = 'new' | 'supporter' | 'builder' | 'champion'
 
@@ -503,6 +504,7 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
   const [supportForm, setSupportForm] = useState<SupportFormState>(defaultSupportFormState)
   const [formErrors, setFormErrors] = useState<SupportFormErrors>({})
   const [supportedBusinesses, setSupportedBusinesses] = useState<CustomerBusinessSupportRow[]>([])
+  const [supportProfileStartedById, setSupportProfileStartedById] = useState<Record<string, boolean>>({})
   const [activeSupport, setActiveSupport] = useState<CustomerBusinessSupportRow | null>(null)
   const [isSupportsLoading, setIsSupportsLoading] = useState(true)
   const [isSavingSupport, setIsSavingSupport] = useState(false)
@@ -569,16 +571,26 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
 
     let isCurrent = true
 
-    void listCustomerBusinessSupports(userId)
-      .then((supports) => {
+    void Promise.all([
+      listCustomerBusinessSupports(userId),
+      listCustomerSupportInviteProfileStates().catch((error) => {
+        console.error('Failed to load support invite profile states:', error)
+        return []
+      }),
+    ])
+      .then(([supports, profileStates]) => {
         if (!isCurrent) return
         setSupportedBusinesses(supports)
+        setSupportProfileStartedById(
+          Object.fromEntries(profileStates.map((state) => [state.supportId, state.profileStarted]))
+        )
         setSupportLoadError(null)
       })
       .catch((error) => {
         if (!isCurrent) return
         console.error('Failed to load supported businesses:', error)
         setSupportLoadError('We could not load your supported businesses right now. Please try again.')
+        setSupportProfileStartedById({})
       })
       .finally(() => {
         if (!isCurrent) return
@@ -649,6 +661,14 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
       support.status !== 'Profile Published' &&
       !support.published_profile_id
   )
+  const businessSignedUpSupports = supportedBusinesses.filter(
+    (support) =>
+      Boolean(support.business_signed_up_at) &&
+      Boolean(support.invited_owner_user_id) &&
+      support.status !== 'Profile Published' &&
+      !support.published_profile_id &&
+      supportProfileStartedById[support.id] === false
+  )
   const publishedSupports = supportedBusinesses.filter((support) => support.status === 'Profile Published')
   const publishedProfilesCount = publishedSupports.length
   const supporterLevel = getCustomerSupporterLevel(publishedProfilesCount)
@@ -675,7 +695,7 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
     },
     {
       label: 'Businesses Signed Up',
-      value: impactSummary.businessesSignedUp,
+      value: businessSignedUpSupports.length,
       icon: <ImpactUserPlusIcon />,
       iconWrapClassName: 'bg-green-50 text-green-700',
     },
@@ -1168,6 +1188,31 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                 </>
               )}
 
+              {!isSupportsLoading && !impactDisplayError && impactView === 'businessSignedUp' && (
+                <>
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="text-base font-semibold text-black">Business Signed Up</h3>
+                    <button
+                      type="button"
+                      className={secondaryButtonClassName}
+                      onClick={() => setImpactView('summary')}
+                    >
+                      Back
+                    </button>
+                  </div>
+
+                  <div className="mt-4">
+                    {renderSupportedBusinessesList(
+                      businessSignedUpSupports,
+                      'No businesses have signed up without starting a profile yet.',
+                      'Business Signed Up',
+                      statusPillClass('Business Signed Up'),
+                      (support) => `Signed up ${formatCompactDate(support.business_signed_up_at ?? support.created_at)}`
+                    )}
+                  </div>
+                </>
+              )}
+
               {!isSupportsLoading &&
                 !impactDisplayError &&
                 impactView === 'summary' &&
@@ -1241,14 +1286,17 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                       if (
                         stat.label === 'Businesses Supported' ||
                         stat.label === 'Invitations Shared' ||
-                        stat.label === 'Links Opened'
+                        stat.label === 'Links Opened' ||
+                        stat.label === 'Businesses Signed Up'
                       ) {
                         const nextImpactView =
                           stat.label === 'Businesses Supported'
                             ? 'supportedBusinesses'
                             : stat.label === 'Invitations Shared'
                               ? 'invitationsShared'
-                              : 'linksOpened'
+                              : stat.label === 'Links Opened'
+                                ? 'linksOpened'
+                                : 'businessSignedUp'
 
                         return (
                           <button

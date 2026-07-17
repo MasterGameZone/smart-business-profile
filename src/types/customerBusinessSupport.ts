@@ -44,6 +44,11 @@ export interface CustomerSupportInvitePreview {
   customerName: string | null
 }
 
+export interface CustomerSupportInviteProfileState {
+  supportId: string
+  profileStarted: boolean
+}
+
 export interface CustomerImpactProgress {
   percent: number
   text: string

@@ -5,6 +5,7 @@ import type {
   CustomerImpactSummary,
   CustomerBusinessSupportInsert,
   CustomerBusinessSupportRow,
+  CustomerSupportInviteProfileState,
   CustomerSupportInvitePreview,
 } from '../types/customerBusinessSupport.ts'
 
@@ -13,6 +14,11 @@ const RECENT_IMPACT_LIMIT = 5
 
 type SupportInvitePreviewRpcRow = {
   customer_name: string | null
+}
+
+type SupportInviteProfileStateRpcRow = {
+  support_id: string
+  profile_started: boolean
 }
 
 function normalizeOptionalMessage(value: string | null): string | null {
@@ -117,6 +123,19 @@ export function calculateCustomerImpactSummary(
 export async function getCustomerImpactSummary(customerId: string): Promise<CustomerImpactSummary> {
   const supports = await listCustomerBusinessSupports(customerId)
   return calculateCustomerImpactSummary(supports)
+}
+
+export async function listCustomerSupportInviteProfileStates(): Promise<CustomerSupportInviteProfileState[]> {
+  const { data, error } = await supabase.rpc('get_customer_support_invite_profile_states')
+
+  if (error) {
+    throw error
+  }
+
+  return ((data ?? []) as SupportInviteProfileStateRpcRow[]).map((state) => ({
+    supportId: state.support_id,
+    profileStarted: state.profile_started,
+  }))
 }
 
 export async function createCustomerBusinessSupport({
