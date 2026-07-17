@@ -594,7 +594,6 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
   const impactSummary = calculateCustomerImpactSummary(supportedBusinesses)
   const supportedBusinessCount = impactSummary.businessesSupported
   const supporterLevel = getCustomerSupporterLevel(supportedBusinessCount)
-  void supporterLevel
   const impactDisplayError =
     !isAuthLoading && !userId ? 'Please sign in to view your local impact.' : supportLoadError
   const supportDisplayError =
@@ -1033,13 +1032,13 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                     <div className="min-w-0">
                       <p className="text-xs font-semibold text-blue-700">Current Supporter Badge</p>
                       <div className="mt-1 inline-flex max-w-full items-center gap-2">
-                        <p className="min-w-0 text-lg font-semibold text-black">{impactSummary.badge}</p>
+                        <p className="min-w-0 text-lg font-semibold text-black">{supporterLevel.levelName}</p>
                         <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white">
                           <SupporterBadgeIcon />
                         </span>
                       </div>
                       <p className="mt-1 text-sm leading-relaxed text-black">
-                        Your support is helping trusted local businesses become easier to find online.
+                        {supporterLevel.description}
                       </p>
                     </div>
                   </div>
