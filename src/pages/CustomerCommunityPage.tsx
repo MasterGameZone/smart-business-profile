@@ -83,8 +83,8 @@ interface CustomerSupporterLevel {
   iconWrapClassName: string
 }
 
-function getCustomerSupporterLevel(supportedBusinessCount: number): CustomerSupporterLevel {
-  if (supportedBusinessCount >= 6) {
+function getCustomerSupporterLevel(publishedProfilesCount: number): CustomerSupporterLevel {
+  if (publishedProfilesCount >= 6) {
     return {
       levelName: 'Local Champion',
       description: "You're a local champion helping more businesses grow their online presence.",
@@ -98,28 +98,28 @@ function getCustomerSupporterLevel(supportedBusinessCount: number): CustomerSupp
     }
   }
 
-  if (supportedBusinessCount >= 3) {
+  if (publishedProfilesCount >= 3) {
     return {
       levelName: 'Community Builder',
       description: 'Your support is helping trusted local businesses become easier to find online.',
       nextLevelName: 'Local Champion',
       nextLevelTarget: 6,
-      progressText: `${supportedBusinessCount} / 6 businesses supported to reach Local Champion`,
-      progressPercent: Math.min(100, Math.round((supportedBusinessCount / 6) * 100)),
+      progressText: `${publishedProfilesCount} / 6 profiles published to reach Local Champion`,
+      progressPercent: Math.min(100, Math.round((publishedProfilesCount / 6) * 100)),
       isMaxLevel: false,
       icon: 'builder',
       iconWrapClassName: 'bg-indigo-100 text-indigo-700',
     }
   }
 
-  if (supportedBusinessCount >= 1) {
+  if (publishedProfilesCount >= 1) {
     return {
       levelName: 'Local Supporter',
       description: "You've started helping local businesses become easier to discover.",
       nextLevelName: 'Community Builder',
       nextLevelTarget: 3,
-      progressText: `${supportedBusinessCount} / 3 businesses supported to reach Community Builder`,
-      progressPercent: Math.min(100, Math.round((supportedBusinessCount / 3) * 100)),
+      progressText: `${publishedProfilesCount} / 3 profiles published to reach Community Builder`,
+      progressPercent: Math.min(100, Math.round((publishedProfilesCount / 3) * 100)),
       isMaxLevel: false,
       icon: 'supporter',
       iconWrapClassName: 'bg-emerald-100 text-emerald-700',
@@ -131,7 +131,7 @@ function getCustomerSupporterLevel(supportedBusinessCount: number): CustomerSupp
     description: "You're ready to start supporting trusted local businesses in your area.",
     nextLevelName: 'Local Supporter',
     nextLevelTarget: 1,
-    progressText: '0 / 1 business supported to reach Local Supporter',
+    progressText: '0 / 1 profile published to reach Local Supporter',
     progressPercent: 0,
     isMaxLevel: false,
     icon: 'new',
@@ -618,8 +618,6 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
 
   const impactSummary = calculateCustomerImpactSummary(supportedBusinesses)
   const supportedBusinessCount = impactSummary.businessesSupported
-  const supporterLevel = getCustomerSupporterLevel(supportedBusinessCount)
-  const supporterProgressPercent = Math.max(0, Math.min(100, supporterLevel.progressPercent))
   const impactDisplayError =
     !isAuthLoading && !userId ? 'Please sign in to view your local impact.' : supportLoadError
   const supportDisplayError =
@@ -633,6 +631,9 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
     (support) => support.status === 'Invitation Shared' || support.status === 'Profile Published'
   )
   const publishedSupports = supportedBusinesses.filter((support) => support.status === 'Profile Published')
+  const publishedProfilesCount = publishedSupports.length
+  const supporterLevel = getCustomerSupporterLevel(publishedProfilesCount)
+  const supporterProgressPercent = Math.max(0, Math.min(100, supporterLevel.progressPercent))
   const profilesInProgressCount = Math.max(sharedSupports.length - publishedSupports.length, 0)
   const impactStats = [
     {
