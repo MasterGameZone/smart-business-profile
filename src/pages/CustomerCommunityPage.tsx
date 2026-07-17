@@ -69,6 +69,23 @@ type FeedbackMessage = {
   text: string
 } | null
 
+function SupporterBadgeIcon() {
+  return (
+    <svg className="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M12 3.5 18 6v5.2c0 3.8-2.4 7.2-6 8.4-3.6-1.2-6-4.6-6-8.4V6l6-2.5Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path
+        d="m12 8.2.9 1.8 2 .3-1.5 1.4.4 2-1.8-.9-1.8.9.4-2-1.5-1.4 2-.3.9-1.8Z"
+        fill="currentColor"
+      />
+    </svg>
+  )
+}
+
 const defaultSupportFormState: SupportFormState = {
   businessName: '',
   businessCategory: '',
@@ -695,13 +712,6 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
         <div>
           {activeTab === 'impact' && (
             <section id="impact" className={sectionClassName}>
-              <div>
-                <h2 className="text-lg font-semibold tracking-tight text-black sm:text-xl">My Local Impact</h2>
-                <p className="mt-1 text-sm text-black">
-                  See how the businesses you support contribute to your local community impact.
-                </p>
-              </div>
-
               {isSupportsLoading && !impactDisplayError && (
                 <div className={`mt-5 ${cardClassName}`}>
                   <p className="text-sm text-black">Loading your local impact...</p>
@@ -741,20 +751,18 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
 
               {!isSupportsLoading && !impactDisplayError && impactSummary.businessesSupported > 0 && (
                 <>
-                  <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-4">
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-blue-700">
-                          Current supporter badge
-                        </p>
-                        <p className="mt-1 text-xl font-semibold text-black">{impactSummary.badge}</p>
-                        <p className="mt-2 text-sm text-black">
-                          Your support helps trusted local businesses become easier to find online.
-                        </p>
+                  <div className="rounded-2xl border border-[#c7d2df] bg-white px-4 py-4 shadow-[0_18px_48px_-34px_rgba(2,12,27,0.55)]">
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-blue-700">Current Supporter Badge</p>
+                      <div className="mt-1 inline-flex max-w-full items-center gap-2">
+                        <p className="min-w-0 text-lg font-semibold text-black">{impactSummary.badge}</p>
+                        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white">
+                          <SupporterBadgeIcon />
+                        </span>
                       </div>
-                      <span className="inline-flex self-start rounded-full bg-white px-3 py-1 text-xs font-semibold text-blue-700">
-                        {impactSummary.level}
-                      </span>
+                      <p className="mt-1 text-sm leading-relaxed text-black">
+                        Your support is helping trusted local businesses become easier to find online.
+                      </p>
                     </div>
                   </div>
 
