@@ -69,6 +69,64 @@ type FeedbackMessage = {
   text: string
 } | null
 
+interface CustomerSupporterLevel {
+  levelName: string
+  description: string
+  nextLevelName: string | null
+  nextLevelTarget: number | null
+  progressText: string
+  progressPercent: number
+  isMaxLevel: boolean
+}
+
+function getCustomerSupporterLevel(supportedBusinessCount: number): CustomerSupporterLevel {
+  if (supportedBusinessCount >= 6) {
+    return {
+      levelName: 'Local Champion',
+      description: "You're a local champion helping more businesses grow their online presence.",
+      nextLevelName: null,
+      nextLevelTarget: null,
+      progressText: 'You reached Local Champion. Next level coming soon.',
+      progressPercent: 100,
+      isMaxLevel: true,
+    }
+  }
+
+  if (supportedBusinessCount >= 3) {
+    return {
+      levelName: 'Community Builder',
+      description: 'Your support is helping trusted local businesses become easier to find online.',
+      nextLevelName: 'Local Champion',
+      nextLevelTarget: 6,
+      progressText: `${supportedBusinessCount} / 6 businesses supported to reach Local Champion`,
+      progressPercent: Math.min(100, Math.round((supportedBusinessCount / 6) * 100)),
+      isMaxLevel: false,
+    }
+  }
+
+  if (supportedBusinessCount >= 1) {
+    return {
+      levelName: 'Local Supporter',
+      description: "You've started helping local businesses become easier to discover.",
+      nextLevelName: 'Community Builder',
+      nextLevelTarget: 3,
+      progressText: `${supportedBusinessCount} / 3 businesses supported to reach Community Builder`,
+      progressPercent: Math.min(100, Math.round((supportedBusinessCount / 3) * 100)),
+      isMaxLevel: false,
+    }
+  }
+
+  return {
+    levelName: 'New Supporter',
+    description: "You're ready to start supporting trusted local businesses in your area.",
+    nextLevelName: 'Local Supporter',
+    nextLevelTarget: 1,
+    progressText: '0 / 1 business supported to reach Local Supporter',
+    progressPercent: 0,
+    isMaxLevel: false,
+  }
+}
+
 function SupporterBadgeIcon() {
   return (
     <svg className="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -534,6 +592,9 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
   }, [activeTab, isAuthLoading, userId])
 
   const impactSummary = calculateCustomerImpactSummary(supportedBusinesses)
+  const supportedBusinessCount = impactSummary.businessesSupported
+  const supporterLevel = getCustomerSupporterLevel(supportedBusinessCount)
+  void supporterLevel
   const impactDisplayError =
     !isAuthLoading && !userId ? 'Please sign in to view your local impact.' : supportLoadError
   const supportDisplayError =
@@ -586,7 +647,6 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
       iconWrapClassName: 'bg-cyan-50 text-cyan-700',
     },
   ]
-  const supportedBusinessCount = impactSummary.businessesSupported
   const canVoteOnFeatures = supportedBusinessCount >= 1
   const canSubmitFeatureSuggestion = supportedBusinessCount >= 3
   const communityPrivileges = [
