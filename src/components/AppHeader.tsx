@@ -2409,8 +2409,8 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     { label: customerActivityMenuItems[2].label, icon: <ProfileIcon />, showChevron: true, panel: 'activityCorrections' },
   ]
   const customerCommunityRenderItems: CustomerMenuRenderItem[] = [
-    { label: customerCommunityMenuItems[0].label, icon: <FollowersMetricIcon />, showChevron: true, panel: 'communityImpact' },
     { label: customerCommunityMenuItems[1].label, icon: <ActionMetricIcon />, showChevron: true, panel: 'communitySupport' },
+    { label: customerCommunityMenuItems[0].label, icon: <FollowersMetricIcon />, showChevron: true, panel: 'communityImpact' },
     { label: customerCommunityMenuItems[2].label, icon: <SettingsIcon />, showChevron: true, panel: 'communityShape' },
   ]
   const customerHelpRenderItems: CustomerMenuRenderItem[] = [
