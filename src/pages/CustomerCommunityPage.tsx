@@ -288,6 +288,7 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
   const helperClassName = 'mt-1 text-xs text-slate-500'
   const errorClassName = 'mt-1 text-xs font-medium text-red-700'
   const cardClassName = 'rounded-2xl border border-[#c7d2df] bg-[#f8fafc] px-4 py-4'
+  const lockedCardClassName = 'rounded-2xl border border-[#c7d2df] bg-white px-4 py-4'
 
   const tabs: Array<{ id: CommunityTab; label: string }> = [
     { id: 'impact', label: 'My Local Impact' },
@@ -296,7 +297,13 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
   ]
 
   useEffect(() => {
-    if ((activeTab !== 'support' && activeTab !== 'impact') || isAuthLoading || !userId) return
+    if (
+      (activeTab !== 'support' && activeTab !== 'impact' && activeTab !== 'shape') ||
+      isAuthLoading ||
+      !userId
+    ) {
+      return
+    }
 
     let isCurrent = true
 
@@ -359,9 +366,13 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
   const supportDisplayError =
     !isAuthLoading && !userId ? 'Please sign in to support a business.' : supportLoadError
   const shapeDisplayError =
-    !isAuthLoading && !userId ? 'Please sign in to shape the platform.' : shapeLoadError
+    !isAuthLoading && !userId ? 'Please sign in to shape the platform.' : shapeLoadError ?? supportLoadError
   const showShapeLoading =
-    isAuthLoading || Boolean(userId && (isShapeLoading || loadedShapeCustomerId !== userId))
+    isAuthLoading ||
+    Boolean(userId && (isShapeLoading || isSupportsLoading || loadedShapeCustomerId !== userId))
+  const supportedBusinessCount = impactSummary.businessesSupported
+  const canVoteOnFeatures = supportedBusinessCount >= 1
+  const canSubmitFeatureSuggestion = supportedBusinessCount >= 3
   const votedFeatureKeys = new Set(featureVotes.map((vote) => vote.feature_key))
 
   const updateSupportInList = (nextSupport: CustomerBusinessSupportRow) => {
@@ -485,6 +496,15 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
 
     const suggestions = await listCustomerPlatformSuggestions(userId)
     setPlatformSuggestions(suggestions)
+  }
+
+  const openSupportBusinessView = (): void => {
+    if (isMenuMode && onSelectTab) {
+      onSelectTab('support')
+      return
+    }
+
+    navigate('/customer/community#support')
   }
 
   const handleCreatePlatformSuggestion = async (
@@ -1034,16 +1054,9 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
 
           {activeTab === 'shape' && (
             <section id="shape" className={sectionClassName}>
-              <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-4">
-                <h2 className="text-lg font-semibold tracking-tight text-black sm:text-xl">Shape the Platform</h2>
-                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-black">
-                  Vote on upcoming features, suggest improvements, and help us build a better local business network.
-                </p>
-              </div>
-
               {shapeFeedback && (
                 <div
-                  className={`mt-5 rounded-2xl border px-4 py-3 text-sm ${
+                  className={`rounded-2xl border px-4 py-3 text-sm ${
                     shapeFeedback.kind === 'success'
                       ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
                       : 'border-red-200 bg-red-50 text-red-700'
@@ -1066,47 +1079,80 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
               )}
 
               {!showShapeLoading && !shapeDisplayError && (
-                <>
-                  <div className="mt-7">
-                    <h3 className="text-base font-semibold text-black">Vote on Upcoming Features</h3>
-                    <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      {CUSTOMER_FEATURE_OPTIONS.map((feature) => {
-                        const hasVoted = votedFeatureKeys.has(feature.key)
-                        const isVoting = votingFeatureKey === feature.key
+                <div className="space-y-5">
+                  <div className={cardClassName}>
+                    <h3 className="text-base font-semibold text-black">Vote on Next Features</h3>
 
-                        return (
-                          <article key={feature.key} className={cardClassName}>
-                            <div className="flex h-full flex-col justify-between gap-4">
-                              <div>
-                                <h4 className="text-sm font-semibold text-black sm:text-base">{feature.title}</h4>
-                                <p className="mt-2 text-sm leading-relaxed text-black">{feature.description}</p>
-                              </div>
-                              <button
-                                type="button"
-                                className={hasVoted ? secondaryButtonClassName : actionButtonClassName}
-                                onClick={() => void handleToggleFeatureVote(feature)}
-                                disabled={Boolean(votingFeatureKey)}
+                    {canVoteOnFeatures ? (
+                      <>
+                        <div className={`mt-4 ${lockedCardClassName}`}>
+                          <div className="space-y-3">
+                          {CUSTOMER_FEATURE_OPTIONS.map((feature) => {
+                            const hasVoted = votedFeatureKeys.has(feature.key)
+                            const isVoting = votingFeatureKey === feature.key
+
+                            return (
+                              <article
+                                key={feature.key}
+                                className="rounded-2xl border border-[#dbe3ec] bg-[#f8fafc] px-4 py-4"
                               >
-                                {isVoting ? 'Updating...' : hasVoted ? 'Voted' : 'Vote'}
-                              </button>
-                            </div>
-                          </article>
-                        )
-                      })}
-                    </div>
-                    <p className={helperClassName}>
-                      Your votes are private. Public vote counts and leaderboards are not part of this MVP.
-                    </p>
+                                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                  <div className="min-w-0">
+                                    <h4 className="text-sm font-semibold text-black sm:text-base">{feature.title}</h4>
+                                    <p className="mt-2 text-sm leading-relaxed text-black">{feature.description}</p>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    className={hasVoted ? secondaryButtonClassName : actionButtonClassName}
+                                    onClick={() => void handleToggleFeatureVote(feature)}
+                                    disabled={Boolean(votingFeatureKey)}
+                                  >
+                                    {isVoting ? 'Updating...' : hasVoted ? 'Voted' : 'Vote'}
+                                  </button>
+                                </div>
+                              </article>
+                            )
+                          })}
+                          </div>
+                        </div>
+                        <p className={helperClassName}>
+                          Your votes are private. Public vote counts and leaderboards are not part of this MVP.
+                        </p>
+                      </>
+                    ) : (
+                      <div className={`mt-4 ${lockedCardClassName}`}>
+                        <p className="text-sm font-semibold text-black">Locked</p>
+                        <p className="mt-1 text-sm leading-relaxed text-black">
+                          Support at least 1 local business to unlock voting on upcoming features.
+                        </p>
+                        <div className="mt-4">
+                          <button
+                            type="button"
+                            className={actionButtonClassName}
+                            onClick={openSupportBusinessView}
+                          >
+                            Support a Business
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  <form
-                    className="mt-8 rounded-2xl border border-[#c7d2df] bg-[#f8fafc] px-4 py-4"
-                    onSubmit={(event) => void handleCreatePlatformSuggestion(event, 'feature')}
-                  >
-                    <div>
-                      <h3 className="text-base font-semibold text-black">Submit Feature Suggestion</h3>
-                      <p className="mt-1 text-sm text-black">Share one feature idea that would make the platform better.</p>
-                    </div>
+                  <div className={cardClassName}>
+                    <h3 className="text-base font-semibold text-black">Submit a Feature Suggestion</h3>
+
+                    {canSubmitFeatureSuggestion ? (
+                      <>
+                        <form
+                          className={`mt-4 ${lockedCardClassName}`}
+                          onSubmit={(event) => void handleCreatePlatformSuggestion(event, 'feature')}
+                        >
+                          <div>
+                            <p className="text-sm font-semibold text-black">Feature Suggestion</p>
+                            <p className="mt-1 text-sm text-black">
+                              Share one feature idea that would make the platform better.
+                            </p>
+                          </div>
 
                     <div className="mt-5 grid grid-cols-1 gap-5">
                       <label className="block">
@@ -1156,11 +1202,11 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                   </form>
 
                   <form
-                    className="mt-5 rounded-2xl border border-[#c7d2df] bg-[#f8fafc] px-4 py-4"
+                    className={`mt-5 ${lockedCardClassName}`}
                     onSubmit={(event) => void handleCreatePlatformSuggestion(event, 'improvement')}
                   >
                     <div>
-                      <h3 className="text-base font-semibold text-black">Suggest Category or Improvement</h3>
+                      <h4 className="text-sm font-semibold text-black">Suggest Category or Improvement</h4>
                       <p className="mt-1 text-sm text-black">Suggest a missing category or a focused platform improvement.</p>
                     </div>
 
@@ -1228,11 +1274,11 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                     </div>
                   </form>
 
-                  <div className="mt-8">
-                    <h3 className="text-base font-semibold text-black">My Suggestions</h3>
+                  <div className={`mt-5 ${lockedCardClassName}`}>
+                    <h4 className="text-sm font-semibold text-black">My Suggestions</h4>
                     <div className="mt-4 space-y-4">
                       {platformSuggestions.length === 0 && (
-                        <div className={cardClassName}>
+                        <div className="rounded-2xl border border-[#dbe3ec] bg-[#f8fafc] px-4 py-4">
                           <p className="text-sm font-semibold text-black">No suggestions yet</p>
                           <p className="mt-1 text-sm text-black">
                             Your submitted ideas and improvements will appear here.
@@ -1241,7 +1287,10 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                       )}
 
                       {platformSuggestions.map((suggestion) => (
-                        <article key={suggestion.id} className={cardClassName}>
+                        <article
+                          key={suggestion.id}
+                          className="rounded-2xl border border-[#dbe3ec] bg-[#f8fafc] px-4 py-4"
+                        >
                           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                             <div className="min-w-0">
                               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
@@ -1267,7 +1316,26 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                       ))}
                     </div>
                   </div>
-                </>
+                      </>
+                    ) : (
+                      <div className={`mt-4 ${lockedCardClassName}`}>
+                        <p className="text-sm font-semibold text-black">Locked</p>
+                        <p className="mt-1 text-sm leading-relaxed text-black">
+                          Support 3 local businesses to unlock feature suggestions.
+                        </p>
+                        <div className="mt-4">
+                          <button
+                            type="button"
+                            className={actionButtonClassName}
+                            onClick={openSupportBusinessView}
+                          >
+                            Support a Business
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               )}
             </section>
           )}

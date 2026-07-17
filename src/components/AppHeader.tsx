@@ -2862,7 +2862,15 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       return (
         <>
           {renderCustomerPanelHeader('Shape the Platform', 'community')}
-          <CustomerCommunityPage mode="menu" activeView="shape" />
+          <CustomerCommunityPage
+            mode="menu"
+            activeView="shape"
+            onSelectTab={(tab) => {
+              if (tab === 'support') {
+                setCustomerMenuPanel('communitySupport')
+              }
+            }}
+          />
         </>
       )
     }
