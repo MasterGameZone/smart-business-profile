@@ -196,6 +196,29 @@ function PrivilegeLockedStatusIcon() {
   )
 }
 
+function SupportedBusinessIcon() {
+  return (
+    <svg className="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M5.5 9.5 7 5.5h10l1.5 4v8.5a1.5 1.5 0 0 1-1.5 1.5H7A1.5 1.5 0 0 1 5.5 18V9.5Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path d="M4.5 9.5h15" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M10 19.5v-4h4v4" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function ChevronRightSmallIcon() {
+  return (
+    <svg className="size-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="m9 6 6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 const defaultSupportFormState: SupportFormState = {
   businessName: '',
   businessCategory: '',
@@ -243,6 +266,20 @@ function formatDate(value: string): string {
   }).format(date)
 }
 
+function formatCompactDate(value: string): string {
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return 'Date unavailable'
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(date)
+}
+
 function statusPillClass(status: CustomerBusinessSupportStatus): string {
   switch (status) {
     case 'Profile Published':
@@ -251,6 +288,17 @@ function statusPillClass(status: CustomerBusinessSupportStatus): string {
       return 'bg-blue-50 text-blue-700'
     case 'Nominated':
       return 'bg-amber-50 text-amber-700'
+  }
+}
+
+function supportedBusinessIconClass(status: CustomerBusinessSupportStatus): string {
+  switch (status) {
+    case 'Profile Published':
+      return 'bg-emerald-50 text-emerald-700'
+    case 'Invitation Shared':
+      return 'bg-blue-50 text-blue-700'
+    case 'Nominated':
+      return 'bg-slate-100 text-slate-600'
   }
 }
 
@@ -1024,24 +1072,42 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                   </div>
 
                   <div className="mt-7">
-                    <h3 className="text-base font-semibold text-black">Recent supported businesses</h3>
-                    <div className="mt-4 space-y-3">
-                      {impactSummary.recentSupports.map((support) => (
-                        <article key={support.id} className={cardClassName}>
-                          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                            <div>
-                              <p className="text-base font-semibold text-black">{support.business_name}</p>
-                              <p className="mt-1 text-sm text-black">{support.business_category}</p>
-                              <p className="mt-1 text-sm text-black">{support.business_location}</p>
-                              <p className="mt-2 text-sm text-slate-500">Submitted {formatDate(support.created_at)}</p>
-                            </div>
+                    <h3 className="text-base font-semibold text-black">Supported Businesses</h3>
+                    <div className="mt-4 overflow-hidden rounded-2xl border border-[#c7d2df] bg-white">
+                      {impactSummary.recentSupports.map((support, index) => (
+                        <article
+                          key={support.id}
+                          className={`${index > 0 ? 'border-t border-slate-200' : ''}`}
+                        >
+                          <div className="flex items-center gap-2 px-3 py-2">
                             <span
-                              className={`inline-flex self-start rounded-full px-3 py-1 text-xs font-semibold ${statusPillClass(
+                              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${supportedBusinessIconClass(
                                 support.status
                               )}`}
                             >
-                              {support.status}
+                              <SupportedBusinessIcon />
                             </span>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-[11px] font-semibold text-slate-950">{support.business_name}</p>
+                              <p className="truncate text-[9px] leading-tight text-slate-600">
+                                {support.business_category} {' • '} {support.business_location}
+                              </p>
+                              <p className="truncate text-[9px] leading-tight text-slate-500">
+                                Submitted {formatCompactDate(support.created_at)}
+                              </p>
+                            </div>
+                            <div className="flex shrink-0 items-center gap-1.5">
+                              <span
+                                className={`inline-flex shrink-0 whitespace-nowrap rounded-full px-2 py-1 text-[8px] font-medium leading-none ${statusPillClass(
+                                  support.status
+                                )}`}
+                              >
+                                {support.status}
+                              </span>
+                              <span className="shrink-0 text-slate-400">
+                                <ChevronRightSmallIcon />
+                              </span>
+                            </div>
                           </div>
                         </article>
                       ))}
