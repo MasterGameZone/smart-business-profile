@@ -88,11 +88,6 @@ const defaultImprovementSuggestionForm: PlatformSuggestionFormState = {
   message: '',
 }
 
-const improvementSuggestionTypes: CustomerPlatformSuggestionType[] = [
-  'Category Suggestion',
-  'Platform Improvement',
-]
-
 function getActiveTab(hash: string): CommunityTab {
   if (hash === '#support') return 'support'
   if (hash === '#shape') return 'shape'
@@ -1222,79 +1217,6 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                         disabled={isSubmittingFeatureSuggestion || !userId}
                       >
                         {isSubmittingFeatureSuggestion ? 'Submitting...' : 'Submit Feature Suggestion'}
-                      </button>
-                    </div>
-                  </form>
-
-                  <form
-                    className={`mt-5 ${lockedCardClassName}`}
-                    onSubmit={(event) => void handleCreatePlatformSuggestion(event, 'improvement')}
-                  >
-                    <div>
-                      <h4 className="text-sm font-semibold text-black">Suggest Category or Improvement</h4>
-                      <p className="mt-1 text-sm text-black">Suggest a missing category or a focused platform improvement.</p>
-                    </div>
-
-                    <div className="mt-5 grid grid-cols-1 gap-5">
-                      <label className="block">
-                        <span className={labelClassName}>Suggestion type</span>
-                        <select
-                          value={improvementSuggestionForm.suggestionType}
-                          onChange={(event) =>
-                            handlePlatformSuggestionFormChange('improvement', 'suggestionType', event.target.value)
-                          }
-                          className={fieldClassName}
-                        >
-                          {improvementSuggestionTypes.map((type) => (
-                            <option key={type} value={type}>
-                              {type}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-
-                      <label className="block">
-                        <span className={labelClassName}>Title</span>
-                        <input
-                          type="text"
-                          value={improvementSuggestionForm.title}
-                          onChange={(event) =>
-                            handlePlatformSuggestionFormChange('improvement', 'title', event.target.value)
-                          }
-                          placeholder="Example: Pet Grooming"
-                          maxLength={80}
-                          className={fieldClassName}
-                          aria-invalid={Boolean(improvementSuggestionErrors.title)}
-                        />
-                        <p className={helperClassName}>{normalizeText(improvementSuggestionForm.title).length}/80 characters. Links are not allowed.</p>
-                        {improvementSuggestionErrors.title && <p className={errorClassName}>{improvementSuggestionErrors.title}</p>}
-                      </label>
-
-                      <label className="block">
-                        <span className={labelClassName}>Message</span>
-                        <textarea
-                          value={improvementSuggestionForm.message}
-                          onChange={(event) =>
-                            handlePlatformSuggestionFormChange('improvement', 'message', event.target.value)
-                          }
-                          placeholder="Add context for the category or improvement you want to suggest."
-                          rows={4}
-                          maxLength={500}
-                          className={fieldClassName}
-                          aria-invalid={Boolean(improvementSuggestionErrors.message)}
-                        />
-                        <p className={helperClassName}>{normalizeText(improvementSuggestionForm.message).length}/500 characters. Links are not allowed.</p>
-                        {improvementSuggestionErrors.message && <p className={errorClassName}>{improvementSuggestionErrors.message}</p>}
-                      </label>
-                    </div>
-
-                    <div className="mt-5">
-                      <button
-                        type="submit"
-                        className={actionButtonClassName}
-                        disabled={isSubmittingImprovementSuggestion || !userId}
-                      >
-                        {isSubmittingImprovementSuggestion ? 'Submitting...' : 'Submit Suggestion'}
                       </button>
                     </div>
                   </form>
