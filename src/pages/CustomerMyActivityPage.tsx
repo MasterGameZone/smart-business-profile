@@ -15,6 +15,11 @@ import type {
 
 type ActivityTab = 'reviews' | 'reports' | 'corrections'
 
+interface CustomerMyActivityPageProps {
+  activeView?: ActivityTab
+  mode?: 'page' | 'menu'
+}
+
 type FeedbackMessage = {
   kind: 'success' | 'error'
   text: string
@@ -84,11 +89,12 @@ function RatingStars({ rating, labelId }: { rating: number; labelId: string }) {
   )
 }
 
-function CustomerMyActivityPage() {
+function CustomerMyActivityPage({ activeView, mode = 'page' }: CustomerMyActivityPageProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, isLoading: isAuthLoading } = useAuth()
   const userId = user?.id ?? null
+  const isMenuMode = mode === 'menu'
 
   const [reviewItems, setReviewItems] = useState<CustomerReviewActivityItem[]>([])
   const [reportItems, setReportItems] = useState<CustomerReportActivityItem[]>([])
@@ -110,7 +116,7 @@ function CustomerMyActivityPage() {
     description: 'View your customer reviews, reported profiles, and submitted corrections.',
   })
 
-  const activeTab = getActiveTab(location.hash)
+  const activeTab = activeView ?? getActiveTab(location.hash)
 
   const sectionClassName =
     'rounded-3xl border border-[#c7d2df] bg-white p-6 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] sm:p-8'
@@ -270,37 +276,39 @@ function CustomerMyActivityPage() {
     isAuthLoading || Boolean(userId && loadedReportsCustomerId !== userId)
 
   return (
-    <div className="min-h-screen bg-[#eef4fa] text-black">
-      <main className="mx-auto max-w-4xl px-4 py-10 sm:py-12">
-        <section className="mb-8">
-          <h1 className="text-2xl font-bold tracking-tight text-black sm:text-3xl">My Activity</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-black sm:text-base">
-            Review your customer-side activity history across ratings, reports, and submitted corrections.
-          </p>
-          <div className="mt-5 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => navigate('/customer/my-activity#reviews')}
-              className={tabClassName('reviews')}
-            >
-              Ratings & Reviews
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/customer/my-activity#reports')}
-              className={tabClassName('reports')}
-            >
-              Reported Profiles
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/customer/my-activity#corrections')}
-              className={tabClassName('corrections')}
-            >
-              Submitted Corrections
-            </button>
-          </div>
-        </section>
+    <div className={isMenuMode ? 'text-black' : 'min-h-screen bg-[#eef4fa] text-black'}>
+      <main className={isMenuMode ? '' : 'mx-auto max-w-4xl px-4 py-10 sm:py-12'}>
+        {!isMenuMode && (
+          <section className="mb-8">
+            <h1 className="text-2xl font-bold tracking-tight text-black sm:text-3xl">My Activity</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-black sm:text-base">
+              Review your customer-side activity history across ratings, reports, and submitted corrections.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => navigate('/customer/my-activity#reviews')}
+                className={tabClassName('reviews')}
+              >
+                Ratings & Reviews
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/customer/my-activity#reports')}
+                className={tabClassName('reports')}
+              >
+                Reported Profiles
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/customer/my-activity#corrections')}
+                className={tabClassName('corrections')}
+              >
+                Submitted Corrections
+              </button>
+            </div>
+          </section>
+        )}
 
         <div className="space-y-6">
           {activeTab === 'reviews' && (

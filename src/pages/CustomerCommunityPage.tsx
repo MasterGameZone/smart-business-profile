@@ -34,6 +34,11 @@ import type {
 
 type CommunityTab = 'impact' | 'support' | 'shape'
 
+interface CustomerCommunityPageProps {
+  activeView?: CommunityTab
+  mode?: 'page' | 'menu'
+}
+
 interface SupportFormState {
   businessName: string
   businessCategory: string
@@ -227,12 +232,13 @@ function invitationLinkForSupport(support: CustomerBusinessSupportRow): string {
   return buildInvitationLink(support, window.location.origin)
 }
 
-function CustomerCommunityPage() {
+function CustomerCommunityPage({ activeView, mode = 'page' }: CustomerCommunityPageProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, isLoading: isAuthLoading } = useAuth()
   const userId = user?.id ?? null
-  const activeTab = getActiveTab(location.hash)
+  const isMenuMode = mode === 'menu'
+  const activeTab = activeView ?? getActiveTab(location.hash)
 
   const [supportForm, setSupportForm] = useState<SupportFormState>(defaultSupportFormState)
   const [formErrors, setFormErrors] = useState<SupportFormErrors>({})
@@ -628,38 +634,42 @@ function CustomerCommunityPage() {
     : ''
 
   return (
-    <div className="min-h-screen bg-[#eef4fa] text-black">
-      <main className="mx-auto max-w-4xl px-4 py-10 sm:py-12">
-        <section className="mb-8">
-          <div className="inline-flex items-center rounded-full border border-[#c7d2df] bg-white px-3 py-1 text-xs font-semibold text-blue-700">
-            Community Preview
-          </div>
-          <h1 className="mt-3 text-2xl font-bold tracking-tight text-black sm:text-3xl">Your Local Community</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-black sm:text-base">
-            Support trusted businesses, track your contribution, and help shape the platform.
-          </p>
-        </section>
+    <div className={isMenuMode ? 'text-black' : 'min-h-screen bg-[#eef4fa] text-black'}>
+      <main className={isMenuMode ? '' : 'mx-auto max-w-4xl px-4 py-10 sm:py-12'}>
+        {!isMenuMode && (
+          <>
+            <section className="mb-8">
+              <div className="inline-flex items-center rounded-full border border-[#c7d2df] bg-white px-3 py-1 text-xs font-semibold text-blue-700">
+                Community Preview
+              </div>
+              <h1 className="mt-3 text-2xl font-bold tracking-tight text-black sm:text-3xl">Your Local Community</h1>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-black sm:text-base">
+                Support trusted businesses, track your contribution, and help shape the platform.
+              </p>
+            </section>
 
-        <div className="mb-6 flex flex-wrap gap-3">
-          {tabs.map((tab) => {
-            const isActive = activeTab === tab.id
+            <div className="mb-6 flex flex-wrap gap-3">
+              {tabs.map((tab) => {
+                const isActive = activeTab === tab.id
 
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                className={`${tabButtonClassName} ${
-                  isActive
-                    ? 'border-blue-200 bg-blue-50 text-blue-700'
-                    : 'border-[#c7d2df] bg-white text-black'
-                }`}
-                onClick={() => navigate(`/customer/community#${tab.id}`)}
-              >
-                {tab.label}
-              </button>
-            )
-          })}
-        </div>
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    className={`${tabButtonClassName} ${
+                      isActive
+                        ? 'border-blue-200 bg-blue-50 text-blue-700'
+                        : 'border-[#c7d2df] bg-white text-black'
+                    }`}
+                    onClick={() => navigate(`/customer/community#${tab.id}`)}
+                  >
+                    {tab.label}
+                  </button>
+                )
+              })}
+            </div>
+          </>
+        )}
 
         <div>
           {activeTab === 'impact' && (

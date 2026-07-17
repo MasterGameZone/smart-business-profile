@@ -67,6 +67,8 @@ import type { BusinessOwnerProfileFormValues } from '../types/businessOwnerProfi
 import type { CustomerNotificationRow } from '../types/customerNotification.ts'
 import type { CustomerProfileFormValues } from '../types/customerProfile.ts'
 import type { FavoriteBusinessWithProfileRow } from '../types/favoriteBusiness.ts'
+import CustomerCommunityPage from '../pages/CustomerCommunityPage.tsx'
+import CustomerMyActivityPage from '../pages/CustomerMyActivityPage.tsx'
 import { ToastContainer, type ToastItem } from './Toast.tsx'
 
 interface AppHeaderPreviewConfig {
@@ -117,7 +119,20 @@ type BusinessOwnerPhoneModalMode = 'add' | 'change'
 type BusinessOwnerPhoneModalStep = 'phone' | 'otp' | 'success'
 type BusinessOwnerAnalyticsRange = '7D' | '30D' | '90D'
 type BusinessOwnerProfileActivityInterval = 'Daily' | 'Weekly' | 'Monthly'
-type CustomerMenuPanel = 'main' | 'profile' | 'notifications' | 'saved' | 'activity' | 'community' | 'settings'
+type CustomerMenuPanel =
+  | 'main'
+  | 'profile'
+  | 'notifications'
+  | 'saved'
+  | 'activity'
+  | 'activityReviews'
+  | 'activityReports'
+  | 'activityCorrections'
+  | 'community'
+  | 'communityImpact'
+  | 'communitySupport'
+  | 'communityShape'
+  | 'settings'
 type CustomerSavedBusinessesLoadState = 'idle' | 'loading' | 'found' | 'empty' | 'error'
 let hasPlayedNavbarEntrance = false
 
@@ -2293,12 +2308,12 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     </section>
   )
 
-  const renderCustomerPanelHeader = (title: string) => (
+  const renderCustomerPanelHeader = (title: string, backPanel: CustomerMenuPanel = 'main') => (
     <div className="mb-3 flex items-center justify-between gap-3">
       <h2 className="text-sm font-semibold text-[#0f172a]">{title}</h2>
       <button
         type="button"
-        onClick={() => setCustomerMenuPanel('main')}
+        onClick={() => setCustomerMenuPanel(backPanel)}
         className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
       >
         <span>Back</span>
@@ -2389,14 +2404,14 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     },
   ]
   const customerActivityRenderItems: CustomerMenuRenderItem[] = [
-    { ...customerActivityMenuItems[0], icon: <MessageActionIcon />, showChevron: true },
-    { ...customerActivityMenuItems[1], icon: <TrendInsightIcon />, showChevron: true },
-    { ...customerActivityMenuItems[2], icon: <ProfileIcon />, showChevron: true },
+    { label: customerActivityMenuItems[0].label, icon: <MessageActionIcon />, showChevron: true, panel: 'activityReviews' },
+    { label: customerActivityMenuItems[1].label, icon: <TrendInsightIcon />, showChevron: true, panel: 'activityReports' },
+    { label: customerActivityMenuItems[2].label, icon: <ProfileIcon />, showChevron: true, panel: 'activityCorrections' },
   ]
   const customerCommunityRenderItems: CustomerMenuRenderItem[] = [
-    { ...customerCommunityMenuItems[0], icon: <FollowersMetricIcon />, showChevron: true },
-    { ...customerCommunityMenuItems[1], icon: <ActionMetricIcon />, showChevron: true },
-    { ...customerCommunityMenuItems[2], icon: <SettingsIcon />, showChevron: true },
+    { label: customerCommunityMenuItems[0].label, icon: <FollowersMetricIcon />, showChevron: true, panel: 'communityImpact' },
+    { label: customerCommunityMenuItems[1].label, icon: <ActionMetricIcon />, showChevron: true, panel: 'communitySupport' },
+    { label: customerCommunityMenuItems[2].label, icon: <SettingsIcon />, showChevron: true, panel: 'communityShape' },
   ]
   const customerHelpRenderItems: CustomerMenuRenderItem[] = [
     { ...customerHelpMenuItems[0], icon: <SettingsIcon />, showChevron: true },
@@ -2781,11 +2796,65 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       )
     }
 
+    if (customerMenuPanel === 'activityReviews') {
+      return (
+        <>
+          {renderCustomerPanelHeader('Ratings & Reviews', 'activity')}
+          <CustomerMyActivityPage mode="menu" activeView="reviews" />
+        </>
+      )
+    }
+
+    if (customerMenuPanel === 'activityReports') {
+      return (
+        <>
+          {renderCustomerPanelHeader('Reported Profiles', 'activity')}
+          <CustomerMyActivityPage mode="menu" activeView="reports" />
+        </>
+      )
+    }
+
+    if (customerMenuPanel === 'activityCorrections') {
+      return (
+        <>
+          {renderCustomerPanelHeader('Submitted Corrections', 'activity')}
+          <CustomerMyActivityPage mode="menu" activeView="corrections" />
+        </>
+      )
+    }
+
     if (customerMenuPanel === 'community') {
       return (
         <>
           {renderCustomerPanelHeader('Community')}
           {renderCustomerMenuGroup(null, customerCommunityRenderItems)}
+        </>
+      )
+    }
+
+    if (customerMenuPanel === 'communityImpact') {
+      return (
+        <>
+          {renderCustomerPanelHeader('My Local Impact', 'community')}
+          <CustomerCommunityPage mode="menu" activeView="impact" />
+        </>
+      )
+    }
+
+    if (customerMenuPanel === 'communitySupport') {
+      return (
+        <>
+          {renderCustomerPanelHeader('Support a Business', 'community')}
+          <CustomerCommunityPage mode="menu" activeView="support" />
+        </>
+      )
+    }
+
+    if (customerMenuPanel === 'communityShape') {
+      return (
+        <>
+          {renderCustomerPanelHeader('Shape the Platform', 'community')}
+          <CustomerCommunityPage mode="menu" activeView="shape" />
         </>
       )
     }
