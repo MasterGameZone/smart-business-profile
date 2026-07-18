@@ -10,7 +10,6 @@ import {
   calculateCustomerImpactSummary,
   createCustomerBusinessSupport,
   listCustomerBusinessSupports,
-  listCustomerSupportInviteProfileStates,
   markBusinessSupportShared,
 } from '../lib/customerBusinessSupportService.ts'
 import {
@@ -395,6 +394,38 @@ function hasReachedProfilePublished(support: CustomerBusinessSupportRow): boolea
   return Boolean(support.published_profile_id) || support.status === 'Profile Published'
 }
 
+function isInvitationSharedCurrentStage(support: CustomerBusinessSupportRow): boolean {
+  return (
+    hasReachedInvitationShared(support) &&
+    !support.invitation_opened_at &&
+    !support.business_signed_up_at &&
+    !support.business_owner_switched_at &&
+    !hasReachedProfilePublished(support)
+  )
+}
+
+function isLinkOpenedCurrentStage(support: CustomerBusinessSupportRow): boolean {
+  return (
+    Boolean(support.invitation_opened_at) &&
+    !support.business_signed_up_at &&
+    !support.business_owner_switched_at &&
+    !hasReachedProfilePublished(support)
+  )
+}
+
+function isBusinessSignedUpCurrentStage(support: CustomerBusinessSupportRow): boolean {
+  return (
+    Boolean(support.business_signed_up_at) &&
+    Boolean(support.invited_owner_user_id) &&
+    !support.business_owner_switched_at &&
+    !hasReachedProfilePublished(support)
+  )
+}
+
+function isBusinessOwnerSwitchedCurrentStage(support: CustomerBusinessSupportRow): boolean {
+  return Boolean(support.business_owner_switched_at) && !hasReachedProfilePublished(support)
+}
+
 function getSupportJourneySteps(support: CustomerBusinessSupportRow): SupportJourneyStep[] {
   return [
     {
@@ -581,7 +612,6 @@ function CustomerCommunityPage({
   const [supportForm, setSupportForm] = useState<SupportFormState>(defaultSupportFormState)
   const [formErrors, setFormErrors] = useState<SupportFormErrors>({})
   const [supportedBusinesses, setSupportedBusinesses] = useState<CustomerBusinessSupportRow[]>([])
-  const [supportProfileStartedById, setSupportProfileStartedById] = useState<Record<string, boolean>>({})
   const [activeSupport, setActiveSupport] = useState<CustomerBusinessSupportRow | null>(null)
   const [selectedSupportBusinessId, setSelectedSupportBusinessId] = useState<string | null>(null)
   const [supportJourneyReturnView, setSupportJourneyReturnView] = useState<ImpactView>('summary')
@@ -658,26 +688,16 @@ function CustomerCommunityPage({
 
     let isCurrent = true
 
-    void Promise.all([
-      listCustomerBusinessSupports(userId),
-      listCustomerSupportInviteProfileStates().catch((error) => {
-        console.error('Failed to load support invite profile states:', error)
-        return []
-      }),
-    ])
-      .then(([supports, profileStates]) => {
+    void listCustomerBusinessSupports(userId)
+      .then((supports) => {
         if (!isCurrent) return
         setSupportedBusinesses(supports)
-        setSupportProfileStartedById(
-          Object.fromEntries(profileStates.map((state) => [state.supportId, state.profileStarted]))
-        )
         setSupportLoadError(null)
       })
       .catch((error) => {
         if (!isCurrent) return
         console.error('Failed to load supported businesses:', error)
         setSupportLoadError('We could not load your supported businesses right now. Please try again.')
-        setSupportProfileStartedById({})
       })
       .finally(() => {
         if (!isCurrent) return
@@ -733,38 +753,12 @@ function CustomerCommunityPage({
   const showShapeLoading =
     isAuthLoading ||
     Boolean(userId && (isShapeLoading || isSupportsLoading || loadedShapeCustomerId !== userId))
-  const sharedInvitationSupports = supportedBusinesses.filter(
-    (support) =>
-      (support.status === 'Invitation Shared' || Boolean(support.invitation_shared_at)) &&
-      support.status !== 'Profile Published' &&
-      !support.published_profile_id
-  )
-  const openedInviteSupports = supportedBusinesses.filter(
-    (support) =>
-      Boolean(support.invitation_opened_at) &&
-      support.status !== 'Profile Published' &&
-      !support.published_profile_id
-  )
-  const businessSignedUpSupports = supportedBusinesses.filter(
-    (support) =>
-      Boolean(support.business_signed_up_at) &&
-      Boolean(support.invited_owner_user_id) &&
-      support.status !== 'Profile Published' &&
-      !support.published_profile_id &&
-      supportProfileStartedById[support.id] === false
-  )
-  const businessOwnerSwitchedSupports = supportedBusinesses.filter(
-    (support) =>
-      Boolean(support.business_owner_switched_at) &&
-      Boolean(support.business_signed_up_at) &&
-      Boolean(support.invited_owner_user_id) &&
-      support.status !== 'Profile Published' &&
-      !support.published_profile_id
-  )
+  const sharedInvitationSupports = supportedBusinesses.filter(isInvitationSharedCurrentStage)
+  const openedInviteSupports = supportedBusinesses.filter(isLinkOpenedCurrentStage)
+  const businessSignedUpSupports = supportedBusinesses.filter(isBusinessSignedUpCurrentStage)
+  const businessOwnerSwitchedSupports = supportedBusinesses.filter(isBusinessOwnerSwitchedCurrentStage)
   const publishedSupports = supportedBusinesses.filter((support) => support.status === 'Profile Published')
-  const publishedProfileSupports = supportedBusinesses.filter(
-    (support) => Boolean(support.published_profile_id) || support.status === 'Profile Published'
-  )
+  const publishedProfileSupports = supportedBusinesses.filter(hasReachedProfilePublished)
   const selectedSupportBusiness = selectedSupportBusinessId
     ? supportedBusinesses.find((support) => support.id === selectedSupportBusinessId) ?? null
     : null
@@ -780,13 +774,13 @@ function CustomerCommunityPage({
     },
     {
       label: 'Invitations Shared',
-      value: impactSummary.invitationsShared,
+      value: sharedInvitationSupports.length,
       icon: <ImpactShareIcon />,
       iconWrapClassName: 'bg-emerald-50 text-emerald-700',
     },
     {
       label: 'Links Opened',
-      value: impactSummary.linksOpened,
+      value: openedInviteSupports.length,
       icon: <ImpactLinkIcon />,
       iconWrapClassName: 'bg-violet-50 text-violet-700',
     },
@@ -804,7 +798,7 @@ function CustomerCommunityPage({
     },
     {
       label: 'Profiles Published',
-      value: impactSummary.profilesPublished,
+      value: publishedProfileSupports.length,
       icon: <ImpactCheckIcon />,
       iconWrapClassName: 'bg-cyan-50 text-cyan-700',
     },
