@@ -70,7 +70,13 @@ type FeedbackMessage = {
   text: string
 } | null
 
-type ImpactView = 'summary' | 'supportedBusinesses' | 'invitationsShared' | 'linksOpened' | 'businessSignedUp'
+type ImpactView =
+  | 'summary'
+  | 'supportedBusinesses'
+  | 'invitationsShared'
+  | 'linksOpened'
+  | 'businessSignedUp'
+  | 'businessOwnerSwitched'
 
 type CustomerSupporterLevelIcon = 'new' | 'supporter' | 'builder' | 'champion'
 
@@ -1221,6 +1227,32 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                 </>
               )}
 
+              {!isSupportsLoading && !impactDisplayError && impactView === 'businessOwnerSwitched' && (
+                <>
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="text-base font-semibold text-black">Switched to Business Owner</h3>
+                    <button
+                      type="button"
+                      className={secondaryButtonClassName}
+                      onClick={() => setImpactView('summary')}
+                    >
+                      Back
+                    </button>
+                  </div>
+
+                  <div className="mt-4">
+                    {renderSupportedBusinessesList(
+                      businessOwnerSwitchedSupports,
+                      'No businesses have switched to Business Owner yet.',
+                      'Switched to Business Owner',
+                      statusPillClass('Switched to Business Owner'),
+                      (support) =>
+                        `Switched ${formatCompactDate(support.business_owner_switched_at ?? support.created_at)}`
+                    )}
+                  </div>
+                </>
+              )}
+
               {!isSupportsLoading &&
                 !impactDisplayError &&
                 impactView === 'summary' &&
@@ -1295,7 +1327,8 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                         stat.label === 'Businesses Supported' ||
                         stat.label === 'Invitations Shared' ||
                         stat.label === 'Links Opened' ||
-                        stat.label === 'Businesses Signed Up'
+                        stat.label === 'Businesses Signed Up' ||
+                        stat.label === 'Switched to Business Owner'
                       ) {
                         const nextImpactView =
                           stat.label === 'Businesses Supported'
@@ -1304,7 +1337,9 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                               ? 'invitationsShared'
                               : stat.label === 'Links Opened'
                                 ? 'linksOpened'
-                                : 'businessSignedUp'
+                                : stat.label === 'Businesses Signed Up'
+                                  ? 'businessSignedUp'
+                                  : 'businessOwnerSwitched'
 
                         return (
                           <button
