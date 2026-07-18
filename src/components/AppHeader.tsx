@@ -102,6 +102,320 @@ interface CustomerMenuRenderItem extends HomeMenuItem {
   panel?: CustomerMenuPanel
 }
 
+type SupporterBenefitStatus = 'Active / Improving' | 'Planned' | 'Coming Soon' | 'Under Review'
+
+interface SupporterBenefitContent {
+  id: string
+  title: string
+  status: SupporterBenefitStatus
+  value: string
+  purpose: string
+  experience: string[]
+  eligibility: string[]
+  safeguards: string[]
+  future: string
+}
+
+const supporterBenefits: SupporterBenefitContent[] = [
+  {
+    id: 'supporter-badges',
+    title: 'Supporter Badges',
+    status: 'Active / Improving',
+    value: 'Milestone-based recognition for supporters whose invitations lead to published business profiles.',
+    purpose: 'Make community contribution visible and measurable.',
+    experience: [
+      'Badge shown in My Local Impact.',
+      'Progress based on published profiles.',
+      'Congratulations modal when a new level is reached.',
+    ],
+    eligibility: [
+      'Local Supporter starts at 0 published profiles.',
+      'Community Builder starts at 3 published profiles.',
+      'Local Champion starts at 10 published profiles, with a 25+ milestone.',
+    ],
+    safeguards: [
+      'Only linked and published profiles count.',
+      'Duplicate, test, fraudulent, or abusive activity may be excluded.',
+    ],
+    future: 'Badge levels may continue improving as the supporter programme matures.',
+  },
+  {
+    id: 'community-recognition',
+    title: 'Community Recognition',
+    status: 'Active / Improving',
+    value: 'Recognition for supporters who help local businesses become discoverable.',
+    purpose: 'Make supporters feel appreciated for useful community work.',
+    experience: [
+      'Current level, contribution metrics, and recent supported businesses.',
+      'New badge milestone celebrations.',
+      'Future public recognition may be optional.',
+    ],
+    eligibility: ['Based on verified supporter contribution and published-profile outcomes.'],
+    safeguards: [
+      'No supporter should be publicly displayed without appropriate visibility controls.',
+      'Recognition does not create business authority or ownership.',
+    ],
+    future: 'Recognition may expand with optional public visibility controls.',
+  },
+  {
+    id: 'supporter-community',
+    title: 'Supporter Community',
+    status: 'Planned',
+    value: 'A dedicated space for supporters to connect, share progress, and participate in local initiatives.',
+    purpose: 'Build a sense of belonging around local business growth.',
+    experience: [
+      'Local, city, or community spaces.',
+      'Supporter stories, tips, campaigns, and challenges.',
+      'Moderated discussions.',
+    ],
+    eligibility: ['Eligibility rules will be defined before this planned feature becomes available.'],
+    safeguards: [
+      'No spam or harassment.',
+      'No sharing personal information without consent.',
+    ],
+    future: 'This is planned as a moderated supporter space.',
+  },
+  {
+    id: 'local-vouchers-offers',
+    title: 'Local Vouchers & Offers',
+    status: 'Coming Soon',
+    value: 'Possible discounts, vouchers, rewards, or special local offers for eligible supporters.',
+    purpose: 'Give practical value to supporters while encouraging local discovery.',
+    experience: [
+      'Supporter-only offers area.',
+      'Clear terms, expiry, location, and redemption instructions.',
+    ],
+    eligibility: ['Availability and qualification rules will depend on each offer.'],
+    safeguards: [
+      'Offers must show terms and limits.',
+      'Availability is not guaranteed after limits are reached.',
+      'Abuse controls are required.',
+    ],
+    future: 'Offers are coming soon and will depend on participating businesses and clear terms.',
+  },
+  {
+    id: 'priority-platform-influence',
+    title: 'Priority Platform Influence',
+    status: 'Active / Improving',
+    value: 'Supporters can help shape platform priorities through suggestions and voting.',
+    purpose: 'Use supporter experience to guide product decisions.',
+    experience: [
+      'Submit feature suggestions.',
+      'Vote on eligible platform ideas.',
+      'Future status updates may show idea progress.',
+    ],
+    eligibility: ['Voting and suggestion access follows the current Community privilege rules.'],
+    safeguards: [
+      'Votes are advisory, not binding.',
+      'Security, legal, technical, and strategic constraints still apply.',
+    ],
+    future: 'Influence tools may improve with clearer proposal status updates.',
+  },
+  {
+    id: 'early-access-features',
+    title: 'Early Access to Features',
+    status: 'Planned',
+    value: 'Selected supporters may test features before broad release.',
+    purpose: 'Improve product quality while rewarding engaged supporters.',
+    experience: [
+      'Early Access or Beta labels.',
+      'Clear explanation of limitations.',
+      'Feedback submission.',
+    ],
+    eligibility: ['Selection criteria will be defined before early access is offered.'],
+    safeguards: [
+      'Beta features may change, pause, or be withdrawn.',
+      'Sensitive features need stronger controls.',
+    ],
+    future: 'Early access is planned for suitable features after safeguards are ready.',
+  },
+  {
+    id: 'supporter-authority',
+    title: 'Supporter Authority Over Supported Business',
+    status: 'Under Review',
+    value: 'A possible future advisory relationship with businesses the supporter helped onboard.',
+    purpose: 'Explore useful ongoing guidance without creating ownership or control risks.',
+    experience: [
+      'Business-controlled invitation to become a recognised supporter or advisor.',
+      'Structured suggestions or feedback.',
+    ],
+    eligibility: ['Would require business consent and approved programme rules.'],
+    safeguards: [
+      'No automatic edit access, ownership, account access, employment status, or legal authority.',
+      'Business consent is required.',
+      'Business can revoke access.',
+    ],
+    future: 'This remains under review and may change substantially before any release.',
+  },
+  {
+    id: 'revenue-share',
+    title: 'Revenue-Share Opportunities',
+    status: 'Under Review',
+    value: 'Potential future earning or reward models tied to eligible referrals, campaigns, or outcomes.',
+    purpose: 'Explore whether high-impact supporters can share in created value.',
+    experience: [
+      'Future programme page with qualifying actions, reward rules, and payment status if approved.',
+    ],
+    eligibility: ['Would require approved qualifying actions and eligibility checks.'],
+    safeguards: [
+      'No guaranteed income.',
+      'No equity or profit ownership promise.',
+      'Legal, tax, fraud, payment, and eligibility checks required.',
+    ],
+    future: 'This is under review and is not an active reward or income programme.',
+  },
+  {
+    id: 'supporter-leaderboard',
+    title: 'Supporter Leaderboard',
+    status: 'Planned',
+    value: 'Optional rankings for high-impact supporters by city, period, or contribution category.',
+    purpose: 'Add motivation and public recognition.',
+    experience: [
+      'City, monthly, quarterly, or all-time views.',
+      'Optional public display.',
+    ],
+    eligibility: ['Scoring and qualification rules will be defined before launch.'],
+    safeguards: [
+      'Anti-gaming rules.',
+      'Privacy-preserving display.',
+      'Clear scoring method.',
+    ],
+    future: 'A leaderboard is planned with privacy and fairness controls.',
+  },
+  {
+    id: 'city-champion-recognition',
+    title: 'City Champion Recognition',
+    status: 'Coming Soon',
+    value: 'Higher-level recognition for exceptional contribution within a city or area.',
+    purpose: 'Celebrate sustained local impact.',
+    experience: [
+      'City Champion title or marker.',
+      'Possible local highlights, discussions, pilots, or events.',
+    ],
+    eligibility: ['Qualification criteria will be defined before this recognition becomes available.'],
+    safeguards: [
+      'Does not create authority over businesses or supporters.',
+      'Can be removed for fraud, abuse, or misleading representation.',
+    ],
+    future: 'City recognition is coming soon as the supporter programme grows.',
+  },
+  {
+    id: 'impact-certificate',
+    title: 'Impact Certificate',
+    status: 'Planned',
+    value: 'Downloadable or shareable certificate showing verified supporter contribution.',
+    purpose: 'Give supporters a formal record of community impact.',
+    experience: [
+      'Certificate after an eligible milestone.',
+      'Verification link or certificate ID.',
+    ],
+    eligibility: ['Certificate milestones and verification rules will be defined before launch.'],
+    safeguards: [
+      'Not an academic, government, employment, or professional qualification.',
+      'Personal information only with consent.',
+    ],
+    future: 'Impact certificates are planned after verification and privacy controls are ready.',
+  },
+  {
+    id: 'public-impact-profile',
+    title: 'Public Impact Profile',
+    status: 'Planned',
+    value: 'Optional public page showing badge, impact metrics, and supporter achievements.',
+    purpose: 'Help supporters build a credible public identity around community contribution.',
+    experience: [
+      'Unique shareable supporter profile link.',
+      'Visibility controls.',
+      'Verified activity indicators.',
+    ],
+    eligibility: ['Supporter opt-in and visibility controls will be required.'],
+    safeguards: [
+      'Do not expose invitation tokens, private messages, phone numbers, or non-public business data.',
+      'Must not imply employment, partnership, ownership, or guaranteed endorsement.',
+    ],
+    future: 'This is planned as an optional public identity feature.',
+  },
+  {
+    id: 'trusted-supporter-tag',
+    title: 'Trusted Supporter Tag',
+    status: 'Planned',
+    value: 'A trust indicator for supporters with verified contribution and responsible conduct.',
+    purpose: 'Help distinguish established, policy-compliant supporters.',
+    experience: [
+      'Visible Trusted Supporter marker.',
+      'Explanation of what it means and does not mean.',
+    ],
+    eligibility: ['Would require verified contribution and responsible conduct.'],
+    safeguards: [
+      'Not a guarantee of honesty, competence, or authority.',
+      'Requires clear review and appeal rules.',
+    ],
+    future: 'This tag is planned after review standards are defined.',
+  },
+  {
+    id: 'special-event-access',
+    title: 'Special Event Access',
+    status: 'Coming Soon',
+    value: 'Invitations or priority access to selected online or local events.',
+    purpose: 'Strengthen community connection and recognition.',
+    experience: [
+      'Event invitations, registration, event details, and post-event materials.',
+    ],
+    eligibility: ['Access will depend on event rules, capacity, and supporter criteria.'],
+    safeguards: [
+      'Invitation does not guarantee admission after capacity is reached.',
+      'Events require conduct, safety, consent, and venue rules.',
+    ],
+    future: 'Event access is coming soon where suitable events are available.',
+  },
+  {
+    id: 'supporter-announcements',
+    title: 'Supporter-Only Announcements',
+    status: 'Planned',
+    value: 'Dedicated communication channel for supporter programme updates and opportunities.',
+    purpose: 'Keep supporters informed without mixing programme updates into general notifications.',
+    experience: [
+      'Supporter announcement feed.',
+      'Unread indicators and deep links.',
+    ],
+    eligibility: ['Announcement access will depend on supporter programme availability.'],
+    safeguards: [
+      'Avoid excessive promotional messaging.',
+      'Provide notification controls where possible.',
+    ],
+    future: 'Supporter-only announcements are planned for programme updates.',
+  },
+  {
+    id: 'community-voting-powers',
+    title: 'Community Voting Powers',
+    status: 'Active / Improving',
+    value: 'Ability to vote on selected platform features and future community decisions.',
+    purpose: 'Give supporters a structured way to express priorities.',
+    experience: [
+      'Vote on eligible features or proposals.',
+      'See summaries, voting periods, and results where available.',
+    ],
+    eligibility: ['Voting access follows the current Community privilege rules.'],
+    safeguards: [
+      'Votes are advisory, not binding.',
+      'Bot activity, duplicate accounts, coercion, and manipulation are prohibited.',
+    ],
+    future: 'Voting powers may expand as community decision flows mature.',
+  },
+]
+
+function supporterBenefitStatusClass(status: SupporterBenefitStatus): string {
+  switch (status) {
+    case 'Active / Improving':
+      return 'bg-emerald-50 text-emerald-700'
+    case 'Coming Soon':
+      return 'bg-blue-50 text-blue-700'
+    case 'Planned':
+      return 'bg-slate-100 text-slate-700'
+    case 'Under Review':
+      return 'bg-amber-50 text-amber-700'
+  }
+}
+
 interface BusinessOwnerMenuState {
   hasBusinessProfile: boolean
   businessProfile?: BusinessProfileRow | null
@@ -132,6 +446,7 @@ type CustomerMenuPanel =
   | 'communityImpact'
   | 'communitySupport'
   | 'communityShape'
+  | 'communityBenefit'
   | 'settings'
 type CustomerSavedBusinessesLoadState = 'idle' | 'loading' | 'found' | 'empty' | 'error'
 let hasPlayedNavbarEntrance = false
@@ -557,6 +872,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const [isHomeMenuOpen, setIsHomeMenuOpen] = useState(false)
   const [businessOwnerMenuPanel, setBusinessOwnerMenuPanel] = useState<BusinessOwnerMenuPanel>('main')
   const [customerMenuPanel, setCustomerMenuPanel] = useState<CustomerMenuPanel>('main')
+  const [selectedSupporterBenefitId, setSelectedSupporterBenefitId] = useState<string | null>(null)
   const [isCustomerImpactSummaryView, setIsCustomerImpactSummaryView] = useState(true)
   const [businessOwnerSettingsView, setBusinessOwnerSettingsView] = useState<BusinessOwnerSettingsView>('main')
   const [businessOwnerAnalyticsRange, setBusinessOwnerAnalyticsRange] = useState<BusinessOwnerAnalyticsRange>('30D')
@@ -956,6 +1272,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     resetBusinessOwnerNotificationPreferenceSession()
     resetBusinessOwnerRecentHelpSuggestions()
     setCustomerMenuPanel('main')
+    setSelectedSupporterBenefitId(null)
     setIsCustomerImpactSummaryView(true)
     setIsHomeMenuOpen(false)
   }
@@ -2192,6 +2509,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     { label: 'My Local Impact', path: '/customer/community#impact' },
     { label: 'Support a Business', path: '/customer/community#support' },
     { label: 'Shape the Platform', path: '/customer/community#shape' },
+    { label: 'Benefit', path: '/customer/community#benefit' },
   ]
 
   const customerHelpMenuItems: HomeMenuItem[] = [
@@ -2277,6 +2595,10 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       disabled={item.disabled}
       onClick={() => {
         if (item.panel) {
+          if (item.panel === 'communityBenefit') {
+            setSelectedSupporterBenefitId(null)
+          }
+
           setCustomerMenuPanel(item.panel)
           return
         }
@@ -2322,6 +2644,93 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       </button>
     </div>
   )
+
+  const renderSupporterBenefitDetailSection = (title: string, content: string | string[]) => (
+    <section className="rounded-2xl border border-slate-200 bg-white px-3 py-3">
+      <h3 className="text-xs font-semibold text-[#0f172a]">{title}</h3>
+      {Array.isArray(content) ? (
+        <ul className="mt-2 space-y-1.5">
+          {content.map((item) => (
+            <li key={item} className="flex gap-2 text-xs leading-relaxed text-slate-600">
+              <span className="mt-1.5 size-1 shrink-0 rounded-full bg-slate-400" aria-hidden="true" />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-2 text-xs leading-relaxed text-slate-600">{content}</p>
+      )}
+    </section>
+  )
+
+  const renderCustomerBenefitPanel = () => {
+    const selectedBenefit = selectedSupporterBenefitId
+      ? supporterBenefits.find((benefit) => benefit.id === selectedSupporterBenefitId) ?? null
+      : null
+
+    if (selectedBenefit) {
+      return (
+        <>
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h2 className="min-w-0 truncate text-sm font-semibold text-[#0f172a]">{selectedBenefit.title}</h2>
+            <button
+              type="button"
+              onClick={() => setSelectedSupporterBenefitId(null)}
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+            >
+              <span>Back</span>
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            <span
+              className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${supporterBenefitStatusClass(
+                selectedBenefit.status
+              )}`}
+            >
+              {selectedBenefit.status}
+            </span>
+            {renderSupporterBenefitDetailSection('Short value statement', selectedBenefit.value)}
+            {renderSupporterBenefitDetailSection('Purpose', selectedBenefit.purpose)}
+            {renderSupporterBenefitDetailSection('What supporters may experience', selectedBenefit.experience)}
+            {renderSupporterBenefitDetailSection('Eligibility / qualification', selectedBenefit.eligibility)}
+            {renderSupporterBenefitDetailSection('Important conditions / safeguards', selectedBenefit.safeguards)}
+            {renderSupporterBenefitDetailSection('Future direction', selectedBenefit.future)}
+          </div>
+        </>
+      )
+    }
+
+    return (
+      <>
+        {renderCustomerPanelHeader('Benefit', 'community')}
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          {supporterBenefits.map((benefit, index) => (
+            <button
+              key={benefit.id}
+              type="button"
+              className={customerMenuRowClass(false, index === supporterBenefits.length - 1)}
+              onClick={() => setSelectedSupporterBenefitId(benefit.id)}
+            >
+              <span className="min-w-0 truncate font-medium">{benefit.title}</span>
+              <span className="ml-3 flex shrink-0 items-center gap-2">
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${supporterBenefitStatusClass(
+                    benefit.status
+                  )}`}
+                >
+                  {benefit.status}
+                </span>
+                <span className="shrink-0 text-slate-400" aria-hidden="true">
+                  <ChevronRightIcon />
+                </span>
+              </span>
+            </button>
+          ))}
+        </section>
+      </>
+    )
+  }
 
   const renderCustomerAccountHeader = () => (
     <div className="border-b border-slate-100 bg-[linear-gradient(180deg,#f8fbff_0%,#ffffff_100%)] p-3">
@@ -2414,6 +2823,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     { label: customerCommunityMenuItems[1].label, icon: <ActionMetricIcon />, showChevron: true, panel: 'communitySupport' },
     { label: customerCommunityMenuItems[0].label, icon: <FollowersMetricIcon />, showChevron: true, panel: 'communityImpact' },
     { label: customerCommunityMenuItems[2].label, icon: <SettingsIcon />, showChevron: true, panel: 'communityShape' },
+    { label: customerCommunityMenuItems[3].label, icon: <TrendInsightIcon />, showChevron: true, panel: 'communityBenefit' },
   ]
   const customerHelpRenderItems: CustomerMenuRenderItem[] = [
     { ...customerHelpMenuItems[0], icon: <SettingsIcon />, showChevron: true },
@@ -2876,6 +3286,10 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
           />
         </>
       )
+    }
+
+    if (customerMenuPanel === 'communityBenefit') {
+      return renderCustomerBenefitPanel()
     }
 
     if (customerMenuPanel === 'settings') {
