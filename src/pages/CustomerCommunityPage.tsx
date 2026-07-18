@@ -578,6 +578,7 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
   const [supportProfileStartedById, setSupportProfileStartedById] = useState<Record<string, boolean>>({})
   const [activeSupport, setActiveSupport] = useState<CustomerBusinessSupportRow | null>(null)
   const [selectedSupportBusinessId, setSelectedSupportBusinessId] = useState<string | null>(null)
+  const [supportJourneyReturnView, setSupportJourneyReturnView] = useState<ImpactView>('summary')
   const [isSupportsLoading, setIsSupportsLoading] = useState(true)
   const [isSavingSupport, setIsSavingSupport] = useState(false)
   const [supportLoadError, setSupportLoadError] = useState<string | null>(null)
@@ -1095,14 +1096,17 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
   const activeInvitationMessage = activeSupport
     ? buildInvitationMessage(activeSupport, activeInvitationLink)
     : ''
-  const openSupportJourney = (support: CustomerBusinessSupportRow) => {
+  const openSupportJourney = (support: CustomerBusinessSupportRow, returnView: ImpactView = 'summary') => {
     setSelectedSupportBusinessId(support.id)
+    setSupportJourneyReturnView(returnView)
     setImpactView('supportJourney')
   }
 
-  const returnToImpactSummary = () => {
+  const returnFromSupportJourney = () => {
+    const returnView = supportJourneyReturnView === 'supportJourney' ? 'summary' : supportJourneyReturnView
+
     setSelectedSupportBusinessId(null)
-    setImpactView('summary')
+    setImpactView(returnView)
   }
 
   const renderSupportedBusinessesList = (
@@ -1189,7 +1193,7 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
             <button
               type="button"
               className={secondaryButtonClassName}
-              onClick={returnToImpactSummary}
+              onClick={returnFromSupportJourney}
             >
               Back
             </button>
@@ -1214,7 +1218,7 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
           <button
             type="button"
             className={secondaryButtonClassName}
-            onClick={returnToImpactSummary}
+            onClick={returnFromSupportJourney}
           >
             Back
           </button>
@@ -1369,7 +1373,9 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                       sharedInvitationSupports,
                       'No shared invitations yet.',
                       'Invitation Shared',
-                      statusPillClass('Invitation Shared')
+                      statusPillClass('Invitation Shared'),
+                      undefined,
+                      isMenuMode ? (support) => openSupportJourney(support, 'invitationsShared') : undefined
                     )}
                   </div>
                 </>
@@ -1394,7 +1400,8 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                       'No opened invite links yet.',
                       'Link Opened',
                       'bg-violet-50 text-violet-700',
-                      (support) => `Opened ${formatCompactDate(support.invitation_opened_at ?? support.created_at)}`
+                      (support) => `Opened ${formatCompactDate(support.invitation_opened_at ?? support.created_at)}`,
+                      isMenuMode ? (support) => openSupportJourney(support, 'linksOpened') : undefined
                     )}
                   </div>
                 </>
@@ -1419,7 +1426,8 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                       'No businesses have signed up without starting a profile yet.',
                       'Business Signed Up',
                       statusPillClass('Business Signed Up'),
-                      (support) => `Signed up ${formatCompactDate(support.business_signed_up_at ?? support.created_at)}`
+                      (support) => `Signed up ${formatCompactDate(support.business_signed_up_at ?? support.created_at)}`,
+                      isMenuMode ? (support) => openSupportJourney(support, 'businessSignedUp') : undefined
                     )}
                   </div>
                 </>
@@ -1445,7 +1453,8 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                       'Switched to Business Owner',
                       statusPillClass('Switched to Business Owner'),
                       (support) =>
-                        `Switched ${formatCompactDate(support.business_owner_switched_at ?? support.created_at)}`
+                        `Switched ${formatCompactDate(support.business_owner_switched_at ?? support.created_at)}`,
+                      isMenuMode ? (support) => openSupportJourney(support, 'businessOwnerSwitched') : undefined
                     )}
                   </div>
                 </>
@@ -1470,7 +1479,8 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                       'No profiles have been published from your invitations yet.',
                       'Profile Published',
                       statusPillClass('Profile Published'),
-                      (support) => `Published ${formatCompactDate(support.updated_at)}`
+                      (support) => `Published ${formatCompactDate(support.updated_at)}`,
+                      isMenuMode ? (support) => openSupportJourney(support, 'profilesPublished') : undefined
                     )}
                   </div>
                 </>
