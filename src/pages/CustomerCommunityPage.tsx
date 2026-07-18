@@ -80,7 +80,7 @@ type ImpactView =
   | 'profilesPublished'
   | 'supportJourney'
 
-type CustomerSupporterLevelIcon = 'new' | 'supporter' | 'builder' | 'champion'
+type CustomerSupporterLevelIcon = 'supporter' | 'builder' | 'champion'
 
 interface CustomerSupporterLevel {
   levelName: string
@@ -90,8 +90,14 @@ interface CustomerSupporterLevel {
   progressText: string
   progressPercent: number
   isMaxLevel: boolean
+  rank: number
   icon: CustomerSupporterLevelIcon
   iconWrapClassName: string
+}
+
+interface BadgeUnlockModalState {
+  title: string
+  message: string
 }
 
 interface SupportJourneyStep {
@@ -100,16 +106,34 @@ interface SupportJourneyStep {
   date: string | null
 }
 
+const CUSTOMER_IMPACT_BADGE_STORAGE_KEY_PREFIX = 'smart-business-profile:customer-impact-badge-level'
+
 function getCustomerSupporterLevel(publishedProfilesCount: number): CustomerSupporterLevel {
-  if (publishedProfilesCount >= 6) {
+  if (publishedProfilesCount >= 25) {
     return {
       levelName: 'Local Champion',
       description: "You're a local champion helping more businesses grow their online presence.",
       nextLevelName: null,
       nextLevelTarget: null,
-      progressText: 'You reached Local Champion. Next level coming soon.',
+      progressText: 'You reached Local Champion. Next level is coming soon.',
       progressPercent: 100,
       isMaxLevel: true,
+      rank: 4,
+      icon: 'champion',
+      iconWrapClassName: 'bg-amber-100 text-amber-700',
+    }
+  }
+
+  if (publishedProfilesCount >= 10) {
+    return {
+      levelName: 'Local Champion',
+      description: "You're a local champion helping more businesses grow their online presence.",
+      nextLevelName: 'Next milestone',
+      nextLevelTarget: 25,
+      progressText: `${publishedProfilesCount} / 25 profiles published to reach the next milestone`,
+      progressPercent: Math.min(100, Math.round((publishedProfilesCount / 25) * 100)),
+      isMaxLevel: false,
+      rank: 3,
       icon: 'champion',
       iconWrapClassName: 'bg-amber-100 text-amber-700',
     }
@@ -120,46 +144,32 @@ function getCustomerSupporterLevel(publishedProfilesCount: number): CustomerSupp
       levelName: 'Community Builder',
       description: 'Your support is helping trusted local businesses become easier to find online.',
       nextLevelName: 'Local Champion',
-      nextLevelTarget: 6,
-      progressText: `${publishedProfilesCount} / 6 profiles published to reach Local Champion`,
-      progressPercent: Math.min(100, Math.round((publishedProfilesCount / 6) * 100)),
+      nextLevelTarget: 10,
+      progressText: `${publishedProfilesCount} / 10 profiles published to reach Local Champion`,
+      progressPercent: Math.min(100, Math.round((publishedProfilesCount / 10) * 100)),
       isMaxLevel: false,
+      rank: 2,
       icon: 'builder',
       iconWrapClassName: 'bg-indigo-100 text-indigo-700',
     }
   }
 
-  if (publishedProfilesCount >= 1) {
-    return {
-      levelName: 'Local Supporter',
-      description: "You've started helping local businesses become easier to discover.",
-      nextLevelName: 'Community Builder',
-      nextLevelTarget: 3,
-      progressText: `${publishedProfilesCount} / 3 profiles published to reach Community Builder`,
-      progressPercent: Math.min(100, Math.round((publishedProfilesCount / 3) * 100)),
-      isMaxLevel: false,
-      icon: 'supporter',
-      iconWrapClassName: 'bg-emerald-100 text-emerald-700',
-    }
-  }
-
   return {
-    levelName: 'New Supporter',
-    description: "You're ready to start supporting trusted local businesses in your area.",
-    nextLevelName: 'Local Supporter',
-    nextLevelTarget: 1,
-    progressText: '0 / 1 profile published to reach Local Supporter',
-    progressPercent: 0,
+    levelName: 'Local Supporter',
+    description: "You've started helping local businesses become easier to discover.",
+    nextLevelName: 'Community Builder',
+    nextLevelTarget: 3,
+    progressText: `${publishedProfilesCount} / 3 profiles published to reach Community Builder`,
+    progressPercent: Math.min(100, Math.round((publishedProfilesCount / 3) * 100)),
     isMaxLevel: false,
-    icon: 'new',
-    iconWrapClassName: 'bg-blue-100 text-blue-700',
+    rank: 1,
+    icon: 'supporter',
+    iconWrapClassName: 'bg-emerald-100 text-emerald-700',
   }
 }
 
 function getSupporterLevelIcon(icon: CustomerSupporterLevelIcon) {
   switch (icon) {
-    case 'new':
-      return <ImpactUserPlusIcon />
     case 'supporter':
       return <ImpactShareIcon />
     case 'builder':
@@ -167,6 +177,31 @@ function getSupporterLevelIcon(icon: CustomerSupporterLevelIcon) {
     case 'champion':
       return <ImpactCheckIcon />
   }
+}
+
+function getBadgeUnlockModalState(rank: number): BadgeUnlockModalState | null {
+  if (rank === 2) {
+    return {
+      title: 'New supporter level unlocked!',
+      message: 'You reached Community Builder by helping more businesses publish their profiles.',
+    }
+  }
+
+  if (rank === 3) {
+    return {
+      title: 'Congratulations!',
+      message: 'You reached Local Champion. Your support is helping local businesses get discovered.',
+    }
+  }
+
+  if (rank === 4) {
+    return {
+      title: 'Congratulations!',
+      message: 'You reached a major Local Champion milestone. Next level is coming soon.',
+    }
+  }
+
+  return null
 }
 
 function SupporterBadgeIcon() {
@@ -638,6 +673,7 @@ function CustomerCommunityPage({
   const [selectedFeatureKey, setSelectedFeatureKey] = useState<CustomerFeatureKey | null>(null)
   const [votingFeatureKey, setVotingFeatureKey] = useState<CustomerFeatureKey | null>(null)
   const [impactView, setImpactView] = useState<ImpactView>('summary')
+  const [badgeUnlockModal, setBadgeUnlockModal] = useState<BadgeUnlockModalState | null>(null)
   const [isSubmittingFeatureSuggestion, setIsSubmittingFeatureSuggestion] = useState(false)
   const [isSubmittingImprovementSuggestion, setIsSubmittingImprovementSuggestion] = useState(false)
 
@@ -757,12 +793,11 @@ function CustomerCommunityPage({
   const openedInviteSupports = supportedBusinesses.filter(isLinkOpenedCurrentStage)
   const businessSignedUpSupports = supportedBusinesses.filter(isBusinessSignedUpCurrentStage)
   const businessOwnerSwitchedSupports = supportedBusinesses.filter(isBusinessOwnerSwitchedCurrentStage)
-  const publishedSupports = supportedBusinesses.filter((support) => support.status === 'Profile Published')
   const publishedProfileSupports = supportedBusinesses.filter(hasReachedProfilePublished)
   const selectedSupportBusiness = selectedSupportBusinessId
     ? supportedBusinesses.find((support) => support.id === selectedSupportBusinessId) ?? null
     : null
-  const publishedProfilesCount = publishedSupports.length
+  const publishedProfilesCount = publishedProfileSupports.length
   const supporterLevel = getCustomerSupporterLevel(publishedProfilesCount)
   const supporterProgressPercent = Math.max(0, Math.min(100, supporterLevel.progressPercent))
   const impactStats = [
@@ -834,6 +869,62 @@ function CustomerCommunityPage({
     setActiveSupport((currentSupport) =>
       currentSupport?.id === nextSupport.id ? nextSupport : currentSupport
     )
+  }
+
+  useEffect(() => {
+    if (activeTab !== 'impact' || isSupportsLoading || !userId) return
+
+    const storageKey = `${CUSTOMER_IMPACT_BADGE_STORAGE_KEY_PREFIX}:${userId}`
+    let modalTimerId: number | undefined
+
+    try {
+      const storedRankValue = window.localStorage.getItem(storageKey)
+
+      if (!storedRankValue) {
+        window.localStorage.setItem(storageKey, String(supporterLevel.rank))
+        return
+      }
+
+      const storedRank = Number.parseInt(storedRankValue, 10)
+
+      if (!Number.isFinite(storedRank)) {
+        window.localStorage.setItem(storageKey, String(supporterLevel.rank))
+        return
+      }
+
+      if (supporterLevel.rank > storedRank && !badgeUnlockModal) {
+        const modalState = getBadgeUnlockModalState(supporterLevel.rank)
+
+        if (modalState) {
+          modalTimerId = window.setTimeout(() => {
+            setBadgeUnlockModal(modalState)
+          }, 0)
+        }
+      }
+    } catch {
+      // localStorage can be unavailable; badge progression should still render normally.
+    }
+
+    return () => {
+      if (modalTimerId !== undefined) {
+        window.clearTimeout(modalTimerId)
+      }
+    }
+  }, [activeTab, badgeUnlockModal, isSupportsLoading, supporterLevel.rank, userId])
+
+  const dismissBadgeUnlockModal = () => {
+    if (userId) {
+      try {
+        window.localStorage.setItem(
+          `${CUSTOMER_IMPACT_BADGE_STORAGE_KEY_PREFIX}:${userId}`,
+          String(supporterLevel.rank)
+        )
+      } catch {
+        // localStorage persistence is best-effort only.
+      }
+    }
+
+    setBadgeUnlockModal(null)
   }
 
   const handleSupportFormChange = (field: keyof SupportFormState, value: string) => {
@@ -2155,6 +2246,39 @@ function CustomerCommunityPage({
           )}
         </div>
       </main>
+
+      {badgeUnlockModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="customer-impact-badge-unlock-title"
+        >
+          <div className="w-full max-w-sm rounded-3xl border border-[#c7d2df] bg-white px-5 py-5 shadow-[0_24px_70px_-32px_rgba(2,12,27,0.9)]">
+            <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-blue-50 text-blue-700">
+              <ImpactCheckIcon />
+            </div>
+            <h3
+              id="customer-impact-badge-unlock-title"
+              className="mt-4 text-center text-lg font-semibold text-black"
+            >
+              {badgeUnlockModal.title}
+            </h3>
+            <p className="mt-2 text-center text-sm leading-relaxed text-slate-600">
+              {badgeUnlockModal.message}
+            </p>
+            <div className="mt-5 flex justify-center">
+              <button
+                type="button"
+                className={actionButtonClassName}
+                onClick={dismissBadgeUnlockModal}
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
