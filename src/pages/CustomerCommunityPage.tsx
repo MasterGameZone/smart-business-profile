@@ -782,8 +782,6 @@ function CustomerCommunityPage({
   const supportedBusinessCount = impactSummary.businessesSupported
   const impactDisplayError =
     !isAuthLoading && !userId ? 'Please sign in to view your local impact.' : supportLoadError
-  const supportDisplayError =
-    !isAuthLoading && !userId ? 'Please sign in to support a business.' : supportLoadError
   const shapeDisplayError =
     !isAuthLoading && !userId ? 'Please sign in to shape the platform.' : shapeLoadError ?? supportLoadError
   const showShapeLoading =
@@ -1180,15 +1178,6 @@ function CustomerCommunityPage({
     setPreviewFeedback({ kind: 'success', text: 'WhatsApp share opened.' })
     window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
     await markSupportShared(support)
-  }
-
-  const handleShareAgain = (support: CustomerBusinessSupportRow) => {
-    setActiveSupport(support)
-    setPreviewFeedback(null)
-    setSupportFeedback({
-      kind: 'success',
-      text: 'Invitation preview loaded. You can share this business again.',
-    })
   }
 
   const activeInvitationLink = activeSupport ? invitationLinkForSupport(activeSupport) : ''
@@ -1951,62 +1940,6 @@ function CustomerCommunityPage({
                   </div>
                 </div>
               )}
-
-              <div className="mt-7">
-                <h3 className="text-base font-semibold text-black">Supported Businesses</h3>
-
-                <div className="mt-4 space-y-4">
-                  {isSupportsLoading && !supportDisplayError && (
-                    <div className={cardClassName}>
-                      <p className="text-sm text-black">Loading supported businesses...</p>
-                    </div>
-                  )}
-
-                  {supportDisplayError && (
-                    <div className={cardClassName}>
-                      <p className="text-sm text-red-700">{supportDisplayError}</p>
-                    </div>
-                  )}
-
-                  {!isSupportsLoading && !supportDisplayError && supportedBusinesses.length === 0 && (
-                    <div className={cardClassName}>
-                      <p className="text-sm font-semibold text-black">No supported businesses yet</p>
-                      <p className="mt-1 text-sm text-black">Businesses you invite will appear here.</p>
-                    </div>
-                  )}
-
-                  {!supportDisplayError &&
-                    supportedBusinesses.map((support) => (
-                      <article key={support.id} className={cardClassName}>
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                          <div>
-                            <p className="text-base font-semibold text-black">{support.business_name}</p>
-                            <p className="mt-1 text-sm text-black">{support.business_category}</p>
-                            <p className="mt-1 text-sm text-black">{support.business_location}</p>
-                          </div>
-                          <span
-                            className={`inline-flex self-start rounded-full px-3 py-1 text-xs font-semibold ${statusPillClass(
-                              support.status
-                            )}`}
-                          >
-                            {support.status}
-                          </span>
-                        </div>
-
-                        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                          <p className="text-sm text-slate-500">Submitted {formatDate(support.created_at)}</p>
-                          <button
-                            type="button"
-                            className={secondaryButtonClassName}
-                            onClick={() => handleShareAgain(support)}
-                          >
-                            Share Again
-                          </button>
-                        </div>
-                      </article>
-                    ))}
-                </div>
-              </div>
             </section>
           )}
 
