@@ -429,7 +429,7 @@ interface BusinessOwnerMenuState {
   profileStatusLabel?: string
 }
 
-type BusinessOwnerMenuPanel = 'main' | 'profile' | 'analytics' | 'notifications' | 'settings'
+type BusinessOwnerMenuPanel = 'main' | 'profile' | 'analytics' | 'notifications' | 'features' | 'settings'
 type BusinessOwnerSettingsView =
   | 'main'
   | 'help'
@@ -586,6 +586,16 @@ function TrendInsightIcon() {
     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 17.5 9 12l4 3 6.5-8" />
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15.5 6.5h4v4" />
+    </svg>
+  )
+}
+
+function SparklesIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="m19 15 .8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="m5 4 .6 1.4L7 6l-1.4.6L5 8l-.6-1.4L3 6l1.4-.6L5 4Z" />
     </svg>
   )
 }
@@ -1283,7 +1293,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   }))
   const businessOwnerHelpSettingsItems = [
     'Business account FAQs',
-    'Suggestions',
+    'Support & Feedback',
     'Contact Us',
     'Recent help & suggestions',
   ]
@@ -3793,12 +3803,20 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
           { key: 'profile', label: 'Profile', icon: <ProfileIcon /> },
           { key: 'analytics', label: 'Analytics', icon: <AnalyticsIcon /> },
           { key: 'notifications', label: 'Notifications', icon: <NotificationsIcon /> },
+          { key: 'features', label: 'Features', icon: <SparklesIcon /> },
+          { key: 'settings', label: 'Settings', icon: <SettingsIcon /> },
         ].map((item) => (
           <button
             key={item.key}
             type="button"
             role="menuitem"
-            onClick={() => setBusinessOwnerMenuPanel(item.key as BusinessOwnerMenuPanel)}
+            onClick={() => {
+              if (item.key === 'settings') {
+                setBusinessOwnerSettingsView('main')
+              }
+
+              setBusinessOwnerMenuPanel(item.key as BusinessOwnerMenuPanel)
+            }}
             className={businessOwnerMenuRowClass}
           >
             <span className="flex items-center gap-3">
@@ -3823,7 +3841,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
               showError('Unable to switch to Customer mode. Please try again.')
             }
           }}
-          className={businessOwnerMenuRowClass}
+          className={`${businessOwnerMenuRowClass} border-b-0`}
         >
           <span className="flex items-center gap-3">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
@@ -3831,23 +3849,6 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
             </span>
             <span className="font-medium">Switch to Customer</span>
           </span>
-        </button>
-        <button
-          type="button"
-          role="menuitem"
-          onClick={() => {
-            setBusinessOwnerSettingsView('main')
-            setBusinessOwnerMenuPanel('settings')
-          }}
-          className={`${businessOwnerMenuRowClass} border-b-0`}
-        >
-          <span className="flex items-center gap-3">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
-              <SettingsIcon />
-            </span>
-            <span className="font-medium">Settings</span>
-          </span>
-          <span className="text-slate-400" aria-hidden="true">&gt;</span>
         </button>
       </div>
     </>
@@ -4302,6 +4303,12 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     </>
   )
 
+  const renderBusinessOwnerFeaturesPanel = () => (
+    <>
+      {renderBusinessOwnerPanelHeader('Features')}
+    </>
+  )
+
   const renderBusinessOwnerSettingsPanel = () => (
     businessOwnerSettingsView === 'faqs' ? (
       <>
@@ -4350,7 +4357,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       </>
     ) : businessOwnerSettingsView === 'suggestions' ? (
       <>
-        {renderBusinessOwnerSubPanelHeader('Suggestions', () => setBusinessOwnerSettingsView('help'))}
+        {renderBusinessOwnerSubPanelHeader('Support & Feedback', () => setBusinessOwnerSettingsView('help'))}
         <section className="space-y-3">
           <div className={businessOwnerPanelCardClass}>
             <p className="text-sm leading-relaxed text-slate-600">
@@ -4572,7 +4579,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
                         setOpenBusinessOwnerFaqQuestion(null)
                         setBusinessOwnerSettingsView('faqs')
                       }
-                    : item === 'Suggestions'
+                    : item === 'Support & Feedback'
                       ? () => {
                           resetBusinessOwnerSuggestionForm()
                           setBusinessOwnerSettingsView('suggestions')
@@ -4753,6 +4760,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     if (businessOwnerMenuPanel === 'profile') return renderBusinessOwnerProfilePanel()
     if (businessOwnerMenuPanel === 'analytics') return renderBusinessOwnerAnalyticsPanel()
     if (businessOwnerMenuPanel === 'notifications') return renderBusinessOwnerNotificationsPanel()
+    if (businessOwnerMenuPanel === 'features') return renderBusinessOwnerFeaturesPanel()
     if (businessOwnerMenuPanel === 'settings') return renderBusinessOwnerSettingsPanel()
     return renderBusinessOwnerMainMenu()
   }
