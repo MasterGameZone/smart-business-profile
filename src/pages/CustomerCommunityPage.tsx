@@ -78,6 +78,7 @@ type ImpactView =
   | 'businessSignedUp'
   | 'businessOwnerSwitched'
   | 'profilesPublished'
+  | 'supportJourney'
 
 type CustomerSupporterLevelIcon = 'new' | 'supporter' | 'builder' | 'champion'
 
@@ -91,6 +92,12 @@ interface CustomerSupporterLevel {
   isMaxLevel: boolean
   icon: CustomerSupporterLevelIcon
   iconWrapClassName: string
+}
+
+interface SupportJourneyStep {
+  label: string
+  isCompleted: boolean
+  date: string | null
 }
 
 function getCustomerSupporterLevel(publishedProfilesCount: number): CustomerSupporterLevel {
@@ -373,6 +380,59 @@ function formatCompactDate(value: string): string {
   }).format(date)
 }
 
+function hasReachedInvitationShared(support: CustomerBusinessSupportRow): boolean {
+  return (
+    Boolean(support.invitation_shared_at) ||
+    support.status === 'Invitation Shared' ||
+    support.status === 'Business Signed Up' ||
+    support.status === 'Switched to Business Owner' ||
+    support.status === 'Profile Published'
+  )
+}
+
+function hasReachedProfilePublished(support: CustomerBusinessSupportRow): boolean {
+  return Boolean(support.published_profile_id) || support.status === 'Profile Published'
+}
+
+function getSupportJourneySteps(support: CustomerBusinessSupportRow): SupportJourneyStep[] {
+  return [
+    {
+      label: 'Business Nominated',
+      isCompleted: true,
+      date: support.created_at,
+    },
+    {
+      label: 'Invitation Shared',
+      isCompleted: hasReachedInvitationShared(support),
+      date: hasReachedInvitationShared(support) ? support.invitation_shared_at ?? support.updated_at : null,
+    },
+    {
+      label: 'Link Opened',
+      isCompleted: Boolean(support.invitation_opened_at),
+      date: support.invitation_opened_at,
+    },
+    {
+      label: 'Business Signed Up',
+      isCompleted: Boolean(support.business_signed_up_at),
+      date: support.business_signed_up_at,
+    },
+    {
+      label: 'Switched to Business Owner',
+      isCompleted: Boolean(support.business_owner_switched_at),
+      date: support.business_owner_switched_at,
+    },
+    {
+      label: 'Profile Published',
+      isCompleted: hasReachedProfilePublished(support),
+      date: hasReachedProfilePublished(support) ? support.updated_at : null,
+    },
+  ]
+}
+
+function getCurrentJourneyStatus(steps: SupportJourneyStep[]): string {
+  return steps.filter((step) => step.isCompleted).at(-1)?.label ?? 'Business Nominated'
+}
+
 function statusPillClass(status: CustomerBusinessSupportStatus): string {
   switch (status) {
     case 'Profile Published':
@@ -517,6 +577,7 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
   const [supportedBusinesses, setSupportedBusinesses] = useState<CustomerBusinessSupportRow[]>([])
   const [supportProfileStartedById, setSupportProfileStartedById] = useState<Record<string, boolean>>({})
   const [activeSupport, setActiveSupport] = useState<CustomerBusinessSupportRow | null>(null)
+  const [selectedSupportBusinessId, setSelectedSupportBusinessId] = useState<string | null>(null)
   const [isSupportsLoading, setIsSupportsLoading] = useState(true)
   const [isSavingSupport, setIsSavingSupport] = useState(false)
   const [supportLoadError, setSupportLoadError] = useState<string | null>(null)
@@ -689,6 +750,9 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
   const publishedProfileSupports = supportedBusinesses.filter(
     (support) => Boolean(support.published_profile_id) || support.status === 'Profile Published'
   )
+  const selectedSupportBusiness = selectedSupportBusinessId
+    ? supportedBusinesses.find((support) => support.id === selectedSupportBusinessId) ?? null
+    : null
   const publishedProfilesCount = publishedSupports.length
   const supporterLevel = getCustomerSupporterLevel(publishedProfilesCount)
   const supporterProgressPercent = Math.max(0, Math.min(100, supporterLevel.progressPercent))
@@ -1031,12 +1095,23 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
   const activeInvitationMessage = activeSupport
     ? buildInvitationMessage(activeSupport, activeInvitationLink)
     : ''
+  const openSupportJourney = (support: CustomerBusinessSupportRow) => {
+    setSelectedSupportBusinessId(support.id)
+    setImpactView('supportJourney')
+  }
+
+  const returnToImpactSummary = () => {
+    setSelectedSupportBusinessId(null)
+    setImpactView('summary')
+  }
+
   const renderSupportedBusinessesList = (
     supports: CustomerBusinessSupportRow[],
     emptyMessage = 'No supported businesses yet.',
     statusLabelOverride?: string,
     statusClassNameOverride?: string,
-    dateLabelForSupport?: (support: CustomerBusinessSupportRow) => string
+    dateLabelForSupport?: (support: CustomerBusinessSupportRow) => string,
+    onSelectSupport?: (support: CustomerBusinessSupportRow) => void
   ) => (
     <div className="overflow-hidden rounded-2xl border border-[#c7d2df] bg-white">
       {supports.length === 0 && (
@@ -1050,7 +1125,27 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
           key={support.id}
           className={`${index > 0 ? 'border-t border-slate-200' : ''}`}
         >
-          <div className="flex items-center gap-2 px-3 py-2">
+          <div
+            className={`flex items-center gap-2 px-3 py-2 ${
+              onSelectSupport
+                ? 'cursor-pointer transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500'
+                : ''
+            }`}
+            role={onSelectSupport ? 'button' : undefined}
+            tabIndex={onSelectSupport ? 0 : undefined}
+            onClick={onSelectSupport ? () => onSelectSupport(support) : undefined}
+            onKeyDown={
+              onSelectSupport
+                ? (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      onSelectSupport(support)
+                    }
+                  }
+                : undefined
+            }
+            aria-label={onSelectSupport ? `View journey for ${support.business_name}` : undefined}
+          >
             <span
               className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${supportedBusinessIconClass(
                 support.status
@@ -1084,6 +1179,96 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
       ))}
     </div>
   )
+
+  const renderSupportJourneyView = () => {
+    if (!selectedSupportBusiness) {
+      return (
+        <>
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="text-base font-semibold text-black">Supported Business</h3>
+            <button
+              type="button"
+              className={secondaryButtonClassName}
+              onClick={returnToImpactSummary}
+            >
+              Back
+            </button>
+          </div>
+
+          <div className={`mt-4 ${cardClassName}`}>
+            <p className="text-sm text-slate-600">Supported business details are unavailable.</p>
+          </div>
+        </>
+      )
+    }
+
+    const journeySteps = getSupportJourneySteps(selectedSupportBusiness)
+    const currentJourneyStatus = getCurrentJourneyStatus(journeySteps)
+
+    return (
+      <>
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="min-w-0 truncate text-base font-semibold text-black">
+            {selectedSupportBusiness.business_name}
+          </h3>
+          <button
+            type="button"
+            className={secondaryButtonClassName}
+            onClick={returnToImpactSummary}
+          >
+            Back
+          </button>
+        </div>
+
+        <div className="mt-4 space-y-4">
+          <div className={cardClassName}>
+            <p className="text-sm font-semibold text-black">{selectedSupportBusiness.business_name}</p>
+            <p className="mt-1 truncate text-xs text-slate-600">
+              {selectedSupportBusiness.business_category} {' - '} {selectedSupportBusiness.business_location}
+            </p>
+            <p className="mt-3 inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+              Current status: {currentJourneyStatus}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-[#c7d2df] bg-white px-4 py-4">
+            <h4 className="text-base font-semibold text-black">Journey Progress</h4>
+
+            <div className="mt-4 space-y-3">
+              {journeySteps.map((step) => (
+                <div key={step.label} className="flex items-start gap-3">
+                  <span
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                      step.isCompleted ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'
+                    }`}
+                  >
+                    {step.isCompleted ? <ImpactCheckIcon /> : <ImpactClockIcon />}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="min-w-0 truncate text-sm font-semibold text-black">{step.label}</p>
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-semibold leading-none ${
+                          step.isCompleted
+                            ? 'bg-emerald-50 text-emerald-700'
+                            : 'bg-slate-100 text-slate-600'
+                        }`}
+                      >
+                        {step.isCompleted ? 'Completed' : 'Pending'}
+                      </span>
+                    </div>
+                    {step.isCompleted && step.date && (
+                      <p className="mt-1 text-xs text-slate-500">Completed {formatCompactDate(step.date)}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </>
+    )
+  }
 
   return (
     <div className={isMenuMode ? 'text-black' : 'min-h-screen bg-[#eef4fa] text-black'}>
@@ -1138,6 +1323,8 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                 </div>
               )}
 
+              {!isSupportsLoading && !impactDisplayError && impactView === 'supportJourney' && renderSupportJourneyView()}
+
               {!isSupportsLoading && !impactDisplayError && impactView === 'supportedBusinesses' && (
                 <>
                   <div className="flex items-center justify-between gap-3">
@@ -1152,7 +1339,14 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                   </div>
 
                   <div className="mt-4">
-                    {renderSupportedBusinessesList(supportedBusinesses)}
+                    {renderSupportedBusinessesList(
+                      supportedBusinesses,
+                      'No supported businesses yet.',
+                      undefined,
+                      undefined,
+                      undefined,
+                      isMenuMode ? openSupportJourney : undefined
+                    )}
                   </div>
                 </>
               )}
@@ -1466,7 +1660,14 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                   <div className="mt-7">
                     <h3 className="text-base font-semibold text-black">Supported Businesses</h3>
                     <div className="mt-4">
-                      {renderSupportedBusinessesList(impactSummary.recentSupports)}
+                      {renderSupportedBusinessesList(
+                        impactSummary.recentSupports,
+                        'No supported businesses yet.',
+                        undefined,
+                        undefined,
+                        undefined,
+                        isMenuMode ? openSupportJourney : undefined
+                      )}
                     </div>
                   </div>
 
