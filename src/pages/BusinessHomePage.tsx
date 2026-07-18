@@ -16,7 +16,9 @@ import {
   useProfile,
 } from '../context/ProfileContext.tsx'
 import { useAuth } from '../context/AuthContext.tsx'
+import { useBusinessSubscription } from '../context/BusinessSubscriptionContext.tsx'
 import { usePageMeta } from '../hooks/usePageMeta.ts'
+import { canUseFeature } from '../lib/businessEntitlements.ts'
 import { getBusinessProfilesByOwner, updateBusinessAvailabilityOverride } from '../lib/businessProfileService.ts'
 import { getBusinessProfileCompletion } from '../lib/profileCompletion.ts'
 import type { BusinessProfileRow } from '../types/businessProfile.ts'
@@ -140,6 +142,11 @@ function SupportIcon() {
 function BusinessHomePage() {
   const navigate = useNavigate()
   const { user, accountMode, isLoading } = useAuth()
+  const {
+    subscription,
+    isLoading: isSubscriptionLoading,
+    isRefreshing: isSubscriptionRefreshing,
+  } = useBusinessSubscription()
   const { profileData, setProfileData, clearProfile } = useProfile()
 
   usePageMeta({
@@ -159,7 +166,8 @@ function BusinessHomePage() {
   const businessCategory = featuredProfile?.business_category.trim() || profileData.businessCategory.trim() || ''
   const businessLogoUrl = featuredProfile?.logo_url || null
   const businessInitials = getInitials(businessName)
-  const analyticsIsPremium = false
+  const analyticsAccessIsChecking = isSubscriptionLoading || isSubscriptionRefreshing
+  const hasFullAnalyticsAccess = canUseFeature(subscription, 'full_analytics')
   const availabilityStatus = featuredProfile ? getManualAvailabilityStatus(featuredProfile) : 'closed'
   const isAvailabilityOpen = availabilityStatus === 'open'
   const availabilityLabel = isAvailabilityOpen ? 'Open' : 'Closed'
@@ -601,14 +609,26 @@ function BusinessHomePage() {
                           <span className="text-[13px] font-semibold leading-4 text-black sm:text-sm sm:leading-5">
                             Analytics
                           </span>
-                          {!analyticsIsPremium && (
-                            <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] leading-none text-slate-600">
-                              Premium
-                            </span>
-                          )}
+                          <span
+                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] leading-none ${
+                              analyticsAccessIsChecking
+                                ? 'bg-slate-100 text-slate-600'
+                                : hasFullAnalyticsAccess
+                                  ? 'bg-emerald-100 text-emerald-700'
+                                  : 'bg-slate-100 text-slate-600'
+                            }`}
+                          >
+                            {analyticsAccessIsChecking ? 'Checking' : hasFullAnalyticsAccess ? 'Pro' : 'Premium'}
+                          </span>
                         </div>
                       </div>
-                      <span className="mt-1 text-xs leading-4 text-slate-600">View customer activity</span>
+                      <span className="mt-1 text-xs leading-4 text-slate-600">
+                        {analyticsAccessIsChecking
+                          ? 'Checking Analytics access'
+                          : hasFullAnalyticsAccess
+                            ? 'Full Analytics active'
+                            : 'View customer activity'}
+                      </span>
                     </button>
                   </div>
                 </div>

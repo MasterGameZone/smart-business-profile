@@ -14,6 +14,7 @@ import {
   useProfile,
 } from '../context/ProfileContext.tsx'
 import { useAuth } from '../context/AuthContext.tsx'
+import { useBusinessSubscription } from '../context/BusinessSubscriptionContext.tsx'
 import { changeAuthenticatedPassword, resetPassword, signOut } from '../lib/authService.ts'
 import {
   ensureProfileUpdateReminderNotification,
@@ -57,6 +58,7 @@ import {
   removeFavoriteBusiness,
 } from '../lib/favoriteBusinessService.ts'
 import { getBusinessProfileActionCount } from '../lib/businessProfileActionService.ts'
+import { canUseFeature } from '../lib/businessEntitlements.ts'
 import type { BusinessProfileRow } from '../types/businessProfile.ts'
 import type {
   BusinessOwnerHelpSuggestionRow,
@@ -1391,6 +1393,12 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const navigate = useNavigate()
   const location = useLocation()
   const { user, isLoading, accountMode, isBusinessOwnerEnabled, setPreferredAccountMode, setLogoutInProgress } = useAuth()
+  const {
+    subscription,
+    isLoading: isSubscriptionLoading,
+    isRefreshing: isSubscriptionRefreshing,
+    error: subscriptionError,
+  } = useBusinessSubscription()
   const { profileData, setProfileData } = useProfile()
   const [isSigningOut, setIsSigningOut] = useState(false)
   const [isHomeMenuOpen, setIsHomeMenuOpen] = useState(false)
@@ -1550,6 +1558,8 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const hasOpenMenu = isHomeMenuOpen || isLandingMobileMenuOpen
   const isBusinessOwnerAnalyticsScreenOpen =
     isHomeMenuOpen && showBusinessHomeTopBar && businessOwnerMenuPanel === 'analytics'
+  const isBusinessSubscriptionLoading = isSubscriptionLoading || isSubscriptionRefreshing
+  const hasFullAnalyticsAccess = canUseFeature(subscription, 'full_analytics')
   const authenticatedHomePath = isCreateProfilePage && accountMode === 'business_owner' ? '/business-home' : '/'
   const useInlineDarkNavbarLayout =
     isProfilePreviewPage || isPublicBusinessProfileVariant || ((isLandingPage || isSimpleDarkNavbarPage) && !user)
@@ -2035,7 +2045,12 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     const loadBusinessOwnerFollowersCount = async () => {
       setBusinessOwnerFollowersCount(null)
 
-      if (!isBusinessOwnerAnalyticsScreenOpen || !businessOwnerAnalyticsProfileId) {
+      if (
+        !isBusinessOwnerAnalyticsScreenOpen ||
+        !businessOwnerAnalyticsProfileId ||
+        isBusinessSubscriptionLoading ||
+        !hasFullAnalyticsAccess
+      ) {
         return
       }
 
@@ -2057,7 +2072,12 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     return () => {
       isActive = false
     }
-  }, [businessOwnerAnalyticsProfileId, isBusinessOwnerAnalyticsScreenOpen])
+  }, [
+    businessOwnerAnalyticsProfileId,
+    hasFullAnalyticsAccess,
+    isBusinessOwnerAnalyticsScreenOpen,
+    isBusinessSubscriptionLoading,
+  ])
 
   useEffect(() => {
     let isActive = true
@@ -2065,7 +2085,12 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     const loadBusinessOwnerWebsiteClicksCount = async () => {
       setBusinessOwnerWebsiteClicksCount(null)
 
-      if (!isBusinessOwnerAnalyticsScreenOpen || !businessOwnerAnalyticsProfileId) {
+      if (
+        !isBusinessOwnerAnalyticsScreenOpen ||
+        !businessOwnerAnalyticsProfileId ||
+        isBusinessSubscriptionLoading ||
+        !hasFullAnalyticsAccess
+      ) {
         return
       }
 
@@ -2087,7 +2112,12 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     return () => {
       isActive = false
     }
-  }, [businessOwnerAnalyticsProfileId, isBusinessOwnerAnalyticsScreenOpen])
+  }, [
+    businessOwnerAnalyticsProfileId,
+    hasFullAnalyticsAccess,
+    isBusinessOwnerAnalyticsScreenOpen,
+    isBusinessSubscriptionLoading,
+  ])
 
   useEffect(() => {
     let isActive = true
@@ -2095,7 +2125,12 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     const loadBusinessOwnerDirectionClicksCount = async () => {
       setBusinessOwnerDirectionClicksCount(null)
 
-      if (!isBusinessOwnerAnalyticsScreenOpen || !businessOwnerAnalyticsProfileId) {
+      if (
+        !isBusinessOwnerAnalyticsScreenOpen ||
+        !businessOwnerAnalyticsProfileId ||
+        isBusinessSubscriptionLoading ||
+        !hasFullAnalyticsAccess
+      ) {
         return
       }
 
@@ -2117,7 +2152,12 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     return () => {
       isActive = false
     }
-  }, [businessOwnerAnalyticsProfileId, isBusinessOwnerAnalyticsScreenOpen])
+  }, [
+    businessOwnerAnalyticsProfileId,
+    hasFullAnalyticsAccess,
+    isBusinessOwnerAnalyticsScreenOpen,
+    isBusinessSubscriptionLoading,
+  ])
 
   useEffect(() => {
     let isActive = true
@@ -2125,7 +2165,12 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     const loadBusinessOwnerWhatsAppClicksCount = async () => {
       setBusinessOwnerWhatsAppClicksCount(null)
 
-      if (!isBusinessOwnerAnalyticsScreenOpen || !businessOwnerAnalyticsProfileId) {
+      if (
+        !isBusinessOwnerAnalyticsScreenOpen ||
+        !businessOwnerAnalyticsProfileId ||
+        isBusinessSubscriptionLoading ||
+        !hasFullAnalyticsAccess
+      ) {
         return
       }
 
@@ -2147,7 +2192,12 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     return () => {
       isActive = false
     }
-  }, [businessOwnerAnalyticsProfileId, isBusinessOwnerAnalyticsScreenOpen])
+  }, [
+    businessOwnerAnalyticsProfileId,
+    hasFullAnalyticsAccess,
+    isBusinessOwnerAnalyticsScreenOpen,
+    isBusinessSubscriptionLoading,
+  ])
 
   useEffect(() => {
     let isActive = true
@@ -2155,7 +2205,12 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     const loadBusinessOwnerCallClicksCount = async () => {
       setBusinessOwnerCallClicksCount(null)
 
-      if (!isBusinessOwnerAnalyticsScreenOpen || !businessOwnerAnalyticsProfileId) {
+      if (
+        !isBusinessOwnerAnalyticsScreenOpen ||
+        !businessOwnerAnalyticsProfileId ||
+        isBusinessSubscriptionLoading ||
+        !hasFullAnalyticsAccess
+      ) {
         return
       }
 
@@ -2177,7 +2232,12 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     return () => {
       isActive = false
     }
-  }, [businessOwnerAnalyticsProfileId, isBusinessOwnerAnalyticsScreenOpen])
+  }, [
+    businessOwnerAnalyticsProfileId,
+    hasFullAnalyticsAccess,
+    isBusinessOwnerAnalyticsScreenOpen,
+    isBusinessSubscriptionLoading,
+  ])
 
   useEffect(() => {
     let isActive = true
@@ -2185,7 +2245,12 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     const loadBusinessOwnerProfileViewsCount = async () => {
       setBusinessOwnerProfileViewsCount(null)
 
-      if (!isBusinessOwnerAnalyticsScreenOpen || !businessOwnerAnalyticsProfileId) {
+      if (
+        !isBusinessOwnerAnalyticsScreenOpen ||
+        !businessOwnerAnalyticsProfileId ||
+        isBusinessSubscriptionLoading ||
+        !hasFullAnalyticsAccess
+      ) {
         return
       }
 
@@ -2207,7 +2272,12 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     return () => {
       isActive = false
     }
-  }, [businessOwnerAnalyticsProfileId, isBusinessOwnerAnalyticsScreenOpen])
+  }, [
+    businessOwnerAnalyticsProfileId,
+    hasFullAnalyticsAccess,
+    isBusinessOwnerAnalyticsScreenOpen,
+    isBusinessSubscriptionLoading,
+  ])
 
   useEffect(() => {
     let isActive = true
@@ -2215,14 +2285,12 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     const loadBusinessOwnerProfileActivity = async () => {
       setBusinessOwnerProfileActivityPoints(null)
 
-      if (!isBusinessOwnerAnalyticsScreenOpen) {
-        return
-      }
-
-      if (!businessOwnerAnalyticsProfileId) {
-        if (isActive) {
-          setBusinessOwnerProfileActivityPoints([])
-        }
+      if (
+        !isBusinessOwnerAnalyticsScreenOpen ||
+        !businessOwnerAnalyticsProfileId ||
+        isBusinessSubscriptionLoading ||
+        !hasFullAnalyticsAccess
+      ) {
         return
       }
 
@@ -2250,7 +2318,9 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   }, [
     businessOwnerAnalyticsProfileId,
     businessOwnerProfileActivityInterval,
+    hasFullAnalyticsAccess,
     isBusinessOwnerAnalyticsScreenOpen,
+    isBusinessSubscriptionLoading,
   ])
 
   useEffect(() => {
@@ -2259,7 +2329,12 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     const loadBusinessOwnerSavesCount = async () => {
       setBusinessOwnerSavesCount(null)
 
-      if (!isBusinessOwnerAnalyticsScreenOpen || !businessOwnerAnalyticsProfileId) {
+      if (
+        !isBusinessOwnerAnalyticsScreenOpen ||
+        !businessOwnerAnalyticsProfileId ||
+        isBusinessSubscriptionLoading ||
+        !hasFullAnalyticsAccess
+      ) {
         return
       }
 
@@ -2281,7 +2356,12 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     return () => {
       isActive = false
     }
-  }, [businessOwnerAnalyticsProfileId, isBusinessOwnerAnalyticsScreenOpen])
+  }, [
+    businessOwnerAnalyticsProfileId,
+    hasFullAnalyticsAccess,
+    isBusinessOwnerAnalyticsScreenOpen,
+    isBusinessSubscriptionLoading,
+  ])
 
   useEffect(() => {
     let isActive = true
@@ -2289,14 +2369,12 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     const loadBusinessOwnerInsights = async () => {
       setBusinessOwnerInsightRows(null)
 
-      if (!isBusinessOwnerAnalyticsScreenOpen) {
-        return
-      }
-
-      if (!businessOwnerAnalyticsProfileId) {
-        if (isActive) {
-          setBusinessOwnerInsightRows([])
-        }
+      if (
+        !isBusinessOwnerAnalyticsScreenOpen ||
+        !businessOwnerAnalyticsProfileId ||
+        isBusinessSubscriptionLoading ||
+        !hasFullAnalyticsAccess
+      ) {
         return
       }
 
@@ -2318,7 +2396,12 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     return () => {
       isActive = false
     }
-  }, [businessOwnerAnalyticsProfileId, isBusinessOwnerAnalyticsScreenOpen])
+  }, [
+    businessOwnerAnalyticsProfileId,
+    hasFullAnalyticsAccess,
+    isBusinessOwnerAnalyticsScreenOpen,
+    isBusinessSubscriptionLoading,
+  ])
 
   useEffect(() => {
     if (!isHomeMenuOpen || !showBusinessHomeTopBar || !user?.id) {
@@ -4391,34 +4474,83 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     </>
   )
 
-  const renderBusinessOwnerAnalyticsPanel = () => (
-    <section className="mx-auto w-full max-w-6xl min-w-0 bg-[#eef4fa]">
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-start gap-2.5">
-          <button
-            type="button"
-            aria-label="Back to Business Account menu"
-            onClick={() => setBusinessOwnerMenuPanel('main')}
-            className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.42)] transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 6 9 12l6 6" />
-            </svg>
-          </button>
-          <div className="min-w-0">
-            <h2 className="text-lg font-bold leading-tight text-[#0f172a]">Analytics</h2>
-            <p className="mt-1 text-xs leading-relaxed text-slate-600">Track how customers interact with your profile.</p>
-          </div>
-        </div>
+  const renderBusinessOwnerAnalyticsPanelHeader = () => (
+    <div className="mb-4 flex items-start justify-between gap-3">
+      <div className="flex min-w-0 items-start gap-2.5">
         <button
           type="button"
-          aria-label="Premium analytics badge"
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[11px] font-semibold text-amber-700 shadow-[0_10px_22px_-18px_rgba(180,83,9,0.45)] focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+          aria-label="Back to Business Account menu"
+          onClick={() => setBusinessOwnerMenuPanel('main')}
+          className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.42)] transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
         >
-          <CrownIcon />
-          <span>Premium</span>
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 6 9 12l6 6" />
+          </svg>
         </button>
+        <div className="min-w-0">
+          <h2 className="text-lg font-bold leading-tight text-[#0f172a]">Analytics</h2>
+          <p className="mt-1 text-xs leading-relaxed text-slate-600">Track how customers interact with your profile.</p>
+        </div>
       </div>
+      <span
+        aria-label="Premium analytics badge"
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[11px] font-semibold text-amber-700 shadow-[0_10px_22px_-18px_rgba(180,83,9,0.45)]"
+      >
+        <CrownIcon />
+        <span>Premium</span>
+      </span>
+    </div>
+  )
+
+  const renderBusinessOwnerAnalyticsPanel = () => {
+    const panelHeader = renderBusinessOwnerAnalyticsPanelHeader()
+
+    if (isBusinessSubscriptionLoading) {
+      return (
+        <section className="mx-auto w-full max-w-6xl min-w-0 bg-[#eef4fa]">
+          {panelHeader}
+          <section
+            className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_18px_38px_-30px_rgba(15,23,42,0.55)]"
+            role="status"
+            aria-live="polite"
+          >
+            <h3 className="text-sm font-bold text-[#0f172a]">Checking Analytics access</h3>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              We are confirming your subscription access before loading Analytics.
+            </p>
+          </section>
+        </section>
+      )
+    }
+
+    if (!hasFullAnalyticsAccess) {
+      return (
+        <section className="mx-auto w-full max-w-6xl min-w-0 bg-[#eef4fa]">
+          {panelHeader}
+          <section className="rounded-2xl border border-amber-200 bg-white p-4 shadow-[0_18px_38px_-30px_rgba(15,23,42,0.55)]">
+            <h3 className="text-sm font-bold text-[#0f172a]">Unlock full Analytics with Pro Analytics</h3>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              Pro Analytics gives you a complete view of how customers engage with your business profile.
+            </p>
+            <ul className="mt-4 space-y-2 text-sm leading-relaxed text-slate-700">
+              <li className="flex gap-2"><span aria-hidden="true">•</span><span>Profile views and activity</span></li>
+              <li className="flex gap-2"><span aria-hidden="true">•</span><span>Customer actions</span></li>
+              <li className="flex gap-2"><span aria-hidden="true">•</span><span>Saves and followers</span></li>
+              <li className="flex gap-2"><span aria-hidden="true">•</span><span>Trends and insights</span></li>
+            </ul>
+            {subscriptionError ? (
+              <p className="mt-4 text-xs leading-relaxed text-slate-500">
+                Subscription access could not be verified. Analytics remains locked.
+              </p>
+            ) : null}
+          </section>
+        </section>
+      )
+    }
+
+    return (
+      <section className="mx-auto w-full max-w-6xl min-w-0 bg-[#eef4fa]">
+        {panelHeader}
 
       <div
         className="grid grid-cols-3 gap-1 rounded-full border border-slate-200 bg-white/80 p-1 shadow-[0_14px_34px_-28px_rgba(15,23,42,0.5)]"
@@ -4661,9 +4793,10 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
             ))}
           </div>
         )}
+        </section>
       </section>
-    </section>
-  )
+    )
+  }
 
   const renderBusinessOwnerNotificationsPanel = () => (
     <>
