@@ -4,6 +4,8 @@ export type CustomerNotificationType =
   | 'support_invite_opened'
   | 'support_invite_business_signed_up'
   | 'support_invite_business_owner_switched'
+  | 'feature_vote_recorded'
+  | 'feature_suggestion_submitted'
   | 'report_status_updated'
   | 'saved_business_updated'
 

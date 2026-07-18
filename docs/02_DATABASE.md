@@ -336,7 +336,7 @@ Stores private customer-owned notifications for customer activity, supported-bus
 | read_at | TIMESTAMP WITH TIME ZONE | Yes | Timestamp when marked read |
 | created_at | TIMESTAMP WITH TIME ZONE | No | Record creation timestamp |
 
-Access is restricted by RLS to the authenticated owner of each row. Authenticated customers may select their own notifications and update only the `is_read` and `read_at` columns on their own notifications. Support invite milestone RPCs create deduplicated notifications for first invite open, first business sign-up, first Business Owner mode switch, profile publication, and supporter-level unlock events.
+Access is restricted by RLS to the authenticated owner of each row. Authenticated customers may select their own notifications and update only the `is_read` and `read_at` columns on their own notifications. Support invite milestone RPCs create deduplicated notifications for first invite open, first business sign-up, first Business Owner mode switch, profile publication, and supporter-level unlock events. Shape the Platform participation RPCs create deduplicated notifications for feature votes and feature suggestion submissions.
 
 ---
 

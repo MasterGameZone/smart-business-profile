@@ -68,7 +68,23 @@ export async function voteForFeature(
     throw error
   }
 
-  return data as CustomerFeatureVoteRow
+  const createdVote = data as CustomerFeatureVoteRow
+
+  try {
+    const { error: notificationError } = await supabase.rpc('create_customer_feature_vote_recorded_notification', {
+      p_feature_vote_id: createdVote.id,
+    })
+
+    if (notificationError && import.meta.env.DEV) {
+      console.warn('Feature vote notification creation failed.')
+    }
+  } catch {
+    if (import.meta.env.DEV) {
+      console.warn('Feature vote notification creation failed.')
+    }
+  }
+
+  return createdVote
 }
 
 export async function removeFeatureVote(
@@ -124,5 +140,26 @@ export async function createCustomerPlatformSuggestion({
     throw error
   }
 
-  return data as CustomerPlatformSuggestionRow
+  const createdSuggestion = data as CustomerPlatformSuggestionRow
+
+  if (createdSuggestion.suggestion_type === 'Feature Suggestion') {
+    try {
+      const { error: notificationError } = await supabase.rpc(
+        'create_customer_feature_suggestion_submitted_notification',
+        {
+          p_suggestion_id: createdSuggestion.id,
+        }
+      )
+
+      if (notificationError && import.meta.env.DEV) {
+        console.warn('Feature suggestion notification creation failed.')
+      }
+    } catch {
+      if (import.meta.env.DEV) {
+        console.warn('Feature suggestion notification creation failed.')
+      }
+    }
+  }
+
+  return createdSuggestion
 }
