@@ -430,7 +430,15 @@ interface BusinessOwnerMenuState {
 }
 
 type BusinessOwnerMenuPanel = 'main' | 'profile' | 'analytics' | 'notifications' | 'settings'
-type BusinessOwnerSettingsView = 'main' | 'help' | 'notifications' | 'security' | 'faqs' | 'suggestions' | 'recent'
+type BusinessOwnerSettingsView =
+  | 'main'
+  | 'help'
+  | 'notifications'
+  | 'security'
+  | 'faqs'
+  | 'suggestions'
+  | 'contact'
+  | 'recent'
 type BusinessOwnerPhoneModalMode = 'add' | 'change'
 type BusinessOwnerPhoneModalStep = 'phone' | 'otp' | 'success'
 type BusinessOwnerAnalyticsRange = '7D' | '30D' | '90D'
@@ -1276,6 +1284,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const businessOwnerHelpSettingsItems = [
     'Business account FAQs',
     'Suggestions',
+    'Contact Us',
     'Recent help & suggestions',
   ]
   const businessOwnerSecuritySettingsItems = [
@@ -4429,6 +4438,44 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
               {isBusinessOwnerSuggestionSubmitting ? 'Sending...' : 'Send suggestion'}
             </button>
           </div>
+      </section>
+    </>
+    ) : businessOwnerSettingsView === 'contact' ? (
+      <>
+        {renderBusinessOwnerSubPanelHeader('Contact Us', () => setBusinessOwnerSettingsView('help'))}
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          <a
+            href="mailto:kumars01082001@gmail.com"
+            className="flex w-full items-center justify-between border-b border-slate-100/90 px-3 py-3 text-left text-sm text-[#0f172a] transition hover:bg-slate-50 focus:bg-slate-50 focus:outline-none"
+          >
+            <span className="flex min-w-0 items-center gap-3">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16v12H4z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m4 7 8 6 8-6" />
+                </svg>
+              </span>
+              <span className="min-w-0">
+                <span className="block font-medium">Email</span>
+                <span className="mt-0.5 block truncate text-xs text-slate-500">kumars01082001@gmail.com</span>
+              </span>
+            </span>
+          </a>
+
+          <div className="flex w-full items-center justify-between px-3 py-3 text-left text-sm text-[#0f172a]">
+            <span className="flex min-w-0 items-center gap-3">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.8 8.8 0 0 1-3.9-.9L3 20l1.1-4.7A8.3 8.3 0 1 1 21 11.5Z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.5 8.5h7M8.5 12h5" />
+                </svg>
+              </span>
+              <span className="min-w-0">
+                <span className="block font-medium">WhatsApp</span>
+                <span className="mt-0.5 block text-xs text-slate-500">Coming Soon</span>
+              </span>
+            </span>
+          </div>
         </section>
       </>
     ) : businessOwnerSettingsView === 'recent' ? (
@@ -4530,10 +4577,12 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
                           resetBusinessOwnerSuggestionForm()
                           setBusinessOwnerSettingsView('suggestions')
                         }
-                      : () => {
-                          setOpenBusinessOwnerRecentHelpSuggestionId(null)
-                          setBusinessOwnerSettingsView('recent')
-                        }
+                      : item === 'Contact Us'
+                        ? () => setBusinessOwnerSettingsView('contact')
+                        : () => {
+                            setOpenBusinessOwnerRecentHelpSuggestionId(null)
+                            setBusinessOwnerSettingsView('recent')
+                          }
                 }
                 className={businessOwnerMenuRowClass}
               >
