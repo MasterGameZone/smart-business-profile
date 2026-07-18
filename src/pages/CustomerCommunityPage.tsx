@@ -77,6 +77,7 @@ type ImpactView =
   | 'linksOpened'
   | 'businessSignedUp'
   | 'businessOwnerSwitched'
+  | 'profilesPublished'
 
 type CustomerSupporterLevelIcon = 'new' | 'supporter' | 'builder' | 'champion'
 
@@ -685,6 +686,9 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
       !support.published_profile_id
   )
   const publishedSupports = supportedBusinesses.filter((support) => support.status === 'Profile Published')
+  const publishedProfileSupports = supportedBusinesses.filter(
+    (support) => Boolean(support.published_profile_id) || support.status === 'Profile Published'
+  )
   const publishedProfilesCount = publishedSupports.length
   const supporterLevel = getCustomerSupporterLevel(publishedProfilesCount)
   const supporterProgressPercent = Math.max(0, Math.min(100, supporterLevel.progressPercent))
@@ -1253,6 +1257,31 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                 </>
               )}
 
+              {!isSupportsLoading && !impactDisplayError && impactView === 'profilesPublished' && (
+                <>
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="text-base font-semibold text-black">Profiles Published</h3>
+                    <button
+                      type="button"
+                      className={secondaryButtonClassName}
+                      onClick={() => setImpactView('summary')}
+                    >
+                      Back
+                    </button>
+                  </div>
+
+                  <div className="mt-4">
+                    {renderSupportedBusinessesList(
+                      publishedProfileSupports,
+                      'No profiles have been published from your invitations yet.',
+                      'Profile Published',
+                      statusPillClass('Profile Published'),
+                      (support) => `Published ${formatCompactDate(support.updated_at)}`
+                    )}
+                  </div>
+                </>
+              )}
+
               {!isSupportsLoading &&
                 !impactDisplayError &&
                 impactView === 'summary' &&
@@ -1328,7 +1357,8 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                         stat.label === 'Invitations Shared' ||
                         stat.label === 'Links Opened' ||
                         stat.label === 'Businesses Signed Up' ||
-                        stat.label === 'Switched to Business Owner'
+                        stat.label === 'Switched to Business Owner' ||
+                        stat.label === 'Profiles Published'
                       ) {
                         const nextImpactView =
                           stat.label === 'Businesses Supported'
@@ -1339,7 +1369,9 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                                 ? 'linksOpened'
                                 : stat.label === 'Businesses Signed Up'
                                   ? 'businessSignedUp'
-                                  : 'businessOwnerSwitched'
+                                  : stat.label === 'Switched to Business Owner'
+                                    ? 'businessOwnerSwitched'
+                                    : 'profilesPublished'
 
                         return (
                           <button
