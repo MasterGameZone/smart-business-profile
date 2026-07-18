@@ -6,7 +6,7 @@ import { usePageMeta } from '../hooks/usePageMeta.ts'
 import { createCustomerHelpFeedbackRequest } from '../lib/customerHelpFeedbackService.ts'
 import type {
   CustomerHelpFeedbackCategory,
-  CustomerSatisfactionLevel,
+  CustomerHelpFeedbackRequestType,
 } from '../types/customerHelpFeedback.ts'
 
 type HelpFeedbackTab = 'help' | 'report' | 'feedback'
@@ -28,9 +28,16 @@ interface ProblemReportFormState {
   message: string
 }
 
-interface FeedbackFormState {
-  feedbackType: CustomerHelpFeedbackCategory
-  satisfactionLevel: CustomerSatisfactionLevel
+type SupportFeedbackType =
+  | 'suggestion'
+  | 'help_request'
+  | 'issue_problem'
+  | 'customer_account_improvement_help'
+
+interface SupportFeedbackFormState {
+  type: SupportFeedbackType
+  subject: string
+  customSubject: string
   message: string
 }
 
@@ -85,22 +92,67 @@ const supportCategories: CustomerHelpFeedbackCategory[] = [
 
 const problemCategories: CustomerHelpFeedbackCategory[] = supportCategories
 
-const feedbackTypes: CustomerHelpFeedbackCategory[] = [
-  'General feedback',
-  'Feature suggestion',
-  'Design feedback',
-  'Bug feedback',
-  'Category suggestion',
-  'Other',
+const supportFeedbackTypeOptions: Array<{
+  value: SupportFeedbackType
+  label: string
+}> = [
+  { value: 'suggestion', label: 'Suggestion' },
+  { value: 'help_request', label: 'Help request' },
+  { value: 'issue_problem', label: 'Issue / problem' },
+  { value: 'customer_account_improvement_help', label: 'Customer account improvement help' },
 ]
 
-const satisfactionLevels: CustomerSatisfactionLevel[] = [
-  'Very satisfied',
-  'Satisfied',
-  'Neutral',
-  'Unsatisfied',
-  'Very unsatisfied',
-]
+const supportFeedbackSubjectOptionsByType: Record<SupportFeedbackType, string[]> = {
+  suggestion: [
+    'New feature suggestion',
+    'Improve customer home page',
+    'Improve business search / directory',
+    'Improve saved businesses',
+    'Improve ratings & reviews',
+    'Improve customer notifications',
+    'Improve Support a Business',
+    'Improve My Local Impact',
+    'Improve customer account menu',
+    'Others',
+  ],
+  help_request: [
+    'Help updating my customer profile',
+    'Help verifying my email address',
+    'Help resetting my password',
+    'Help finding businesses',
+    'Help with saved businesses',
+    'Help with ratings & reviews',
+    'Help with reported profiles',
+    'Help with Support a Business',
+    'Help switching account mode',
+    'Others',
+  ],
+  issue_problem: [
+    'Customer profile is not saving',
+    'Email verification is not working',
+    'Password reset is not working',
+    'Search or directory is not working',
+    'Saved businesses are not loading',
+    'Ratings or reviews are not working',
+    'Reported profiles are not loading',
+    'Notifications are not loading correctly',
+    'Support a Business is not working',
+    'Customer account or menu issue',
+    'Others',
+  ],
+  customer_account_improvement_help: [
+    'Improve my customer profile',
+    'Improve my account settings experience',
+    'Improve business discovery',
+    'Improve saved businesses experience',
+    'Improve ratings and reviews experience',
+    'Improve My Activity',
+    'Improve customer notifications',
+    'Improve community features',
+    'Improve Support & Feedback',
+    'Others',
+  ],
+}
 
 const defaultContactSupportForm: ContactSupportFormState = {
   category: supportCategories[0],
@@ -114,9 +166,10 @@ const defaultProblemReportForm: ProblemReportFormState = {
   message: '',
 }
 
-const defaultFeedbackForm: FeedbackFormState = {
-  feedbackType: feedbackTypes[0],
-  satisfactionLevel: 'Satisfied',
+const defaultSupportFeedbackForm: SupportFeedbackFormState = {
+  type: 'suggestion',
+  subject: '',
+  customSubject: '',
   message: '',
 }
 
@@ -155,6 +208,36 @@ function validateTextField(
   return undefined
 }
 
+function getSupportFeedbackRequestType(type: SupportFeedbackType): CustomerHelpFeedbackRequestType {
+  switch (type) {
+    case 'suggestion':
+      return 'Feedback'
+    case 'help_request':
+      return 'Contact Support'
+    case 'issue_problem':
+      return 'Problem Report'
+    case 'customer_account_improvement_help':
+      return 'Contact Support'
+    default:
+      return 'Feedback'
+  }
+}
+
+function getSupportFeedbackCategory(type: SupportFeedbackType): CustomerHelpFeedbackCategory {
+  switch (type) {
+    case 'suggestion':
+      return 'Feature suggestion'
+    case 'help_request':
+      return 'Account issue'
+    case 'issue_problem':
+      return 'Technical problem'
+    case 'customer_account_improvement_help':
+      return 'Account issue'
+    default:
+      return 'Other'
+  }
+}
+
 function CustomerHelpFeedbackPage() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -169,7 +252,7 @@ function CustomerHelpFeedbackPage() {
   const [problemErrors, setProblemErrors] = useState<TextFormErrors>({})
   const [problemFeedback, setProblemFeedback] = useState<FeedbackMessage>(null)
   const [isSubmittingProblem, setIsSubmittingProblem] = useState(false)
-  const [feedbackForm, setFeedbackForm] = useState<FeedbackFormState>(defaultFeedbackForm)
+  const [supportFeedbackForm, setSupportFeedbackForm] = useState<SupportFeedbackFormState>(defaultSupportFeedbackForm)
   const [feedbackErrors, setFeedbackErrors] = useState<TextFormErrors>({})
   const [feedbackSubmitMessage, setFeedbackSubmitMessage] = useState<FeedbackMessage>(null)
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false)
@@ -191,6 +274,9 @@ function CustomerHelpFeedbackPage() {
     'rounded-3xl border border-[#c7d2df] bg-white p-6 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] sm:p-8'
   const fieldClassName =
     'mt-2 w-full rounded-2xl border border-[#c7d2df] bg-[#f8fafc] px-4 py-3 text-sm text-black placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-blue-500'
+  const supportFeedbackPanelCardClass = 'rounded-2xl border border-slate-200 bg-slate-50/80 p-3'
+  const supportFeedbackInputClass =
+    'mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-[#0f172a] outline-none focus:ring-2 focus:ring-slate-300'
   const labelClassName = 'text-sm font-semibold text-black'
   const helperClassName = 'mt-1 text-xs text-slate-500'
   const errorClassName = 'mt-1 text-xs font-medium text-red-700'
@@ -208,7 +294,7 @@ function CustomerHelpFeedbackPage() {
   const tabs: Array<{ id: HelpFeedbackTab; label: string }> = [
     { id: 'help', label: 'Help & Support' },
     { id: 'report', label: 'Report a Problem' },
-    { id: 'feedback', label: 'Share Feedback' },
+    { id: 'feedback', label: 'Support & Feedback' },
   ]
 
   const authSubmitError = 'Please sign in to submit this request.'
@@ -304,15 +390,23 @@ function CustomerHelpFeedbackPage() {
 
     if (isSubmittingFeedback) return
 
-    const message = normalizeText(feedbackForm.message)
+    const selectedSubject = supportFeedbackForm.subject
+    const customSubject = normalizeText(supportFeedbackForm.customSubject)
+    const title = selectedSubject === 'Others' ? customSubject : selectedSubject
+    const message = normalizeText(supportFeedbackForm.message)
     const errors: TextFormErrors = {
+      subject: selectedSubject
+        ? selectedSubject === 'Others'
+          ? validateTextField(customSubject, 'a subject', 80)
+          : undefined
+        : 'Please select a subject.',
       message: validateTextField(message, 'feedback', 1000),
     }
 
     setFeedbackErrors(errors)
     setFeedbackSubmitMessage(null)
 
-    if (errors.message) return
+    if (errors.subject || errors.message) return
 
     if (!userId) {
       setFeedbackSubmitMessage({ kind: 'error', text: authSubmitError })
@@ -324,20 +418,167 @@ function CustomerHelpFeedbackPage() {
     try {
       await createCustomerHelpFeedbackRequest({
         customerId: userId,
-        requestType: 'Feedback',
-        category: feedbackForm.feedbackType,
-        title: feedbackForm.feedbackType,
+        requestType: getSupportFeedbackRequestType(supportFeedbackForm.type),
+        category: getSupportFeedbackCategory(supportFeedbackForm.type),
+        title,
         message,
-        satisfactionLevel: feedbackForm.satisfactionLevel,
+        satisfactionLevel: null,
       })
-      setFeedbackForm(defaultFeedbackForm)
-      setFeedbackSubmitMessage({ kind: 'success', text: 'Feedback submitted.' })
+      setSupportFeedbackForm(defaultSupportFeedbackForm)
+      setFeedbackSubmitMessage({ kind: 'success', text: 'Thanks, your message has been sent.' })
     } catch (error) {
-      console.error('Failed to submit customer feedback:', error)
-      setFeedbackSubmitMessage({ kind: 'error', text: 'We could not submit your feedback. Please try again.' })
+      console.error('Failed to submit customer support and feedback request:', error)
+      setFeedbackSubmitMessage({ kind: 'error', text: 'We could not send your message. Please try again.' })
     } finally {
       setIsSubmittingFeedback(false)
     }
+  }
+
+  const handleSupportFeedbackBack = (): void => {
+    window.sessionStorage.setItem('smart-business-profile:open-customer-help-suggestions', 'true')
+    navigate('/')
+  }
+
+  if (activeTab === 'feedback') {
+    return (
+      <div className="min-h-screen bg-[#eef4fa] text-black">
+        <main className="mx-auto max-w-4xl px-4 py-10 sm:py-12">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h1 className="text-sm font-semibold text-[#0f172a]">Support & Feedback</h1>
+            <button
+              type="button"
+              onClick={handleSupportFeedbackBack}
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+            >
+              <span>Back</span>
+            </button>
+          </div>
+
+          <section id="feedback" className="space-y-3">
+            <div className={supportFeedbackPanelCardClass}>
+              <p className="text-sm leading-relaxed text-slate-600">
+                Share feedback, report an issue, or ask for help improving your customer account.
+              </p>
+            </div>
+
+            <form
+              className={`${supportFeedbackPanelCardClass} space-y-3`}
+              onSubmit={(event) => void submitFeedback(event)}
+            >
+              <label className="block text-xs font-semibold text-slate-600">
+                Type
+                <select
+                  className={supportFeedbackInputClass}
+                  value={supportFeedbackForm.type}
+                  onChange={(event) => {
+                    setSupportFeedbackForm((currentForm) => ({
+                      ...currentForm,
+                      type: event.target.value as SupportFeedbackType,
+                      subject: '',
+                      customSubject: '',
+                    }))
+                    setFeedbackErrors({})
+                    setFeedbackSubmitMessage(null)
+                  }}
+                  disabled={isSubmittingFeedback}
+                >
+                  {supportFeedbackTypeOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="block text-xs font-semibold text-slate-600">
+                Subject
+                <select
+                  className={supportFeedbackInputClass}
+                  value={supportFeedbackForm.subject}
+                  onChange={(event) => {
+                    setSupportFeedbackForm((currentForm) => ({
+                      ...currentForm,
+                      subject: event.target.value,
+                      customSubject: event.target.value === 'Others' ? currentForm.customSubject : '',
+                    }))
+                    setFeedbackErrors((currentErrors) => ({ ...currentErrors, subject: undefined }))
+                    setFeedbackSubmitMessage(null)
+                  }}
+                  disabled={isSubmittingFeedback}
+                >
+                  <option value="">Select subject</option>
+                  {supportFeedbackSubjectOptionsByType[supportFeedbackForm.type].map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+                {feedbackErrors.subject ? (
+                  <p className="mt-1.5 text-xs text-rose-700">{feedbackErrors.subject}</p>
+                ) : null}
+              </label>
+
+              {supportFeedbackForm.subject === 'Others' ? (
+                <label className="block text-xs font-semibold text-slate-600">
+                  Please specify subject
+                  <input
+                    className={supportFeedbackInputClass}
+                    value={supportFeedbackForm.customSubject}
+                    onChange={(event) => {
+                      setSupportFeedbackForm((currentForm) => ({
+                        ...currentForm,
+                        customSubject: event.target.value,
+                      }))
+                      setFeedbackErrors((currentErrors) => ({ ...currentErrors, subject: undefined }))
+                      setFeedbackSubmitMessage(null)
+                    }}
+                    maxLength={80}
+                    disabled={isSubmittingFeedback}
+                  />
+                </label>
+              ) : null}
+
+              <label className="block text-xs font-semibold text-slate-600">
+                Message
+                <textarea
+                  className={`${supportFeedbackInputClass} min-h-28 resize-y`}
+                  value={supportFeedbackForm.message}
+                  onChange={(event) => {
+                    setSupportFeedbackForm((currentForm) => ({ ...currentForm, message: event.target.value }))
+                    setFeedbackErrors((currentErrors) => ({ ...currentErrors, message: undefined }))
+                    setFeedbackSubmitMessage(null)
+                  }}
+                  maxLength={1000}
+                  disabled={isSubmittingFeedback}
+                  aria-invalid={Boolean(feedbackErrors.message)}
+                />
+                {feedbackErrors.message ? (
+                  <p className="mt-1.5 text-xs text-rose-700">{feedbackErrors.message}</p>
+                ) : null}
+              </label>
+
+              {feedbackSubmitMessage ? (
+                <p
+                  className={`text-xs ${
+                    feedbackSubmitMessage.kind === 'success' ? 'text-emerald-700' : 'text-rose-700'
+                  }`}
+                >
+                  {feedbackSubmitMessage.text}
+                </p>
+              ) : null}
+
+              <button
+                type="submit"
+                className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700 disabled:cursor-not-allowed disabled:opacity-70"
+                disabled={isAuthLoading || isSubmittingFeedback}
+              >
+                {isSubmittingFeedback ? 'Sending...' : 'Send message'}
+              </button>
+            </form>
+          </section>
+        </main>
+      </div>
+    )
   }
 
   return (
@@ -560,92 +801,6 @@ function CustomerHelpFeedbackPage() {
             </section>
           )}
 
-          {activeTab === 'feedback' && (
-            <section id="feedback" className={sectionClassName}>
-              <div className="flex flex-col gap-2">
-                <h2 className="text-lg font-semibold tracking-tight text-black sm:text-xl">Share Feedback</h2>
-                <p className="text-sm text-black">
-                  Share what is working well or what should improve.
-                </p>
-              </div>
-
-              {feedbackSubmitMessage && <div className={feedbackBoxClassName(feedbackSubmitMessage)}>{feedbackSubmitMessage.text}</div>}
-
-              <form className="mt-5 grid grid-cols-1 gap-5" onSubmit={(event) => void submitFeedback(event)}>
-                <label className="block">
-                  <span className={labelClassName}>Feedback type</span>
-                  <select
-                    className={fieldClassName}
-                    value={feedbackForm.feedbackType}
-                    onChange={(event) =>
-                      setFeedbackForm((currentForm) => ({
-                        ...currentForm,
-                        feedbackType: event.target.value as CustomerHelpFeedbackCategory,
-                      }))
-                    }
-                  >
-                    {feedbackTypes.map((type) => (
-                      <option key={type} value={type}>
-                        {type}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <div>
-                  <p className={labelClassName}>Rating or satisfaction level</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {satisfactionLevels.map((level) => {
-                      const isSelected = feedbackForm.satisfactionLevel === level
-
-                      return (
-                        <button
-                          key={level}
-                          type="button"
-                          className={`inline-flex min-h-[38px] items-center justify-center rounded-full border px-4 py-2 text-sm font-medium ${
-                            isSelected
-                              ? 'border-blue-200 bg-blue-50 text-blue-700'
-                              : 'border-[#c7d2df] bg-[#f8fafc] text-black'
-                          }`}
-                          onClick={() =>
-                            setFeedbackForm((currentForm) => ({
-                              ...currentForm,
-                              satisfactionLevel: level,
-                            }))
-                          }
-                        >
-                          {level}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                <label className="block">
-                  <span className={labelClassName}>Feedback message</span>
-                  <textarea
-                    className={`${fieldClassName} min-h-[140px] resize-none`}
-                    value={feedbackForm.message}
-                    onChange={(event) => {
-                      setFeedbackForm((currentForm) => ({ ...currentForm, message: event.target.value }))
-                      setFeedbackErrors((currentErrors) => ({ ...currentErrors, message: undefined }))
-                    }}
-                    placeholder="Share what is working well or what should improve"
-                    maxLength={1000}
-                    aria-invalid={Boolean(feedbackErrors.message)}
-                  />
-                  <p className={helperClassName}>{normalizeText(feedbackForm.message).length}/1000 characters. Links are not allowed.</p>
-                  {feedbackErrors.message && <p className={errorClassName}>{feedbackErrors.message}</p>}
-                </label>
-
-                <div className="pt-1">
-                  <button type="submit" className={actionButtonClassName} disabled={isAuthLoading || isSubmittingFeedback}>
-                    {isSubmittingFeedback ? 'Submitting...' : 'Submit Feedback'}
-                  </button>
-                </div>
-              </form>
-            </section>
-          )}
         </div>
       </main>
     </div>

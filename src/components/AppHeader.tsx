@@ -450,6 +450,7 @@ type CustomerMenuPanel =
   | 'communityBenefit'
   | 'settings'
   | 'helpSuggestions'
+  | 'customerFaqs'
   | 'helpSuggestionsRecent'
 type CustomerSavedBusinessesLoadState = 'idle' | 'loading' | 'found' | 'empty' | 'error'
 let hasPlayedNavbarEntrance = false
@@ -790,6 +791,69 @@ const businessOwnerFaqItems = [
   },
 ]
 
+const customerFaqItems = [
+  {
+    question: 'How do I update my customer profile?',
+    answer:
+      'Open the customer menu, select Profile & Settings, update your name, phone number, preferred city, or preferred area, and then save your changes.',
+  },
+  {
+    question: 'Can I change the email address linked to my account?',
+    answer:
+      'Your email address is connected to your login account and is currently read-only inside Profile & Settings. Email-address changes are not currently available from the customer profile screen.',
+  },
+  {
+    question: 'How do I verify my email address?',
+    answer:
+      'Open Profile & Settings and check the verification status shown beside your email address. If your email is not verified, use the available resend verification email option and follow the link sent to your inbox.',
+  },
+  {
+    question: 'How do I reset my password?',
+    answer:
+      'Open Profile & Settings, go to Login & Security, and select the password reset option. A password reset link will be sent to your registered email address.',
+  },
+  {
+    question: 'Where can I find businesses I have saved?',
+    answer:
+      'Open the customer menu and select Saved Businesses to view the businesses you have saved for later.',
+  },
+  {
+    question: 'Where can I view or manage my ratings and reviews?',
+    answer:
+      'Open the customer menu, go to My Activity, and select Ratings & Reviews. You can view, edit, or delete your existing reviews from there.',
+  },
+  {
+    question: 'Where can I check the profiles I have reported?',
+    answer:
+      'Open the customer menu, go to My Activity, and select Reported Profiles. You can view your submitted reports and their available status information there.',
+  },
+  {
+    question: 'How can I support a local business?',
+    answer:
+      'Open the customer menu, go to Community, and select Support a Business. You can enter the business details and share the generated invitation through WhatsApp, a copied message, or an invitation link.',
+  },
+  {
+    question: 'What is My Local Impact?',
+    answer:
+      'My Local Impact shows your contribution to supporting local businesses, including businesses supported, invitations shared, published profiles, supporter level, and progress toward the next level.',
+  },
+  {
+    question: 'How do I switch to a Business Account?',
+    answer:
+      'Open the customer menu and select Switch to Business Mode. This allows you to access business-owner features and create or manage a business profile without creating a separate login account.',
+  },
+  {
+    question: 'Where can I see my customer notifications?',
+    answer:
+      'Open the customer menu and select Notifications. Customer notifications may include supported-business updates, supporter-level achievements, report-status updates, and saved-business updates.',
+  },
+  {
+    question: 'How do I contact support or submit a suggestion?',
+    answer:
+      'Open Settings, select Help & Suggestions, and then choose Suggestions or Contact Us. You can also use Recent to view available previous submissions.',
+  },
+]
+
 const businessOwnerSuggestionTypeOptions: Array<{
   value: BusinessOwnerHelpSuggestionType
   label: string
@@ -892,6 +956,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     useState<BusinessProfileViewActivityPoint[] | null>(null)
   const [businessOwnerInsightRows, setBusinessOwnerInsightRows] = useState<BusinessProfileInsight[] | null>(null)
   const [openBusinessOwnerFaqQuestion, setOpenBusinessOwnerFaqQuestion] = useState<string | null>(null)
+  const [openCustomerFaqQuestion, setOpenCustomerFaqQuestion] = useState<string | null>(null)
   const [isLandingMobileMenuOpen, setIsLandingMobileMenuOpen] = useState(false)
   const [businessOwnerSuggestionForm, setBusinessOwnerSuggestionForm] = useState<BusinessOwnerSuggestionFormState>({
     type: 'suggestion',
@@ -1285,6 +1350,21 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       hasPlayedNavbarEntrance = true
     }
   }, [shouldAnimateEntrance])
+
+  useEffect(() => {
+    if (!showLoggedInHomeIcons) {
+      return
+    }
+
+    if (window.sessionStorage.getItem('smart-business-profile:open-customer-help-suggestions') !== 'true') {
+      return
+    }
+
+    window.sessionStorage.removeItem('smart-business-profile:open-customer-help-suggestions')
+    setBusinessOwnerMenuPanel('main')
+    setCustomerMenuPanel('helpSuggestions')
+    setIsHomeMenuOpen(true)
+  }, [location.pathname, showLoggedInHomeIcons])
 
   useEffect(() => {
     if (!hasTopBarMenu || !isHomeMenuOpen) {
@@ -2646,6 +2726,9 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
           if (item.panel === 'communityBenefit') {
             setSelectedSupporterBenefitId(null)
           }
+          if (item.panel === 'customerFaqs') {
+            setOpenCustomerFaqQuestion(null)
+          }
 
           setCustomerMenuPanel(item.panel)
           return
@@ -2879,8 +2962,8 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     { label: 'Log Out', icon: <LogoutIcon />, onSelect: handleLogout },
   ]
   const customerHelpSuggestionsRenderItems: CustomerMenuRenderItem[] = [
-    { label: 'Customer Account FAQs', path: '/customer/help-feedback#faqs', icon: <SettingsIcon />, showChevron: true },
-    { label: 'Suggestions', path: '/customer/help-feedback#feedback', icon: <TrendInsightIcon />, showChevron: true },
+    { label: 'Customer Account FAQs', icon: <SettingsIcon />, showChevron: true, panel: 'customerFaqs' },
+    { label: 'Support & Feedback', path: '/customer/help-feedback#feedback', icon: <TrendInsightIcon />, showChevron: true },
     { label: 'Contact Us', path: '/customer/help-feedback#contact', icon: <MessageActionIcon />, showChevron: true },
     { label: 'Recent', icon: <NotificationsIcon />, showChevron: true, panel: 'helpSuggestionsRecent' },
   ]
@@ -3339,6 +3422,50 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
         <>
           {renderCustomerPanelHeader('Help & Suggestions', 'settings')}
           {renderCustomerMenuGroup(null, customerHelpSuggestionsRenderItems)}
+        </>
+      )
+    }
+
+    if (customerMenuPanel === 'customerFaqs') {
+      return (
+        <>
+          {renderCustomerPanelHeader('Customer Account FAQs', 'helpSuggestions')}
+          <section className="space-y-3">
+            <div className="space-y-2">
+              {customerFaqItems.map((item) => (
+                <button
+                  key={item.question}
+                  type="button"
+                  onClick={() =>
+                    setOpenCustomerFaqQuestion((currentQuestion) =>
+                      currentQuestion === item.question ? null : item.question
+                    )
+                  }
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-left transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+                >
+                  <span className="flex items-start justify-between gap-3">
+                    <span className="text-sm font-semibold text-[#0f172a]">{item.question}</span>
+                    <span className="mt-0.5 shrink-0 text-slate-500" aria-hidden="true">
+                      {openCustomerFaqQuestion === item.question ? (
+                        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M18 15l-6-6-6 6" />
+                        </svg>
+                      ) : (
+                        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
+                        </svg>
+                      )}
+                    </span>
+                  </span>
+                  {openCustomerFaqQuestion === item.question ? (
+                    <span className="mt-2 block border-t border-slate-100 pt-2 text-xs leading-relaxed text-slate-600">
+                      {item.answer}
+                    </span>
+                  ) : null}
+                </button>
+              ))}
+            </div>
+          </section>
         </>
       )
     }
