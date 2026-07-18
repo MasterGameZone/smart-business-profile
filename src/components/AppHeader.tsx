@@ -860,7 +860,14 @@ interface BusinessOwnerMenuState {
   profileStatusLabel?: string
 }
 
-type BusinessOwnerMenuPanel = 'main' | 'profile' | 'analytics' | 'notifications' | 'features' | 'settings'
+type BusinessOwnerMenuPanel =
+  | 'main'
+  | 'profile'
+  | 'analytics'
+  | 'features'
+  | 'subscriptions'
+  | 'notifications'
+  | 'settings'
 type BusinessOwnerSettingsView =
   | 'main'
   | 'help'
@@ -4235,18 +4242,15 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
         {[
           { key: 'profile', label: 'Profile', icon: <ProfileIcon /> },
           { key: 'analytics', label: 'Analytics', icon: <AnalyticsIcon /> },
-          { key: 'notifications', label: 'Notifications', icon: <NotificationsIcon /> },
           { key: 'features', label: 'Features', icon: <SparklesIcon /> },
-          { key: 'settings', label: 'Settings', icon: <SettingsIcon /> },
+          { key: 'subscriptions', label: 'Subscriptions', icon: <CrownIcon /> },
+          { key: 'notifications', label: 'Notifications', icon: <NotificationsIcon /> },
         ].map((item) => (
           <button
             key={item.key}
             type="button"
             role="menuitem"
             onClick={() => {
-              if (item.key === 'settings') {
-                setBusinessOwnerSettingsView('main')
-              }
               if (item.key === 'features') {
                 setSelectedBusinessFeatureId(null)
               }
@@ -4277,7 +4281,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
               showError('Unable to switch to Customer mode. Please try again.')
             }
           }}
-          className={`${businessOwnerMenuRowClass} border-b-0`}
+          className={businessOwnerMenuRowClass}
         >
           <span className="flex items-center gap-3">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
@@ -4285,6 +4289,23 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
             </span>
             <span className="font-medium">Switch to Customer</span>
           </span>
+        </button>
+        <button
+          type="button"
+          role="menuitem"
+          onClick={() => {
+            setBusinessOwnerSettingsView('main')
+            setBusinessOwnerMenuPanel('settings')
+          }}
+          className={`${businessOwnerMenuRowClass} border-b-0`}
+        >
+          <span className="flex items-center gap-3">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+              <SettingsIcon />
+            </span>
+            <span className="font-medium">Settings</span>
+          </span>
+          <span className="text-slate-400" aria-hidden="true">&gt;</span>
         </button>
       </div>
     </>
@@ -4839,6 +4860,12 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     )
   }
 
+  const renderBusinessOwnerSubscriptionsPanel = () => (
+    <>
+      {renderBusinessOwnerPanelHeader('Subscriptions')}
+    </>
+  )
+
   const renderBusinessOwnerSettingsPanel = () => (
     businessOwnerSettingsView === 'faqs' ? (
       <>
@@ -5289,8 +5316,9 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const renderBusinessOwnerMenuContent = () => {
     if (businessOwnerMenuPanel === 'profile') return renderBusinessOwnerProfilePanel()
     if (businessOwnerMenuPanel === 'analytics') return renderBusinessOwnerAnalyticsPanel()
-    if (businessOwnerMenuPanel === 'notifications') return renderBusinessOwnerNotificationsPanel()
     if (businessOwnerMenuPanel === 'features') return renderBusinessOwnerFeaturesPanel()
+    if (businessOwnerMenuPanel === 'subscriptions') return renderBusinessOwnerSubscriptionsPanel()
+    if (businessOwnerMenuPanel === 'notifications') return renderBusinessOwnerNotificationsPanel()
     if (businessOwnerMenuPanel === 'settings') return renderBusinessOwnerSettingsPanel()
     return renderBusinessOwnerMainMenu()
   }
