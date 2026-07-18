@@ -1356,6 +1356,14 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       return
     }
 
+    if (window.sessionStorage.getItem('smart-business-profile:open-customer-settings') === 'true') {
+      window.sessionStorage.removeItem('smart-business-profile:open-customer-settings')
+      setBusinessOwnerMenuPanel('main')
+      setCustomerMenuPanel('settings')
+      setIsHomeMenuOpen(true)
+      return
+    }
+
     if (window.sessionStorage.getItem('smart-business-profile:open-customer-help-suggestions') !== 'true') {
       return
     }
