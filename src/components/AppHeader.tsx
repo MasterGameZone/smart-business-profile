@@ -2565,13 +2565,6 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     { label: 'Benefit', path: '/customer/community#benefit' },
   ]
 
-  const customerHelpMenuItems: HomeMenuItem[] = [
-    { label: 'Help Articles', path: '/customer/help-feedback#help' },
-    { label: 'Contact Support', path: '/customer/help-feedback#help' },
-    { label: 'Report a Problem', path: '/customer/help-feedback#report' },
-    { label: 'Submit Feedback', path: '/customer/help-feedback#feedback' },
-  ]
-
   const switchToBusinessModeMenuItem: HomeMenuItem = isBusinessOwnerEnabled
     ? {
         label: 'Switch to Business Mode',
@@ -2877,15 +2870,6 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     { label: customerCommunityMenuItems[0].label, icon: <FollowersMetricIcon />, showChevron: true, panel: 'communityImpact' },
     { label: customerCommunityMenuItems[2].label, icon: <SettingsIcon />, showChevron: true, panel: 'communityShape' },
     { label: customerCommunityMenuItems[3].label, icon: <TrendInsightIcon />, showChevron: true, panel: 'communityBenefit' },
-  ]
-  const customerHelpRenderItems: CustomerMenuRenderItem[] = [
-    { ...customerHelpMenuItems[0], icon: <SettingsIcon />, showChevron: true },
-    { ...customerHelpMenuItems[1], icon: <MessageActionIcon />, showChevron: true },
-    { ...customerHelpMenuItems[2], icon: <TrendInsightIcon />, showChevron: true },
-    { ...customerHelpMenuItems[3], icon: <MessageActionIcon />, showChevron: true },
-  ]
-  const customerSettingsRenderItems: CustomerMenuRenderItem[] = [
-    ...customerHelpRenderItems,
   ]
   const customerMenuUserId = user?.id ?? ''
   const isCustomerNotificationsPanelLoading =
@@ -3349,7 +3333,6 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       return (
         <>
           {renderCustomerPanelHeader('Settings')}
-          {renderCustomerMenuGroup(null, customerSettingsRenderItems)}
         </>
       )
     }
