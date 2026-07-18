@@ -2,6 +2,7 @@ export type CustomerBusinessSupportStatus =
   | 'Nominated'
   | 'Invitation Shared'
   | 'Business Signed Up'
+  | 'Switched to Business Owner'
   | 'Profile Published'
 
 export interface CustomerBusinessSupportRow {
@@ -19,6 +20,7 @@ export interface CustomerBusinessSupportRow {
   invitation_open_count: number
   invited_owner_user_id: string | null
   business_signed_up_at: string | null
+  business_owner_switched_at: string | null
   created_at: string
   updated_at: string
 }

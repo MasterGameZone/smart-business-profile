@@ -370,6 +370,8 @@ function statusPillClass(status: CustomerBusinessSupportStatus): string {
   switch (status) {
     case 'Profile Published':
       return 'bg-emerald-50 text-emerald-700'
+    case 'Switched to Business Owner':
+      return 'bg-indigo-50 text-indigo-700'
     case 'Business Signed Up':
       return 'bg-green-50 text-green-700'
     case 'Invitation Shared':
@@ -383,6 +385,8 @@ function supportedBusinessIconClass(status: CustomerBusinessSupportStatus): stri
   switch (status) {
     case 'Profile Published':
       return 'bg-emerald-50 text-emerald-700'
+    case 'Switched to Business Owner':
+      return 'bg-indigo-50 text-indigo-700'
     case 'Business Signed Up':
       return 'bg-green-50 text-green-700'
     case 'Invitation Shared':
@@ -646,9 +650,6 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
   const showShapeLoading =
     isAuthLoading ||
     Boolean(userId && (isShapeLoading || isSupportsLoading || loadedShapeCustomerId !== userId))
-  const sharedSupports = supportedBusinesses.filter(
-    (support) => support.status === 'Invitation Shared' || support.status === 'Profile Published'
-  )
   const sharedInvitationSupports = supportedBusinesses.filter(
     (support) =>
       (support.status === 'Invitation Shared' || Boolean(support.invitation_shared_at)) &&
@@ -669,11 +670,18 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
       !support.published_profile_id &&
       supportProfileStartedById[support.id] === false
   )
+  const businessOwnerSwitchedSupports = supportedBusinesses.filter(
+    (support) =>
+      Boolean(support.business_owner_switched_at) &&
+      Boolean(support.business_signed_up_at) &&
+      Boolean(support.invited_owner_user_id) &&
+      support.status !== 'Profile Published' &&
+      !support.published_profile_id
+  )
   const publishedSupports = supportedBusinesses.filter((support) => support.status === 'Profile Published')
   const publishedProfilesCount = publishedSupports.length
   const supporterLevel = getCustomerSupporterLevel(publishedProfilesCount)
   const supporterProgressPercent = Math.max(0, Math.min(100, supporterLevel.progressPercent))
-  const profilesInProgressCount = Math.max(sharedSupports.length - publishedSupports.length, 0)
   const impactStats = [
     {
       label: 'Businesses Supported',
@@ -700,10 +708,10 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
       iconWrapClassName: 'bg-green-50 text-green-700',
     },
     {
-      label: 'Profiles In Progress',
-      value: profilesInProgressCount,
+      label: 'Switched to Business Owner',
+      value: businessOwnerSwitchedSupports.length,
       icon: <ImpactClockIcon />,
-      iconWrapClassName: 'bg-orange-50 text-orange-700',
+      iconWrapClassName: 'bg-indigo-50 text-indigo-700',
     },
     {
       label: 'Profiles Published',

@@ -253,6 +253,47 @@ export async function markSupportInviteBusinessSignedUp(invitationToken: string)
   }
 }
 
+export async function markSupportInviteBusinessOwnerSwitched(invitationToken: string): Promise<boolean> {
+  const trimmedToken = invitationToken.trim()
+  if (!trimmedToken) return false
+
+  try {
+    const { data, error } = await supabase.rpc('mark_support_invite_business_owner_switched', {
+      invite_token: trimmedToken,
+    })
+
+    if (error) {
+      console.warn('Support invite Business Owner mode tracking failed.')
+      return false
+    }
+
+    return data === true
+  } catch {
+    console.warn('Support invite Business Owner mode tracking failed.')
+    return false
+  }
+}
+
+export async function markCurrentUserSupportInviteBusinessOwnerSwitched(): Promise<boolean> {
+  try {
+    const { data, error } = await supabase.rpc('mark_current_user_support_invite_business_owner_switched')
+
+    if (error) {
+      if (import.meta.env.DEV) {
+        console.warn('Support invite Business Owner mode fallback tracking failed.')
+      }
+      return false
+    }
+
+    return data === true
+  } catch {
+    if (import.meta.env.DEV) {
+      console.warn('Support invite Business Owner mode fallback tracking failed.')
+    }
+    return false
+  }
+}
+
 export async function getSupportInvitePreview(invitationToken: string): Promise<CustomerSupportInvitePreview | null> {
   const trimmedToken = invitationToken.trim()
   if (!trimmedToken) return null

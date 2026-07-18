@@ -1,4 +1,5 @@
 import { supabase } from './supabase.ts'
+import { markStoredSupportInviteBusinessOwnerSwitched } from './supportInviteLinking.ts'
 import type { AccountModeState, PreferredAccountMode } from '../types/accountMode.ts'
 
 interface AccountModeRow {
@@ -46,7 +47,11 @@ export async function enableBusinessOwnerMode(userId: string): Promise<AccountMo
     .single()
 
   if (error) throw error
-  return normalizeAccountMode(data as AccountModeRow)
+  const nextAccountMode = normalizeAccountMode(data as AccountModeRow)
+  if (nextAccountMode.preferredMode === 'business_owner') {
+    void markStoredSupportInviteBusinessOwnerSwitched()
+  }
+  return nextAccountMode
 }
 
 export async function setPreferredAccountMode(
