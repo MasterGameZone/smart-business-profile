@@ -99,6 +99,7 @@ interface HomeMenuItem {
 
 interface CustomerMenuRenderItem extends HomeMenuItem {
   icon: ReactNode
+  labelClassName?: string
   showChevron?: boolean
   panel?: CustomerMenuPanel
 }
@@ -2951,7 +2952,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     >
       <span className="flex min-w-0 items-center gap-3">
         <span className={customerMenuIconClass}>{item.icon}</span>
-        <span className="truncate font-medium">{item.label}</span>
+        <span className={`truncate font-medium ${item.labelClassName ?? ''}`}>{item.label}</span>
       </span>
       {item.disabled ? (
         <span className="ml-3 shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
@@ -3170,7 +3171,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const customerSettingsRenderItems: CustomerMenuRenderItem[] = [
     { label: 'Help & Suggestions', icon: <MessageActionIcon />, showChevron: true, panel: 'helpSuggestions' },
     { label: 'Security', path: '/customer/profile-settings#security', icon: <SettingsIcon />, showChevron: true },
-    { label: 'Log Out', icon: <LogoutIcon />, onSelect: handleLogout },
+    { label: 'Log Out', icon: <LogoutIcon />, labelClassName: 'text-rose-700', onSelect: handleLogout },
   ]
   const customerHelpSuggestionsRenderItems: CustomerMenuRenderItem[] = [
     { label: 'Customer Account FAQs', icon: <SettingsIcon />, showChevron: true, panel: 'customerFaqs' },
