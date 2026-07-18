@@ -449,6 +449,8 @@ type CustomerMenuPanel =
   | 'communityShape'
   | 'communityBenefit'
   | 'settings'
+  | 'helpSuggestions'
+  | 'helpSuggestionsRecent'
 type CustomerSavedBusinessesLoadState = 'idle' | 'loading' | 'found' | 'empty' | 'error'
 let hasPlayedNavbarEntrance = false
 
@@ -2871,6 +2873,17 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     { label: customerCommunityMenuItems[2].label, icon: <SettingsIcon />, showChevron: true, panel: 'communityShape' },
     { label: customerCommunityMenuItems[3].label, icon: <TrendInsightIcon />, showChevron: true, panel: 'communityBenefit' },
   ]
+  const customerSettingsRenderItems: CustomerMenuRenderItem[] = [
+    { label: 'Help & Suggestions', icon: <MessageActionIcon />, showChevron: true, panel: 'helpSuggestions' },
+    { label: 'Security', path: '/customer/profile-settings#security', icon: <SettingsIcon />, showChevron: true },
+    { label: 'Log Out', icon: <LogoutIcon />, onSelect: handleLogout },
+  ]
+  const customerHelpSuggestionsRenderItems: CustomerMenuRenderItem[] = [
+    { label: 'Customer Account FAQs', path: '/customer/help-feedback#faqs', icon: <SettingsIcon />, showChevron: true },
+    { label: 'Suggestions', path: '/customer/help-feedback#feedback', icon: <TrendInsightIcon />, showChevron: true },
+    { label: 'Contact Us', path: '/customer/help-feedback#contact', icon: <MessageActionIcon />, showChevron: true },
+    { label: 'Recent', icon: <NotificationsIcon />, showChevron: true, panel: 'helpSuggestionsRecent' },
+  ]
   const customerMenuUserId = user?.id ?? ''
   const isCustomerNotificationsPanelLoading =
     Boolean(customerMenuUserId) &&
@@ -3203,23 +3216,6 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
           </button>
         </div>
       </section>
-      <button
-        type="button"
-        role="menuitem"
-        onClick={async () => {
-          closeHomeMenu()
-          await handleLogout()
-        }}
-        disabled={isSigningOut}
-        className="flex w-full items-center justify-between rounded-2xl border border-rose-100 bg-rose-50/70 px-3 py-3 text-left text-sm font-medium text-rose-700 transition hover:bg-rose-50 focus:bg-rose-50 focus:outline-none disabled:cursor-not-allowed disabled:opacity-70"
-      >
-        <span className="flex items-center gap-3">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-rose-600">
-            <LogoutIcon />
-          </span>
-          <span>{isSigningOut ? 'Logging out...' : 'Log Out'}</span>
-        </span>
-      </button>
     </div>
   )
 
@@ -3333,6 +3329,30 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       return (
         <>
           {renderCustomerPanelHeader('Settings')}
+          {renderCustomerMenuGroup(null, customerSettingsRenderItems)}
+        </>
+      )
+    }
+
+    if (customerMenuPanel === 'helpSuggestions') {
+      return (
+        <>
+          {renderCustomerPanelHeader('Help & Suggestions', 'settings')}
+          {renderCustomerMenuGroup(null, customerHelpSuggestionsRenderItems)}
+        </>
+      )
+    }
+
+    if (customerMenuPanel === 'helpSuggestionsRecent') {
+      return (
+        <>
+          {renderCustomerPanelHeader('Recent', 'helpSuggestions')}
+          <section className="rounded-2xl border border-slate-200 bg-white px-3 py-3">
+            <p className="text-sm font-semibold text-[#0f172a]">Recent submissions</p>
+            <p className="mt-1 text-xs leading-relaxed text-slate-500">
+              Recent customer help and feedback history is not available in this account menu yet.
+            </p>
+          </section>
         </>
       )
     }

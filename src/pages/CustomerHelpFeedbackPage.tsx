@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.tsx'
@@ -123,6 +123,7 @@ const defaultFeedbackForm: FeedbackFormState = {
 function getActiveTab(hash: string): HelpFeedbackTab {
   if (hash === '#report') return 'report'
   if (hash === '#feedback') return 'feedback'
+  if (hash === '#faqs' || hash === '#contact') return 'help'
   return 'help'
 }
 
@@ -172,6 +173,14 @@ function CustomerHelpFeedbackPage() {
   const [feedbackErrors, setFeedbackErrors] = useState<TextFormErrors>({})
   const [feedbackSubmitMessage, setFeedbackSubmitMessage] = useState<FeedbackMessage>(null)
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false)
+
+  useEffect(() => {
+    if (location.hash !== '#faqs' && location.hash !== '#contact') return
+
+    window.requestAnimationFrame(() => {
+      document.getElementById(location.hash.slice(1))?.scrollIntoView({ block: 'start' })
+    })
+  }, [location.hash])
 
   usePageMeta({
     title: 'Help & Feedback | Smart Business Profile',
@@ -372,7 +381,7 @@ function CustomerHelpFeedbackPage() {
                 </p>
               </div>
 
-              <div className="mt-5 space-y-3">
+              <div id="faqs" className="mt-5 space-y-3">
                 {helpItems.map((item) => (
                   <div
                     key={item.title}
@@ -401,7 +410,11 @@ function CustomerHelpFeedbackPage() {
                 ))}
               </div>
 
-              <form className="mt-7 rounded-2xl border border-[#c7d2df] bg-[#f8fafc] px-4 py-4" onSubmit={(event) => void submitContactSupport(event)}>
+              <form
+                id="contact"
+                className="mt-7 rounded-2xl border border-[#c7d2df] bg-[#f8fafc] px-4 py-4"
+                onSubmit={(event) => void submitContactSupport(event)}
+              >
                 <div>
                   <h3 className="text-base font-semibold text-black">Contact Support</h3>
                   <p className="mt-1 text-sm text-black">Send a simple support request to the Smart Business Profile team.</p>

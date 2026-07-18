@@ -337,7 +337,10 @@ function CustomerProfileSettingsPage() {
             )}
           </section>
 
-          <section className="rounded-3xl border border-[#c7d2df] bg-white p-6 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] sm:p-8">
+          <section
+            id="security"
+            className="rounded-3xl border border-[#c7d2df] bg-white p-6 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] sm:p-8"
+          >
             <h2 className="text-lg font-semibold tracking-tight text-black sm:text-xl">Login & Security</h2>
             <div className="mt-5 space-y-4">
               <div className="flex flex-col gap-3 rounded-2xl border border-[#c7d2df] bg-[#f8fafc] px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
