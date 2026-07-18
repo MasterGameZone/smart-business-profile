@@ -281,6 +281,84 @@ Access is restricted by RLS to the authenticated owner of each row. Authenticate
 
 ---
 
+## Table: business_owner_subscriptions
+
+Purpose
+
+Stores the account-level subscription state for a Business Owner. A single subscription belongs to `auth.users.id` and applies to every business profile owned by that account. Free is represented by the absence of a subscription row.
+
+### Columns
+
+| Column | Type | Nullable | Description |
+|----------|------|----------|-------------|
+| id | UUID | No | Primary key |
+| owner_id | UUID | No | Subscription owner; reference to `auth.users.id` |
+| plan_id | TEXT | No | Paid plan identifier: `pro_analytics` |
+| billing_provider | TEXT | No | Future billing provider identifier (1–50 characters) |
+| provider_customer_id | TEXT | Yes | Future provider customer identifier |
+| provider_subscription_id | TEXT | Yes | Future provider subscription identifier |
+| provider_plan_id | TEXT | Yes | Future provider plan identifier |
+| status | TEXT | No | `incomplete`, `active`, `past_due`, `canceled`, or `expired` |
+| billing_interval | TEXT | No | `monthly` only |
+| currency | TEXT | No | `INR` only |
+| amount_minor_units | INTEGER | No | Price in minor units; currently `4500` for ₹45/month |
+| current_period_start | TIMESTAMP WITH TIME ZONE | Yes | Current paid-period start |
+| current_period_end | TIMESTAMP WITH TIME ZONE | Yes | Current paid-period end |
+| cancel_at_period_end | BOOLEAN | No | Whether cancellation is scheduled for period end |
+| grace_period_end | TIMESTAMP WITH TIME ZONE | Yes | End of a permitted past-due grace period |
+| canceled_at | TIMESTAMP WITH TIME ZONE | Yes | Cancellation timestamp |
+| ended_at | TIMESTAMP WITH TIME ZONE | Yes | Subscription-end timestamp |
+| created_at | TIMESTAMP WITH TIME ZONE | No | Record creation timestamp |
+| updated_at | TIMESTAMP WITH TIME ZONE | No | Last update timestamp |
+
+Each owner may have only one row. The plan, interval, currency, amount, provider length, and current-period ordering are constrained in the database. Provider subscription IDs are additionally unique per provider when present. Indexes support provider/customer lookups and status/period-expiry processing.
+
+RLS is enabled. Authenticated users can read only their own row and only the safe lookup columns (`owner_id`, plan/status/billing fields, period fields, cancellation flag, and grace-period end). They receive no direct insert, update, or delete permission and cannot access provider identifiers, lifecycle audit timestamps, or another owner's subscription. Trusted backend processes use server-side credentials for writes.
+
+Effective Pro access is true only for an unexpired `active` period, a `past_due` row with an unexpired grace period, or a `canceled` row with an unexpired paid period. Scheduling `cancel_at_period_end = true` does not remove access before that valid active period ends. Expiration never deletes analytics or business-profile data.
+
+---
+
+## Table: subscription_webhook_events
+
+Purpose
+
+Provides an account/subscription webhook audit and idempotency foundation for future trusted billing-provider processing. It is not exposed to the frontend.
+
+### Columns
+
+| Column | Type | Nullable | Description |
+|----------|------|----------|-------------|
+| id | UUID | No | Primary key |
+| billing_provider | TEXT | No | Provider identifier (1–50 characters) |
+| provider_event_id | TEXT | No | Non-blank provider event identifier |
+| event_type | TEXT | No | Non-blank provider event type |
+| subscription_id | UUID | Yes | Reference to `business_owner_subscriptions.id`; set null if removed |
+| owner_id | UUID | Yes | Reference to `auth.users.id`; set null if removed |
+| provider_customer_id | TEXT | Yes | Future provider customer identifier |
+| provider_subscription_id | TEXT | Yes | Future provider subscription identifier |
+| provider_created_at | TIMESTAMP WITH TIME ZONE | Yes | Provider event timestamp |
+| processing_status | TEXT | No | `received`, `processed`, `ignored`, or `failed` |
+| processing_attempts | INTEGER | No | Processing retry count, zero or greater |
+| payload | JSONB | No | Sanitized, signature-verified event object only |
+| last_error | TEXT | Yes | Last trusted-processing error |
+| received_at | TIMESTAMP WITH TIME ZONE | No | Receipt timestamp |
+| processed_at | TIMESTAMP WITH TIME ZONE | Yes | Processing-completion timestamp |
+| created_at | TIMESTAMP WITH TIME ZONE | No | Record creation timestamp |
+| updated_at | TIMESTAMP WITH TIME ZONE | No | Last update timestamp |
+
+The unique `(billing_provider, provider_event_id)` constraint makes provider events idempotent. Indexes support subscription correlation, processing queues, and owner-related webhook event lookups. The `owner_id` index supports the `owner_id` foreign key and efficient foreign-key maintenance when an `auth.users` record is deleted. RLS is enabled with no anonymous or authenticated policies or table privileges. Only trusted backend processes may access it. Payloads must be JSON objects and must be sanitized; they must never contain secrets, API keys, webhook secrets, card data, or payment credentials.
+
+---
+
+## Function: get_my_business_subscription()
+
+`get_my_business_subscription()` is an authenticated-only, stable, security-invoker lookup that relies on the owner-only subscription RLS policy. It returns exactly one safe row and never exposes provider identifiers or webhook information.
+
+The returned fields are `plan_id`, `subscription_status`, `billing_interval`, `currency`, `amount_minor_units`, current-period bounds, `cancel_at_period_end`, `grace_period_end`, and `has_pro_access`. If no subscription exists (or no row is visible), it safely returns Free: `free` plan/status, `INR`, zero minor units, null period fields, `false` cancellation, and `false` Pro access. Its Pro-access calculation follows the effective-access rules documented for `business_owner_subscriptions`.
+
+---
+
 ## Table: customer_business_supports
 
 Purpose
@@ -614,6 +692,8 @@ Version 3.8 added helper functions for logo, cover, and gallery uploads. Version
 | 4.29 | Business availability manual override | Migration created; apply to Supabase |
 | 4.30 | Business Owner notification preferences | Migration created; apply to Supabase |
 | 4.31 | Business profile followers | Migration created; apply to Supabase |
+| 4.32 | 20260718160000_add_business_owner_subscription_foundation.sql | Applied to Supabase|
+| 4.33 | 20260718160001_add_subscription_webhook_owner_index.sql | Applied to Supabase |
 | Future | Additional modules | Planned |
 
 Detailed migration SQL should remain inside the `/supabase/migrations` directory.
@@ -631,7 +711,6 @@ The following tables are planned but do not yet exist.
 | customers | Planned |
 | crm_contacts | Planned |
 | analytics | Planned |
-| subscriptions | Planned |
 | payments | Planned |
 | notifications | Planned |
 | business_gallery | Planned |
@@ -749,7 +828,6 @@ Planned
 Phase 4
 
 - Payments
-- Subscriptions
 
 Planned
 
