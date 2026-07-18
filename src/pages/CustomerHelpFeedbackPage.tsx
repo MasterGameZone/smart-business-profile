@@ -439,6 +439,65 @@ function CustomerHelpFeedbackPage() {
     navigate('/')
   }
 
+  const handleContactUsBack = (): void => {
+    window.sessionStorage.setItem('smart-business-profile:open-customer-help-suggestions', 'true')
+    navigate('/')
+  }
+
+  if (location.hash === '#contact') {
+    return (
+      <div className="min-h-screen bg-[#eef4fa] text-black">
+        <main className="mx-auto max-w-4xl px-4 py-10 sm:py-12">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h1 className="text-sm font-semibold text-[#0f172a]">Contact Us</h1>
+            <button
+              type="button"
+              onClick={handleContactUsBack}
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+            >
+              <span>Back</span>
+            </button>
+          </div>
+
+          <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+            <a
+              href="mailto:kumars01082001@gmail.com"
+              className="flex w-full items-center justify-between border-b border-slate-100/90 px-3 py-3 text-left text-sm text-[#0f172a] transition hover:bg-slate-50 focus:bg-slate-50 focus:outline-none"
+            >
+              <span className="flex min-w-0 items-center gap-3">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16v12H4z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m4 7 8 6 8-6" />
+                  </svg>
+                </span>
+                <span className="min-w-0">
+                  <span className="block font-medium">Email</span>
+                  <span className="mt-0.5 block truncate text-xs text-slate-500">kumars01082001@gmail.com</span>
+                </span>
+              </span>
+            </a>
+
+            <div className="flex w-full items-center justify-between px-3 py-3 text-left text-sm text-[#0f172a]">
+              <span className="flex min-w-0 items-center gap-3">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.8 8.8 0 0 1-3.9-.9L3 20l1.1-4.7A8.3 8.3 0 1 1 21 11.5Z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.5 8.5h7M8.5 12h5" />
+                  </svg>
+                </span>
+                <span className="min-w-0">
+                  <span className="block font-medium">WhatsApp</span>
+                  <span className="mt-0.5 block text-xs text-slate-500">Coming Soon</span>
+                </span>
+              </span>
+            </div>
+          </section>
+        </main>
+      </div>
+    )
+  }
+
   if (activeTab === 'feedback') {
     return (
       <div className="min-h-screen bg-[#eef4fa] text-black">
