@@ -1,6 +1,9 @@
 export type CustomerNotificationType =
   | 'supported_business_profile_published'
   | 'supporter_level_unlocked'
+  | 'support_invite_opened'
+  | 'support_invite_business_signed_up'
+  | 'support_invite_business_owner_switched'
   | 'report_status_updated'
   | 'saved_business_updated'
 
