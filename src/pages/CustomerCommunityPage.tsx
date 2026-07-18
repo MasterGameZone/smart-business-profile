@@ -38,6 +38,7 @@ type CommunityTab = 'impact' | 'support' | 'shape'
 interface CustomerCommunityPageProps {
   activeView?: CommunityTab
   mode?: 'page' | 'menu'
+  onImpactSummaryViewChange?: (isSummaryView: boolean) => void
   onSelectTab?: (tab: CommunityTab) => void
 }
 
@@ -564,7 +565,12 @@ function invitationLinkForSupport(support: CustomerBusinessSupportRow): string {
   return buildInvitationLink(support, window.location.origin)
 }
 
-function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: CustomerCommunityPageProps) {
+function CustomerCommunityPage({
+  activeView,
+  mode = 'page',
+  onImpactSummaryViewChange,
+  onSelectTab,
+}: CustomerCommunityPageProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, isLoading: isAuthLoading } = useAuth()
@@ -610,6 +616,12 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
     description: 'Support trusted businesses, track your contribution, and help shape the platform.',
   })
 
+  useEffect(() => {
+    if (!isMenuMode || activeTab !== 'impact') return
+
+    onImpactSummaryViewChange?.(impactView === 'summary')
+  }, [activeTab, impactView, isMenuMode, onImpactSummaryViewChange])
+
   const sectionClassName =
     'rounded-3xl border border-[#c7d2df] bg-white p-6 shadow-[0_24px_70px_-38px_rgba(2,12,27,0.98)] sm:p-8'
   const impactSectionClassName = isMenuMode ? 'px-2 pb-2' : sectionClassName
@@ -617,6 +629,8 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
     'inline-flex min-h-[42px] items-center justify-center rounded-full border border-sky-200 bg-blue-50 px-5 py-2.5 text-sm font-semibold text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70'
   const secondaryButtonClassName =
     'inline-flex min-h-[42px] items-center justify-center rounded-full border border-[#c7d2df] bg-white px-5 py-2.5 text-sm font-semibold text-black focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70'
+  const menuBackButtonClassName =
+    'inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300'
   const tabButtonClassName =
     'inline-flex min-h-[42px] items-center justify-center rounded-full border px-4 py-2 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
   const fieldClassName =
@@ -1192,7 +1206,7 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
             <h3 className="text-base font-semibold text-black">Supported Business</h3>
             <button
               type="button"
-              className={secondaryButtonClassName}
+              className={menuBackButtonClassName}
               onClick={returnFromSupportJourney}
             >
               Back
@@ -1217,7 +1231,7 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
           </h3>
           <button
             type="button"
-            className={secondaryButtonClassName}
+            className={menuBackButtonClassName}
             onClick={returnFromSupportJourney}
           >
             Back
@@ -1335,7 +1349,7 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                     <h3 className="text-base font-semibold text-black">Supported Businesses</h3>
                     <button
                       type="button"
-                      className={secondaryButtonClassName}
+                      className={menuBackButtonClassName}
                       onClick={() => setImpactView('summary')}
                     >
                       Back
@@ -1361,7 +1375,7 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                     <h3 className="text-base font-semibold text-black">Invitations Shared</h3>
                     <button
                       type="button"
-                      className={secondaryButtonClassName}
+                      className={menuBackButtonClassName}
                       onClick={() => setImpactView('summary')}
                     >
                       Back
@@ -1387,7 +1401,7 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                     <h3 className="text-base font-semibold text-black">Links Opened</h3>
                     <button
                       type="button"
-                      className={secondaryButtonClassName}
+                      className={menuBackButtonClassName}
                       onClick={() => setImpactView('summary')}
                     >
                       Back
@@ -1413,7 +1427,7 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                     <h3 className="text-base font-semibold text-black">Business Signed Up</h3>
                     <button
                       type="button"
-                      className={secondaryButtonClassName}
+                      className={menuBackButtonClassName}
                       onClick={() => setImpactView('summary')}
                     >
                       Back
@@ -1439,7 +1453,7 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                     <h3 className="text-base font-semibold text-black">Switched to Business Owner</h3>
                     <button
                       type="button"
-                      className={secondaryButtonClassName}
+                      className={menuBackButtonClassName}
                       onClick={() => setImpactView('summary')}
                     >
                       Back
@@ -1466,7 +1480,7 @@ function CustomerCommunityPage({ activeView, mode = 'page', onSelectTab }: Custo
                     <h3 className="text-base font-semibold text-black">Profiles Published</h3>
                     <button
                       type="button"
-                      className={secondaryButtonClassName}
+                      className={menuBackButtonClassName}
                       onClick={() => setImpactView('summary')}
                     >
                       Back

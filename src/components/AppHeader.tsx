@@ -557,6 +557,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const [isHomeMenuOpen, setIsHomeMenuOpen] = useState(false)
   const [businessOwnerMenuPanel, setBusinessOwnerMenuPanel] = useState<BusinessOwnerMenuPanel>('main')
   const [customerMenuPanel, setCustomerMenuPanel] = useState<CustomerMenuPanel>('main')
+  const [isCustomerImpactSummaryView, setIsCustomerImpactSummaryView] = useState(true)
   const [businessOwnerSettingsView, setBusinessOwnerSettingsView] = useState<BusinessOwnerSettingsView>('main')
   const [businessOwnerAnalyticsRange, setBusinessOwnerAnalyticsRange] = useState<BusinessOwnerAnalyticsRange>('30D')
   const [businessOwnerFollowersCount, setBusinessOwnerFollowersCount] = useState<number | null>(null)
@@ -955,6 +956,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     resetBusinessOwnerNotificationPreferenceSession()
     resetBusinessOwnerRecentHelpSuggestions()
     setCustomerMenuPanel('main')
+    setIsCustomerImpactSummaryView(true)
     setIsHomeMenuOpen(false)
   }
 
@@ -2835,10 +2837,11 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     if (customerMenuPanel === 'communityImpact') {
       return (
         <>
-          {renderCustomerPanelHeader('My Local Impact', 'community')}
+          {isCustomerImpactSummaryView ? renderCustomerPanelHeader('My Local Impact', 'community') : null}
           <CustomerCommunityPage
             mode="menu"
             activeView="impact"
+            onImpactSummaryViewChange={setIsCustomerImpactSummaryView}
             onSelectTab={(tab) => {
               if (tab === 'support') {
                 setCustomerMenuPanel('communitySupport')
