@@ -418,6 +418,437 @@ function supporterBenefitStatusClass(status: SupporterBenefitStatus): string {
   }
 }
 
+type BusinessFeatureStatus =
+  | 'Active'
+  | 'Active / Improving'
+  | 'Premium / Paid'
+  | 'Coming Soon'
+  | 'Planned'
+  | 'Under Review'
+
+interface BusinessFeatureContent {
+  id: string
+  title: string
+  status: BusinessFeatureStatus
+  summary: string
+  whatItDoes: string
+  businessValue: string
+  ownerExperience: string[]
+  productNote: string
+}
+
+const businessFeatures: BusinessFeatureContent[] = [
+  {
+    id: 'business-profile-creation',
+    title: 'Business Profile Creation',
+    status: 'Active',
+    summary: 'Create a structured digital profile that works like a modern, shareable business card and mini landing page.',
+    whatItDoes: 'Business owners can create a structured digital profile that acts like a modern, shareable business card and mini landing page.',
+    businessValue: 'This helps small businesses move from scattered contact details to a clean, trusted, mobile-first online presence.',
+    ownerExperience: [
+      'Add business name, owner name, category, subcategory, tagline, experience, contact details, location, and overview.',
+      'Use guided profile sections so important information is not missed.',
+      'Preview and save the profile before sharing it publicly.',
+    ],
+    productNote: 'This is a core MVP feature and should remain simple, stable, and highly reliable.',
+  },
+  {
+    id: 'public-business-profile-page',
+    title: 'Public Business Profile Page',
+    status: 'Active',
+    summary: 'Give customers a public profile page they can open without logging in.',
+    whatItDoes: 'Each business can have a public profile page that visitors can open without logging in.',
+    businessValue: 'Customers can quickly understand the business, see services, open contact actions, view location, and decide whether to connect.',
+    ownerExperience: [
+      'Public route for each profile using the business slug.',
+      'Mobile-first profile layout with profile header, sections, gallery, working hours, contact, FAQs, and documents where available.',
+      'Owner preview and public visitor views stay visually aligned.',
+    ],
+    productNote: 'The page should continue prioritizing fast loading, clear contact actions, and trust-building information.',
+  },
+  {
+    id: 'shareable-business-link',
+    title: 'Shareable Business Link',
+    status: 'Active',
+    summary: 'Share one profile link across WhatsApp, social media, print material, and customer conversations.',
+    whatItDoes: 'Business owners can share a unique profile link with customers, on social media, in WhatsApp, or on printed materials.',
+    businessValue: 'A single link reduces friction by giving customers one reliable place to call, WhatsApp, get directions, view services, and check details.',
+    ownerExperience: [
+      'Share profile from the public or preview page.',
+      'Use the link across online and offline channels.',
+      'Avoid repeatedly sending separate phone, address, document, and service details.',
+    ],
+    productNote: 'This feature is foundational for every other discovery and QR-code flow.',
+  },
+  {
+    id: 'qr-code',
+    title: 'QR Code',
+    status: 'Active / Improving',
+    summary: 'Use a QR code linked directly to the public business profile.',
+    whatItDoes: 'Business owners can use a QR code linked to their public business profile.',
+    businessValue: 'QR codes make offline-to-online discovery simple for shops, clinics, salons, tutors, service providers, and local businesses.',
+    ownerExperience: [
+      'Generate or access the profile QR code from owner tools.',
+      'Use QR on counters, posters, business cards, invoices, packaging, or local marketing material.',
+      'Customers scan and land directly on the business profile.',
+    ],
+    productNote: 'Future improvements can include branded QR designs, QR download sizes, campaign-specific QR tracking, and print-ready exports.',
+  },
+  {
+    id: 'logo-cover-banner-gallery',
+    title: 'Logo, Cover Banner, and Gallery',
+    status: 'Active',
+    summary: 'Present the business brand visually with logo, cover image, and gallery photos.',
+    whatItDoes: 'Businesses can visually present their brand using logo, cover image, and gallery photos.',
+    businessValue: 'Visual proof helps customers judge quality, professionalism, environment, products, results, or service standards before contacting the business.',
+    ownerExperience: [
+      'Upload a business logo for identity.',
+      'Add a cover banner for first impression.',
+      'Add gallery images to show products, office, shop, work samples, menu items, facilities, or portfolio.',
+    ],
+    productNote: 'Gallery should remain easy to update because stale visuals reduce credibility.',
+  },
+  {
+    id: 'products-menu-packages-services',
+    title: 'Products, Menu, Packages, and Services',
+    status: 'Active',
+    summary: 'Show structured offering cards with name, description, price or range, and optional image.',
+    whatItDoes: 'Business owners can add repeatable offering cards with item name, description, price or price range, and optional image.',
+    businessValue: 'Customers can understand what the business offers before making contact, which improves lead quality and reduces repetitive questions.',
+    ownerExperience: [
+      'Add multiple offerings using structured fields.',
+      'Use this section for services, packages, restaurant menu items, product categories, consultation types, or pricing examples.',
+      'Show important details in clean customer-facing cards.',
+    ],
+    productNote: 'Future versions can add enquiry tracking per item, featured items, offers, and category grouping.',
+  },
+  {
+    id: 'contact-actions',
+    title: 'Contact Actions',
+    status: 'Active',
+    summary: 'Let visitors call, WhatsApp, email, open website, or get directions from the profile.',
+    whatItDoes: 'Visitors can take direct actions from the business profile, such as call, WhatsApp, email, website, or directions where configured.',
+    businessValue: 'Contact actions convert profile visitors into real customer enquiries with minimal friction.',
+    ownerExperience: [
+      'Business owners add contact details once.',
+      'Visitors can act immediately from the profile.',
+      'Actions are designed for mobile-first usage.',
+    ],
+    productNote: 'Future analytics should track which actions customers use most.',
+  },
+  {
+    id: 'google-maps-location-details',
+    title: 'Google Maps and Location Details',
+    status: 'Active',
+    summary: 'Show address and Google Maps link so customers can find the business easily.',
+    whatItDoes: 'Businesses can add address and Google Maps link so customers can understand location and open directions.',
+    businessValue: 'Location clarity is critical for clinics, salons, restaurants, local services, coaching centres, and walk-in businesses.',
+    ownerExperience: [
+      'Add business address.',
+      'Add Google Maps link.',
+      'Visitors can open map directions from the profile.',
+    ],
+    productNote: 'Future improvements can include embedded map preview, distance hints, and service-area display.',
+  },
+  {
+    id: 'working-hours',
+    title: 'Working Hours',
+    status: 'Active / Improving',
+    summary: 'Display opening hours so customers know when the business is open or closed.',
+    whatItDoes: 'Business owners can display working hours so customers know when the business is open or closed.',
+    businessValue: 'Clear hours reduce missed calls, improve customer expectations, and make the public profile more useful.',
+    ownerExperience: [
+      'Set weekly working hours.',
+      'Public profile can show working-hours information.',
+      'Open/closed logic can support owner status and reminders over time.',
+    ],
+    productNote: 'Future versions can add holiday hours, temporary closures, special hours, and automatic reopen reminders.',
+  },
+  {
+    id: 'faqs',
+    title: 'FAQs',
+    status: 'Active',
+    summary: 'Answer common customer questions directly on the business profile.',
+    whatItDoes: 'Businesses can answer common customer questions directly on the profile.',
+    businessValue: 'FAQs reduce repetitive conversations and help visitors make decisions without waiting for a reply.',
+    ownerExperience: [
+      'Add question and answer pairs.',
+      'Use FAQs for pricing rules, appointment requirements, delivery areas, refund policies, parking, documents required, or business process details.',
+      'Customers can review answers before contacting the business.',
+    ],
+    productNote: 'Future improvements can include suggested FAQs by business category.',
+  },
+  {
+    id: 'certificates-qualifications',
+    title: 'Certificates and Qualifications',
+    status: 'Active',
+    summary: 'Show certificates, licenses, qualifications, and documents where relevant.',
+    whatItDoes: 'Business owners can show certificates, licenses, qualifications, and supporting documents where relevant.',
+    businessValue: 'Trust signals are especially useful for doctors, clinics, tutors, consultants, service professionals, training centres, and licensed businesses.',
+    ownerExperience: [
+      'Add certificate title, issuer, year, description, display name, and document file where needed.',
+      'Customers can view available trust documents from the public profile.',
+      'Owner-managed documents remain structured and controlled.',
+    ],
+    productNote: 'Future versions can add verification status, expiry reminders, and verified badge flows.',
+  },
+  {
+    id: 'public-directory-visibility',
+    title: 'Public Directory Visibility',
+    status: 'Active / Improving',
+    summary: 'Appear in the public directory when profile visibility is enabled.',
+    whatItDoes: 'Public profiles can appear in the business directory when profile visibility is enabled.',
+    businessValue: 'Directory visibility helps customers discover businesses beyond direct link sharing.',
+    ownerExperience: [
+      'Businesses can be searchable by customers.',
+      'Customers can browse or search directory listings.',
+      'Public profile quality directly affects customer trust and engagement.',
+    ],
+    productNote: 'Future improvements can include advanced filters, category landing pages, city pages, and ranking signals.',
+  },
+  {
+    id: 'business-notifications',
+    title: 'Business Notifications',
+    status: 'Active / Improving',
+    summary: 'Receive useful account and profile notifications inside the business account menu.',
+    whatItDoes: 'Business owners can receive useful account and profile notifications inside the business account menu.',
+    businessValue: 'Notifications keep owners aware of profile updates, support replies, reviews, reports, subscription events, and other account activity as the product expands.',
+    ownerExperience: [
+      'View business notifications in a dedicated menu area.',
+      'Mark notifications as read where supported.',
+      'Receive profile and support-related updates over time.',
+    ],
+    productNote: 'Notification scope should stay focused and avoid noisy reminders.',
+  },
+  {
+    id: 'business-account-settings',
+    title: 'Business Account Settings',
+    status: 'Active / Improving',
+    summary: 'Manage profile, security, notifications, help, feedback, contact, and recent submissions.',
+    whatItDoes: 'Business owners have a dedicated account settings area for profile, security, notifications, help, feedback, contact, and recent submissions.',
+    businessValue: 'A clean settings structure makes the business account easier to trust and manage.',
+    ownerExperience: [
+      'Access profile details, notification settings, security actions, FAQs, support and feedback, contact options, and recent help submissions.',
+      'Switch account mode when needed.',
+      'Use consistent back-navigation inside menu panels.',
+    ],
+    productNote: 'Settings should remain account-control focused. Feature education belongs in the Features section, not inside Settings.',
+  },
+  {
+    id: 'business-analytics-dashboard',
+    title: 'Business Analytics Dashboard',
+    status: 'Premium / Paid',
+    summary: 'Understand how customers interact with the business profile.',
+    whatItDoes: 'A paid analytics experience can show business owners how customers interact with their profile.',
+    businessValue: 'Analytics help owners understand profile performance, customer interest, and which actions generate engagement.',
+    ownerExperience: [
+      'See profile views, calls, WhatsApp clicks, saves, follows, and other key actions where implemented.',
+      'Compare performance over selected time ranges.',
+      'Use insights to improve profile content and conversion.',
+    ],
+    productNote: 'Free users can see a locked preview. Paid users can access full analytics.',
+  },
+  {
+    id: 'customer-activity-dashboard',
+    title: 'Customer Activity Dashboard',
+    status: 'Premium / Paid',
+    summary: 'Understand customer engagement trends while preserving privacy.',
+    whatItDoes: 'Business owners can understand customer activity patterns such as follows, saved profile actions, repeated profile visits, or engagement trends where privacy rules allow.',
+    businessValue: 'This helps owners identify genuine interest and improve follow-up strategy without exposing private customer data unnecessarily.',
+    ownerExperience: [
+      'View aggregated customer engagement metrics.',
+      'Understand which actions customers take most often.',
+      'Use activity trends to improve profile quality and offerings.',
+    ],
+    productNote: 'Must be designed with privacy safeguards, aggregation, and clear limitations.',
+  },
+  {
+    id: 'advanced-profile-customization',
+    title: 'Advanced Profile Customization',
+    status: 'Coming Soon',
+    summary: 'Give business owners more control over how their public profile looks.',
+    whatItDoes: 'Paid profile customization can allow business owners to make their public profile look more premium and category-appropriate.',
+    businessValue: 'Better visual control helps businesses differentiate their brand and improve customer confidence.',
+    ownerExperience: [
+      'Customize selected sections, highlight key services, choose featured gallery images, and control display emphasis.',
+      'Use premium layouts or section arrangements in future tiers.',
+      'Maintain a professional, consistent design system.',
+    ],
+    productNote: 'Customization must avoid breaking the clean public-profile layout.',
+  },
+  {
+    id: 'business-verification-badge',
+    title: 'Business Verification Badge',
+    status: 'Coming Soon',
+    summary: 'Show a verification badge after selected details or documents are reviewed.',
+    whatItDoes: 'A verification badge can indicate that selected business details or documents have been reviewed according to platform rules.',
+    businessValue: 'Verification can increase trust, reduce fake-profile concerns, and support premium positioning.',
+    ownerExperience: [
+      'Submit required verification details or documents in a future flow.',
+      'Show verification status on the public profile when approved.',
+      'Receive reminders when information or documents need updates.',
+    ],
+    productNote: 'Verification requires strong policy, review, expiry, and abuse-prevention controls.',
+  },
+  {
+    id: 'advanced-qr-toolkit',
+    title: 'Advanced QR Toolkit',
+    status: 'Planned',
+    summary: 'Expand QR codes into branded, downloadable, and campaign-specific assets.',
+    whatItDoes: 'QR-code features can expand beyond basic profile access into branded, downloadable, and campaign-specific QR assets.',
+    businessValue: 'Businesses can use QR codes for offline marketing, store displays, flyers, packaging, and local campaigns.',
+    ownerExperience: [
+      'Download print-ready QR assets.',
+      'Add business branding to QR layouts.',
+      'Create QR campaigns for events, offers, or specific services in future versions.',
+    ],
+    productNote: 'Campaign tracking should connect to analytics only after tracking rules are clearly defined.',
+  },
+  {
+    id: 'customer-follow-button',
+    title: 'Customer Follow Button',
+    status: 'Active / Improving',
+    summary: 'Allow customers to follow businesses and stay connected with future updates.',
+    whatItDoes: 'Customers can follow businesses to stay connected with future profile activity and updates.',
+    businessValue: 'Following turns a one-time visitor into an ongoing audience member.',
+    ownerExperience: [
+      'Customers follow a business from its profile.',
+      'Owners can later understand follower counts and engagement through analytics.',
+      'Future notifications can inform followers about important business updates.',
+    ],
+    productNote: 'Follow should remain available broadly while advanced follower insights can be paid.',
+  },
+  {
+    id: 'supporter-community-signals',
+    title: 'Supporter and Community Signals',
+    status: 'Active / Improving',
+    summary: 'Use community support signals to help grow the local business network.',
+    whatItDoes: 'Customers can support local businesses and help bring more businesses onto the platform.',
+    businessValue: 'Community contribution can help grow the directory and create local network effects.',
+    ownerExperience: [
+      'Customers submit or invite businesses through Support a Business.',
+      'Published supported businesses can link back to supporter contribution.',
+      'Business owners benefit from community-driven discovery.',
+    ],
+    productNote: 'Business-side display of supporter signals should remain carefully controlled and avoid implying ownership or authority.',
+  },
+  {
+    id: 'appointment-booking',
+    title: 'Appointment Booking',
+    status: 'Planned',
+    summary: 'Let customers request or book time slots from the business profile in future versions.',
+    whatItDoes: 'Appointment booking can allow customers to request or book time slots directly from the business profile.',
+    businessValue: 'This is highly useful for doctors, clinics, salons, tutors, consultants, coaches, and service providers.',
+    ownerExperience: [
+      'Set available days and time slots.',
+      'Receive booking requests or confirmed bookings.',
+      'Manage appointment status and customer details in a future owner workflow.',
+    ],
+    productNote: 'Requires careful design for availability, cancellation, reminders, spam prevention, and business confirmation rules.',
+  },
+  {
+    id: 'payments-deposits',
+    title: 'Payments and Deposits',
+    status: 'Planned',
+    summary: 'Support deposits, bookings, offers, packages, or service payments in future versions.',
+    whatItDoes: 'Payment features can support deposits, bookings, offers, packages, or service payments in future versions.',
+    businessValue: 'Payments can convert profile interest into revenue and reduce no-shows for appointment-based businesses.',
+    ownerExperience: [
+      'Accept payment or deposits for eligible services.',
+      'Display payment status and basic transaction history.',
+      'Connect payments to booking or package flows later.',
+    ],
+    productNote: 'Requires payment gateway integration, compliance, refund handling, dispute handling, and clear platform policies.',
+  },
+  {
+    id: 'customer-relationship-management',
+    title: 'Customer Relationship Management',
+    status: 'Planned',
+    summary: 'Help owners manage enquiries, repeat customers, follow-ups, and customer notes.',
+    whatItDoes: 'A lightweight CRM can help owners manage enquiries, repeat customers, follow-ups, and customer notes.',
+    businessValue: 'Small businesses need a simple way to remember leads and convert them without adopting complex enterprise tools.',
+    ownerExperience: [
+      'Track enquiries and customer actions.',
+      'Add follow-up status or notes.',
+      'Organize leads by source, service, or priority in future versions.',
+    ],
+    productNote: 'CRM features must be simple, privacy-aware, and suitable for non-technical business owners.',
+  },
+  {
+    id: 'ai-business-assistant',
+    title: 'AI Business Assistant',
+    status: 'Planned',
+    summary: 'Help owners improve profile content, FAQs, service descriptions, and setup quality.',
+    whatItDoes: 'An AI assistant can help business owners improve profile content, answer common setup questions, generate FAQ ideas, and draft business descriptions.',
+    businessValue: 'This can reduce setup friction and help owners create better profiles faster.',
+    ownerExperience: [
+      'Suggest better About Business text.',
+      'Recommend FAQs based on business category.',
+      'Help draft service descriptions, offer text, and profile improvements.',
+    ],
+    productNote: 'AI output must be reviewable by the owner before publishing and should not make unsupported claims.',
+  },
+  {
+    id: 'offers-vouchers-promotions',
+    title: 'Offers, Vouchers, and Promotions',
+    status: 'Under Review',
+    summary: 'Possible future tools for publishing offers, vouchers, or local promotional announcements.',
+    whatItDoes: 'Businesses may eventually publish limited offers, local vouchers, or promotional announcements to attract customers.',
+    businessValue: 'Offers can increase customer conversion and provide clear reasons to revisit a profile.',
+    ownerExperience: [
+      'Create limited-time offers.',
+      'Show terms, validity, and redemption instructions.',
+      'Connect offer performance to analytics in future versions.',
+    ],
+    productNote: 'Requires abuse prevention, expiry rules, offer terms, and potentially moderation.',
+  },
+  {
+    id: 'team-access-role-management',
+    title: 'Team Access and Role Management',
+    status: 'Under Review',
+    summary: 'Allow staff or team members to help manage business profile content in future versions.',
+    whatItDoes: 'Business owners may later invite staff or team members to help manage profile content or enquiries.',
+    businessValue: 'Useful for clinics, agencies, restaurants, institutes, and growing teams where one person should not manage everything alone.',
+    ownerExperience: [
+      'Invite team members.',
+      'Assign roles such as viewer, editor, or manager.',
+      'Control who can update profile content or view analytics.',
+    ],
+    productNote: 'Requires strong access control, audit history, and permission boundaries before release.',
+  },
+  {
+    id: 'multi-profile-management',
+    title: 'Multi-Profile Management',
+    status: 'Planned',
+    summary: 'Allow one business account to manage more than one profile or location in future versions.',
+    whatItDoes: 'A single business account can eventually manage more than one business profile or location.',
+    businessValue: 'Useful for multi-branch clinics, restaurant groups, institutes, agencies, franchises, and service brands.',
+    ownerExperience: [
+      'Create or switch between multiple profiles.',
+      'Manage each profile independently.',
+      'Compare profile performance across locations in future analytics.',
+    ],
+    productNote: 'Requires careful database, billing, permissions, and navigation design.',
+  },
+]
+
+function businessFeatureStatusClass(status: BusinessFeatureStatus): string {
+  switch (status) {
+    case 'Active':
+      return 'bg-emerald-50 text-emerald-700'
+    case 'Active / Improving':
+      return 'bg-teal-50 text-teal-700'
+    case 'Premium / Paid':
+      return 'bg-violet-50 text-violet-700'
+    case 'Coming Soon':
+      return 'bg-blue-50 text-blue-700'
+    case 'Planned':
+      return 'bg-slate-100 text-slate-700'
+    case 'Under Review':
+      return 'bg-amber-50 text-amber-700'
+  }
+}
+
 interface BusinessOwnerMenuState {
   hasBusinessProfile: boolean
   businessProfile?: BusinessProfileRow | null
@@ -957,6 +1388,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const [isSigningOut, setIsSigningOut] = useState(false)
   const [isHomeMenuOpen, setIsHomeMenuOpen] = useState(false)
   const [businessOwnerMenuPanel, setBusinessOwnerMenuPanel] = useState<BusinessOwnerMenuPanel>('main')
+  const [selectedBusinessFeatureId, setSelectedBusinessFeatureId] = useState<string | null>(null)
   const [customerMenuPanel, setCustomerMenuPanel] = useState<CustomerMenuPanel>('main')
   const [selectedSupporterBenefitId, setSelectedSupporterBenefitId] = useState<string | null>(null)
   const [isCustomerImpactSummaryView, setIsCustomerImpactSummaryView] = useState(true)
@@ -1376,6 +1808,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     resetBusinessOwnerNotificationPreferenceSession()
     resetBusinessOwnerRecentHelpSuggestions()
     setBusinessOwnerSecuritySuccessMessage('')
+    setSelectedBusinessFeatureId(null)
     setCustomerMenuPanel('main')
     setSelectedSupporterBenefitId(null)
     setIsCustomerImpactSummaryView(true)
@@ -3814,6 +4247,9 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
               if (item.key === 'settings') {
                 setBusinessOwnerSettingsView('main')
               }
+              if (item.key === 'features') {
+                setSelectedBusinessFeatureId(null)
+              }
 
               setBusinessOwnerMenuPanel(item.key as BusinessOwnerMenuPanel)
             }}
@@ -4303,11 +4739,105 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     </>
   )
 
-  const renderBusinessOwnerFeaturesPanel = () => (
-    <>
-      {renderBusinessOwnerPanelHeader('Features')}
-    </>
+  const renderBusinessFeatureDetailSection = (title: string, content: string | string[]) => (
+    <section className="rounded-2xl border border-slate-200 bg-white px-3 py-3">
+      <h3 className="text-xs font-semibold text-[#0f172a]">{title}</h3>
+      {Array.isArray(content) ? (
+        <ul className="mt-2 space-y-1.5">
+          {content.map((item) => (
+            <li key={item} className="flex gap-2 text-xs leading-relaxed text-slate-600">
+              <span className="mt-1.5 size-1 shrink-0 rounded-full bg-slate-400" aria-hidden="true" />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-2 text-xs leading-relaxed text-slate-600">{content}</p>
+      )}
+    </section>
   )
+
+  const renderBusinessOwnerFeaturesPanel = () => {
+    const selectedFeature = selectedBusinessFeatureId
+      ? businessFeatures.find((feature) => feature.id === selectedBusinessFeatureId) ?? null
+      : null
+
+    if (selectedFeature) {
+      return (
+        <>
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h2 className="min-w-0 truncate text-sm font-semibold text-[#0f172a]">{selectedFeature.title}</h2>
+            <button
+              type="button"
+              onClick={() => setSelectedBusinessFeatureId(null)}
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+            >
+              <span>Back</span>
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            <span
+              className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${businessFeatureStatusClass(
+                selectedFeature.status
+              )}`}
+            >
+              {selectedFeature.status}
+            </span>
+            {renderBusinessFeatureDetailSection('What it does', selectedFeature.whatItDoes)}
+            {renderBusinessFeatureDetailSection('Business value', selectedFeature.businessValue)}
+            {renderBusinessFeatureDetailSection('Owner experience', selectedFeature.ownerExperience)}
+            {renderBusinessFeatureDetailSection('Product note', selectedFeature.productNote)}
+          </div>
+        </>
+      )
+    }
+
+    return (
+      <>
+        {renderBusinessOwnerPanelHeader('Features')}
+        <section className="space-y-3">
+          <div className={businessOwnerPanelCardClass}>
+            <h3 className="text-sm font-semibold text-[#0f172a]">Explore current and upcoming business tools</h3>
+            <p className="mt-1 text-sm leading-relaxed text-slate-600">
+              See what is available now, what is improving, and what is planned to help business owners create better
+              profiles, attract customers, and grow with Smart Business Profile.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            {businessFeatures.map((feature) => (
+              <button
+                key={feature.id}
+                type="button"
+                onClick={() => setSelectedBusinessFeatureId(feature.id)}
+                className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-left transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+              >
+                <span className="flex items-start justify-between gap-3">
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold text-[#0f172a]">{feature.title}</span>
+                    <span className="mt-1 block text-xs leading-relaxed text-slate-600">{feature.summary}</span>
+                  </span>
+                  <span className="ml-3 flex shrink-0 items-center gap-2">
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${businessFeatureStatusClass(
+                        feature.status
+                      )}`}
+                    >
+                      {feature.status}
+                    </span>
+                    <span className="shrink-0 text-slate-400" aria-hidden="true">
+                      <ChevronRightIcon />
+                    </span>
+                  </span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+      </>
+    )
+  }
 
   const renderBusinessOwnerSettingsPanel = () => (
     businessOwnerSettingsView === 'faqs' ? (
