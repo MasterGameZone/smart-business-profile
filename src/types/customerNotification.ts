@@ -6,6 +6,9 @@ export type CustomerNotificationType =
   | 'support_invite_business_owner_switched'
   | 'feature_vote_recorded'
   | 'feature_suggestion_submitted'
+  | 'new_benefit_announced'
+  | 'benefit_status_updated'
+  | 'supporter_only_announcement'
   | 'report_status_updated'
   | 'saved_business_updated'
 

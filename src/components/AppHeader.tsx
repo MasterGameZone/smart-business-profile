@@ -23,6 +23,7 @@ import {
 import {
   listCustomerNotifications,
   markCustomerNotificationRead,
+  syncSupporterProgramAnnouncementNotifications,
 } from '../lib/customerNotificationService.ts'
 import {
   getCustomerProfile,
@@ -1873,20 +1874,32 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
 
     let isActive = true
 
-    void listCustomerNotifications(user.id)
-      .then((nextNotifications) => {
+    const loadCustomerNotifications = async () => {
+      try {
+        try {
+          await syncSupporterProgramAnnouncementNotifications()
+        } catch (syncError) {
+          if (import.meta.env.DEV) {
+            console.warn('Failed to sync supporter programme announcements:', syncError)
+          }
+        }
+
+        const nextNotifications = await listCustomerNotifications(user.id)
         if (!isActive) return
         setCustomerNotifications(nextNotifications)
         setLoadedCustomerNotificationsUserId(user.id)
         setCustomerNotificationsError('')
-      })
-      .catch((error) => {
+      } catch (error) {
         if (!isActive) return
         console.error('Failed to load customer notifications:', error)
         setCustomerNotifications([])
         setLoadedCustomerNotificationsUserId(user.id)
         setCustomerNotificationsError('We could not load your notifications right now. Please try again.')
-      })
+      }
+    }
+
+    void loadCustomerNotifications()
+
     return () => {
       isActive = false
     }
@@ -2348,8 +2361,48 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     }
   }
 
+  const openCustomerProgramNotificationAction = (notification: CustomerNotificationRow): boolean => {
+    if (notification.type === 'new_benefit_announced' || notification.type === 'benefit_status_updated') {
+      setSelectedSupporterBenefitId(null)
+      setCustomerMenuPanel('communityBenefit')
+      return true
+    }
+
+    if (notification.type !== 'supporter_only_announcement') {
+      return false
+    }
+
+    if (notification.action_url === '/customer/community#benefit') {
+      setSelectedSupporterBenefitId(null)
+      setCustomerMenuPanel('communityBenefit')
+      return true
+    }
+
+    if (notification.action_url === '/customer/community#impact') {
+      setCustomerMenuPanel('communityImpact')
+      return true
+    }
+
+    if (notification.action_url === '/customer/community#support') {
+      setCustomerMenuPanel('communitySupport')
+      return true
+    }
+
+    if (notification.action_url === '/customer/community#shape') {
+      setCustomerMenuPanel('communityShape')
+      return true
+    }
+
+    setCustomerMenuPanel('community')
+    return true
+  }
+
   const handleCustomerNotificationOpen = async (notification: CustomerNotificationRow) => {
     const updatedNotification = await markCustomerNotificationReadLocally(notification)
+
+    if (openCustomerProgramNotificationAction(updatedNotification)) {
+      return
+    }
 
     if (updatedNotification.action_url) {
       closeHomeMenu()

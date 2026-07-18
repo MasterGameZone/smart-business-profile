@@ -1,6 +1,22 @@
 import { supabase } from './supabase.ts'
 import type { CustomerNotificationRow } from '../types/customerNotification.ts'
 
+interface SupporterProgramAnnouncementSyncResult {
+  syncedCount?: number
+}
+
+export async function syncSupporterProgramAnnouncementNotifications(): Promise<number> {
+  const { data, error } = await supabase.rpc('sync_supporter_program_announcement_notifications')
+
+  if (error) {
+    throw error
+  }
+
+  const result = data as SupporterProgramAnnouncementSyncResult | null
+
+  return typeof result?.syncedCount === 'number' ? result.syncedCount : 0
+}
+
 export async function listCustomerNotifications(
   customerId: string
 ): Promise<CustomerNotificationRow[]> {

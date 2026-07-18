@@ -336,7 +336,39 @@ Stores private customer-owned notifications for customer activity, supported-bus
 | read_at | TIMESTAMP WITH TIME ZONE | Yes | Timestamp when marked read |
 | created_at | TIMESTAMP WITH TIME ZONE | No | Record creation timestamp |
 
-Access is restricted by RLS to the authenticated owner of each row. Authenticated customers may select their own notifications and update only the `is_read` and `read_at` columns on their own notifications. Support invite milestone RPCs create deduplicated notifications for first invite open, first business sign-up, first Business Owner mode switch, profile publication, and supporter-level unlock events. Shape the Platform participation RPCs create deduplicated notifications for feature votes and feature suggestion submissions.
+Access is restricted by RLS to the authenticated owner of each row. Authenticated customers may select their own notifications and update only the `is_read` and `read_at` columns on their own notifications. Support invite milestone RPCs create deduplicated notifications for first invite open, first business sign-up, first Business Owner mode switch, profile publication, and supporter-level unlock events. Shape the Platform participation RPCs create deduplicated notifications for feature votes and feature suggestion submissions. Supporter programme announcement sync creates deduplicated notifications for new benefit announcements, benefit status updates, and supporter-only announcements.
+
+---
+
+## Table: supporter_program_announcements
+
+Purpose
+
+Stores published supporter programme announcements that can be synced into each customer's private notification inbox.
+
+### Columns
+
+| Column | Type | Nullable | Description |
+|----------|------|----------|-------------|
+| id | UUID | No | Primary key |
+| announcement_type | TEXT | No | `new_benefit_announced`, `benefit_status_updated`, or `supporter_only_announcement` |
+| benefit_key | TEXT | Yes | Optional stable benefit key |
+| benefit_name | TEXT | Yes | Optional supporter benefit name |
+| old_status | TEXT | Yes | Optional previous benefit status |
+| new_status | TEXT | Yes | Optional new benefit status |
+| title | TEXT | No | Notification title |
+| message | TEXT | No | Notification message/body |
+| action_target | TEXT | Yes | Optional safe internal action target |
+| is_published | BOOLEAN | No | Whether the announcement is published |
+| published_at | TIMESTAMP WITH TIME ZONE | Yes | Publication timestamp |
+| created_at | TIMESTAMP WITH TIME ZONE | No | Record creation timestamp |
+| updated_at | TIMESTAMP WITH TIME ZONE | No | Last update timestamp |
+
+Allowed benefit status values are `Active / Improving`, `Planned`, `Coming Soon`, and `Under Review`.
+
+Authenticated users may select only published announcements where `is_published = true`, `published_at` is present, and `published_at <= now()`. No anonymous access is granted. No frontend insert, update, or delete grants are provided.
+
+The authenticated-only `sync_supporter_program_announcement_notifications` RPC creates missing `customer_notifications` rows for the current user from published announcements. Notifications are deduped per user, notification type, and `supporter_program_announcement` related entity id. Benefit announcement and benefit status notifications open Customer Account -> Community -> Benefit. Supporter-only announcements default to Customer Account -> Community unless their `action_target` matches an allowed internal Community target.
 
 ---
 
