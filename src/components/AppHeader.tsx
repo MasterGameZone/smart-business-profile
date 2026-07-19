@@ -1554,6 +1554,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const businessOwnerCurrentPasswordInputRef = useRef<HTMLInputElement | null>(null)
   const isAppHeaderMountedRef = useRef(true)
   const customerMenuOverlayRef = useRef<HTMLDivElement | null>(null)
+  const businessOwnerAnalyticsOverlayRef = useRef<HTMLDivElement | null>(null)
   const landingMobileMenuRef = useRef<HTMLDivElement | null>(null)
   const analyticsUpgradeFlowIdRef = useRef(0)
   const analyticsUpgradePollTimerRef = useRef<number | null>(null)
@@ -2155,6 +2156,8 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   }, [shouldAnimateEntrance])
 
   useEffect(() => {
+    isAppHeaderMountedRef.current = true
+
     return () => {
       isAppHeaderMountedRef.current = false
     }
@@ -2196,6 +2199,10 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       const target = event.target as Node
 
       if (showLoggedInHomeIcons && customerMenuOverlayRef.current?.contains(target)) {
+        return
+      }
+
+      if (businessOwnerAnalyticsOverlayRef.current?.contains(target)) {
         return
       }
 
@@ -6212,6 +6219,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       )}
       {isBusinessOwnerAnalyticsScreenOpen ? createPortal(
         <div
+          ref={businessOwnerAnalyticsOverlayRef}
           role="menu"
           aria-label="Business owner analytics"
           className="fixed inset-0 z-[90] overflow-y-auto overscroll-contain bg-[#eef4fa] px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8"
