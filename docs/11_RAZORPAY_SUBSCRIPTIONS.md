@@ -120,6 +120,16 @@ The safe Checkout response contains only the provider, environment, Checkout key
 
 This endpoint performs no database lifecycle mutation, entitlement activation, or webhook processing. A successful response means Checkout authorization was received; verified provider webhook confirmation is still pending before paid access can change.
 
+## Public webhook endpoint
+
+`POST /functions/v1/razorpay-subscription-webhook` is public with `verify_jwt = false`; Razorpay HMAC verification is the endpoint authentication mechanism. The raw request body is read once and verified before JSON parsing or creation of the webhook Supabase context. The `x-razorpay-event-id` header is the provider event identity used for idempotency under at-least-once delivery, so duplicate events are expected.
+
+The function supports `subscription.authenticated`, `subscription.activated`, `subscription.charged`, `subscription.completed`, `subscription.updated`, `subscription.pending`, `subscription.halted`, `subscription.cancelled`, `subscription.paused`, and `subscription.resumed`. Event/status consistency, the server-configured Plan ID, and all five SBP correlation notes are validated before processing. Payment entities and payment/card/mandate information are discarded; only a sanitized subscription-only payload is stored.
+
+No admin context is created before a valid signature. The existing atomic webhook RPC owns status mapping, stale-event handling, grace periods, and idempotency. `processed`, `duplicate`, `ignored`, and `stale_event` return HTTP 200; retryable processing failures return non-2xx. This verified webhook database path is the only paid-entitlement activation path.
+
+The function is implemented locally only; no function deployment or Razorpay Dashboard webhook setup has occurred.
+
 ## Signature security
 
 Webhook signatures use the unchanged raw request body, HMAC-SHA256, strict hexadecimal-signature validation, and constant-time byte comparison. Checkout verification uses the payment ID plus the server-stored expected subscription ID. Signature verification alone never grants Pro access.
@@ -163,16 +173,16 @@ Completed locally, not deployed:
 - Shared Edge Function infrastructure
 - Create subscription Edge Function
 - Checkout verification Edge Function
+- Razorpay subscription webhook Edge Function
 
-Still not implemented:
+Still pending:
 
-- Webhook Edge Function
 - Supabase function secrets
 - Function deployment
 - Razorpay webhook Dashboard configuration
 - Frontend Checkout
+- Test Mode end-to-end lifecycle testing
 - Cancellation
-- End-to-end payment testing
 - Live Mode activation
 
 The shared foundation is not deployed.
