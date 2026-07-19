@@ -308,10 +308,12 @@ Stores the account-level subscription state for a Business Owner. A single subsc
 | grace_period_end | TIMESTAMP WITH TIME ZONE | Yes | End of a permitted past-due grace period |
 | canceled_at | TIMESTAMP WITH TIME ZONE | Yes | Cancellation timestamp |
 | ended_at | TIMESTAMP WITH TIME ZONE | Yes | Subscription-end timestamp |
+| creation_attempt_id | UUID | Yes | Trusted backend creation lease identifier; paired with `creation_started_at` |
+| creation_started_at | TIMESTAMP WITH TIME ZONE | Yes | Trusted backend creation lease start; paired with `creation_attempt_id` |
 | created_at | TIMESTAMP WITH TIME ZONE | No | Record creation timestamp |
 | updated_at | TIMESTAMP WITH TIME ZONE | No | Last update timestamp |
 
-Each owner may have only one row. The plan, interval, currency, amount, provider length, and current-period ordering are constrained in the database. Provider subscription IDs are additionally unique per provider when present. Indexes support provider/customer lookups and status/period-expiry processing.
+Each owner may have only one row. The plan, interval, currency, amount, provider length, and current-period ordering are constrained in the database. The creation lease fields are either both null or both populated, and their partial index supports stale-lease recovery. Provider subscription IDs are additionally unique per provider when present. Indexes support provider/customer lookups and status/period-expiry processing.
 
 RLS is enabled. Authenticated users can read only their own row and only the safe lookup columns (`owner_id`, plan/status/billing fields, period fields, cancellation flag, and grace-period end). They receive no direct insert, update, or delete permission and cannot access provider identifiers, lifecycle audit timestamps, or another owner's subscription. Trusted backend processes use server-side credentials for writes.
 
@@ -356,6 +358,41 @@ The unique `(billing_provider, provider_event_id)` constraint makes provider eve
 `get_my_business_subscription()` is an authenticated-only, stable, security-invoker lookup that relies on the owner-only subscription RLS policy. It returns exactly one safe row and never exposes provider identifiers or webhook information.
 
 The returned fields are `plan_id`, `subscription_status`, `billing_interval`, `currency`, `amount_minor_units`, current-period bounds, `cancel_at_period_end`, `grace_period_end`, and `has_pro_access`. If no subscription exists (or no row is visible), it safely returns Free: `free` plan/status, `INR`, zero minor units, null period fields, `false` cancellation, and `false` Pro access. Its Pro-access calculation follows the effective-access rules documented for `business_owner_subscriptions`.
+
+---
+
+## Backend-only Razorpay subscription RPCs
+
+`claim_razorpay_subscription_creation(uuid)`, `finalize_razorpay_subscription_creation(uuid, uuid, text, text)`, `release_razorpay_subscription_creation(uuid, uuid)`, and `process_razorpay_subscription_webhook(...)` are `SECURITY DEFINER` RPCs with an empty fixed search path. Their database-object and callable built-in references are explicitly qualified. They are executable only by `service_role`; they are not available to anonymous or authenticated frontend roles.
+
+The creation RPCs use a per-owner transaction advisory lock and a five-minute creation lease so trusted backend work can create, finalize, inspect, or release a single Razorpay subscription safely. Five minutes is not permission to retry the provider call automatically: a stale lease represents an ambiguous external provider outcome and returns `inspect_existing` without replacing or clearing the existing claim. Only an explicit release after a confirmed provider failure makes that clean row eligible for a new claim. Future Razorpay create requests must include the creation attempt ID in approved provider notes as `sbp_creation_attempt_id`; provider reconciliation is not implemented by this migration.
+
+The webhook RPC records each sanitized Razorpay event before processing. Retried `received` or `failed` events validate the normalized immutable identity fields `event_type`, `provider_subscription_id`, and `provider_created_at`. An identity mismatch increments attempts once, marks the event failed, and does not overwrite its original identity or sanitized payload. Existing `processed` and `ignored` events remain terminal duplicates and are not incremented. Safe event-to-subscription correlation is persisted before protected state mutation and is explicitly retained when unexpected processing fails. The RPC ignores unsupported or stale events and changes subscription state only after provider subscription and plan correlation succeeds. `pending` creates a three-day grace period only when no grace period already exists; `halted` preserves any existing grace period, and `paused` clears it. Claims, stale-claim reconciliation, and these corrections do not grant Pro access; access changes only through verified webhook state. These backend RPCs do not expose provider identifiers or creation leases through `get_my_business_subscription()`.
+
+---
+
+### Live Supabase Verification
+
+Status: Passed
+
+The migration was applied successfully through the Supabase SQL Editor.
+
+The live verification query confirmed:
+
+- `creation_attempt_id` and `creation_started_at` exist on `public.business_owner_subscriptions`.
+- `business_owner_subscriptions_creation_lease_check` exists.
+- `business_owner_subscriptions_creation_started_at_idx` exists.
+- All four backend RPCs exist:
+  - `claim_razorpay_subscription_creation`
+  - `finalize_razorpay_subscription_creation`
+  - `release_razorpay_subscription_creation`
+  - `process_razorpay_subscription_webhook`
+- All four RPCs use `SECURITY DEFINER`.
+- All four RPCs use an empty fixed search path.
+- `service_role` can execute all four RPCs.
+- `anon`, `authenticated`, and `public` cannot execute the RPCs.
+
+Live verification completed on 2026-07-19.
 
 ---
 
@@ -694,6 +731,7 @@ Version 3.8 added helper functions for logo, cover, and gallery uploads. Version
 | 4.31 | Business profile followers | Migration created; apply to Supabase |
 | 4.32 | 20260718160000_add_business_owner_subscription_foundation.sql | Applied to Supabase|
 | 4.33 | 20260718160001_add_subscription_webhook_owner_index.sql | Applied to Supabase |
+| 4.34 | 20260718160002_add_razorpay_subscription_atomic_backend_rpcs.sql | Migration created; Applied to Supabase |
 | Future | Additional modules | Planned |
 
 Detailed migration SQL should remain inside the `/supabase/migrations` directory.
