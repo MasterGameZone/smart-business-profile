@@ -44,6 +44,16 @@ import {
 } from '../lib/businessOwnerProfileService.ts'
 import { getBusinessProfileFollowersCount } from '../lib/businessProfileFollowService.ts'
 import {
+  BusinessSubscriptionFlowError,
+  createRazorpaySubscription,
+  verifyRazorpaySubscriptionCheckout,
+} from '../lib/businessSubscriptionService.ts'
+import {
+  loadRazorpayCheckout,
+  validateRazorpayCheckoutSuccess,
+  type RazorpayCheckoutSuccessResponse,
+} from '../lib/razorpayCheckout.ts'
+import {
   getBusinessProfileViewActivity,
   getBusinessProfileViewsCount,
   type BusinessProfileViewActivityPoint,
@@ -882,6 +892,15 @@ type BusinessOwnerSettingsView =
 type BusinessOwnerPhoneModalMode = 'add' | 'change'
 type BusinessOwnerPhoneModalStep = 'phone' | 'otp' | 'success'
 type BusinessOwnerAnalyticsRange = '7D' | '30D' | '90D'
+type BusinessOwnerAnalyticsUpgradeState =
+  | 'idle'
+  | 'preparing'
+  | 'checkout'
+  | 'verifying'
+  | 'confirming'
+  | 'pending'
+  | 'timeout'
+  | 'active'
 type BusinessOwnerProfileActivityInterval = 'Daily' | 'Weekly' | 'Monthly'
 type CustomerMenuPanel =
   | 'main'
@@ -903,6 +922,15 @@ type CustomerMenuPanel =
   | 'helpSuggestionsRecent'
 type CustomerSavedBusinessesLoadState = 'idle' | 'loading' | 'found' | 'empty' | 'error'
 let hasPlayedNavbarEntrance = false
+
+const ANALYTICS_ACTIVATION_PENDING_MESSAGE =
+  'Payment authorization received. Subscription activation is being confirmed.'
+const ANALYTICS_ACTIVATION_TIMEOUT_MESSAGE =
+  'Payment authorization was received. Activation is still being confirmed.'
+const ANALYTICS_PRO_ACTIVATED_MESSAGE = 'Pro Analytics is active.'
+const ANALYTICS_CHECKOUT_DISMISSED_MESSAGE = 'Checkout was closed. No access changes were made.'
+const ANALYTICS_PAYMENT_FAILED_MESSAGE = 'Payment authorization was not completed.'
+const ANALYTICS_VERIFICATION_ERROR_MESSAGE = 'Payment verification failed. No subscription access was granted.'
 
 function getInitials(value: string): string {
   return value
@@ -1398,6 +1426,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     isLoading: isSubscriptionLoading,
     isRefreshing: isSubscriptionRefreshing,
     error: subscriptionError,
+    refreshBusinessSubscription,
   } = useBusinessSubscription()
   const { profileData, setProfileData } = useProfile()
   const [isSigningOut, setIsSigningOut] = useState(false)
@@ -1409,6 +1438,9 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const [isCustomerImpactSummaryView, setIsCustomerImpactSummaryView] = useState(true)
   const [businessOwnerSettingsView, setBusinessOwnerSettingsView] = useState<BusinessOwnerSettingsView>('main')
   const [businessOwnerAnalyticsRange, setBusinessOwnerAnalyticsRange] = useState<BusinessOwnerAnalyticsRange>('30D')
+  const [businessOwnerAnalyticsUpgradeState, setBusinessOwnerAnalyticsUpgradeState] =
+    useState<BusinessOwnerAnalyticsUpgradeState>('idle')
+  const [businessOwnerAnalyticsUpgradeMessage, setBusinessOwnerAnalyticsUpgradeMessage] = useState<string | null>(null)
   const [businessOwnerFollowersCount, setBusinessOwnerFollowersCount] = useState<number | null>(null)
   const [businessOwnerProfileViewsCount, setBusinessOwnerProfileViewsCount] = useState<number | null>(null)
   const [businessOwnerSavesCount, setBusinessOwnerSavesCount] = useState<number | null>(null)
@@ -1523,6 +1555,9 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const isAppHeaderMountedRef = useRef(true)
   const customerMenuOverlayRef = useRef<HTMLDivElement | null>(null)
   const landingMobileMenuRef = useRef<HTMLDivElement | null>(null)
+  const analyticsUpgradeFlowIdRef = useRef(0)
+  const analyticsUpgradePollTimerRef = useRef<number | null>(null)
+  const hasFullAnalyticsAccessRef = useRef(false)
   const userMetadata = (user?.user_metadata ?? {}) as Record<string, unknown>
   const isLandingPage = location.pathname === '/'
   const isStartBusinessPage = location.pathname === '/start-business'
@@ -1560,6 +1595,15 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     isHomeMenuOpen && showBusinessHomeTopBar && businessOwnerMenuPanel === 'analytics'
   const isBusinessSubscriptionLoading = isSubscriptionLoading || isSubscriptionRefreshing
   const hasFullAnalyticsAccess = canUseFeature(subscription, 'full_analytics')
+  const businessOwnerAnalyticsUpgradeButtonLabel =
+    businessOwnerAnalyticsUpgradeState === 'preparing'
+      ? 'Preparing...'
+      : businessOwnerAnalyticsUpgradeState === 'verifying'
+        ? 'Verifying...'
+        : businessOwnerAnalyticsUpgradeState === 'confirming' || businessOwnerAnalyticsUpgradeState === 'pending'
+          ? 'Confirming...'
+          : 'Upgrade'
+  const isBusinessOwnerAnalyticsUpgradeButtonDisabled = businessOwnerAnalyticsUpgradeState !== 'idle'
   const authenticatedHomePath = isCreateProfilePage && accountMode === 'business_owner' ? '/business-home' : '/'
   const useInlineDarkNavbarLayout =
     isProfilePreviewPage || isPublicBusinessProfileVariant || ((isLandingPage || isSimpleDarkNavbarPage) && !user)
@@ -1752,6 +1796,209 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     'Change password',
   ]
 
+  const clearAnalyticsActivationPolling = () => {
+    if (analyticsUpgradePollTimerRef.current !== null) {
+      window.clearTimeout(analyticsUpgradePollTimerRef.current)
+      analyticsUpgradePollTimerRef.current = null
+    }
+  }
+
+  const isAnalyticsUpgradeFlowCurrent = (flowId: number) =>
+    isAppHeaderMountedRef.current && analyticsUpgradeFlowIdRef.current === flowId
+
+  const getSafeAnalyticsUpgradeErrorMessage = (error: unknown) =>
+    error instanceof BusinessSubscriptionFlowError
+      ? error.message
+      : 'The subscription request could not be completed.'
+
+  const beginAnalyticsActivationConfirmation = async (flowId: number) => {
+    if (!isAnalyticsUpgradeFlowCurrent(flowId)) {
+      return
+    }
+
+    clearAnalyticsActivationPolling()
+    const activationDeadline = Date.now() + 30_000
+    setBusinessOwnerAnalyticsUpgradeState('confirming')
+    setBusinessOwnerAnalyticsUpgradeMessage(ANALYTICS_ACTIVATION_PENDING_MESSAGE)
+
+    try {
+      await refreshBusinessSubscription()
+    } catch {
+      // The subscription context preserves fail-safe Free behavior; continue checking on the next poll.
+    }
+
+    if (!isAnalyticsUpgradeFlowCurrent(flowId) || hasFullAnalyticsAccessRef.current) {
+      return
+    }
+
+    setBusinessOwnerAnalyticsUpgradeState('pending')
+
+    const pollForAnalyticsActivation = () => {
+      if (!isAnalyticsUpgradeFlowCurrent(flowId) || hasFullAnalyticsAccessRef.current) {
+        return
+      }
+
+      if (Date.now() >= activationDeadline) {
+        setBusinessOwnerAnalyticsUpgradeState('timeout')
+        setBusinessOwnerAnalyticsUpgradeMessage(ANALYTICS_ACTIVATION_TIMEOUT_MESSAGE)
+        return
+      }
+
+      analyticsUpgradePollTimerRef.current = window.setTimeout(() => {
+        void (async () => {
+          if (!isAnalyticsUpgradeFlowCurrent(flowId) || hasFullAnalyticsAccessRef.current) {
+            return
+          }
+
+          try {
+            await refreshBusinessSubscription()
+          } catch {
+            // Keep the activation state pending and try the next bounded refresh.
+          }
+
+          pollForAnalyticsActivation()
+        })()
+      }, 2500)
+    }
+
+    pollForAnalyticsActivation()
+  }
+
+  const handleAnalyticsCheckoutSuccess = async (
+    response: RazorpayCheckoutSuccessResponse,
+    expectedSubscriptionId: string,
+    flowId: number
+  ) => {
+    if (!isAnalyticsUpgradeFlowCurrent(flowId)) {
+      return
+    }
+
+    setBusinessOwnerAnalyticsUpgradeState('verifying')
+    const checkoutSuccess = validateRazorpayCheckoutSuccess(response, expectedSubscriptionId)
+    if (!checkoutSuccess) {
+      setBusinessOwnerAnalyticsUpgradeState('idle')
+      setBusinessOwnerAnalyticsUpgradeMessage(ANALYTICS_VERIFICATION_ERROR_MESSAGE)
+      return
+    }
+
+    try {
+      await verifyRazorpaySubscriptionCheckout(
+        checkoutSuccess.paymentId,
+        checkoutSuccess.subscriptionId,
+        checkoutSuccess.signature
+      )
+
+      if (!isAnalyticsUpgradeFlowCurrent(flowId)) {
+        return
+      }
+
+      setBusinessOwnerAnalyticsUpgradeMessage(ANALYTICS_ACTIVATION_PENDING_MESSAGE)
+      await beginAnalyticsActivationConfirmation(flowId)
+    } catch (error) {
+      if (!isAnalyticsUpgradeFlowCurrent(flowId)) {
+        return
+      }
+
+      setBusinessOwnerAnalyticsUpgradeState('idle')
+      setBusinessOwnerAnalyticsUpgradeMessage(getSafeAnalyticsUpgradeErrorMessage(error))
+    }
+  }
+
+  const handleAnalyticsUpgrade = async () => {
+    if (businessOwnerAnalyticsUpgradeState !== 'idle' || hasFullAnalyticsAccess) {
+      return
+    }
+
+    const flowId = ++analyticsUpgradeFlowIdRef.current
+    clearAnalyticsActivationPolling()
+    setBusinessOwnerAnalyticsUpgradeState('preparing')
+    setBusinessOwnerAnalyticsUpgradeMessage(null)
+
+    try {
+      const checkoutData = await createRazorpaySubscription()
+      if (!isAnalyticsUpgradeFlowCurrent(flowId)) {
+        return
+      }
+
+      const Razorpay = await loadRazorpayCheckout()
+      if (!isAnalyticsUpgradeFlowCurrent(flowId)) {
+        return
+      }
+
+      let checkoutSuccessReceived = false
+      let checkoutPaymentFailureReceived = false
+      const checkout = new Razorpay({
+        key: checkoutData.keyId,
+        subscription_id: checkoutData.subscriptionId,
+        name: checkoutData.checkoutName,
+        description: checkoutData.checkoutDescription,
+        handler: (response) => {
+          if (checkoutSuccessReceived) {
+            return
+          }
+
+          checkoutSuccessReceived = true
+          void handleAnalyticsCheckoutSuccess(response, checkoutData.subscriptionId, flowId)
+        },
+        modal: {
+          ondismiss: () => {
+            if (!checkoutSuccessReceived && !checkoutPaymentFailureReceived && isAnalyticsUpgradeFlowCurrent(flowId)) {
+              setBusinessOwnerAnalyticsUpgradeState('idle')
+              setBusinessOwnerAnalyticsUpgradeMessage(ANALYTICS_CHECKOUT_DISMISSED_MESSAGE)
+            }
+          },
+        },
+      })
+
+      checkout.on?.('payment.failed', () => {
+        if (!checkoutSuccessReceived && isAnalyticsUpgradeFlowCurrent(flowId)) {
+          checkoutPaymentFailureReceived = true
+          setBusinessOwnerAnalyticsUpgradeState('idle')
+          setBusinessOwnerAnalyticsUpgradeMessage(ANALYTICS_PAYMENT_FAILED_MESSAGE)
+        }
+      })
+
+      setBusinessOwnerAnalyticsUpgradeState('checkout')
+      checkout.open()
+    } catch (error) {
+      if (!isAnalyticsUpgradeFlowCurrent(flowId)) {
+        return
+      }
+
+      if (error instanceof BusinessSubscriptionFlowError && error.code === 'subscription_already_authorized') {
+        await beginAnalyticsActivationConfirmation(flowId)
+        return
+      }
+
+      setBusinessOwnerAnalyticsUpgradeState('idle')
+      setBusinessOwnerAnalyticsUpgradeMessage(getSafeAnalyticsUpgradeErrorMessage(error))
+    }
+  }
+
+  const handleCheckAnalyticsActivation = async () => {
+    if (businessOwnerAnalyticsUpgradeState !== 'timeout') {
+      return
+    }
+
+    const flowId = ++analyticsUpgradeFlowIdRef.current
+    clearAnalyticsActivationPolling()
+    setBusinessOwnerAnalyticsUpgradeState('confirming')
+    setBusinessOwnerAnalyticsUpgradeMessage(ANALYTICS_ACTIVATION_PENDING_MESSAGE)
+
+    try {
+      await refreshBusinessSubscription()
+    } catch {
+      // Keep the activation state safely locked when the refresh cannot complete.
+    }
+
+    if (!isAnalyticsUpgradeFlowCurrent(flowId) || hasFullAnalyticsAccessRef.current) {
+      return
+    }
+
+    setBusinessOwnerAnalyticsUpgradeState('timeout')
+    setBusinessOwnerAnalyticsUpgradeMessage(ANALYTICS_ACTIVATION_TIMEOUT_MESSAGE)
+  }
+
   const resetBusinessOwnerNotificationsSession = () => {
     setBusinessOwnerNotifications([])
     setIsBusinessOwnerNotificationsLoading(false)
@@ -1831,6 +2078,75 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     setIsCustomerImpactSummaryView(true)
     setIsHomeMenuOpen(false)
   }
+
+  useEffect(() => {
+    hasFullAnalyticsAccessRef.current = hasFullAnalyticsAccess
+
+    if (hasFullAnalyticsAccess) {
+      if (businessOwnerAnalyticsUpgradeState !== 'idle' && businessOwnerAnalyticsUpgradeState !== 'active') {
+        if (analyticsUpgradePollTimerRef.current !== null) {
+          window.clearTimeout(analyticsUpgradePollTimerRef.current)
+          analyticsUpgradePollTimerRef.current = null
+        }
+        analyticsUpgradeFlowIdRef.current += 1
+        const settledFlowId = analyticsUpgradeFlowIdRef.current
+        window.setTimeout(() => {
+          if (
+            !isAppHeaderMountedRef.current ||
+            analyticsUpgradeFlowIdRef.current !== settledFlowId ||
+            !hasFullAnalyticsAccessRef.current
+          ) {
+            return
+          }
+
+          setBusinessOwnerAnalyticsUpgradeState('active')
+          setBusinessOwnerAnalyticsUpgradeMessage(ANALYTICS_PRO_ACTIVATED_MESSAGE)
+        }, 0)
+      }
+      return
+    }
+
+    if (businessOwnerAnalyticsUpgradeState === 'active') {
+      if (analyticsUpgradePollTimerRef.current !== null) {
+        window.clearTimeout(analyticsUpgradePollTimerRef.current)
+        analyticsUpgradePollTimerRef.current = null
+      }
+      analyticsUpgradeFlowIdRef.current += 1
+      const resetFlowId = analyticsUpgradeFlowIdRef.current
+      window.setTimeout(() => {
+        if (
+          !isAppHeaderMountedRef.current ||
+          analyticsUpgradeFlowIdRef.current !== resetFlowId ||
+          hasFullAnalyticsAccessRef.current
+        ) {
+          return
+        }
+
+        setBusinessOwnerAnalyticsUpgradeState('idle')
+        setBusinessOwnerAnalyticsUpgradeMessage(null)
+      }, 0)
+    }
+  }, [businessOwnerAnalyticsUpgradeState, hasFullAnalyticsAccess])
+
+  useEffect(() => {
+    const flowId = ++analyticsUpgradeFlowIdRef.current
+    if (analyticsUpgradePollTimerRef.current !== null) {
+      window.clearTimeout(analyticsUpgradePollTimerRef.current)
+      analyticsUpgradePollTimerRef.current = null
+    }
+
+    return () => {
+      if (analyticsUpgradeFlowIdRef.current === flowId) {
+        analyticsUpgradeFlowIdRef.current += 1
+      }
+      if (analyticsUpgradePollTimerRef.current !== null) {
+        window.clearTimeout(analyticsUpgradePollTimerRef.current)
+        analyticsUpgradePollTimerRef.current = null
+      }
+      setBusinessOwnerAnalyticsUpgradeState('idle')
+      setBusinessOwnerAnalyticsUpgradeMessage(null)
+    }
+  }, [accountMode, user?.id])
 
   useEffect(() => {
     if (shouldAnimateEntrance) {
@@ -4475,31 +4791,38 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   )
 
   const renderBusinessOwnerAnalyticsPanelHeader = () => (
-    <div className="mb-4 flex items-start justify-between gap-3">
-      <div className="flex min-w-0 items-start gap-2.5">
-        <button
-          type="button"
-          aria-label="Back to Business Account menu"
-          onClick={() => setBusinessOwnerMenuPanel('main')}
-          className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.42)] transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
-        >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 6 9 12l6 6" />
-          </svg>
-        </button>
-        <div className="min-w-0">
-          <h2 className="text-lg font-bold leading-tight text-[#0f172a]">Analytics</h2>
-          <p className="mt-1 text-xs leading-relaxed text-slate-600">Track how customers interact with your profile.</p>
+    <>
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-start gap-2.5">
+          <button
+            type="button"
+            aria-label="Back to Business Account menu"
+            onClick={() => setBusinessOwnerMenuPanel('main')}
+            className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.42)] transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 6 9 12l6 6" />
+            </svg>
+          </button>
+          <div className="min-w-0">
+            <h2 className="text-lg font-bold leading-tight text-[#0f172a]">Analytics</h2>
+            <p className="mt-1 text-xs leading-relaxed text-slate-600">Track how customers interact with your profile.</p>
+          </div>
         </div>
+        <span
+          aria-label="Premium analytics badge"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[11px] font-semibold text-amber-700 shadow-[0_10px_22px_-18px_rgba(180,83,9,0.45)]"
+        >
+          <CrownIcon />
+          <span>Premium</span>
+        </span>
       </div>
-      <span
-        aria-label="Premium analytics badge"
-        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[11px] font-semibold text-amber-700 shadow-[0_10px_22px_-18px_rgba(180,83,9,0.45)]"
-      >
-        <CrownIcon />
-        <span>Premium</span>
-      </span>
-    </div>
+      {hasFullAnalyticsAccess && businessOwnerAnalyticsUpgradeState === 'active' ? (
+        <p className="mb-4 text-xs font-semibold text-emerald-700" role="status" aria-live="polite">
+          {ANALYTICS_PRO_ACTIVATED_MESSAGE}
+        </p>
+      ) : null}
+    </>
   )
 
   const renderBusinessOwnerAnalyticsPanel = () => {
@@ -4518,6 +4841,11 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
             <p className="mt-2 text-sm leading-relaxed text-slate-600">
               We are confirming your subscription access before loading Analytics.
             </p>
+            {businessOwnerAnalyticsUpgradeMessage ? (
+              <p className="mt-3 text-xs leading-relaxed text-slate-600" role="status" aria-live="polite">
+                {businessOwnerAnalyticsUpgradeMessage}
+              </p>
+            ) : null}
           </section>
         </section>
       )
@@ -4538,6 +4866,32 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
               <li className="flex gap-2"><span aria-hidden="true">•</span><span>Saves and followers</span></li>
               <li className="flex gap-2"><span aria-hidden="true">•</span><span>Trends and insights</span></li>
             </ul>
+            <button
+              type="button"
+              onClick={() => {
+                void handleAnalyticsUpgrade()
+              }}
+              disabled={isBusinessOwnerAnalyticsUpgradeButtonDisabled}
+              className="mt-4 inline-flex w-full items-center justify-center rounded-full border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700 transition hover:border-sky-300 hover:bg-sky-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+            >
+              {businessOwnerAnalyticsUpgradeButtonLabel}
+            </button>
+            {businessOwnerAnalyticsUpgradeMessage ? (
+              <p className="mt-3 text-xs leading-relaxed text-slate-600" role="status" aria-live="polite">
+                {businessOwnerAnalyticsUpgradeMessage}
+              </p>
+            ) : null}
+            {businessOwnerAnalyticsUpgradeState === 'timeout' ? (
+              <button
+                type="button"
+                onClick={() => {
+                  void handleCheckAnalyticsActivation()
+                }}
+                className="mt-2 text-xs font-semibold text-sky-700 underline decoration-sky-300 underline-offset-2 transition hover:text-sky-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
+              >
+                Check activation
+              </button>
+            ) : null}
             {subscriptionError ? (
               <p className="mt-4 text-xs leading-relaxed text-slate-500">
                 Subscription access could not be verified. Analytics remains locked.

@@ -32,7 +32,7 @@ The Plan ID is not a password, but it remains server-controlled configuration an
 
 ## Architecture
 
-The future implementation consists of three Edge Functions:
+The implementation consists of three Edge Functions:
 
 1. `create-razorpay-subscription` is an authenticated endpoint. It uses fixed server plan configuration, calls the creation-claim RPC, creates a provider subscription server-to-server, and finalizes only as `incomplete`.
 2. `verify-razorpay-subscription-checkout` is an authenticated endpoint. It verifies the Razorpay Checkout signature and never activates Pro.
@@ -90,15 +90,17 @@ The atomic migration is applied and live verification passed. Backend RPCs are s
 
 No real secret values are documented. The approved Test Plan ID above is not a credential, but remains server-controlled.
 
+The three Edge Functions are deployed in Test Mode. The required hosted function secrets are configured, and their values are not documented.
+
 ## CORS policy
 
 Browser origins use exact normalized allow-list matching; wildcards are never used. When no allowed-origin configuration is supplied, Test Mode permits only `http://localhost:5000`. Live Mode requires an explicit non-empty allow-list and does not automatically allow localhost.
 
-The future handlers will handle browser preflight requests explicitly. Server-to-server webhooks do not depend on browser CORS. CORS is not authentication.
+The handlers process browser preflight requests explicitly. Server-to-server webhooks do not depend on browser CORS. CORS is not authentication.
 
 ## Razorpay API security
 
-Server-to-server Razorpay API requests use Basic Authentication. The Key Secret never reaches the frontend, request bodies are not logged, and the shared API helper performs no automatic retries. GET failures may be marked retryable because GET does not modify provider state. POST and PATCH failures are not safely retryable when they are network errors, timeouts, aborts, HTTP 408, HTTP 429, 5xx responses, or invalid successful responses: those failures may represent an unknown mutation outcome. Unknown outcomes fail closed, and the future handler must reconcile provider state before attempting another mutation. Future creation requests will place `sbp_creation_attempt_id` in approved provider notes.
+Server-to-server Razorpay API requests use Basic Authentication. The Key Secret never reaches the frontend, request bodies are not logged, and the shared API helper performs no automatic retries. GET failures may be marked retryable because GET does not modify provider state. POST and PATCH failures are not safely retryable when they are network errors, timeouts, aborts, HTTP 408, HTTP 429, 5xx responses, or invalid successful responses: those failures may represent an unknown mutation outcome. Unknown outcomes fail closed, and the handler must reconcile provider state before attempting another mutation. Creation requests place `sbp_creation_attempt_id` in approved provider notes.
 
 Every Razorpay API caller must provide a runtime response parser. TypeScript generic types alone are not trusted: successful JSON is validated before provider fields are used, and parser failures produce sanitized provider errors. Raw provider responses are never exposed or logged.
 
@@ -128,7 +130,7 @@ The function supports `subscription.authenticated`, `subscription.activated`, `s
 
 No admin context is created before a valid signature. The existing atomic webhook RPC owns status mapping, stale-event handling, grace periods, and idempotency. `processed`, `duplicate`, `ignored`, and `stale_event` return HTTP 200; retryable processing failures return non-2xx. This verified webhook database path is the only paid-entitlement activation path.
 
-The function is implemented locally only; no function deployment or Razorpay Dashboard webhook setup has occurred.
+The webhook function is deployed in Test Mode. The Razorpay Test Mode webhook is active and enabled for the ten approved subscription events.
 
 ## Signature security
 
@@ -144,9 +146,9 @@ Permitted future logs are limited to safe operational metadata such as operation
 
 Test and Live use separate API credentials, Plan IDs, webhook secrets, webhook endpoints or Supabase environments where practical, and provider data. The database provider value remains `razorpay` in both environments; do not use `razorpay_test` or `razorpay_live`.
 
-## Local development and future commands
+## Local development and operational commands
 
-The following are future procedures only and were not run for this shared-foundation action:
+The following commands are operational procedures and were not run for this correction task:
 
 ```bash
 npx supabase functions serve <function-name> --env-file <local-env-file>
@@ -154,11 +156,25 @@ npx supabase functions deploy <function-name>
 npx supabase secrets set --env-file <secure-env-file>
 ```
 
-No secrets were set, no functions were deployed, and no local environment file was committed.
+No local secret file is committed. This correction task does not redeploy functions or change hosted secrets.
+
+## Frontend Checkout flow
+
+The frontend Razorpay Checkout flow is completed locally, not yet committed or end-to-end tested. The existing Analytics locked-preview `Upgrade` button starts the subscription Checkout flow for eligible free business owners. It invokes `create-razorpay-subscription` with an empty object and uses the validated response to obtain the public Checkout Key ID and provider `subscription_id`.
+
+The Razorpay Checkout script is lazy-loaded only after the button is clicked, through one shared module-level loader. Checkout receives only `key`, `subscription_id`, `name`, `description`, `handler`, and `modal.ondismiss`; it does not receive `amount`, currency, plan identifiers, owner identifiers, internal identifiers, or secrets. The server-created subscription determines the amount.
+
+Checkout success is runtime-validated for the three required fields: `razorpay_payment_id`, `razorpay_subscription_id`, and `razorpay_signature`. The returned subscription ID must match the server-created subscription ID. The validated fields are sent exactly to `verify-razorpay-subscription-checkout`, and payment fields are kept in memory only.
+
+Verification does not activate Pro Analytics. After verification, the existing business subscription context is refreshed immediately and then polled approximately every 2.5 seconds for no more than 30 seconds. Polling stops when backend entitlement reports Pro, the component unmounts, the authenticated owner changes or logs out, or the timeout is reached. The timeout remains safely locked and offers a manual `Check activation` refresh without reopening Checkout.
+
+Checkout dismissal does not change entitlement. Payment authorization failures show a safe message, and malformed Checkout or server responses fail closed. Pro Analytics is shown only when the existing backend entitlement reports Pro; Checkout success and signature verification never set Pro locally.
+
+Frontend Test Mode lifecycle testing is still pending. Cancellation and Live Mode remain unimplemented.
 
 ## Implementation status
 
-Completed:
+Completed and deployed/configured in Test Mode:
 
 - Product subscription rules
 - Razorpay Test Mode account readiness
@@ -167,22 +183,20 @@ Completed:
 - Subscription database foundation
 - Atomic backend RPC migration
 - Live database verification
-
-Completed locally, not deployed:
-
 - Shared Edge Function infrastructure
 - Create subscription Edge Function
 - Checkout verification Edge Function
 - Razorpay subscription webhook Edge Function
+- Required Supabase Edge Function secrets
+- Razorpay Test Mode webhook endpoint configuration
+- Webhook enabled for the ten approved subscription events
+
+Completed locally, not yet committed or end-to-end tested:
+
+- Frontend Razorpay Checkout flow
 
 Still pending:
 
-- Supabase function secrets
-- Function deployment
-- Razorpay webhook Dashboard configuration
-- Frontend Checkout
 - Test Mode end-to-end lifecycle testing
 - Cancellation
 - Live Mode activation
-
-The shared foundation is not deployed.
