@@ -1,0 +1,10 @@
+project_id = "smart-business-profile"
+
+[functions.create-razorpay-subscription]
+verify_jwt = true
+
+[functions.verify-razorpay-subscription-checkout]
+verify_jwt = true
+
+[functions.razorpay-subscription-webhook]
+verify_jwt = false
