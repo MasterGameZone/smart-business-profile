@@ -1,12 +1,10 @@
-import { useState } from 'react'
-import type { RefObject } from 'react'
+import { forwardRef, useId, useState } from 'react'
 import QRCode from 'react-qr-code'
 
 export interface BusinessQrPosterProps {
   businessName: string
   businessLogoUrl: string | null
   profileUrl: string
-  qrCodeRef: RefObject<HTMLDivElement>
 }
 
 function getInitials(value: string): string {
@@ -21,91 +19,190 @@ function getInitials(value: string): string {
   return initials || 'SB'
 }
 
-function BusinessQrPoster({ businessName, businessLogoUrl, profileUrl, qrCodeRef }: BusinessQrPosterProps) {
+function getBusinessNameLines(value: string): string[] {
+  const normalized = value.trim() || 'Your Business Profile'
+  if (normalized.length <= 25) return [normalized]
+
+  const words = normalized.split(/\s+/)
+  const firstLine: string[] = []
+
+  while (words.length > 0 && `${firstLine.join(' ')} ${words[0]}`.trim().length <= 25) {
+    firstLine.push(words.shift() as string)
+  }
+
+  if (firstLine.length === 0) {
+    firstLine.push(words.shift() as string)
+  }
+
+  const secondLine = words.join(' ').trim()
+  return secondLine ? [firstLine.join(' '), secondLine] : [firstLine.join(' ')]
+}
+
+const BusinessQrPoster = forwardRef<SVGSVGElement, BusinessQrPosterProps>(function BusinessQrPoster(
+  { businessName, businessLogoUrl, profileUrl },
+  ref
+) {
   const [logoErrorSource, setLogoErrorSource] = useState<string | null>(null)
+  const posterId = useId().replace(/:/g, '')
+  const titleId = `business-qr-poster-title-${posterId}`
+  const descriptionId = `business-qr-poster-description-${posterId}`
+  const logoClipId = `business-qr-poster-logo-clip-${posterId}`
   const initials = getInitials(businessName)
+  const nameLines = getBusinessNameLines(businessName)
   const logoFailed = Boolean(businessLogoUrl && logoErrorSource === businessLogoUrl)
 
   return (
-    <article
-      aria-labelledby="business-qr-poster-title"
-      className="relative mx-auto flex aspect-[2/3] w-full max-w-[25rem] overflow-hidden rounded-[2rem] border border-slate-200 bg-white text-center text-slate-950 shadow-[0_28px_70px_-38px_rgba(15,23,42,0.7)]"
-    >
+    <div className="relative mx-auto w-full max-w-[25rem]" style={{ aspectRatio: '1748 / 2480' }}>
       <svg
-        className="pointer-events-none absolute right-0 top-0 h-40 w-40 text-sky-500/15"
-        viewBox="0 0 160 160"
-        fill="none"
-        aria-hidden="true"
+        ref={ref}
+        className="block h-full w-full"
+        viewBox="0 0 874 1240"
+        preserveAspectRatio="xMidYMid meet"
+        role="img"
+        aria-labelledby={`${titleId} ${descriptionId}`}
+        xmlns="http://www.w3.org/2000/svg"
       >
-        <path d="M70 0h90v90L116 44 70 0Z" fill="currentColor" />
-        <path d="M160 34 118 0h42v34Z" fill="#2563eb" fillOpacity=".2" />
-        <circle cx="112" cy="28" r="14" stroke="#0f172a" strokeOpacity=".12" strokeWidth="2" />
-      </svg>
+        <title id={titleId}>Business QR poster for {businessName}</title>
+        <desc id={descriptionId}>Scan the QR code to open the public business profile.</desc>
 
-      <svg
-        className="pointer-events-none absolute bottom-0 left-0 h-36 w-36 text-blue-600/15"
-        viewBox="0 0 144 144"
-        fill="none"
-        aria-hidden="true"
-      >
-        <path d="M0 144V62l42 40 38-38 64 80H0Z" fill="currentColor" />
-        <path d="M0 144V102l42-40 38 38-44 44H0Z" fill="#38bdf8" fillOpacity=".24" />
-        <path d="m0 94 26 24" stroke="#0f172a" strokeOpacity=".12" strokeWidth="2" />
-      </svg>
+        <defs>
+          <clipPath id={logoClipId}>
+            <rect x="373" y="70" width="128" height="128" rx="28" />
+          </clipPath>
+        </defs>
 
-      <div className="relative z-10 flex h-full min-h-0 w-full flex-col items-center px-6 py-7 sm:px-9 sm:py-9">
-        <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-sky-100 bg-slate-950 text-lg font-bold tracking-wide text-white shadow-[0_14px_28px_-18px_rgba(15,23,42,0.9)] sm:h-[4.5rem] sm:w-[4.5rem]">
-          {businessLogoUrl && !logoFailed ? (
-            <img
-              src={businessLogoUrl}
-              alt={`${businessName} logo`}
-              className="h-full w-full object-cover"
-              onError={() => setLogoErrorSource(businessLogoUrl)}
-            />
-          ) : (
-            <span aria-hidden="true">{initials}</span>
-          )}
-        </div>
+        <rect x="0" y="0" width="874" height="1240" rx="56" fill="#ffffff" />
 
-        <p className="mt-5 text-[0.65rem] font-extrabold tracking-[0.28em] text-blue-600 sm:text-xs">
+        <path d="M560 0h314v300L700 130 560 0Z" fill="#dff4ff" />
+        <path d="M874 0v180L760 70 874 0Z" fill="#2563eb" fillOpacity=".2" />
+        <circle cx="720" cy="78" r="28" stroke="#0f172a" strokeOpacity=".12" strokeWidth="3" />
+
+        <path d="M0 1240v-250l112 106 106-106 176 250H0Z" fill="#dbeafe" />
+        <path d="M0 1240v-126l112-106 106 106-122 126H0Z" fill="#38bdf8" fillOpacity=".24" />
+        <path d="m0 1094 72 66" stroke="#0f172a" strokeOpacity=".12" strokeWidth="3" />
+
+        <rect x="373" y="70" width="128" height="128" rx="28" fill="#0f172a" />
+        {businessLogoUrl && (
+          <image
+            data-logo-image="true"
+            href={businessLogoUrl}
+            x="373"
+            y="70"
+            width="128"
+            height="128"
+            clipPath={`url(#${logoClipId})`}
+            preserveAspectRatio="xMidYMid meet"
+            opacity={logoFailed ? 0 : 1}
+            onError={() => setLogoErrorSource(businessLogoUrl)}
+          />
+        )}
+        <g data-logo-fallback="true" opacity={!businessLogoUrl || logoFailed ? 1 : 0}>
+          <rect x="373" y="70" width="128" height="128" rx="28" fill="#0f172a" />
+          <text
+            x="437"
+            y="151"
+            textAnchor="middle"
+            fill="#ffffff"
+            fontFamily="Arial, Helvetica, sans-serif"
+            fontSize="34"
+            fontWeight="700"
+            letterSpacing="2"
+          >
+            {initials}
+          </text>
+        </g>
+
+        <text
+          x="437"
+          y="257"
+          textAnchor="middle"
+          fill="#2563eb"
+          fontFamily="Arial, Helvetica, sans-serif"
+          fontSize="17"
+          fontWeight="800"
+          letterSpacing="5"
+        >
           VIEW OUR
-        </p>
-        <h2
-          id="business-qr-poster-title"
-          className="mt-1 max-w-[17rem] text-xl font-black uppercase leading-tight tracking-[0.08em] text-slate-950 sm:text-2xl"
+        </text>
+        <text
+          x="437"
+          y="308"
+          textAnchor="middle"
+          fill="#0f172a"
+          fontFamily="Arial, Helvetica, sans-serif"
+          fontSize="34"
+          fontWeight="900"
+          letterSpacing="2"
         >
           BUSINESS PROFILE
-        </h2>
-        <p className="mt-2 max-w-[17rem] truncate text-sm font-semibold text-slate-600">{businessName}</p>
+        </text>
+        <text
+          x="437"
+          y={nameLines.length === 1 ? 354 : 348}
+          textAnchor="middle"
+          fill="#475569"
+          fontFamily="Arial, Helvetica, sans-serif"
+          fontSize="20"
+          fontWeight="600"
+        >
+          {nameLines.map((line, index) => (
+            <tspan key={`${line}-${index}`} x="437" dy={index === 0 ? 0 : 25}>
+              {line}
+            </tspan>
+          ))}
+        </text>
 
-        <div className="mt-5 flex min-h-0 w-full justify-center">
-          <div className="rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-[0_18px_36px_-26px_rgba(15,23,42,0.7)] sm:p-5">
-            <div ref={qrCodeRef} className="bg-white p-3" aria-label="Business profile QR code">
-              <QRCode
-                value={profileUrl}
-                size={220}
-                bgColor="#ffffff"
-                fgColor="#0f172a"
-                level="M"
-                className="block h-auto w-full max-w-[12rem] sm:max-w-[14rem]"
-              />
-            </div>
-          </div>
-        </div>
+        <rect x="167" y="390" width="540" height="540" rx="40" fill="#ffffff" stroke="#e2e8f0" strokeWidth="2" />
+        <g transform="translate(207 430)">
+          <QRCode
+            value={profileUrl}
+            size={460}
+            bgColor="#ffffff"
+            fgColor="#0f172a"
+            level="M"
+            data-qr-code="true"
+          />
+        </g>
 
-        <p className="mt-4 text-[0.65rem] font-extrabold tracking-[0.25em] text-blue-600 sm:text-xs">
+        <text
+          x="437"
+          y="976"
+          textAnchor="middle"
+          fill="#2563eb"
+          fontFamily="Arial, Helvetica, sans-serif"
+          fontSize="17"
+          fontWeight="800"
+          letterSpacing="4"
+        >
           SCAN WITH YOUR CAMERA
-        </p>
-        <p className="mt-2 max-w-full break-all px-2 text-[0.6rem] leading-relaxed text-slate-500 sm:text-xs">
+        </text>
+        <text
+          x="437"
+          y="1025"
+          textAnchor="middle"
+          fill="#64748b"
+          fontFamily="Arial, Helvetica, sans-serif"
+          fontSize="14"
+        >
           {profileUrl}
-        </p>
-
-        <p className="mt-auto pt-4 text-[0.65rem] font-medium tracking-wide text-slate-500 sm:text-xs">
-          Powered by <span className="font-bold text-slate-900">Smart Business Profile</span>
-        </p>
-      </div>
-    </article>
+        </text>
+        <text
+          x="437"
+          y="1176"
+          textAnchor="middle"
+          fill="#64748b"
+          fontFamily="Arial, Helvetica, sans-serif"
+          fontSize="15"
+          fontWeight="500"
+          letterSpacing="1"
+        >
+          Powered by <tspan fill="#0f172a" fontWeight="700">Smart Business Profile</tspan>
+        </text>
+      </svg>
+    </div>
   )
-}
+})
+
+BusinessQrPoster.displayName = 'BusinessQrPoster'
 
 export default BusinessQrPoster

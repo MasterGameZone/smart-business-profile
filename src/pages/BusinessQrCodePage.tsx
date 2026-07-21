@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext.tsx'
 import { usePageMeta } from '../hooks/usePageMeta.ts'
 import { getBusinessProfilesByOwner } from '../lib/businessProfileService.ts'
 import { svgContainerToBlob, triggerBlobDownload } from '../utils/qr.ts'
+import { downloadQrPosterPng } from '../utils/qrPoster.ts'
 
 interface QrCodePageLocationState {
   profile?: {
@@ -25,13 +26,26 @@ interface QrProfile {
 
 type QrProfileLoadState = 'loading' | 'ready' | 'empty' | 'error'
 
+function getSafePosterFileName(businessName: string): string {
+  const safeBusinessName = businessName
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+  return `${safeBusinessName || 'business-profile'}-business-profile-qr-poster.png`
+}
+
 function BusinessQrCodePage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, isLoading: isAuthLoading } = useAuth()
   const state = location.state as QrCodePageLocationState | null
-  const qrCodeRef = useRef<HTMLDivElement>(null) as RefObject<HTMLDivElement>
+  const posterRef = useRef<SVGSVGElement>(null) as RefObject<SVGSVGElement>
   const [toasts, setToasts] = useState<ToastItem[]>([])
+  const [isPosterDownloading, setIsPosterDownloading] = useState(false)
+  const [posterDownloadError, setPosterDownloadError] = useState<string | null>(null)
+  const posterDownloadInProgressRef = useRef(false)
   const [profile, setProfile] = useState<QrProfile | null>(() => {
     const businessName = state?.profile?.business_name?.trim() || ''
     const slug = state?.profile?.slug?.trim() || ''
@@ -120,6 +134,7 @@ function BusinessQrCodePage() {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '') || 'business-profile'}-qr-code.png`
+  const posterFileName = getSafePosterFileName(businessName)
 
   const showToast = useCallback((message: string, type: ToastType = 'success') => {
     const id = Date.now()
@@ -131,19 +146,39 @@ function BusinessQrCodePage() {
     if (!hasProfileUrl) return
 
     try {
-      const blob = await svgContainerToBlob(qrCodeRef.current)
+      const blob = await svgContainerToBlob(posterRef.current)
       triggerBlobDownload(blob, qrFileName)
       showToast('QR Code downloaded.')
     } catch {
       showToast('Failed to download QR Code.', 'error')
     }
-  }, [hasProfileUrl, qrFileName, showToast])
+  }, [hasProfileUrl, posterRef, qrFileName, showToast])
+
+  const handleDownloadPoster = useCallback(async () => {
+    if (!hasProfileUrl || posterDownloadInProgressRef.current) return
+
+    posterDownloadInProgressRef.current = true
+    setIsPosterDownloading(true)
+    setPosterDownloadError(null)
+
+    try {
+      await downloadQrPosterPng(posterRef.current, posterFileName)
+      showToast('QR Poster downloaded.')
+    } catch (error) {
+      console.error('Failed to download QR poster:', error)
+      setPosterDownloadError('Unable to download the poster right now. Please try again.')
+      showToast('Failed to download QR Poster.', 'error')
+    } finally {
+      posterDownloadInProgressRef.current = false
+      setIsPosterDownloading(false)
+    }
+  }, [hasProfileUrl, posterFileName, showToast])
 
   const handleShareQr = useCallback(async () => {
     if (!hasProfileUrl) return
 
     try {
-      const blob = await svgContainerToBlob(qrCodeRef.current)
+      const blob = await svgContainerToBlob(posterRef.current)
       const file = new File([blob], qrFileName, { type: 'image/png' })
 
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -178,7 +213,7 @@ function BusinessQrCodePage() {
         showToast('Unable to share QR Code right now.', 'error')
       }
     }
-  }, [businessName, hasProfileUrl, profileUrl, qrFileName, showToast])
+  }, [businessName, hasProfileUrl, profileUrl, posterRef, qrFileName, showToast])
 
   usePageMeta({
     title: hasProfileUrl ? `${businessName} QR Code | Smart Business Profile` : 'Business QR Code | Smart Business Profile',
@@ -237,10 +272,10 @@ function BusinessQrCodePage() {
           </p>
         )}
         <BusinessQrPoster
+          ref={posterRef}
           businessName={businessName}
           businessLogoUrl={profile.businessLogoUrl}
           profileUrl={profileUrl}
-          qrCodeRef={qrCodeRef}
         />
         <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
           <button
@@ -252,12 +287,27 @@ function BusinessQrCodePage() {
           </button>
           <button
             type="button"
+            onClick={handleDownloadPoster}
+            disabled={isPosterDownloading}
+            aria-label="Download complete QR poster as PNG"
+            aria-busy={isPosterDownloading}
+            className="inline-flex items-center justify-center rounded-full border border-blue-500/30 bg-blue-50 px-5 py-2.5 text-sm font-semibold text-blue-800 transition hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 disabled:cursor-wait disabled:opacity-70"
+          >
+            {isPosterDownloading ? 'Preparing poster…' : 'Download Poster'}
+          </button>
+          <button
+            type="button"
             onClick={handleShareQr}
             className="inline-flex items-center justify-center rounded-full border border-sky-400/30 bg-[linear-gradient(135deg,#38bdf8_0%,#2563eb_55%,#0f172a_100%)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_16px_32px_-20px_rgba(56,189,248,0.42)] focus:outline-none focus:ring-2 focus:ring-sky-300/80 focus:ring-offset-2"
           >
             Share QR
           </button>
         </div>
+        {posterDownloadError && (
+          <p role="alert" aria-live="polite" className="mt-3 text-xs text-red-700">
+            {posterDownloadError}
+          </p>
+        )}
       </>
     )
   }

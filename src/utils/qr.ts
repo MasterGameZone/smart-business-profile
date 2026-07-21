@@ -1,7 +1,9 @@
-export function svgContainerToBlob(container: HTMLElement | null): Promise<Blob> {
+export function svgContainerToBlob(container: Element | null): Promise<Blob> {
   return new Promise((resolve, reject) => {
-    const svg = container?.querySelector('svg')
-    if (!svg) { reject(new Error('SVG not found')); return }
+    const svg = container?.matches('svg[data-qr-code="true"]')
+      ? container
+      : container?.querySelector('svg[data-qr-code="true"]') ?? container?.querySelector('svg')
+    if (!(svg instanceof SVGSVGElement)) { reject(new Error('SVG not found')); return }
     const size = 400
     const serialised = new XMLSerializer().serializeToString(svg)
     const svgUrl = URL.createObjectURL(
