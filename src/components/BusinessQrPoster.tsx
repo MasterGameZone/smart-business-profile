@@ -49,6 +49,10 @@ const BusinessQrPoster = forwardRef<SVGSVGElement, BusinessQrPosterProps>(functi
   const logoClipId = `business-qr-poster-logo-clip-${posterId}`
   const initials = getInitials(businessName)
   const nameLines = getBusinessNameLines(businessName)
+  const nameFontSize = nameLines.length === 1 ? 32 : 28
+  const nameLineSpacing = 32
+  const longestNameLineLength = Math.max(...nameLines.map((line) => line.length))
+  const profileUrlFontSize = Math.max(10, Math.min(17, 760 / (Math.max(profileUrl.length, 1) * 0.56)))
   const logoFailed = Boolean(businessLogoUrl && logoErrorSource === businessLogoUrl)
 
   return (
@@ -118,9 +122,9 @@ const BusinessQrPoster = forwardRef<SVGSVGElement, BusinessQrPosterProps>(functi
           textAnchor="middle"
           fill="#2563eb"
           fontFamily="Arial, Helvetica, sans-serif"
-          fontSize="17"
+          fontSize="13"
           fontWeight="800"
-          letterSpacing="5"
+          letterSpacing="4"
         >
           VIEW OUR
         </text>
@@ -130,23 +134,29 @@ const BusinessQrPoster = forwardRef<SVGSVGElement, BusinessQrPosterProps>(functi
           textAnchor="middle"
           fill="#0f172a"
           fontFamily="Arial, Helvetica, sans-serif"
-          fontSize="34"
-          fontWeight="900"
-          letterSpacing="2"
+          fontSize="24"
+          fontWeight="800"
+          letterSpacing="1.5"
         >
           BUSINESS PROFILE
         </text>
         <text
           x="437"
-          y={nameLines.length === 1 ? 354 : 348}
+          y={nameLines.length === 1 ? 354 : 343}
           textAnchor="middle"
           fill="#475569"
           fontFamily="Arial, Helvetica, sans-serif"
-          fontSize="20"
-          fontWeight="600"
+          fontSize={nameFontSize}
+          fontWeight="700"
         >
           {nameLines.map((line, index) => (
-            <tspan key={`${line}-${index}`} x="437" dy={index === 0 ? 0 : 25}>
+            <tspan
+              key={`${line}-${index}`}
+              x="437"
+              dy={index === 0 ? 0 : nameLineSpacing}
+              textLength={longestNameLineLength > 45 ? 640 : undefined}
+              lengthAdjust={longestNameLineLength > 45 ? 'spacingAndGlyphs' : undefined}
+            >
               {line}
             </tspan>
           ))}
@@ -182,21 +192,23 @@ const BusinessQrPoster = forwardRef<SVGSVGElement, BusinessQrPosterProps>(functi
           textAnchor="middle"
           fill="#64748b"
           fontFamily="Arial, Helvetica, sans-serif"
-          fontSize="14"
+          fontSize={profileUrlFontSize}
         >
           {profileUrl}
         </text>
+        <line x1="286" y1="1107" x2="588" y2="1107" stroke="#bfdbfe" strokeWidth="3" />
+        <circle cx="437" cy="1107" r="7" fill="#2563eb" />
         <text
           x="437"
           y="1176"
           textAnchor="middle"
           fill="#64748b"
           fontFamily="Arial, Helvetica, sans-serif"
-          fontSize="15"
+          fontSize="20"
           fontWeight="500"
           letterSpacing="1"
         >
-          Powered by <tspan fill="#0f172a" fontWeight="700">Smart Business Profile</tspan>
+          Powered by <tspan fill="#0f172a" fontSize="22" fontWeight="800">Smart Business Profile</tspan>
         </text>
       </svg>
     </div>
