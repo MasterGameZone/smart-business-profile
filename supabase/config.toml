@@ -6,5 +6,8 @@ verify_jwt = true
 [functions.verify-razorpay-subscription-checkout]
 verify_jwt = true
 
+[functions.reconcile-razorpay-subscription]
+verify_jwt = true
+
 [functions.razorpay-subscription-webhook]
 verify_jwt = false

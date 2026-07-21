@@ -46,6 +46,7 @@ import { getBusinessProfileFollowersCount } from '../lib/businessProfileFollowSe
 import {
   BusinessSubscriptionFlowError,
   createRazorpaySubscription,
+  reconcileRazorpaySubscription,
   verifyRazorpaySubscriptionCheckout,
 } from '../lib/businessSubscriptionService.ts'
 import {
@@ -1441,6 +1442,10 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const [businessOwnerAnalyticsUpgradeState, setBusinessOwnerAnalyticsUpgradeState] =
     useState<BusinessOwnerAnalyticsUpgradeState>('idle')
   const [businessOwnerAnalyticsUpgradeMessage, setBusinessOwnerAnalyticsUpgradeMessage] = useState<string | null>(null)
+  const [isBusinessOwnerAnalyticsReconciliationInFlight, setIsBusinessOwnerAnalyticsReconciliationInFlight] =
+    useState(false)
+  const [businessOwnerAnalyticsReconciliationMessage, setBusinessOwnerAnalyticsReconciliationMessage] =
+    useState<string | null>(null)
   const [businessOwnerFollowersCount, setBusinessOwnerFollowersCount] = useState<number | null>(null)
   const [businessOwnerProfileViewsCount, setBusinessOwnerProfileViewsCount] = useState<number | null>(null)
   const [businessOwnerSavesCount, setBusinessOwnerSavesCount] = useState<number | null>(null)
@@ -1558,6 +1563,8 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   const landingMobileMenuRef = useRef<HTMLDivElement | null>(null)
   const analyticsUpgradeFlowIdRef = useRef(0)
   const analyticsUpgradePollTimerRef = useRef<number | null>(null)
+  const analyticsReconciliationRequestIdRef = useRef(0)
+  const isAnalyticsReconciliationInFlightRef = useRef(false)
   const hasFullAnalyticsAccessRef = useRef(false)
   const userMetadata = (user?.user_metadata ?? {}) as Record<string, unknown>
   const isLandingPage = location.pathname === '/'
@@ -1596,6 +1603,16 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     isHomeMenuOpen && showBusinessHomeTopBar && businessOwnerMenuPanel === 'analytics'
   const isBusinessSubscriptionLoading = isSubscriptionLoading || isSubscriptionRefreshing
   const hasFullAnalyticsAccess = canUseFeature(subscription, 'full_analytics')
+  const isBusinessOwnerAnalyticsSubscriptionIncomplete = subscription.status === 'incomplete'
+  const isBusinessOwnerAnalyticsAwaitingProviderConfirmation =
+    businessOwnerAnalyticsUpgradeState === 'confirming' ||
+    businessOwnerAnalyticsUpgradeState === 'pending' ||
+    businessOwnerAnalyticsUpgradeState === 'timeout'
+  const shouldShowBusinessOwnerAnalyticsReconciliation =
+    isBusinessOwnerAnalyticsSubscriptionIncomplete || isBusinessOwnerAnalyticsAwaitingProviderConfirmation
+  const shouldHideBusinessOwnerAnalyticsUpgrade = isBusinessOwnerAnalyticsSubscriptionIncomplete
+  const businessOwnerAnalyticsStatusMessage =
+    businessOwnerAnalyticsReconciliationMessage ?? businessOwnerAnalyticsUpgradeMessage
   const businessOwnerAnalyticsUpgradeButtonLabel =
     businessOwnerAnalyticsUpgradeState === 'preparing'
       ? 'Preparing...'
@@ -1604,7 +1621,8 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
         : businessOwnerAnalyticsUpgradeState === 'confirming' || businessOwnerAnalyticsUpgradeState === 'pending'
           ? 'Confirming...'
           : 'Upgrade'
-  const isBusinessOwnerAnalyticsUpgradeButtonDisabled = businessOwnerAnalyticsUpgradeState !== 'idle'
+  const isBusinessOwnerAnalyticsUpgradeButtonDisabled =
+    businessOwnerAnalyticsUpgradeState !== 'idle' || isBusinessOwnerAnalyticsReconciliationInFlight
   const authenticatedHomePath = isCreateProfilePage && accountMode === 'business_owner' ? '/business-home' : '/'
   const useInlineDarkNavbarLayout =
     isProfilePreviewPage || isPublicBusinessProfileVariant || ((isLandingPage || isSimpleDarkNavbarPage) && !user)
@@ -1812,6 +1830,23 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       ? error.message
       : 'The subscription request could not be completed.'
 
+  const getAnalyticsReconciliationMessage = (result: Awaited<ReturnType<typeof reconcileRazorpaySubscription>>) => {
+    switch (result.result) {
+      case 'reconciled':
+        return 'Subscription status refreshed.'
+      case 'already_reconciled':
+        return 'Subscription status is already up to date.'
+      case 'no_provider_subscription':
+        return 'No existing subscription needs refreshing.'
+      case 'payment_not_confirmed':
+        return 'Payment could not be confirmed. Analytics remains locked.'
+      case 'manual_review_required':
+        return 'Payment status requires manual review. Analytics remains locked.'
+      case 'provider_state_not_entitled':
+        return 'Your provider subscription does not currently include paid Analytics access.'
+    }
+  }
+
   const beginAnalyticsActivationConfirmation = async (flowId: number) => {
     if (!isAnalyticsUpgradeFlowCurrent(flowId)) {
       return
@@ -1906,7 +1941,12 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
   }
 
   const handleAnalyticsUpgrade = async () => {
-    if (businessOwnerAnalyticsUpgradeState !== 'idle' || hasFullAnalyticsAccess) {
+    if (
+      businessOwnerAnalyticsUpgradeState !== 'idle' ||
+      hasFullAnalyticsAccess ||
+      isBusinessOwnerAnalyticsSubscriptionIncomplete ||
+      isAnalyticsReconciliationInFlightRef.current
+    ) {
       return
     }
 
@@ -1998,6 +2038,48 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
 
     setBusinessOwnerAnalyticsUpgradeState('timeout')
     setBusinessOwnerAnalyticsUpgradeMessage(ANALYTICS_ACTIVATION_TIMEOUT_MESSAGE)
+  }
+
+  const handleAnalyticsSubscriptionReconciliation = async () => {
+    if (isAnalyticsReconciliationInFlightRef.current) {
+      return
+    }
+
+    const requestId = ++analyticsReconciliationRequestIdRef.current
+    isAnalyticsReconciliationInFlightRef.current = true
+    setIsBusinessOwnerAnalyticsReconciliationInFlight(true)
+    setBusinessOwnerAnalyticsReconciliationMessage(null)
+
+    try {
+      const result = await reconcileRazorpaySubscription()
+      if (!isAppHeaderMountedRef.current || analyticsReconciliationRequestIdRef.current !== requestId) {
+        return
+      }
+
+      await refreshBusinessSubscription()
+      if (!isAppHeaderMountedRef.current || analyticsReconciliationRequestIdRef.current !== requestId) {
+        return
+      }
+
+      setBusinessOwnerAnalyticsReconciliationMessage(getAnalyticsReconciliationMessage(result))
+    } catch (error) {
+      if (!isAppHeaderMountedRef.current || analyticsReconciliationRequestIdRef.current !== requestId) {
+        return
+      }
+
+      setBusinessOwnerAnalyticsReconciliationMessage(
+        error instanceof BusinessSubscriptionFlowError
+          ? error.message
+          : 'The subscription status could not be refreshed. Please try again later.'
+      )
+    } finally {
+      if (analyticsReconciliationRequestIdRef.current === requestId) {
+        isAnalyticsReconciliationInFlightRef.current = false
+        if (isAppHeaderMountedRef.current) {
+          setIsBusinessOwnerAnalyticsReconciliationInFlight(false)
+        }
+      }
+    }
   }
 
   const resetBusinessOwnerNotificationsSession = () => {
@@ -2131,6 +2213,8 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
 
   useEffect(() => {
     const flowId = ++analyticsUpgradeFlowIdRef.current
+    const reconciliationRequestId = ++analyticsReconciliationRequestIdRef.current
+    isAnalyticsReconciliationInFlightRef.current = false
     if (analyticsUpgradePollTimerRef.current !== null) {
       window.clearTimeout(analyticsUpgradePollTimerRef.current)
       analyticsUpgradePollTimerRef.current = null
@@ -2140,12 +2224,18 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
       if (analyticsUpgradeFlowIdRef.current === flowId) {
         analyticsUpgradeFlowIdRef.current += 1
       }
+      if (analyticsReconciliationRequestIdRef.current === reconciliationRequestId) {
+        analyticsReconciliationRequestIdRef.current += 1
+      }
+      isAnalyticsReconciliationInFlightRef.current = false
       if (analyticsUpgradePollTimerRef.current !== null) {
         window.clearTimeout(analyticsUpgradePollTimerRef.current)
         analyticsUpgradePollTimerRef.current = null
       }
       setBusinessOwnerAnalyticsUpgradeState('idle')
       setBusinessOwnerAnalyticsUpgradeMessage(null)
+      setIsBusinessOwnerAnalyticsReconciliationInFlight(false)
+      setBusinessOwnerAnalyticsReconciliationMessage(null)
     }
   }, [accountMode, user?.id])
 
@@ -4829,6 +4919,16 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
           {ANALYTICS_PRO_ACTIVATED_MESSAGE}
         </p>
       ) : null}
+      {hasFullAnalyticsAccess && businessOwnerAnalyticsReconciliationMessage ? (
+        <p className="mb-4 text-xs font-semibold text-emerald-700" role="status" aria-live="polite">
+          {businessOwnerAnalyticsReconciliationMessage}
+        </p>
+      ) : null}
+      {hasFullAnalyticsAccess && subscription.status === 'canceled' && subscription.currentPeriodEnd ? (
+        <p className="mb-4 text-xs font-semibold text-amber-700" role="status" aria-live="polite">
+          Renewal is cancelled. Analytics access ends {formatNotificationDate(subscription.currentPeriodEnd)}.
+        </p>
+      ) : null}
     </>
   )
 
@@ -4848,9 +4948,9 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
             <p className="mt-2 text-sm leading-relaxed text-slate-600">
               We are confirming your subscription access before loading Analytics.
             </p>
-            {businessOwnerAnalyticsUpgradeMessage ? (
+            {businessOwnerAnalyticsStatusMessage ? (
               <p className="mt-3 text-xs leading-relaxed text-slate-600" role="status" aria-live="polite">
-                {businessOwnerAnalyticsUpgradeMessage}
+                {businessOwnerAnalyticsStatusMessage}
               </p>
             ) : null}
           </section>
@@ -4873,19 +4973,35 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
               <li className="flex gap-2"><span aria-hidden="true">•</span><span>Saves and followers</span></li>
               <li className="flex gap-2"><span aria-hidden="true">•</span><span>Trends and insights</span></li>
             </ul>
-            <button
-              type="button"
-              onClick={() => {
-                void handleAnalyticsUpgrade()
-              }}
-              disabled={isBusinessOwnerAnalyticsUpgradeButtonDisabled}
-              className="mt-4 inline-flex w-full items-center justify-center rounded-full border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700 transition hover:border-sky-300 hover:bg-sky-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
-            >
-              {businessOwnerAnalyticsUpgradeButtonLabel}
-            </button>
-            {businessOwnerAnalyticsUpgradeMessage ? (
+            {shouldShowBusinessOwnerAnalyticsReconciliation ? (
+              <button
+                type="button"
+                onClick={() => {
+                  void handleAnalyticsSubscriptionReconciliation()
+                }}
+                disabled={isBusinessOwnerAnalyticsReconciliationInFlight}
+                className="mt-4 inline-flex w-full items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+              >
+                {isBusinessOwnerAnalyticsReconciliationInFlight
+                  ? 'Checking payment status...'
+                  : 'Refresh subscription status'}
+              </button>
+            ) : null}
+            {!shouldHideBusinessOwnerAnalyticsUpgrade ? (
+              <button
+                type="button"
+                onClick={() => {
+                  void handleAnalyticsUpgrade()
+                }}
+                disabled={isBusinessOwnerAnalyticsUpgradeButtonDisabled}
+                className={`${shouldShowBusinessOwnerAnalyticsReconciliation ? 'mt-2' : 'mt-4'} inline-flex w-full items-center justify-center rounded-full border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700 transition hover:border-sky-300 hover:bg-sky-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto`}
+              >
+                {businessOwnerAnalyticsUpgradeButtonLabel}
+              </button>
+            ) : null}
+            {businessOwnerAnalyticsStatusMessage ? (
               <p className="mt-3 text-xs leading-relaxed text-slate-600" role="status" aria-live="polite">
-                {businessOwnerAnalyticsUpgradeMessage}
+                {businessOwnerAnalyticsStatusMessage}
               </p>
             ) : null}
             {businessOwnerAnalyticsUpgradeState === 'timeout' ? (

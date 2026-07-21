@@ -536,7 +536,12 @@ export default {
       return invalidWebhookEvent(request);
     }
 
-    const subscription = parseSubscriptionEntity(envelope.payload.subscription, webhookConfig);
+    const subscriptionPayload = envelope.payload.subscription;
+    if (!isRecord(subscriptionPayload)) {
+      return invalidWebhookEvent(request);
+    }
+
+    const subscription = parseSubscriptionEntity(subscriptionPayload.entity, webhookConfig);
     if (subscription === null) {
       return invalidWebhookEvent(request);
     }

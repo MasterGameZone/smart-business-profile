@@ -37,6 +37,20 @@ export interface RazorpaySubscriptionVerificationResult {
   message: string
 }
 
+export type RazorpaySubscriptionReconciliationResult =
+  | 'reconciled'
+  | 'already_reconciled'
+  | 'no_provider_subscription'
+  | 'payment_not_confirmed'
+  | 'manual_review_required'
+  | 'provider_state_not_entitled'
+
+export interface RazorpaySubscriptionReconciliationData {
+  result: RazorpaySubscriptionReconciliationResult
+  status: SubscriptionStatus
+  hasPaidPeriod: boolean
+}
+
 const subscriptionFlowErrorMessages = {
   business_owner_not_eligible: 'Create a business profile before subscribing.',
   creation_in_progress: 'A subscription request is already being processed.',
@@ -54,6 +68,9 @@ const subscriptionFlowErrorMessages = {
   provider_request_failed: 'Razorpay could not process the subscription request. Please try again later.',
   invalid_checkout_response: 'The Checkout response was invalid. No subscription access was granted.',
   subscription_not_ready: 'The subscription is not ready for verification yet. Please wait and try again.',
+  reconciliation_rejected: 'The subscription status could not be reconciled.',
+  provider_state_not_found: 'The provider subscription could not be reconciled.',
+  reconciliation_failed: 'The subscription status could not be refreshed. Please try again later.',
   server_configuration_error: 'Payments are temporarily unavailable. Please try again later.',
   unknown_error: 'The subscription request could not be completed.',
 } as const
@@ -187,6 +204,41 @@ function parseVerifySubscriptionResponse(value: unknown): RazorpaySubscriptionVe
   }
 }
 
+const reconciliationResults: readonly RazorpaySubscriptionReconciliationResult[] = [
+  'reconciled',
+  'already_reconciled',
+  'no_provider_subscription',
+  'payment_not_confirmed',
+  'manual_review_required',
+  'provider_state_not_entitled',
+]
+
+function isReconciliationResult(value: unknown): value is RazorpaySubscriptionReconciliationResult {
+  return typeof value === 'string' && reconciliationResults.includes(value as RazorpaySubscriptionReconciliationResult)
+}
+
+function parseReconcileSubscriptionResponse(value: unknown): RazorpaySubscriptionReconciliationData {
+  const response = isRecord(value) ? value : null
+  const data = response?.data
+
+  if (
+    response?.ok !== true ||
+    !isRecord(data) ||
+    !isReconciliationResult(data.result) ||
+    !isSubscriptionStatus(data.status) ||
+    typeof data.hasPaidPeriod !== 'boolean'
+  ) {
+    const responseErrorCode = getResponseErrorCode(value)
+    throw new BusinessSubscriptionFlowError(responseErrorCode ?? 'unknown_error')
+  }
+
+  return {
+    result: data.result,
+    status: data.status,
+    hasPaidPeriod: data.hasPaidPeriod,
+  }
+}
+
 const subscriptionPlanIds: readonly SubscriptionPlanId[] = ['free', 'pro_analytics']
 const subscriptionStatuses: readonly SubscriptionStatus[] = [
   'free',
@@ -302,4 +354,9 @@ export async function verifyRazorpaySubscriptionCheckout(
   })
 
   return parseVerifySubscriptionResponse(response)
+}
+
+export async function reconcileRazorpaySubscription(): Promise<RazorpaySubscriptionReconciliationData> {
+  const response = await invokeSubscriptionFunction('reconcile-razorpay-subscription', {})
+  return parseReconcileSubscriptionResponse(response)
 }
