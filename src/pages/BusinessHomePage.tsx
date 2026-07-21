@@ -18,12 +18,21 @@ import {
 import { useAuth } from '../context/AuthContext.tsx'
 import { useBusinessSubscription } from '../context/BusinessSubscriptionContext.tsx'
 import { usePageMeta } from '../hooks/usePageMeta.ts'
-import { canUseFeature } from '../lib/businessEntitlements.ts'
 import { getBusinessProfilesByOwner, updateBusinessAvailabilityOverride } from '../lib/businessProfileService.ts'
 import { getBusinessProfileCompletion } from '../lib/profileCompletion.ts'
+import type { RazorpaySubscriptionReconciliationData } from '../lib/businessSubscriptionService.ts'
 import type { BusinessProfileRow } from '../types/businessProfile.ts'
 
 type LoadState = 'loading' | 'found' | 'empty' | 'error'
+type BusinessOwnerAnalyticsCardState =
+  | 'loading'
+  | 'pending'
+  | 'error'
+  | 'premium'
+  | 'pro-active'
+  | 'pro-canceled'
+  | 'pro-payment-issue'
+  | 'access-ended'
 
 function getInitials(value: string): string {
   const parts = value
@@ -37,6 +46,34 @@ function getInitials(value: string): string {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? '')
     .join('')
+}
+
+function formatBusinessSubscriptionDate(value: string | null): string | null {
+  if (!value) return null
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+
+  return date.toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+}
+
+function getBusinessHomeReconciliationMessage(result: RazorpaySubscriptionReconciliationData): string | null {
+  switch (result.result) {
+    case 'reconciled':
+    case 'already_reconciled':
+      return null
+    case 'no_provider_subscription':
+      return 'No existing subscription needs refreshing.'
+    case 'payment_not_confirmed':
+    case 'provider_state_not_entitled':
+      return 'Payment status was checked. Analytics access is not active.'
+    case 'manual_review_required':
+      return 'Payment status requires review. Analytics access remains locked.'
+  }
 }
 
 function getManualAvailabilityStatus(profile: BusinessProfileRow): 'open' | 'closed' {
@@ -144,8 +181,12 @@ function BusinessHomePage() {
   const { user, accountMode, isLoading } = useAuth()
   const {
     subscription,
+    hasProAccess,
     isLoading: isSubscriptionLoading,
     isRefreshing: isSubscriptionRefreshing,
+    error: subscriptionError,
+    isReconciliationInFlight,
+    reconcileBusinessSubscription,
   } = useBusinessSubscription()
   const { profileData, setProfileData, clearProfile } = useProfile()
 
@@ -158,6 +199,8 @@ function BusinessHomePage() {
   const [profiles, setProfiles] = useState<BusinessProfileRow[]>([])
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const [availabilitySavingProfileId, setAvailabilitySavingProfileId] = useState<string | null>(null)
+  const [businessOwnerAnalyticsOpenRequest, setBusinessOwnerAnalyticsOpenRequest] = useState<number | null>(null)
+  const [analyticsCardFeedback, setAnalyticsCardFeedback] = useState<string | null>(null)
 
   const featuredProfile = profiles[0] ?? null
   const hasBusinessProfile = Boolean(featuredProfile && loadState === 'found')
@@ -166,8 +209,84 @@ function BusinessHomePage() {
   const businessCategory = featuredProfile?.business_category.trim() || profileData.businessCategory.trim() || ''
   const businessLogoUrl = featuredProfile?.logo_url || null
   const businessInitials = getInitials(businessName)
-  const analyticsAccessIsChecking = isSubscriptionLoading || isSubscriptionRefreshing
-  const hasFullAnalyticsAccess = canUseFeature(subscription, 'full_analytics')
+  const analyticsAccessIsChecking =
+    (isSubscriptionLoading || isSubscriptionRefreshing) && !isReconciliationInFlight
+  const formattedAnalyticsAccessEndDate = formatBusinessSubscriptionDate(subscription.currentPeriodEnd)
+  const formattedAnalyticsGracePeriodEndDate = formatBusinessSubscriptionDate(subscription.gracePeriodEnd)
+  const analyticsCardState: BusinessOwnerAnalyticsCardState = analyticsAccessIsChecking
+    ? 'loading'
+    : isReconciliationInFlight || subscription.status === 'incomplete'
+      ? 'pending'
+      : subscriptionError
+        ? 'error'
+        : hasProAccess && subscription.status === 'canceled'
+          ? 'pro-canceled'
+          : hasProAccess && subscription.status === 'past_due'
+            ? 'pro-payment-issue'
+            : hasProAccess
+              ? 'pro-active'
+              : subscription.status === 'canceled' || subscription.status === 'expired'
+                ? 'access-ended'
+                : 'premium'
+  const analyticsCardBadge =
+    analyticsCardState === 'loading'
+      ? 'Checking'
+      : analyticsCardState === 'pending'
+        ? 'PENDING'
+        : analyticsCardState === 'error'
+          ? 'CHECK REQUIRED'
+          : analyticsCardState === 'premium'
+            ? 'PREMIUM'
+            : analyticsCardState === 'pro-canceled'
+              ? 'PRO • RENEWAL CANCELLED'
+              : analyticsCardState === 'pro-payment-issue'
+                ? 'PRO • PAYMENT ISSUE'
+                : analyticsCardState === 'access-ended'
+                  ? 'ACCESS ENDED'
+                  : 'PRO'
+  const analyticsCardDescription =
+    analyticsCardState === 'loading'
+      ? 'Checking Analytics access…'
+      : analyticsCardState === 'pending'
+        ? 'Payment confirmation is still pending.'
+        : analyticsCardState === 'error'
+          ? 'Analytics access could not be confirmed.'
+          : analyticsCardState === 'premium'
+            ? 'Unlock profile views, customer actions, trends, and insights.'
+            : analyticsCardState === 'pro-payment-issue'
+              ? 'Analytics access is temporarily available during the grace period.'
+              : analyticsCardState === 'access-ended'
+                ? 'Your Pro Analytics access has ended.'
+                : 'View profile performance and customer actions.'
+  const analyticsCardStatusLine =
+    analyticsCardFeedback ??
+    (analyticsCardState === 'pending'
+      ? isReconciliationInFlight
+        ? 'Checking payment status…'
+        : 'Refresh your subscription status before trying again.'
+      : analyticsCardState === 'pro-active'
+        ? 'Pro Analytics active'
+        : analyticsCardState === 'pro-canceled'
+          ? formattedAnalyticsAccessEndDate
+            ? `Access until ${formattedAnalyticsAccessEndDate}`
+            : null
+          : analyticsCardState === 'pro-payment-issue'
+            ? formattedAnalyticsGracePeriodEndDate
+              ? `Payment grace period until ${formattedAnalyticsGracePeriodEndDate}`
+              : 'Please update your subscription payment.'
+            : null)
+  const analyticsCardAction =
+    analyticsCardState === 'loading'
+      ? 'Checking Analytics access…'
+      : analyticsCardState === 'pending'
+        ? isReconciliationInFlight
+          ? 'Checking payment status…'
+          : 'Refresh subscription status'
+        : analyticsCardState === 'premium' || analyticsCardState === 'access-ended'
+          ? 'Upgrade'
+          : analyticsCardState === 'error'
+            ? 'Open Analytics'
+            : 'View Analytics'
   const availabilityStatus = featuredProfile ? getManualAvailabilityStatus(featuredProfile) : 'closed'
   const isAvailabilityOpen = availabilityStatus === 'open'
   const availabilityLabel = isAvailabilityOpen ? 'Open' : 'Closed'
@@ -372,10 +491,43 @@ function BusinessHomePage() {
     navigate('/customer/help-feedback#report')
   }
 
+  const handleOpenBusinessOwnerAnalytics = () => {
+    setBusinessOwnerAnalyticsOpenRequest((currentRequest) => (currentRequest ?? 0) + 1)
+  }
+
+  const handleRefreshAnalyticsSubscription = async () => {
+    if (isReconciliationInFlight) {
+      return
+    }
+
+    setAnalyticsCardFeedback(null)
+
+    try {
+      const result = await reconcileBusinessSubscription()
+      setAnalyticsCardFeedback(getBusinessHomeReconciliationMessage(result))
+    } catch {
+      setAnalyticsCardFeedback('We could not refresh your subscription status. Please try again.')
+    }
+  }
+
+  const handleAnalyticsCardAction = () => {
+    if (analyticsCardState === 'loading' || isReconciliationInFlight) {
+      return
+    }
+
+    if (analyticsCardState === 'pending') {
+      void handleRefreshAnalyticsSubscription()
+      return
+    }
+
+    handleOpenBusinessOwnerAnalytics()
+  }
+
   return (
     <div className="min-h-screen bg-[#eef4fa] text-black">
       <ToastContainer toasts={toasts} />
       <AppHeader
+        businessOwnerAnalyticsOpenRequest={businessOwnerAnalyticsOpenRequest}
         businessOwnerMenuState={
           featuredProfile
             ? {
@@ -599,36 +751,72 @@ function BusinessHomePage() {
 
                     <button
                       type="button"
-                      className="col-span-2 flex min-h-[4.25rem] flex-col justify-center rounded-2xl border border-slate-200 bg-white/80 px-3 py-3 text-left shadow-[0_12px_30px_-24px_rgba(15,23,42,0.35)] transition hover:border-sky-200 hover:bg-sky-50/70 focus:outline-none focus:ring-2 focus:ring-sky-300/80 focus:ring-offset-2 focus:ring-offset-slate-950 sm:col-span-1"
+                      onClick={handleAnalyticsCardAction}
+                      disabled={analyticsCardState === 'loading' || isReconciliationInFlight}
+                      aria-label={
+                        analyticsCardState === 'loading'
+                          ? 'Checking Analytics access'
+                          : analyticsCardState === 'pending'
+                          ? 'Refresh subscription status'
+                          : analyticsCardState === 'premium' || analyticsCardState === 'access-ended'
+                            ? 'Open locked Analytics upgrade preview'
+                            : 'Open Analytics'
+                      }
+                      className="col-span-2 flex min-w-0 flex-col rounded-2xl border border-slate-200 bg-white/80 px-3 py-3 text-left shadow-[0_12px_30px_-24px_rgba(15,23,42,0.35)] transition hover:border-sky-200 hover:bg-sky-50/70 focus:outline-none focus:ring-2 focus:ring-sky-300/80 focus:ring-offset-2 focus:ring-offset-slate-950 disabled:cursor-wait disabled:opacity-80 sm:col-span-1"
                     >
                       <div className="flex items-center gap-3">
                         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cyan-100 text-cyan-700">
                           <ChartIcon />
                         </span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[13px] font-semibold leading-4 text-black sm:text-sm sm:leading-5">
-                            Analytics
-                          </span>
-                          <span
-                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] leading-none ${
-                              analyticsAccessIsChecking
-                                ? 'bg-slate-100 text-slate-600'
-                                : hasFullAnalyticsAccess
-                                  ? 'bg-emerald-100 text-emerald-700'
-                                  : 'bg-slate-100 text-slate-600'
-                            }`}
-                          >
-                            {analyticsAccessIsChecking ? 'Checking' : hasFullAnalyticsAccess ? 'Pro' : 'Premium'}
-                          </span>
-                        </div>
+                        <h3 className="text-[13px] font-semibold leading-4 text-black sm:text-sm sm:leading-5">
+                          Analytics
+                        </h3>
                       </div>
-                      <span className="mt-1 text-xs leading-4 text-slate-600">
-                        {analyticsAccessIsChecking
-                          ? 'Checking Analytics access'
-                          : hasFullAnalyticsAccess
-                            ? 'Full Analytics active'
-                            : 'View customer activity'}
+                      <div className="mt-3 border-t border-dashed border-slate-200" />
+                      <span className="mt-3 block text-xs leading-4 text-slate-600">
+                        {analyticsCardDescription}
                       </span>
+                      <div className="mt-3 flex min-w-0">
+                        <span
+                          className={`inline-flex max-w-full items-center gap-1.5 whitespace-normal rounded-full px-2 py-0.5 text-center text-[10px] font-semibold uppercase tracking-[0.12em] leading-tight ${
+                            analyticsCardState === 'premium'
+                              ? 'bg-violet-100 text-violet-700'
+                              : analyticsCardState === 'pending'
+                                ? 'bg-amber-100 text-amber-800'
+                                : analyticsCardState === 'error' || analyticsCardState === 'pro-payment-issue'
+                                  ? 'bg-amber-100 text-amber-800'
+                                  : analyticsCardState === 'access-ended'
+                                    ? 'bg-slate-100 text-slate-600'
+                                    : analyticsCardState === 'loading'
+                                      ? 'bg-slate-100 text-slate-600'
+                                      : 'bg-emerald-100 text-emerald-700'
+                          }`}
+                        >
+                          <svg className="h-3 w-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 3.75l2.25 4.56 5.03.73-3.64 3.55.86 5.01L12 15.23 7.5 17.6l.86-5.01-3.64-3.55 5.03-.73L12 3.75z" />
+                          </svg>
+                          {analyticsCardBadge}
+                        </span>
+                      </div>
+                      <div className="mt-3 border-t border-slate-200" />
+                      <div className="mt-3 flex min-w-0 items-center justify-between gap-3">
+                        {analyticsCardStatusLine ? (
+                          <span className="flex min-w-0 items-center gap-1.5 text-xs font-semibold leading-4 text-slate-700" role="status" aria-live="polite">
+                            <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M7 3.75v3m10-3v3M4.75 9.5h14.5M6 5.5h12A1.5 1.5 0 0119.5 7v11A1.5 1.5 0 0118 19.5H6A1.5 1.5 0 014.5 18V7A1.5 1.5 0 016 5.5z" />
+                            </svg>
+                            <span className="min-w-0 truncate">{analyticsCardStatusLine}</span>
+                          </span>
+                        ) : (
+                          <span aria-hidden="true" />
+                        )}
+                        <span className="flex shrink-0 items-center gap-1 text-xs font-semibold leading-4 text-sky-700">
+                          {analyticsCardAction}
+                          <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M5 12h14m-6-6l6 6-6 6" />
+                          </svg>
+                        </span>
+                      </div>
                     </button>
                   </div>
                 </div>

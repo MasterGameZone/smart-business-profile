@@ -1,6 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from './AuthContext.tsx'
-import { getMyBusinessSubscription } from '../lib/businessSubscriptionService.ts'
+import {
+  getMyBusinessSubscription,
+  reconcileRazorpaySubscription,
+  type RazorpaySubscriptionReconciliationData,
+} from '../lib/businessSubscriptionService.ts'
 import { canUseFeature } from '../lib/businessEntitlements.ts'
 import {
   FREE_BUSINESS_SUBSCRIPTION,
@@ -12,8 +16,10 @@ interface BusinessSubscriptionContextValue {
   hasProAccess: boolean
   isLoading: boolean
   isRefreshing: boolean
+  isReconciliationInFlight: boolean
   error: Error | null
   refreshBusinessSubscription: () => Promise<void>
+  reconcileBusinessSubscription: () => Promise<RazorpaySubscriptionReconciliationData>
 }
 
 const BusinessSubscriptionContext = createContext<BusinessSubscriptionContextValue | null>(null)
@@ -24,9 +30,11 @@ export function BusinessSubscriptionProvider({ children }: { children: React.Rea
   const [subscriptionOwnerId, setSubscriptionOwnerId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [isReconciliationInFlight, setIsReconciliationInFlight] = useState(false)
   const [error, setError] = useState<Error | null>(null)
   const requestIdRef = useRef(0)
   const activeOwnerIdRef = useRef<string | null>(null)
+  const reconciliationPromiseRef = useRef<Promise<RazorpaySubscriptionReconciliationData> | null>(null)
 
   const businessOwnerId = !isAuthLoading && user && accountMode === 'business_owner' ? user.id : null
 
@@ -141,6 +149,28 @@ export function BusinessSubscriptionProvider({ children }: { children: React.Rea
     }
   }, [businessOwnerId, isAuthLoading])
 
+  const reconcileBusinessSubscription = useCallback((): Promise<RazorpaySubscriptionReconciliationData> => {
+    if (reconciliationPromiseRef.current) {
+      return reconciliationPromiseRef.current
+    }
+
+    const reconciliationPromise = (async () => {
+      setIsReconciliationInFlight(true)
+
+      try {
+        const result = await reconcileRazorpaySubscription()
+        await refreshBusinessSubscription()
+        return result
+      } finally {
+        reconciliationPromiseRef.current = null
+        setIsReconciliationInFlight(false)
+      }
+    })()
+
+    reconciliationPromiseRef.current = reconciliationPromise
+    return reconciliationPromise
+  }, [refreshBusinessSubscription])
+
   const isCurrentOwnerSubscription = Boolean(businessOwnerId && subscriptionOwnerId === businessOwnerId)
   const visibleSubscription = isCurrentOwnerSubscription ? subscription : FREE_BUSINESS_SUBSCRIPTION
   const subscriptionIsLoading = isAuthLoading || Boolean(businessOwnerId && (!isCurrentOwnerSubscription || isLoading))
@@ -152,10 +182,21 @@ export function BusinessSubscriptionProvider({ children }: { children: React.Rea
       hasProAccess,
       isLoading: subscriptionIsLoading,
       isRefreshing,
+      isReconciliationInFlight,
       error,
       refreshBusinessSubscription,
+      reconcileBusinessSubscription,
     }),
-    [error, hasProAccess, isRefreshing, refreshBusinessSubscription, subscriptionIsLoading, visibleSubscription]
+    [
+      error,
+      hasProAccess,
+      isReconciliationInFlight,
+      isRefreshing,
+      reconcileBusinessSubscription,
+      refreshBusinessSubscription,
+      subscriptionIsLoading,
+      visibleSubscription,
+    ]
   )
 
   return <BusinessSubscriptionContext.Provider value={value}>{children}</BusinessSubscriptionContext.Provider>
