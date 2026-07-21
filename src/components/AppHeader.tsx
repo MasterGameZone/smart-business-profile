@@ -1797,6 +1797,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
     businessOwnerProfileActivityMinValue,
   ]
   const businessOwnerInsights = businessOwnerInsightRows?.map((insight) => ({
+    insightKey: insight.insight_type,
     ariaLabel: `${insight.title || 'Business insight'} insight`,
     icon: getBusinessOwnerInsightIcon(insight.insight_type),
     accentClassName: getBusinessOwnerInsightAccentClassName(insight),
@@ -5169,7 +5170,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
                     businessOwnerProfileActivityChartHeight
 
                 return (
-                  <g key={value}>
+                  <g key={`profile-activity-y-axis-${index}`}>
                     <text
                       x={businessOwnerProfileActivityChart.left - 8}
                       y={y + 3}
@@ -5200,8 +5201,8 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
                 strokeLinejoin="round"
                 strokeWidth="3"
               />
-              {businessOwnerProfileActivityCoordinates.map((point) => (
-                <g key={point.label}>
+              {businessOwnerProfileActivityCoordinates.map((point, index) => (
+                <g key={`profile-activity-point-${point.label}-${index}`}>
                   <circle cx={point.x} cy={point.y} r="4" fill="#ffffff" stroke="#0ea5e9" strokeWidth="2.4" />
                   <text
                     x={point.x}
@@ -5249,7 +5250,7 @@ function AppHeader({ previewConfig = null, variant = 'default', businessOwnerMen
           <div className="mt-3 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50/50">
             {businessOwnerInsights.map((insight, index) => (
               <button
-                key={insight.ariaLabel}
+                key={`business-insight-${insight.insightKey}-${index}`}
                 type="button"
                 aria-label={insight.ariaLabel}
                 className={`flex w-full min-w-0 items-center gap-3 bg-white/70 px-3 py-3 text-left transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-300 ${
