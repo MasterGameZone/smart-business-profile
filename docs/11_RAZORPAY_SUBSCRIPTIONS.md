@@ -292,7 +292,7 @@ The current detector classifications and thresholds are:
 - Reconciliation failures: existing reconciliation processing is recorded in `subscription_webhook_events` with the sanitized `provider_api_reconciliation` source marker, so those rows are monitored using the same failure, repeated-attempt, unprocessed, and correlation rules. The repository has no separate reconciliation-required state or reconciliation-audit table; no new state or table was added merely for monitoring.
 - Expired grace period: `critical` when an existing `past_due` row has `grace_period_end <= p_observed_at`. The detector does not normalize the subscription, remove entitlement, or invoke recovery.
 
-Repeated detection refreshes the same open incident, increments `detection_count`, advances `last_detected_at` using the supplied observation time, and can escalate severity but never lower it automatically. Once resolved, a later occurrence creates a new incident while retaining the resolved history. Phase 1 has no schedule, Supabase Cron job, email or Slack delivery, admin UI, automated recovery, refund workflow, or frontend monitoring service.
+Repeated detection refreshes the same open incident, increments `detection_count`, advances `last_detected_at` using the supplied observation time, and can escalate severity but never lower it automatically. Once resolved, a later occurrence creates a new incident while retaining the resolved history. Phase 1 itself has no email or Slack delivery, admin UI, automated recovery, refund workflow, or frontend monitoring service; Phase 2 provides the separate database schedule.
 
 The proposed rollback is a controlled reverse migration after confirming that no internal monitoring caller depends on the RPCs: preserve or export operational incident history as required, revoke monitoring execution, then remove the monitoring functions, trigger, indexes, and table in dependency order. No rollback is currently applied to the remote project.
 
@@ -343,6 +343,106 @@ where jobname = 'payment-monitoring-detection';
 
 After confirming that no job references the wrapper, a later controlled rollback may drop only `run_payment_monitoring_cycle`. Preserve the Phase 1 incidents, detector, resolution RPC, payment source tables, and unrelated Cron jobs. Do not drop `pg_cron`, delete Cron history, or apply rollback during normal verification.
 
+## Phase 3 administrator alert delivery
+
+Phase 3 adds sanitized administrator email delivery for newly detected open `high` and `critical` incidents. It does not change payment lifecycle state, entitlement calculation, webhook processing, reconciliation, detection rules, incident resolution, creation leases, or automated recovery. The implementation is present in the migration `20260722085723_add_payment_monitoring_alert_delivery.sql`, the server-only Edge Function `deliver-payment-monitoring-alerts`, its shared pure helpers, and focused local tests. It has not been deployed, given production secrets, or used to send a real email.
+
+### Audit result and provider choice
+
+The audit found no existing approved transactional-email provider, provider client, administrator-alert integration, `pg_net` wrapper, Vault secret configuration, or general-purpose email utility in the repository. The existing business-owner and customer notification tables are user-facing and are not used for operational alerts. The reusable constant-time byte comparison helper in `supabase/functions/_shared/razorpay.ts` is used for the dedicated invocation secret. Resend is therefore the MVP provider for this phase, using its HTTP API through the platform `fetch` implementation; no Resend package was added.
+
+The local Supabase image already provides `pg_net` and Vault’s `vault.decrypted_secrets` view. The migration enables `pg_net` only when it is absent and does not recreate or move an existing extension. Production Vault and `pg_net` availability must be confirmed before activation.
+
+### Durable delivery outbox
+
+`public.payment_monitoring_alert_deliveries` is a private RLS-protected outbox with one durable row per incident, channel, and alert severity. It stores the incident foreign key, `email` channel, `high`/`critical` severity, deterministic delivery key, attempt counters, availability time, claim lease, sanitized provider message ID, sanitized error code, terminal timestamps, and audit timestamps. It does not store the administrator address, email HTML, complete email bodies, provider requests or responses, webhook payloads, signatures, payment details, or customer contact information. The incident foreign key uses the default non-cascading behavior so delivery history is not deleted automatically.
+
+Allowed delivery statuses are:
+
+- `pending`: newly enqueued and due for its first attempt.
+- `processing`: atomically claimed with a token and lease.
+- `retry_scheduled`: a retryable failure has a future `available_at`.
+- `sent`: a provider message ID and `sent_at` are recorded.
+- `failed`: a terminal or exhausted failure has `failed_at`.
+- `suppressed`: the incident was resolved before delivery and the history is retained.
+
+The delivery key is `payment-monitoring-email:<incident-uuid>:<severity>`. A unique index makes insertion conflict-safe. Repeated detection and enqueue operations cannot create another delivery for the same incident and severity. A high incident gets one high delivery; when that same open incident escalates to critical, it gets exactly one additional critical delivery. An incident first seen as critical gets only its critical delivery, and a later recurrence is a new incident row with its own key. Warning and resolved incidents do not enter the send queue.
+
+### Restricted database operations
+
+The internal RPCs are `SECURITY DEFINER`, use an empty `search_path`, schema-qualify their objects, and are executable only by `service_role` and the required database-owner/Cron role. `PUBLIC`, `anon`, and `authenticated` cannot execute them or access the outbox table. RLS remains enabled with no frontend policies.
+
+- `enqueue_payment_monitoring_alert_deliveries(p_observed_at timestamptz default now())` suppresses pending/retry rows whose incident is already resolved, enqueues only open high/critical incidents, uses the deterministic key, and returns only observation time and counts.
+- `claim_payment_monitoring_alert_deliveries(p_max_batch_size integer default 10, p_observed_at timestamptz default now(), p_lease_seconds integer default 300)` clamps the batch to 10, accepts leases from 60 to 3,600 seconds, recovers expired claims, suppresses resolved incidents, and claims due rows with `FOR UPDATE SKIP LOCKED`. A claim increments `attempt_count` exactly once, sets `last_attempt_at`, and returns only the sanitized incident and delivery fields needed for the email.
+- `mark_payment_monitoring_alert_delivery_sent(...)` requires the matching claim token and a safe provider message ID, clears the active lease, and is idempotent for the same sent result. Conflicting provider IDs are rejected.
+- `mark_payment_monitoring_alert_delivery_failed(...)` requires the matching claim token and a safe error-code format. Retryable failures use bounded backoff of 5, 15, 30, and 60 minutes after attempts 1–4. The fifth attempt, any non-retryable failure, or an exhausted delivery becomes `failed`. Raw provider errors are never accepted or stored.
+
+An expired processing claim returns to `retry_scheduled` while attempts remain or becomes terminal `failed` when the maximum is exhausted. Active claims cannot be stolen before their lease expires. Delivery operations never modify the incident, subscription, webhook-audit, reconciliation, or entitlement tables.
+
+### Edge Function and email safety
+
+`supabase/functions/deliver-payment-monitoring-alerts/index.ts` is configured with `verify_jwt = false` because it is server-to-server only. It accepts POST only and requires `x-payment-monitoring-cron-secret`. The expected value is `PAYMENT_MONITORING_CRON_SECRET`; it is compared with the shared constant-time helper. The secret is never accepted in a query parameter, URL path, or request body, and is never returned or logged. The function claims no more than 10 rows, processes deliveries sequentially, sends one provider request per delivery, continues after an individual failure, and uses an explicit 10-second outbound timeout without an in-function provider retry loop.
+
+The required Edge Function secrets are `RESEND_API_KEY`, `PAYMENT_MONITORING_ADMIN_EMAIL`, `PAYMENT_MONITORING_FROM_EMAIL`, and `PAYMENT_MONITORING_CRON_SECRET`. The required Vault secrets are `payment_monitoring_alert_function_url` and `payment_monitoring_alert_cron_secret`; the Vault secret must match the Edge Function secret. These values are intentionally unset in the repository and are not placed in migrations, committed `.env` files, frontend variables, source code, or documentation examples. The Cron secret should use at least 32 bytes of high-entropy randomness. The sender must use the provider’s verified domain, and the recipient must be controlled by the platform operator. Local test values must never be reused in production.
+
+Resend requests use the official API endpoint and send the deterministic delivery key in the `Idempotency-Key` header. Every retry of the same delivery row reuses that exact key; a critical escalation has a different key because its severity is part of the key. Database uniqueness remains authoritative if provider idempotency expires. Provider and network outcomes are mapped to safe codes such as `email_network_error`, `email_timeout`, `email_rate_limited`, `email_provider_unavailable`, `email_invalid_configuration`, `email_authentication_failed`, `email_invalid_recipient`, `email_invalid_sender`, `email_idempotency_conflict`, and `email_unknown_failure`. Only the delivery UUID, incident UUID, severity, safe error code, and attempt number are suitable log metadata.
+
+Each email contains plain text and minimal escaped HTML with only severity, incident type, diagnostic code, incident UUID, first/last UTC detection times, detection count, source table, source record identifier, and provider subscription/event identifiers when present. It directs the administrator to inspect the database incident log and states that no automated recovery was performed. It contains no webhook payload, request body, signature, API key, secret, authorization header, provider response or raw error, stack trace, payment amount, card/payment-method data, customer or owner contact data, complete subscription object, complete audit record, tracking image, or admin-interface link.
+
+### Vault wrapper and scheduled invocation
+
+`public.invoke_payment_monitoring_alert_delivery()` reads only the two named Vault secrets, returns `{"status":"not_configured"}` without making an HTTP request when either is absent, and otherwise calls `net.http_post` with a minimal `{}` body and the private Cron-secret header. It never returns decrypted secret values or incident data. The `pg_net` request is asynchronous and begins after transaction commit; the request ID and `net._http_response` are the operational inspection references.
+
+Phase 3 adds exactly one active Cron job, without changing Phase 2:
+
+```text
+Job:      payment-monitoring-alert-delivery
+Schedule: 2-59/5 * * * *
+Command:  select public.invoke_payment_monitoring_alert_delivery();
+```
+
+This runs at minutes 2, 7, 12, 17, 22, 27, 32, 37, 42, 47, 52, and 57—two minutes after the unchanged `payment-monitoring-detection` job. The stored command contains no URL, email address, API key, service-role key, authorization token, or invocation secret. Scheduling is keyed by the stable job name and does not create jobs per severity or incident type.
+
+Useful inspection queries are:
+
+```sql
+select jobid, jobname, schedule, command, active, username
+from cron.job
+where jobname in ('payment-monitoring-detection', 'payment-monitoring-alert-delivery');
+
+select id, incident_id, alert_severity, status, attempt_count, max_attempts,
+       available_at, last_attempt_at, last_error_code, sent_at, failed_at, suppressed_at
+from public.payment_monitoring_alert_deliveries
+order by created_at desc
+limit 50;
+
+select *
+from net._http_response
+order by created desc
+limit 20;
+```
+
+For retries, inspect `status`, `attempt_count`, `available_at`, and `last_error_code`. For terminal failures, inspect `failed_at` and the safe error code; never inspect or copy provider response bodies into application logs or incident rows.
+
+### Local testing, production runbook, and rollback
+
+Local verification uses the migration reset and `supabase/tests/database/payment_monitoring_alert_delivery.test.sql`, which runs 70 pgTAP assertions without a live provider. Vitest tests import pure helpers and mock `fetch`; they cover POST-secret authorization helpers, missing configuration, HTML escaping, provider classification, timeout behavior, idempotency headers, batch limits, sanitized summaries, and continuing after a failed delivery. No test sends email, calls Resend, calls a remote Supabase project, or uses a production secret. A configured `pg_net` invocation is not committed during local tests; the missing-Vault path is verified as `not_configured`.
+The Deno/Supabase Edge Runtime request path is not started inside the Vite/Vitest process; full authenticated server-to-server invocation remains part of the controlled production activation runbook and is not a Phase 3 local integration test.
+
+Production activation is a controlled runbook and is not executed by this implementation:
+
+1. Create or confirm the transactional-email provider and verify the sender domain.
+2. Create the provider API key and generate a dedicated high-entropy Cron secret.
+3. Set the four Edge Function secrets and deploy the Edge Function.
+4. Store the function URL and matching Cron secret in Vault.
+5. Apply the Phase 3 migration and verify both named Cron jobs.
+6. Invoke the Edge Function with a controlled sanitized test incident, verify one administrator email and a `sent` row, then verify a repeated invocation does not duplicate it.
+7. Inspect `net._http_response` and Cron history, then remove or resolve the controlled test incident according to the approved runbook.
+
+Secret rotation changes the Edge Function Cron secret and the matching Vault secret together, confirms the scheduled wrapper returns `requested`, and then inspects recent `net._http_response` and Cron history. Never put values into a migration or commit them. The non-destructive rollback is to unschedule only `payment-monitoring-alert-delivery`, confirm it is absent, drop the Phase 3 wrapper, disable or remove the Edge Function separately, and revoke or rotate only the dedicated Phase 3 secrets. Preserve incidents, delivery history, Phase 1 detection/resolution, Phase 2 cycle/detection job, payment lifecycle tables, webhook and reconciliation history, and unrelated Cron jobs. Do not drop `pg_cron`, `pg_net`, or Vault.
+
+Phase 3 does not provide automatic incident resolution, subscription recovery, webhook replay, reconciliation recovery, an admin interface, a monitoring dashboard, acknowledgment or assignment workflow, Slack, SMS, push notifications, customer notifications, business-owner notifications, or frontend access. Cancellation remains outside the application through Razorpay or the payment mandate, and in-app cancellation remains pending.
+
 ## Safe logging and documentation policy
 
 Never log or document:
@@ -385,6 +485,8 @@ Completed and deployed/configured in Live Mode:
 - Webhook processing-attempt ambiguity fix
 - Authenticated reconciliation RPC migration
 - Phase 1 payment monitoring database foundation and local pgTAP coverage
+- Phase 2 scheduled payment-monitoring detection migration and local pgTAP coverage
+- Phase 3 sanitized administrator alert-delivery outbox, restricted RPCs, Edge Function, Cron wrapper, and local tests
 - Migration-history repair and alignment
 - Shared Edge Function infrastructure
 - Create subscription Edge Function
@@ -408,7 +510,8 @@ Still pending:
 - Automated refund workflow
 - Manual-review tooling
 - Automated payment integration tests
-- Administrator monitoring alerts and visibility
+- Administrator monitoring interface, dashboard, acknowledgment, and assignment visibility
 - Production activation of Phase 2 scheduled monitoring
+- Production activation of Phase 3 provider, Edge Function, Vault, and alert-delivery configuration
 - Isolated staging/Test Mode Supabase environment
 - Final production origin allow-list verification

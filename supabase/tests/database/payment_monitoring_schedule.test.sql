@@ -113,7 +113,7 @@ select is(
   (
     select count(*)
     from cron.job
-    where jobname <> 'payment-monitoring-detection'
+    where jobname not in ('payment-monitoring-detection', 'payment-monitoring-alert-delivery')
   ),
   0::bigint,
   'no unrelated local Cron jobs were changed'
