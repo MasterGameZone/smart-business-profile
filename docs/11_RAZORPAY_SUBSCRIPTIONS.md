@@ -250,7 +250,24 @@ npm run test:coverage
 
 The test foundation uses Vitest with the `jsdom` environment, V8 coverage, React Testing Library, and fake Razorpay fixtures only. Tests must not call Razorpay, Supabase, or any external network service, and must not use real customer, payment, provider, webhook, or credential data.
 
-Phase 2 tests do not claim to verify database idempotency, grace-period state transitions, actual duplicate-event protection, cancellation behavior, refunds, or the complete reconciliation lifecycle. Those database and lifecycle integration tests remain pending for Phase 3. Automated payment testing is therefore not fully resolved.
+Phase 2 tests do not claim to verify database idempotency, grace-period state transitions, actual duplicate-event protection, cancellation behavior, refunds, or the complete reconciliation lifecycle; those database and lifecycle areas are covered by Phase 3 below. Automated payment testing is therefore not fully resolved.
+
+## Phase 3 local database integration tests
+
+Phase 3 adds pgTAP integration coverage for the existing subscription tables, grants, RLS policies, creation leases, webhook lifecycle RPC, duplicate and stale-event handling, grace periods, cancellation, reconciliation snapshots, sanitized payload storage, and entitlement calculation. Tests use only the local Supabase database, deterministic fake users and Razorpay identifiers, transaction-local fixtures, and rollback cleanup. They do not use a linked project, production credentials, Razorpay, or any external network service.
+
+Run the database test foundation locally:
+
+```bash
+npx supabase start
+npx supabase db reset --local --no-seed
+npx supabase test db --local supabase/tests/database
+npx supabase stop --no-backup
+```
+
+Each SQL test starts a transaction, declares a pgTAP plan, calls `finish()`, and rolls back. The Phase 3 suite covers backend permissions and RLS, subscription creation/finalization/release, supported webhook lifecycle states, idempotency, stale-event protection, reconciliation result classification, and the database entitlement contract.
+
+Phase 4 frontend interaction tests remain pending. Refund automation and true refund workflow tests also remain pending because refund automation is not implemented. The overall automated payment testing issue remains open.
 
 ## Safe logging and documentation policy
 

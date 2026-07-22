@@ -1,0 +1,33 @@
+name: Payment Database Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  database-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start local Supabase
+        run: supabase start
+
+      - name: Apply local migrations
+        run: supabase db reset --local --no-seed
+
+      - name: Run pgTAP database tests
+        run: supabase test db --local supabase/tests/database
+
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop --no-backup
