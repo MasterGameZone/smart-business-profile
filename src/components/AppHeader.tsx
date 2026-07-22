@@ -1376,6 +1376,7 @@ const businessOwnerSuggestionSubjectOptionsByType: Record<BusinessOwnerHelpSugge
     'Help sharing my profile',
     'Help switching account mode',
     'Help understanding profile completion',
+    'Payment & Subscription',
     'Others',
   ],
   issue_problem: [
