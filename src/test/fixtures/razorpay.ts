@@ -1,4 +1,5 @@
 import type { RazorpayCheckoutSuccessResponse } from '../../lib/razorpayCheckout.ts'
+import type { BusinessSubscription } from '../../types/businessSubscription.ts'
 
 export const fakeRazorpaySecrets = {
   apiKeySecret: 'fake_key_secret',
@@ -75,3 +76,59 @@ export const fakeWebhookMetadata = {
   eventType: 'subscription.activated',
   providerStatus: 'active',
 } as const
+
+export function createDeferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void
+  let reject!: (reason?: unknown) => void
+
+  const promise = new Promise<T>((promiseResolve, promiseReject) => {
+    resolve = promiseResolve
+    reject = promiseReject
+  })
+
+  return { promise, resolve, reject }
+}
+
+export const fakeFreeSubscription: BusinessSubscription = {
+  planId: 'free',
+  status: 'free',
+  billingInterval: null,
+  currency: 'INR',
+  amountMinorUnits: 0,
+  currentPeriodStart: null,
+  currentPeriodEnd: null,
+  cancelAtPeriodEnd: false,
+  gracePeriodEnd: null,
+  hasProAccess: false,
+}
+
+export const fakeActiveProSubscription: BusinessSubscription = {
+  ...fakeFreeSubscription,
+  planId: 'pro_analytics',
+  status: 'active',
+  billingInterval: 'monthly',
+  amountMinorUnits: 4500,
+  currentPeriodStart: '2026-07-01T00:00:00.000Z',
+  currentPeriodEnd: '2026-08-01T00:00:00.000Z',
+  hasProAccess: true,
+}
+
+export const fakeCanceledProSubscription: BusinessSubscription = {
+  ...fakeActiveProSubscription,
+  status: 'canceled',
+  cancelAtPeriodEnd: true,
+}
+
+export const fakeIncompleteSubscription: BusinessSubscription = {
+  ...fakeFreeSubscription,
+  planId: 'pro_analytics',
+  status: 'incomplete',
+  billingInterval: 'monthly',
+  amountMinorUnits: 4500,
+}
+
+export const fakePastDueSubscription: BusinessSubscription = {
+  ...fakeActiveProSubscription,
+  status: 'past_due',
+  hasProAccess: false,
+}

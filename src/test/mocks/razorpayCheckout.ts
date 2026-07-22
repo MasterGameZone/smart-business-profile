@@ -24,7 +24,9 @@ export function installMockRazorpayCheckout(options: InstallMockRazorpayCheckout
     successResponse = fakeRazorpayCheckoutSuccess,
   } = options
 
-  const constructorMock = vi.fn((checkoutOption: RazorpayCheckoutOptions): RazorpayCheckoutInstance => {
+  const constructorMock = vi.fn(function checkoutConstructor(
+    checkoutOption: RazorpayCheckoutOptions,
+  ): RazorpayCheckoutInstance {
     const instance: RazorpayCheckoutInstance = {
       on: vi.fn((event, handler) => {
         if (event === 'payment.failed') {

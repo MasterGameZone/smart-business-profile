@@ -267,7 +267,13 @@ npx supabase stop --no-backup
 
 Each SQL test starts a transaction, declares a pgTAP plan, calls `finish()`, and rolls back. The Phase 3 suite covers backend permissions and RLS, subscription creation/finalization/release, supported webhook lifecycle states, idempotency, stale-event protection, reconciliation result classification, and the database entitlement contract.
 
-Phase 4 frontend interaction tests remain pending. Refund automation and true refund workflow tests also remain pending because refund automation is not implemented. The overall automated payment testing issue remains open.
+## Phase 4 frontend interaction tests
+
+Phase 4 adds automated React Testing Library and Vitest interaction coverage for the existing Business Owner Pro Analytics flow. The suite covers locked and paid entitlement rendering, explicit Checkout start, Checkout field safety, success-response validation, backend verification, bounded polling and timeout handling, manual reconciliation, dismissal, payment failure, safe error mapping, concurrency guards, account changes, logout, stale async work, unmount cleanup, and the `BusinessSubscriptionProvider` contract.
+
+All frontend interaction tests mock the Razorpay Checkout constructor, Checkout loader, and business subscription service/Supabase boundaries. They use deterministic fake identifiers and customer values only. No real payment, Checkout script, database, Supabase, Razorpay, or external network request occurs.
+
+Phases 1 through 4 of the currently implemented payment system are covered by the automated test foundation, frontend unit tests, local database integration tests, and frontend interaction tests. This does not fully resolve the payment-testing issue: true automated refund workflow testing remains pending because refund automation is not implemented, and in-app cancellation UI testing remains pending because cancellation currently occurs outside the application through Razorpay or the payment mandate.
 
 ## Safe logging and documentation policy
 
@@ -316,6 +322,7 @@ Completed and deployed/configured in Live Mode:
 - Checkout verification Edge Function
 - Reconciliation Edge Function
 - Razorpay subscription webhook Edge Function
+- Phase 4 frontend payment interaction tests
 - Required Supabase Edge Function secrets
 - Razorpay Live Mode webhook endpoint configuration
 - Frontend Razorpay Checkout flow
