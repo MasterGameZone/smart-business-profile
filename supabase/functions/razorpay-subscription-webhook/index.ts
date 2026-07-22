@@ -331,6 +331,10 @@ function parseSubscriptionEntity(value: unknown, config: WebhookConfig): Subscri
 }
 
 function eventStatusMatches(eventType: string, status: string): boolean {
+  if (eventType === "subscription.authenticated") {
+    return status === "authenticated" || status === "active";
+  }
+
   const expectedStatus = EVENT_STATUS[eventType];
   return expectedStatus === null || expectedStatus === status;
 }
