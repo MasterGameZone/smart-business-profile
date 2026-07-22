@@ -1,4 +1,4 @@
-import type { JsonValue } from "./http.ts";
+import type { JsonValue } from "./json.ts";
 
 export const RAZORPAY_API_BASE_URL = "https://api.razorpay.com/v1";
 export const RAZORPAY_INTERNAL_PLAN_ID = "pro_analytics";

@@ -3,124 +3,23 @@ import {
   jsonError,
   jsonSuccess,
   requireMethod,
-  type JsonValue,
 } from "../_shared/http.ts";
 import { createWebhookContext } from "../_shared/supabaseClients.ts";
 import {
   getRazorpayWebhookConfig,
-  RAZORPAY_INTERNAL_PLAN_ID,
   RazorpayConfigurationError,
   verifyRazorpayWebhookSignature,
 } from "../_shared/razorpay.ts";
-
-const MAX_WEBHOOK_BYTES = 512 * 1024;
-const MAX_EVENT_ID_LENGTH = 255;
-const MAX_EVENT_TYPE_LENGTH = 100;
-const MAX_CONTAINS_VALUE_LENGTH = 100;
-const MAX_UNIX_SECONDS = 8_640_000_000_000;
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/;
-
-const SUPPORTED_EVENTS = new Set([
-  "subscription.authenticated",
-  "subscription.activated",
-  "subscription.charged",
-  "subscription.completed",
-  "subscription.updated",
-  "subscription.pending",
-  "subscription.halted",
-  "subscription.cancelled",
-  "subscription.paused",
-  "subscription.resumed",
-]);
-
-const PROVIDER_STATUSES = new Set([
-  "created",
-  "authenticated",
-  "active",
-  "pending",
-  "halted",
-  "paused",
-  "cancelled",
-  "completed",
-  "expired",
-]);
-
-const INTERNAL_STATUSES = new Set(["incomplete", "active", "past_due", "canceled", "expired"]);
-
-const EVENT_STATUS: Readonly<Record<string, string | null>> = {
-  "subscription.authenticated": "authenticated",
-  "subscription.activated": "active",
-  "subscription.charged": "active",
-  "subscription.completed": "completed",
-  "subscription.updated": null,
-  "subscription.pending": "pending",
-  "subscription.halted": "halted",
-  "subscription.cancelled": "cancelled",
-  "subscription.paused": "paused",
-  "subscription.resumed": "active",
-};
-
-const CORRELATION_NOTE_KEYS = [
-  "sbp_owner_id",
-  "sbp_subscription_id",
-  "sbp_plan_id",
-  "sbp_creation_attempt_id",
-  "sbp_environment",
-] as const;
-
-type WebhookConfig = ReturnType<typeof getRazorpayWebhookConfig>;
-
-type WebhookEnvelope = {
-  eventType: string;
-  providerCreatedAt: string;
-  contains: string[];
-  payload: Record<string, unknown>;
-};
-
-type CorrelationNotes = {
-  sbp_owner_id: string;
-  sbp_subscription_id: string;
-  sbp_plan_id: "pro_analytics";
-  sbp_creation_attempt_id: string;
-  sbp_environment: "test" | "live";
-};
-
-type SubscriptionEvent = {
-  id: string;
-  planId: string;
-  customerId: string | null;
-  status: string;
-  currentPeriodStart: string | null;
-  currentPeriodEnd: string | null;
-  endedAt: string | null;
-  notes: CorrelationNotes;
-};
-
-type RpcResult = {
-  result: "processed" | "duplicate" | "ignored" | "stale_event" | "subscription_not_found" | "plan_mismatch" | "failed";
-  webhookEventId: string;
-  internalSubscriptionId: string | null;
-  internalStatus: string | null;
-  processingAttempts: number;
-};
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function isUuid(value: unknown): value is string {
-  return typeof value === "string" && UUID_PATTERN.test(value);
-}
-
-function nonBlankString(value: unknown, maxLength: number): string | null {
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  const trimmed = value.trim();
-  return trimmed.length > 0 && trimmed.length <= maxLength ? trimmed : null;
-}
+import {
+  SUPPORTED_WEBHOOK_EVENTS,
+  parseWebhookEnvelope,
+  parseWebhookRpcResult,
+  parseWebhookSubscriptionEntity,
+  sanitizedWebhookPayload,
+  webhookCorrelationMatchesRow,
+  webhookEventStatusMatches,
+  webhookPlanMatchesConfiguredPlan,
+} from "../_shared/razorpayWebhookValidation.ts";
 
 function invalidWebhookEvent(request: Request): Response {
   return jsonError("invalid_webhook_event", "The webhook event is invalid.", { request, status: 400 });
@@ -143,6 +42,14 @@ function invalidSignature(request: Request): Response {
 function configuredPlanId(): string | null {
   const planId = Deno.env.get("RAZORPAY_PLAN_ID")?.trim();
   return planId !== undefined && planId.length > 0 && planId.startsWith("plan_") ? planId : null;
+}
+
+const MAX_WEBHOOK_BYTES = 512 * 1024;
+const MAX_EVENT_ID_LENGTH = 255;
+const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function contentLengthStatus(request: Request): "missing" | "valid" | "invalid" | "too_large" {
@@ -198,234 +105,6 @@ function validSignature(request: Request): string | null {
   }
 
   return signature;
-}
-
-function unixSecondsToIso(value: unknown): string | null {
-  if (
-    typeof value !== "number" ||
-    !Number.isSafeInteger(value) ||
-    value < 0 ||
-    value > MAX_UNIX_SECONDS
-  ) {
-    return null;
-  }
-
-  const date = new Date(value * 1000);
-  return Number.isNaN(date.getTime()) ? null : date.toISOString();
-}
-
-function nullableUnixSecondsToIso(value: unknown): string | null | undefined {
-  if (value === null) {
-    return null;
-  }
-
-  return unixSecondsToIso(value) ?? undefined;
-}
-
-function parseEnvelope(payload: unknown): WebhookEnvelope | null {
-  if (!isRecord(payload) || payload.entity !== "event") {
-    return null;
-  }
-
-  const eventType = nonBlankString(payload.event, MAX_EVENT_TYPE_LENGTH);
-  const providerCreatedAt = unixSecondsToIso(payload.created_at);
-  const contains = payload.contains;
-  const eventPayload = payload.payload;
-
-  if (
-    eventType === null ||
-    providerCreatedAt === null ||
-    !Array.isArray(contains) ||
-    !contains.every((value) => nonBlankString(value, MAX_CONTAINS_VALUE_LENGTH) !== null) ||
-    !isRecord(eventPayload)
-  ) {
-    return null;
-  }
-
-  return {
-    eventType,
-    providerCreatedAt,
-    contains: contains.map((value) => String(value)),
-    payload: eventPayload,
-  };
-}
-
-function parseCorrelationNotes(value: unknown, config: WebhookConfig): CorrelationNotes | null {
-  if (!isRecord(value)) {
-    return null;
-  }
-
-  const ownerId = value.sbp_owner_id;
-  const subscriptionId = value.sbp_subscription_id;
-  const planId = value.sbp_plan_id;
-  const creationAttemptId = value.sbp_creation_attempt_id;
-  const environment = value.sbp_environment;
-
-  if (
-    CORRELATION_NOTE_KEYS.some((key) => typeof value[key] !== "string" || value[key] === "") ||
-    !isUuid(ownerId) ||
-    !isUuid(subscriptionId) ||
-    planId !== RAZORPAY_INTERNAL_PLAN_ID ||
-    !isUuid(creationAttemptId) ||
-    environment !== config.environment
-  ) {
-    return null;
-  }
-
-  return {
-    sbp_owner_id: ownerId,
-    sbp_subscription_id: subscriptionId,
-    sbp_plan_id: RAZORPAY_INTERNAL_PLAN_ID,
-    sbp_creation_attempt_id: creationAttemptId,
-    sbp_environment: config.environment,
-  };
-}
-
-function parseSubscriptionEntity(value: unknown, config: WebhookConfig): SubscriptionEvent | null {
-  if (!isRecord(value) || value.entity !== "subscription") {
-    return null;
-  }
-
-  const id = nonBlankString(value.id, 255);
-  const planId = nonBlankString(value.plan_id, 255);
-  const customerId = value.customer_id === null
-    ? null
-    : nonBlankString(value.customer_id, 255);
-  const status = nonBlankString(value.status, 50);
-  const notes = parseCorrelationNotes(value.notes, config);
-  const currentPeriodStart = nullableUnixSecondsToIso(value.current_start);
-  const currentPeriodEnd = nullableUnixSecondsToIso(value.current_end);
-  const endedAt = nullableUnixSecondsToIso(value.ended_at);
-
-  if (
-    id === null ||
-    !id.startsWith("sub_") ||
-    planId === null ||
-    !planId.startsWith("plan_") ||
-    (value.customer_id !== null && (customerId === null || !customerId.startsWith("cust_"))) ||
-    status === null ||
-    !PROVIDER_STATUSES.has(status) ||
-    value.quantity !== 1 ||
-    value.total_count !== 120 ||
-    value.customer_notify !== true ||
-    notes === null ||
-    currentPeriodStart === undefined ||
-    currentPeriodEnd === undefined ||
-    endedAt === undefined ||
-    (currentPeriodStart !== null && currentPeriodEnd !== null && currentPeriodEnd <= currentPeriodStart) ||
-    (status === "active" && (currentPeriodStart === null || currentPeriodEnd === null))
-  ) {
-    return null;
-  }
-
-  return {
-    id,
-    planId,
-    customerId,
-    status,
-    currentPeriodStart,
-    currentPeriodEnd,
-    endedAt,
-    notes,
-  };
-}
-
-function eventStatusMatches(eventType: string, status: string): boolean {
-  if (eventType === "subscription.authenticated") {
-    return status === "authenticated" || status === "active";
-  }
-
-  const expectedStatus = EVENT_STATUS[eventType];
-  return expectedStatus === null || expectedStatus === status;
-}
-
-function parseRpcResult(data: unknown): RpcResult | null {
-  if (!Array.isArray(data) || data.length !== 1 || !isRecord(data[0])) {
-    return null;
-  }
-
-  const row = data[0];
-  const result = row.result;
-  const webhookEventId = row.webhook_event_id;
-  const internalSubscriptionId = row.internal_subscription_id;
-  const internalStatus = row.internal_status;
-  const processingAttempts = row.processing_attempts;
-  const isAllowedResult = (value: unknown): value is RpcResult["result"] =>
-    value === "processed" ||
-    value === "duplicate" ||
-    value === "ignored" ||
-    value === "stale_event" ||
-    value === "subscription_not_found" ||
-    value === "plan_mismatch" ||
-    value === "failed";
-
-  if (
-    !isAllowedResult(result) ||
-    !isUuid(webhookEventId) ||
-    (internalSubscriptionId !== null && !isUuid(internalSubscriptionId)) ||
-    (internalStatus !== null && (typeof internalStatus !== "string" || !INTERNAL_STATUSES.has(internalStatus))) ||
-    typeof processingAttempts !== "number" ||
-    !Number.isSafeInteger(processingAttempts) ||
-    processingAttempts < 0
-  ) {
-    return null;
-  }
-
-  return {
-    result,
-    webhookEventId,
-    internalSubscriptionId,
-    internalStatus,
-    processingAttempts,
-  };
-}
-
-function sanitizedPayload(
-  eventId: string,
-  envelope: WebhookEnvelope,
-  subscription: SubscriptionEvent,
-): JsonValue {
-  return {
-    schema_version: 1,
-    provider_event_id: eventId,
-    event_type: envelope.eventType,
-    provider_created_at: envelope.providerCreatedAt,
-    subscription: {
-      id: subscription.id,
-      plan_id: subscription.planId,
-      customer_id: subscription.customerId,
-      status: subscription.status,
-      current_period_start: subscription.currentPeriodStart,
-      current_period_end: subscription.currentPeriodEnd,
-      ended_at: subscription.endedAt,
-      quantity: 1,
-      total_count: 120,
-      customer_notify: true,
-      notes: subscription.notes,
-    },
-  };
-}
-
-function correlationMatchesRow(
-  row: Record<string, unknown>,
-  subscription: SubscriptionEvent,
-  configuredPlanId: string,
-): boolean {
-  const rowId = row.id;
-  const ownerId = row.owner_id;
-  const providerSubscriptionId = row.provider_subscription_id;
-  const providerPlanId = row.provider_plan_id;
-
-  return (
-    isUuid(rowId) &&
-    isUuid(ownerId) &&
-    row.plan_id === RAZORPAY_INTERNAL_PLAN_ID &&
-    row.billing_provider === "razorpay" &&
-    providerSubscriptionId === subscription.id &&
-    (providerPlanId === null || providerPlanId === configuredPlanId) &&
-    subscription.notes.sbp_subscription_id === rowId &&
-    subscription.notes.sbp_owner_id === ownerId
-  );
 }
 
 export default {
@@ -527,12 +206,12 @@ export default {
       return invalidWebhookEvent(request);
     }
 
-    const envelope = parseEnvelope(parsedBody);
+    const envelope = parseWebhookEnvelope(parsedBody);
     if (envelope === null) {
       return invalidWebhookEvent(request);
     }
 
-    if (!SUPPORTED_EVENTS.has(envelope.eventType)) {
+    if (!SUPPORTED_WEBHOOK_EVENTS.includes(envelope.eventType as (typeof SUPPORTED_WEBHOOK_EVENTS)[number])) {
       return jsonSuccess({ received: true, ignored: true }, { request, status: 200 });
     }
 
@@ -545,14 +224,14 @@ export default {
       return invalidWebhookEvent(request);
     }
 
-    const subscription = parseSubscriptionEntity(subscriptionPayload.entity, webhookConfig);
+    const subscription = parseWebhookSubscriptionEntity(subscriptionPayload.entity, webhookConfig);
     if (subscription === null) {
       return invalidWebhookEvent(request);
     }
-    if (!eventStatusMatches(envelope.eventType, subscription.status)) {
+    if (!webhookEventStatusMatches(envelope.eventType, subscription.status)) {
       return invalidWebhookEvent(request);
     }
-    if (subscription.planId !== configuredPlan) {
+    if (!webhookPlanMatchesConfiguredPlan(subscription, configuredPlan)) {
       return jsonError("webhook_correlation_failed", "The webhook subscription could not be correlated.", {
         request,
         status: 409,
@@ -577,7 +256,7 @@ export default {
       }
 
       if (data !== null) {
-        if (!isRecord(data) || !correlationMatchesRow(data, subscription, configuredPlan)) {
+        if (!isRecord(data) || !webhookCorrelationMatchesRow(data, subscription, configuredPlan)) {
           return jsonError("webhook_correlation_failed", "The webhook subscription could not be correlated.", {
             request,
             status: 409,
@@ -588,7 +267,7 @@ export default {
       return processingFailure(request);
     }
 
-    const payload = sanitizedPayload(eventId, envelope, subscription);
+    const payload = sanitizedWebhookPayload(eventId, envelope, subscription);
     let rpcData: unknown;
     try {
       const { data, error } = await contextResult.context.supabaseAdmin.rpc("process_razorpay_subscription_webhook", {
@@ -613,7 +292,7 @@ export default {
       return processingFailure(request);
     }
 
-    const result = parseRpcResult(rpcData);
+    const result = parseWebhookRpcResult(rpcData);
     if (result === null) {
       return processingFailure(request);
     }

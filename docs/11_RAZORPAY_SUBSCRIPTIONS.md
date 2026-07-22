@@ -238,7 +238,7 @@ No local secret file is committed. This documentation update does not redeploy f
 
 ## Automated payment test foundation
 
-Phase 1 automated payment testing adds only local/CI test infrastructure. It does not add checkout, webhook lifecycle, cancellation, grace-period, refund, reconciliation, or database integration behavior tests.
+Phase 1 automated payment testing adds only local/CI test infrastructure. Phase 2 adds unit coverage for existing frontend response validation, Checkout and webhook HMAC verification, webhook event/status validation, sanitized payload validation, reconciliation result parsing, and Razorpay API error classification. These tests exercise pure logic with fake data and mocked Supabase, `fetch`, time, and Deno environment boundaries; they never call Razorpay, Supabase, or any external network service.
 
 Available commands:
 
@@ -249,6 +249,8 @@ npm run test:coverage
 ```
 
 The test foundation uses Vitest with the `jsdom` environment, V8 coverage, React Testing Library, and fake Razorpay fixtures only. Tests must not call Razorpay, Supabase, or any external network service, and must not use real customer, payment, provider, webhook, or credential data.
+
+Phase 2 tests do not claim to verify database idempotency, grace-period state transitions, actual duplicate-event protection, cancellation behavior, refunds, or the complete reconciliation lifecycle. Those database and lifecycle integration tests remain pending for Phase 3. Automated payment testing is therefore not fully resolved.
 
 ## Safe logging and documentation policy
 

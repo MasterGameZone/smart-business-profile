@@ -1,10 +1,4 @@
-export type JsonValue =
-  | null
-  | boolean
-  | number
-  | string
-  | JsonValue[]
-  | { [key: string]: JsonValue };
+export type { JsonValue } from "./json.ts";
 
 export type JsonSuccess<T extends JsonValue> = {
   ok: true;
