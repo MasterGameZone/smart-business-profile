@@ -1,4 +1,6 @@
-export type { JsonValue } from "./json.ts";
+import type { JsonValue } from "./json.ts";
+
+export type { JsonValue };
 
 export type JsonSuccess<T extends JsonValue> = {
   ok: true;

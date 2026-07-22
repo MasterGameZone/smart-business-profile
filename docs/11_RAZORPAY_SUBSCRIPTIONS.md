@@ -116,9 +116,24 @@ No real secret values are documented. Provider identifiers and account-specific 
 
 ## CORS policy
 
-Browser origins use exact normalized allow-list matching; wildcards are never used. When no allowed-origin configuration is supplied, Test Mode permits only `http://localhost:5000`. Live Mode requires an explicit non-empty allow-list and does not automatically allow localhost.
+Browser origins use exact normalized allow-list matching from `SBP_ALLOWED_ORIGINS`. Multiple origins are comma-separated. Each entry must contain only an `http` or `https` scheme, hostname, and optional port. Paths, queries, hashes, usernames, passwords, empty entries, malformed URLs, and `*` are rejected. When no allowed-origin configuration is supplied, Test Mode permits only `http://localhost:5000`. Live Mode requires an explicit non-empty allow-list for browser-origin requests and does not automatically allow localhost.
 
-The handlers process browser preflight requests explicitly. Server-to-server webhooks do not depend on browser CORS. CORS is not authentication.
+The expected future production configuration is:
+
+```text
+RAZORPAY_ENVIRONMENT=live
+SBP_ALLOWED_ORIGINS=https://<final-vercel-production-domain>
+```
+
+For more than one approved browser origin, use an exact comma-separated list with no wildcard:
+
+```text
+SBP_ALLOWED_ORIGINS=https://<final-vercel-production-domain>,https://<approved-secondary-origin>
+```
+
+The authenticated browser-invoked functions handle `OPTIONS` before JWT verification, body parsing, Supabase queries, or Razorpay calls. Success, expected errors, internal errors, and method-not-allowed responses preserve the original request when invoking the shared JSON helpers. Unknown browser origins receive no `Access-Control-Allow-Origin`. Live Mode browser requests fail closed with a sanitized configuration error when the allow-list is missing or invalid. Requests without an `Origin` header continue to work for legitimate server-to-server calls.
+
+The Razorpay webhook and payment-monitoring alert-delivery functions remain server-to-server. They do not require an `Origin` header, and CORS does not replace Razorpay signature or Cron-secret authentication. Final production-origin verification remains pending until the final Vercel domain exists. See [Phase 1 CORS Origin Verification](13_CORS_ORIGIN_VERIFICATION.md) for the audit, classifications, and verification checklist.
 
 Final production origin allow-list verification remains pending.
 
