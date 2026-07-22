@@ -275,6 +275,27 @@ All frontend interaction tests mock the Razorpay Checkout constructor, Checkout 
 
 Phases 1 through 4 of the currently implemented payment system are covered by the automated test foundation, frontend unit tests, local database integration tests, and frontend interaction tests. This does not fully resolve the payment-testing issue: true automated refund workflow testing remains pending because refund automation is not implemented, and in-app cancellation UI testing remains pending because cancellation currently occurs outside the application through Razorpay or the payment mandate.
 
+## Phase 1 payment monitoring database foundation
+
+Phase 1 adds the observation-only migration `20260722073730_add_payment_monitoring_foundation.sql` and the local pgTAP test `payment_monitoring_foundation.test.sql`. It does not change payment lifecycle processing, entitlement calculation, webhook processing, reconciliation, creation leases, provider calls, or frontend behavior.
+
+The private `public.payment_monitoring_incidents` table stores sanitized operational incidents only. It keeps a deterministic open incident key composed of the incident type, source table, and stable source row identifier. It records severity, open/resolved status, detection timestamps and count, optional owner and provider correlation identifiers, and a fixed diagnostic code. Webhook payloads, request bodies, signatures, provider errors, payment details, customer data, secrets, and stack traces are prohibited.
+
+The internal `detect_payment_monitoring_incidents(p_observed_at)` RPC uses the existing `subscription_webhook_events` and `business_owner_subscriptions` schema. It is a `SECURITY DEFINER` function with an empty search path and is executable only by `service_role`; `anon` and `authenticated` have no table privileges or monitoring RPC execution privileges. RLS is enabled, and the table is not exposed to business owners, customers, or frontend Data API access. `resolve_payment_monitoring_incident(...)` accepts only a non-empty sanitized summary, preserves history, is idempotent for an already resolved incident, and never auto-resolves an incident because a later observation is clean.
+
+The current detector classifications and thresholds are:
+
+- Failed webhook processing: `high` for one failed event and `critical` for three or more processing attempts. Correlation failures are `critical`; received events that remain neither processed nor intentionally ignored for 15 minutes are `high`.
+- Stale subscription creation lease: `high` after five minutes, using the authoritative `creation_started_at` lease window from the creation-claim RPC. Monitoring does not release the lease.
+- Stale incomplete subscription without a provider subscription or active creation lease: `high` after 30 minutes, using the best available lifecycle timestamp (`updated_at`, then `created_at`).
+- Provider subscription created but not internally activated: `critical` after 30 minutes while the internal row remains `incomplete` and has a provider subscription ID. This is kept separate from the generic incomplete detector to avoid duplicate root-cause incidents.
+- Reconciliation failures: existing reconciliation processing is recorded in `subscription_webhook_events` with the sanitized `provider_api_reconciliation` source marker, so those rows are monitored using the same failure, repeated-attempt, unprocessed, and correlation rules. The repository has no separate reconciliation-required state or reconciliation-audit table; no new state or table was added merely for monitoring.
+- Expired grace period: `critical` when an existing `past_due` row has `grace_period_end <= p_observed_at`. The detector does not normalize the subscription, remove entitlement, or invoke recovery.
+
+Repeated detection refreshes the same open incident, increments `detection_count`, advances `last_detected_at` using the supplied observation time, and can escalate severity but never lower it automatically. Once resolved, a later occurrence creates a new incident while retaining the resolved history. Phase 1 has no schedule, Supabase Cron job, email or Slack delivery, admin UI, automated recovery, refund workflow, or frontend monitoring service.
+
+The proposed rollback is a controlled reverse migration after confirming that no internal monitoring caller depends on the RPCs: preserve or export operational incident history as required, revoke monitoring execution, then remove the monitoring functions, trigger, indexes, and table in dependency order. No rollback is currently applied to the remote project.
+
 ## Safe logging and documentation policy
 
 Never log or document:
@@ -316,6 +337,7 @@ Completed and deployed/configured in Live Mode:
 - Atomic backend RPC migration
 - Webhook processing-attempt ambiguity fix
 - Authenticated reconciliation RPC migration
+- Phase 1 payment monitoring database foundation and local pgTAP coverage
 - Migration-history repair and alignment
 - Shared Edge Function infrastructure
 - Create subscription Edge Function
