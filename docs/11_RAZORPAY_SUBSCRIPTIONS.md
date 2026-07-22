@@ -296,6 +296,53 @@ Repeated detection refreshes the same open incident, increments `detection_count
 
 The proposed rollback is a controlled reverse migration after confirming that no internal monitoring caller depends on the RPCs: preserve or export operational incident history as required, revoke monitoring execution, then remove the monitoring functions, trigger, indexes, and table in dependency order. No rollback is currently applied to the remote project.
 
+## Phase 2 scheduled monitoring
+
+Phase 2 schedules the existing Phase 1 detector directly inside Postgres. The migration enables `pg_cron` when it is absent and creates exactly one active job named `payment-monitoring-detection` with the schedule `*/5 * * * *`. The stored command is:
+
+```sql
+select public.run_payment_monitoring_cycle();
+```
+
+The job runs as the existing database owner role, `postgres`. The restricted wrapper is `public.run_payment_monitoring_cycle(p_observed_at timestamptz default now())`, returns a sanitized `jsonb` summary, uses an empty `search_path`, and is executable by `service_role` and the Cron/database-owner role only. `anon` and `authenticated` cannot execute it. It passes one stable observation timestamp to `detect_payment_monitoring_incidents(...)` and reports only `observed_at`, `outcome`, `skipped`, and `incident_candidates_detected`.
+
+Each cycle uses `pg_try_advisory_xact_lock` with the stable key `smart-business-profile:payment-monitoring-cycle`. A concurrent cycle returns a sanitized `skipped` outcome without creating an incident; the transaction-scoped lock releases automatically at transaction completion. The lock is limited to monitoring orchestration and does not lock subscription rows or interfere with checkout, webhook, reconciliation, or entitlement operations.
+
+The Cron command contains no URL, HTTP call, Edge Function invocation, `pg_net`, Vault lookup, API key, token, authorization header, or user-controlled input. A detector failure propagates as a failed Cron execution, rolls back the cycle transaction, and is visible through Cron run history. Phase 2 adds no custom retry loop, monitoring-system incident, alert delivery, automatic recovery, automatic resolution, administrator email, Slack integration, alert Edge Function, frontend, or admin UI.
+
+Operational inspection queries are:
+
+```sql
+select jobid, jobname, schedule, command, active, username
+from cron.job
+where jobname = 'payment-monitoring-detection';
+
+select *
+from cron.job_run_details
+where jobid = (
+  select jobid from cron.job
+  where jobname = 'payment-monitoring-detection'
+)
+order by start_time desc
+limit 20;
+
+select public.run_payment_monitoring_cycle('2026-07-22T12:00:00Z'::timestamptz);
+```
+
+Local verification confirms one active named job, the five-minute schedule, the exact schema-qualified command, the `postgres` execution role, and the restricted wrapper privileges. Deterministic tests invoke the wrapper directly rather than waiting five minutes. A short local test run may produce no Cron history rows, and runtime overlap behavior requires two concurrent database sessions; the function source and lock key are verified in pgTAP.
+
+Production activation is a controlled migration deployment after reviewing the named-job metadata and confirming that no unrelated Cron job is affected. After activation, inspect `cron.job` and recent `cron.job_run_details`; do not add a second job manually. The safe rollback is:
+
+```sql
+select cron.unschedule('payment-monitoring-detection');
+
+select 1
+from cron.job
+where jobname = 'payment-monitoring-detection';
+```
+
+After confirming that no job references the wrapper, a later controlled rollback may drop only `run_payment_monitoring_cycle`. Preserve the Phase 1 incidents, detector, resolution RPC, payment source tables, and unrelated Cron jobs. Do not drop `pg_cron`, delete Cron history, or apply rollback during normal verification.
+
 ## Safe logging and documentation policy
 
 Never log or document:
@@ -361,6 +408,7 @@ Still pending:
 - Automated refund workflow
 - Manual-review tooling
 - Automated payment integration tests
-- Monitoring and alerts
+- Administrator monitoring alerts and visibility
+- Production activation of Phase 2 scheduled monitoring
 - Isolated staging/Test Mode Supabase environment
 - Final production origin allow-list verification
