@@ -196,7 +196,17 @@ No real secret values are documented. Provider identifiers and account-specific 
 
 ## Isolated Test Mode staging
 
-The repository-side foundation for an isolated Razorpay Test Mode environment is documented in [Payment Lifecycle Staging](14_PAYMENT_LIFECYCLE_STAGING.md). It requires a separate Supabase project, staging Vercel deployment, Test Mode credentials and plan, webhook endpoint and secret, exact staging CORS origin, and test-only users/data. No staging environment is activated until all inputs are explicitly approved through a secure channel.
+The isolated Razorpay Test Mode environment and its approved staging Vercel deployment are active and documented in [Payment Lifecycle Staging](14_PAYMENT_LIFECYCLE_STAGING.md). It uses separate Test Mode credentials, plan, webhook endpoint and secret, exact staging CORS origin, migrations, Edge Functions, and test-only users/data. Production resources remain separate and untouched.
+
+## Phase 2A staging verification
+
+On 2026-07-22, Test Owner A and Test Owner B completed one independent initial Razorpay Test Mode purchase each. Both accounts were Free/Locked before Checkout. The final sanitized staging state contained two account-level active `pro_analytics` subscriptions, two distinct owners, two distinct provider subscriptions, and two paid Analytics entitlements with no duplicate owner rows.
+
+The staging webhook processed six initial lifecycle events: `subscription.authenticated`, `subscription.activated`, and `subscription.charged`, two of each. All six were processed, duplicate provider-event count was zero, and sanitized Edge Function logs showed successful HTTP 200 webhook outcomes. Checkout success and signature verification did not activate Pro directly.
+
+The operator performed logout/account switching between owners. Each owner received Pro only after that owner’s verified lifecycle processing, with no cross-owner subscription or entitlement correlation. Monitoring recorded zero incidents, zero outbound alert requests, and zero alert emails; missing monitoring Vault configuration continued to fail safely as `not_configured`.
+
+This verification covers only two independent initial Test Mode purchases. It does not prove natural Live Mode renewal behavior. The following remain pending: successful renewal, duplicate or out-of-order renewal events, failed renewal and three-day grace-period recovery, retry exhaustion and halted state, grace expiry, pause/resume, immediate or end-of-cycle cancellation, completion/expiry, resubscription, automated refunds, manual-review tooling, automated payment integration tests, production monitoring activation, and in-app cancellation.
 
 CORS policy
 
@@ -345,7 +355,7 @@ Test and Live separation
 
 Test and Live use separate API credentials, Plan IDs, webhook secrets, webhook endpoints or Supabase environments where practical, and provider data. The database provider value remains razorpay in both environments; do not use razorpay_test or razorpay_live.
 
-An isolated staging/Test Mode Supabase environment remains pending.
+The isolated staging/Test Mode Supabase environment and Phase 2A two-owner initial lifecycle verification are complete. Later renewal, failure, cancellation, refund, monitoring-activation, and in-app-cancellation work remains pending as described above.
 
 Local development and operational commands
 
@@ -694,7 +704,9 @@ Verified real ₹45 Live Mode purchase
 
 Verified account-level Pro Analytics unlock
 
-Verified HTTP 200 responses for subscription.authenticated, subscription.activated, and subscription.charged
+Verified HTTP 200 responses for subscription.authenticated, subscription.activated, and subscription.charged in Live Mode
+
+Verified isolated Test Mode Phase 2A with two staging owners, two independent initial purchases, six processed lifecycle events, two account-level Pro Analytics entitlements, and no cross-owner correlation
 
 Still pending:
 
@@ -718,4 +730,6 @@ Production activation of Phase 2 scheduled monitoring
 
 Production activation of Phase 3 provider, Edge Function, Vault, and alert-delivery configuration
 
-Isolated staging/Test Mode Supabase environment
+Natural Live Mode renewal behavior
+
+Remaining isolated-staging lifecycle scenarios listed in the Phase 2A verification section

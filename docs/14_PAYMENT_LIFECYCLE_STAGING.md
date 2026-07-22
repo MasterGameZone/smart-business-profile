@@ -2,7 +2,9 @@
 
 ## Status
 
-This document defines the repository-side foundation for an isolated Razorpay Test Mode staging environment. No staging project, Vercel deployment, Razorpay Test Mode plan, webhook, user, migration, secret, or Edge Function deployment has been created or changed by this phase.
+The isolated Razorpay Test Mode staging environment is activated and remains separate from production. The staging migrations, four payment Edge Functions, Test Mode webhook, exact staging CORS origin, and two synthetic Business Owner accounts were verified through the approved staging workflow.
+
+Phase 2A multi-user initial lifecycle verification completed on 2026-07-22. It covered two independent initial Test Mode purchases, webhook processing, account-level entitlement activation, and logout/account-switch isolation. Renewal, failure, grace-period, cancellation, refund, and later lifecycle states remain outside this phase.
 
 Remote activation is permitted only after every required staging identifier and credential has been supplied through an approved secure channel. Never supply secret values in chat, source control, terminal output, application logs, or documentation.
 
@@ -73,6 +75,53 @@ Use the staging project reference explicitly for every remote command. Never rel
 10. Run the non-payment smoke verification below.
 
 Rollback is scoped to staging: remove the staging webhook, revoke or rotate staging Test Mode secrets, remove staging Vercel variables/deployment, and retire the staging project only through approved change control. Never use rollback steps against production.
+
+## Phase 2A multi-user initial lifecycle verification
+
+Verification date: 2026-07-22.
+
+Two synthetic staging owners were tested: Test Owner A and Test Owner B. Both showed Free/Locked Analytics before Checkout. Each completed one independent Razorpay Test Mode initial purchase through the staging frontend. No real customer or payment data was used.
+
+The sanitized staging result was:
+
+| Check | Result |
+| --- | --- |
+| Account-level subscription rows | 2 |
+| Distinct owners with subscriptions | 2 |
+| Duplicate owner rows | 0 |
+| Active subscriptions | 2 |
+| Paid Analytics entitlements | 2 |
+| Distinct provider subscriptions | 2 |
+| Processed webhook events | 6 |
+| Duplicate provider events | 0 |
+| Webhook event types | `subscription.authenticated`, `subscription.activated`, `subscription.charged` — 2 each |
+| Webhook processing result | All 6 processed |
+| Monitoring incidents | 0 |
+| Outbound monitoring alert requests | 0 |
+| Alert emails sent | 0 |
+
+The staging webhook returned successful HTTP 200 outcomes for the verified initial lifecycle processing. Razorpay Test Mode webhook delivery and supported subscription events were confirmed. Checkout success and Checkout signature verification did not activate Pro directly; paid access appeared only after verified provider lifecycle processing.
+
+The operator signed out and switched accounts between the two purchases. Owner B remained Free/Locked before its purchase, and the final account-level data showed one subscription, provider subscription, entitlement, and lifecycle event set per owner with no cross-owner correlation.
+
+Production resources were not accessed or modified. No provider identifiers, user identifiers, credentials, signatures, payment details, or raw webhook bodies are recorded here.
+
+Still pending for later lifecycle phases:
+
+- Successful recurring renewal and duplicate renewal delivery behavior.
+- Out-of-order lifecycle events.
+- Failed renewal, pending state, and three-day grace-period behavior.
+- Recovery after a failed renewal, retry exhaustion, and halted state.
+- Grace-period expiry.
+- Pause and resume.
+- Immediate cancellation and end-of-cycle cancellation.
+- Completion/expiry.
+- Resubscription.
+- Automated refund workflow.
+- Manual-review tooling.
+- Automated payment integration tests.
+- Production monitoring and alerts activation.
+- In-app cancellation, which remains outside the application through Razorpay or the payment mandate.
 
 ## Non-payment staging smoke verification
 
