@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
   RazorpayApiError,
+  getRazorpayApiConfig,
   razorpayApiRequest,
 } from '../../../supabase/functions/_shared/razorpay.ts'
 import { fakeRazorpayApiConfig, fakeRazorpaySecrets } from '../fixtures/razorpay.ts'
@@ -45,6 +46,26 @@ describe('Razorpay API helper behavior', () => {
       }),
     ).resolves.toBe('sub_test_example')
     expect(fetchMock).toHaveBeenCalledOnce()
+  })
+
+  it.each([
+    ['test', 'rzp_live_example'],
+    ['live', 'rzp_test_example'],
+  ] as const)('rejects an obvious %s-mode Key ID mismatch', (environment, keyId) => {
+    vi.stubGlobal('Deno', {
+      env: {
+        get: (name: string) => ({
+          RAZORPAY_ENVIRONMENT: environment,
+          RAZORPAY_KEY_ID: keyId,
+          RAZORPAY_KEY_SECRET: fakeRazorpaySecrets.apiKeySecret,
+          RAZORPAY_PLAN_ID: fakeRazorpayApiConfig.planId,
+        })[name],
+      },
+    } satisfies FakeDeno)
+
+    expect(() => getRazorpayApiConfig()).toThrow(
+      'RAZORPAY_KEY_ID does not match RAZORPAY_ENVIRONMENT.',
+    )
   })
 
   it('sanitizes parser rejection as invalid_response', async () => {

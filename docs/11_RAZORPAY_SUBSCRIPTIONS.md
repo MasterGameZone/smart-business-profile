@@ -194,6 +194,10 @@ Exact browser-origin allow-list
 
 No real secret values are documented. Provider identifiers and account-specific identifiers are also not documented.
 
+## Isolated Test Mode staging
+
+The repository-side foundation for an isolated Razorpay Test Mode environment is documented in [Payment Lifecycle Staging](14_PAYMENT_LIFECYCLE_STAGING.md). It requires a separate Supabase project, staging Vercel deployment, Test Mode credentials and plan, webhook endpoint and secret, exact staging CORS origin, and test-only users/data. No staging environment is activated until all inputs are explicitly approved through a secure channel.
+
 CORS policy
 
 Browser origins use exact normalized allow-list matching from SBP_ALLOWED_ORIGINS. Multiple origins are comma-separated. Each entry must contain only an http or https scheme, hostname, and optional port. Paths, queries, hashes, usernames, passwords, empty entries, malformed URLs, and * are rejected. When no allowed-origin configuration is supplied, Test Mode permits only http://localhost:5000. Live Mode requires an explicit non-empty allow-list for browser-origin requests and does not automatically allow localhost.
