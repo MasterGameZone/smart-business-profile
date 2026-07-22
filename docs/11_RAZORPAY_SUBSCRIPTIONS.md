@@ -236,6 +236,20 @@ npx supabase secrets set --env-file <secure-env-file>
 
 No local secret file is committed. This documentation update does not redeploy functions or change hosted secrets.
 
+## Automated payment test foundation
+
+Phase 1 automated payment testing adds only local/CI test infrastructure. It does not add checkout, webhook lifecycle, cancellation, grace-period, refund, reconciliation, or database integration behavior tests.
+
+Available commands:
+
+```bash
+npm run test
+npm run test:watch
+npm run test:coverage
+```
+
+The test foundation uses Vitest with the `jsdom` environment, V8 coverage, React Testing Library, and fake Razorpay fixtures only. Tests must not call Razorpay, Supabase, or any external network service, and must not use real customer, payment, provider, webhook, or credential data.
+
 ## Safe logging and documentation policy
 
 Never log or document:
