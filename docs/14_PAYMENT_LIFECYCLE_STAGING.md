@@ -4,7 +4,7 @@
 
 The isolated Razorpay Test Mode staging environment is activated and remains separate from production. The staging migrations, four payment Edge Functions, Test Mode webhook, exact staging CORS origin, and two synthetic Business Owner accounts were verified through the approved staging workflow.
 
-Phase 2A multi-user initial lifecycle verification completed on 2026-07-22. It covered two independent initial Test Mode purchases, webhook processing, account-level entitlement activation, and logout/account-switch isolation. Renewal, failure, grace-period, cancellation, refund, and later lifecycle states remain outside this phase.
+Phase 2A multi-user initial lifecycle verification completed on 2026-07-22. It covered two independent initial Test Mode purchases, webhook processing, account-level entitlement activation, and logout/account-switch isolation. Phase 3 then verified one successful subsequent Test Mode charge for Test Owner A and entitlement continuity. Failure, grace-period, cancellation, refund, and later lifecycle states remain outside these phases.
 
 Remote activation is permitted only after every required staging identifier and credential has been supplied through an approved secure channel. Never supply secret values in chat, source control, terminal output, application logs, or documentation.
 
@@ -108,7 +108,8 @@ Production resources were not accessed or modified. No provider identifiers, use
 
 Still pending for later lifecycle phases:
 
-- Successful recurring renewal and duplicate renewal delivery behavior.
+- Natural Live Mode renewal behavior.
+- Forced/provider-replayed duplicate renewal delivery behavior.
 - Out-of-order lifecycle events.
 - Failed renewal, pending state, and three-day grace-period behavior.
 - Recovery after a failed renewal, retry exhaustion, and halted state.
@@ -122,6 +123,36 @@ Still pending for later lifecycle phases:
 - Automated payment integration tests.
 - Production monitoring and alerts activation.
 - In-app cancellation, which remains outside the application through Razorpay or the payment mandate.
+
+## Phase 3 successful renewal and entitlement continuity
+
+Verification date: 2026-07-22.
+
+One successful Razorpay Test Mode subsequent charge was completed manually for Test Owner A using the existing staging subscription. No second subscription or payment was created, and no charge was triggered for Test Owner B.
+
+The sanitized staging result was:
+
+| Check | Result |
+| --- | --- |
+| New webhook event | `subscription.charged` processed successfully |
+| Webhook rows | 6 before, 7 after; one new processed event |
+| Subscription rows | 2 before and after |
+| Owner A subscription row | Existing authoritative row retained |
+| Owner A paid period | Advanced exactly once from the prior monthly end to the next monthly end |
+| Owner A entitlement | Pro Analytics remained active in the verified backend state |
+| Owner B subscription and period | Unchanged |
+| Owner B entitlement | Pro Analytics remained active |
+| Creation leases | 0 active after processing |
+| Grace/cancellation/terminal state | None created for the renewal |
+| Monitoring incidents | 0 |
+| Outbound alert deliveries | 0 |
+| Alert emails sent | 0 |
+
+The existing account-level subscription row remained authoritative. The processed charged-event count increased by exactly one, no duplicate owner or provider-correlation group appeared, and no payment/card fields were present in the sanitized webhook payloads. The staging Test Mode configuration was operator-confirmed to have the production webhook disabled and only the staging webhook enabled. Production resources were not accessed or modified.
+
+No natural duplicate delivery was observed, and no duplicate or out-of-order event was forced. The authenticated reconciliation consistency check was not executed because no safe operator path was available without another provider-state operation; it remains a separate verification item.
+
+The following remain pending: forced/provider-replayed duplicate delivery, deliberate out-of-order delivery, failed renewal, pending state, three-day grace-period behavior, recovery after failed renewal, retry exhaustion, halted state, grace expiry, pause/resume, cancellation, completion/expiry, resubscription, refunds, and natural Live Mode renewal behavior. This Test Mode manual charge does not prove natural Live Mode recurring debit behavior.
 
 ## Non-payment staging smoke verification
 

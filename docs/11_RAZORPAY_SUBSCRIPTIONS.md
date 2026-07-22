@@ -206,7 +206,24 @@ The staging webhook processed six initial lifecycle events: `subscription.authen
 
 The operator performed logout/account switching between owners. Each owner received Pro only after that owner’s verified lifecycle processing, with no cross-owner subscription or entitlement correlation. Monitoring recorded zero incidents, zero outbound alert requests, and zero alert emails; missing monitoring Vault configuration continued to fail safely as `not_configured`.
 
-This verification covers only two independent initial Test Mode purchases. It does not prove natural Live Mode renewal behavior. The following remain pending: successful renewal, duplicate or out-of-order renewal events, failed renewal and three-day grace-period recovery, retry exhaustion and halted state, grace expiry, pause/resume, immediate or end-of-cycle cancellation, completion/expiry, resubscription, automated refunds, manual-review tooling, automated payment integration tests, production monitoring activation, and in-app cancellation.
+This verification covered only two independent initial Test Mode purchases. A successful Test Mode renewal was verified separately in the Phase 3 staging section below. Natural Live Mode renewal behavior, duplicate or out-of-order renewal events, failed renewal and three-day grace-period recovery, retry exhaustion and halted state, grace expiry, pause/resume, immediate or end-of-cycle cancellation, completion/expiry, resubscription, automated refunds, manual-review tooling, automated payment integration tests, production monitoring activation, and in-app cancellation remain pending.
+
+## Phase 3 successful renewal and entitlement continuity
+
+On 2026-07-22, one successful subsequent Razorpay Test Mode charge was completed manually for Test Owner A's existing staging subscription. No second subscription was created and Owner B was not renewed.
+
+The sanitized staging verification confirmed:
+
+- The latest `subscription.charged` webhook event was processed successfully.
+- The existing Owner A subscription row remained authoritative; total subscription rows stayed at 2.
+- The processed charged-event count increased from 2 to 3 globally, exactly one new event.
+- Owner A's paid period advanced exactly once to the next monthly period and `hasProAccess` remained true.
+- Owner B's subscription row, paid period, charged-event count, and entitlement remained unchanged.
+- Both subscriptions remained active and both account-level Pro Analytics entitlements remained true.
+- No incomplete subscription, creation lease, grace period, cancellation, terminal timestamp, provider-owner collision, or payment/card field was created.
+- Monitoring remained healthy: 0 incidents, 0 outbound alert deliveries, and 0 alert emails.
+
+The operator confirmed that Razorpay Test Mode had the production webhook disabled and only the staging webhook enabled. No production resource was accessed or modified. No natural duplicate delivery was observed, and no duplicate or out-of-order webhook was forced. Reconciliation consistency was not executed because no safe operator path was available without another provider-state operation. A Test Mode manual charge does not prove natural Live Mode recurring debit behavior.
 
 CORS policy
 
@@ -355,7 +372,7 @@ Test and Live separation
 
 Test and Live use separate API credentials, Plan IDs, webhook secrets, webhook endpoints or Supabase environments where practical, and provider data. The database provider value remains razorpay in both environments; do not use razorpay_test or razorpay_live.
 
-The isolated staging/Test Mode Supabase environment and Phase 2A two-owner initial lifecycle verification are complete. Later renewal, failure, cancellation, refund, monitoring-activation, and in-app-cancellation work remains pending as described above.
+The isolated staging/Test Mode Supabase environment, Phase 2A two-owner initial lifecycle verification, and Phase 3 successful-renewal continuity verification are complete. Later failure, cancellation, refund, monitoring-activation, duplicate/out-of-order, natural Live Mode renewal, and in-app-cancellation work remains pending as described above.
 
 Local development and operational commands
 
@@ -708,6 +725,8 @@ Verified HTTP 200 responses for subscription.authenticated, subscription.activat
 
 Verified isolated Test Mode Phase 2A with two staging owners, two independent initial purchases, six processed lifecycle events, two account-level Pro Analytics entitlements, and no cross-owner correlation
 
+Verified isolated Test Mode Phase 3 with one successful subsequent charge for Test Owner A, one processed renewal event, exactly one paid-period advancement, continuous account-level Pro Analytics access, and unchanged Owner B state
+
 Still pending:
 
 In-app cancellation
@@ -731,5 +750,9 @@ Production activation of Phase 2 scheduled monitoring
 Production activation of Phase 3 provider, Edge Function, Vault, and alert-delivery configuration
 
 Natural Live Mode renewal behavior
+
+Forced/provider-replayed duplicate renewal webhook verification
+
+Deliberate out-of-order webhook verification
 
 Remaining isolated-staging lifecycle scenarios listed in the Phase 2A verification section
