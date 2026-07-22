@@ -55,6 +55,20 @@ export type PaymentMonitoringAlertRunSummary = {
   observed_at: string;
 };
 
+export type PaymentMonitoringAlertOperationalLog = {
+  event: "payment_monitoring_alert_delivery_completed" | "payment_monitoring_alert_delivery_failed";
+  invocation_id: string;
+  status: "completed" | "failed";
+  enqueued: number;
+  claimed: number;
+  sent: number;
+  retry_scheduled: number;
+  failed: number;
+  suppressed: number;
+  diagnostic_code?: string;
+  duration_ms?: number;
+};
+
 export type PaymentMonitoringAlertRunDependencies = {
   enqueue: () => Promise<{ enqueued: number; suppressed: number }>;
   claim: (maxBatchSize: number) => Promise<PaymentMonitoringAlertDelivery[]>;
@@ -72,6 +86,8 @@ const PAYMENT_MONITORING_CRON_HEADER = "x-payment-monitoring-cron-secret";
 const MAX_DELIVERY_KEY_LENGTH = 255;
 const PROVIDER_REQUEST_TIMEOUT_MS = 10_000;
 const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const SAFE_OPERATIONAL_CODE_PATTERN = /^[a-z][a-z0-9_]{0,63}$/;
 
 function readServerEnvironment(name: string): string | undefined {
   return Deno.env.get(name);
@@ -127,6 +143,39 @@ export function isPaymentMonitoringCronRequestAuthorized(
 
 export function isPaymentMonitoringAlertPostRequest(request: Request): boolean {
   return request.method.toUpperCase() === "POST";
+}
+
+export function parsePaymentMonitoringInvocationId(value: unknown): string | null {
+  return typeof value === "string" && UUID_PATTERN.test(value) ? value.toLowerCase() : null;
+}
+
+export function buildPaymentMonitoringAlertOperationalLog(
+  event: PaymentMonitoringAlertOperationalLog["event"],
+  invocationId: string,
+  fields: Omit<PaymentMonitoringAlertOperationalLog, "event" | "invocation_id">,
+): PaymentMonitoringAlertOperationalLog {
+  const log: PaymentMonitoringAlertOperationalLog = {
+    event,
+    invocation_id: invocationId,
+    status: fields.status,
+    enqueued: fields.enqueued,
+    claimed: fields.claimed,
+    sent: fields.sent,
+    retry_scheduled: fields.retry_scheduled,
+    failed: fields.failed,
+    suppressed: fields.suppressed,
+  };
+
+  if (fields.diagnostic_code !== undefined) {
+    log.diagnostic_code = SAFE_OPERATIONAL_CODE_PATTERN.test(fields.diagnostic_code)
+      ? fields.diagnostic_code
+      : "unknown";
+  }
+  if (fields.duration_ms !== undefined) {
+    log.duration_ms = fields.duration_ms;
+  }
+
+  return log;
 }
 
 export function sanitizeOperationalField(value: string | number | null | undefined, fallback = "not provided"): string {

@@ -2,11 +2,13 @@ import { describe, expect, it, vi } from 'vitest'
 
 import {
   buildPaymentMonitoringAlertEmail,
+  buildPaymentMonitoringAlertOperationalLog,
   classifyPaymentMonitoringProviderStatus,
   escapePaymentMonitoringHtml,
   getPaymentMonitoringEmailConfig,
   isPaymentMonitoringAlertPostRequest,
   isPaymentMonitoringCronRequestAuthorized,
+  parsePaymentMonitoringInvocationId,
   runPaymentMonitoringAlertDelivery,
   sendPaymentMonitoringAlertEmail,
   type PaymentMonitoringAlertDelivery,
@@ -40,6 +42,44 @@ describe('payment monitoring alert helpers', () => {
   it('accepts POST and rejects unsupported methods', () => {
     expect(isPaymentMonitoringAlertPostRequest(new Request('https://alerts.example.test', { method: 'POST' }))).toBe(true)
     expect(isPaymentMonitoringAlertPostRequest(new Request('https://alerts.example.test', { method: 'GET' }))).toBe(false)
+  })
+
+  it('accepts only fake UUID-shaped invocation identifiers and emits sanitized logs', () => {
+    const invocationId = '30000000-0000-4000-8000-000000000001'
+
+    expect(parsePaymentMonitoringInvocationId(invocationId)).toBe(invocationId)
+    expect(parsePaymentMonitoringInvocationId('not-an-invocation')).toBeNull()
+    expect(parsePaymentMonitoringInvocationId({ invocation_id: invocationId })).toBeNull()
+
+    const log = buildPaymentMonitoringAlertOperationalLog(
+      'payment_monitoring_alert_delivery_completed',
+      invocationId,
+      {
+        status: 'completed',
+        enqueued: 1,
+        claimed: 1,
+        sent: 1,
+        retry_scheduled: 0,
+        failed: 0,
+        suppressed: 0,
+        duration_ms: 42,
+      },
+    )
+
+    expect(log).toEqual({
+      event: 'payment_monitoring_alert_delivery_completed',
+      invocation_id: invocationId,
+      status: 'completed',
+      enqueued: 1,
+      claimed: 1,
+      sent: 1,
+      retry_scheduled: 0,
+      failed: 0,
+      suppressed: 0,
+      duration_ms: 42,
+    })
+    expect(JSON.stringify(log)).not.toContain('owner@example.test')
+    expect(JSON.stringify(log)).not.toContain('resend')
   })
 
   it('authorizes only the dedicated header using constant-time comparison', () => {

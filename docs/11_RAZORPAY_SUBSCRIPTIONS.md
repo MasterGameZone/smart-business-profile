@@ -391,7 +391,7 @@ Each email contains plain text and minimal escaped HTML with only severity, inci
 
 ### Vault wrapper and scheduled invocation
 
-`public.invoke_payment_monitoring_alert_delivery()` reads only the two named Vault secrets, returns `{"status":"not_configured"}` without making an HTTP request when either is absent, and otherwise calls `net.http_post` with a minimal `{}` body and the private Cron-secret header. It never returns decrypted secret values or incident data. The `pg_net` request is asynchronous and begins after transaction commit; the request ID and `net._http_response` are the operational inspection references.
+`public.invoke_payment_monitoring_alert_delivery()` reads only the two named Vault secrets, returns `{"status":"not_configured"}` without making an HTTP request when either is absent, and otherwise calls `net.http_post` with only a generated invocation UUID in the JSON body and the private Cron-secret header. Phase 4 persists both that invocation UUID and the asynchronous `pg_net` request ID in the restricted invocation audit table. It never returns decrypted secret values, the Cron secret, the function URL, or incident data. The request remains asynchronous and begins after transaction commit; the request ID, invocation UUID, and safe `net._http_response` metadata are the operational inspection references.
 
 Phase 3 adds exactly one active Cron job, without changing Phase 2:
 
@@ -426,7 +426,7 @@ For retries, inspect `status`, `attempt_count`, `available_at`, and `last_error_
 
 ### Local testing, production runbook, and rollback
 
-Local verification uses the migration reset and `supabase/tests/database/payment_monitoring_alert_delivery.test.sql`, which runs 70 pgTAP assertions without a live provider. Vitest tests import pure helpers and mock `fetch`; they cover POST-secret authorization helpers, missing configuration, HTML escaping, provider classification, timeout behavior, idempotency headers, batch limits, sanitized summaries, and continuing after a failed delivery. No test sends email, calls Resend, calls a remote Supabase project, or uses a production secret. A configured `pg_net` invocation is not committed during local tests; the missing-Vault path is verified as `not_configured`.
+Local verification uses the migration reset and the Phase 3/4 pgTAP files, including `supabase/tests/database/payment_monitoring_operations.test.sql`, which runs 46 focused operational-visibility tests without a live provider. Vitest tests import pure helpers and mock `fetch`; they cover POST-secret authorization helpers, missing configuration, UUID invocation validation, safe structured logs, HTML escaping, provider classification, timeout behavior, idempotency headers, batch limits, sanitized summaries, and continuing after a failed delivery. No test sends email, calls Resend, calls a remote Supabase project, or uses a production secret. Configured local correlation uses fake Vault values and a loopback request target only; it does not call Razorpay, a production Supabase project, or an external provider.
 The Deno/Supabase Edge Runtime request path is not started inside the Vite/Vitest process; full authenticated server-to-server invocation remains part of the controlled production activation runbook and is not a Phase 3 local integration test.
 
 Production activation is a controlled runbook and is not executed by this implementation:
@@ -436,12 +436,33 @@ Production activation is a controlled runbook and is not executed by this implem
 3. Set the four Edge Function secrets and deploy the Edge Function.
 4. Store the function URL and matching Cron secret in Vault.
 5. Apply the Phase 3 migration and verify both named Cron jobs.
-6. Invoke the Edge Function with a controlled sanitized test incident, verify one administrator email and a `sent` row, then verify a repeated invocation does not duplicate it.
+6. Invoke the Edge Function with a controlled sanitized test incident, verify one administrator email and a `sent` row, then verify the invocation UUID, `pg_net` request ID, and a repeated invocation do not duplicate it.
 7. Inspect `net._http_response` and Cron history, then remove or resolve the controlled test incident according to the approved runbook.
 
 Secret rotation changes the Edge Function Cron secret and the matching Vault secret together, confirms the scheduled wrapper returns `requested`, and then inspects recent `net._http_response` and Cron history. Never put values into a migration or commit them. The non-destructive rollback is to unschedule only `payment-monitoring-alert-delivery`, confirm it is absent, drop the Phase 3 wrapper, disable or remove the Edge Function separately, and revoke or rotate only the dedicated Phase 3 secrets. Preserve incidents, delivery history, Phase 1 detection/resolution, Phase 2 cycle/detection job, payment lifecycle tables, webhook and reconciliation history, and unrelated Cron jobs. Do not drop `pg_cron`, `pg_net`, or Vault.
 
 Phase 3 does not provide automatic incident resolution, subscription recovery, webhook replay, reconciliation recovery, an admin interface, a monitoring dashboard, acknowledgment or assignment workflow, Slack, SMS, push notifications, customer notifications, business-owner notifications, or frontend access. Cancellation remains outside the application through Razorpay or the payment mandate, and in-app cancellation remains pending.
+
+## Phase 4 operational visibility
+
+Phase 4 adds operational visibility only. It does not change payment behavior, subscription status mapping, entitlement calculation, webhook processing, reconciliation, cancellation, refund behavior, or the Phase 1–3 schedules. The implementation is local and requires a separately approved migration/Edge Function activation; no production secrets were added and nothing was deployed by this phase.
+
+The new migration `20260722100357_add_payment_monitoring_operational_visibility.sql` provides:
+
+- `public.payment_monitoring_incident_operations`, a restricted `security_invoker` view with one row per incident and deterministic latest-delivery information.
+- `public.payment_monitoring_alert_delivery_operations`, a restricted `security_invoker` view with sanitized delivery status, lease, retry, and terminal-state fields.
+- `public.get_payment_monitoring_operational_health(p_observed_at timestamptz default now())`, a restricted read-only JSON health RPC with separate monitoring-system and payment-incident health classifications.
+- `public.payment_monitoring_alert_invocations`, a private RLS-protected audit table correlating the invocation UUID, `pg_net` request ID, sanitized status, timestamps, HTTP status, counters, and safe diagnostic code.
+
+The health RPC treats the detector as stale after 15 minutes, the configured alert scheduler as stale after 20 minutes, and pending/retry work as overdue after 15 minutes. Missing/incorrect jobs, stale detector runs, repeated recent failures, stale claims, terminal failed deliveries for open incidents, and reliable `pg_net` failures are critical. Overdue pending/retry work, isolated failures followed by success, and temporary retry backlogs are degraded. Missing alert Vault configuration is `not_configured` when structural monitoring conditions remain sound. Payment-incident health is derived only from open incident severity and does not make monitoring-system health unhealthy by itself.
+
+The wrapper now creates an invocation audit row, passes only its UUID to the Edge Function, stores the `pg_net` request ID, and records `not_configured` safely when Vault is incomplete. The Edge Function authenticates the Cron secret before trusting the UUID, marks the invocation running, and records sanitized success/failure counts. Audit-write failures do not prevent claimed-delivery finalization. Structured logs contain only invocation/incident/delivery UUIDs, severity, attempt, safe code, counters, and duration; no secrets, bodies, provider responses, customer data, or payment data are logged.
+
+All Phase 4 tables, views, and RPCs are inaccessible to `PUBLIC`, `anon`, and `authenticated`; operational reads and internal execution are limited to the database owner and `service_role`. The repository has no approved administrator authorization model or admin route, so no UI is added. Operators use the [Payment Monitoring Operations Runbook](12_PAYMENT_MONITORING_OPERATIONS.md), Supabase Dashboard/SQL, Cron history, safe `pg_net` metadata, and Edge logs. An administrator interface remains deferred until secure authorization is approved.
+
+Phase 4 local verification includes 46 pgTAP assertions for permissions, security-invoker views, one-row/latest-delivery behavior, sanitized fields, missing/configured request correlation, success/failure audit transitions, invalid IDs, health classifications, stale claims, and unchanged Cron identity. Vitest extends the existing helper tests for invocation UUID validation, auth-before-update design coverage, safe structured logs, idempotency, retry, and continuation behavior. The existing GitHub Actions workflows already run `npm ci`, frontend tests, coverage, production build, local migrations, and the full pgTAP directory on pushes and pull requests to `main`; no workflow change was necessary.
+
+Phase 4 does not provide an administrator UI, automated renewal lifecycle testing, failed-renewal/grace-period verification, all provider lifecycle-state verification, automated refunds, manual-review tooling, automated payment integration tests, production monitoring/alerts activation, an isolated staging/Test Mode Supabase environment, final production origin allow-list verification, or in-app cancellation. Cancellation remains outside the application through Razorpay or the payment mandate.
 
 ## Safe logging and documentation policy
 
@@ -487,6 +508,7 @@ Completed and deployed/configured in Live Mode:
 - Phase 1 payment monitoring database foundation and local pgTAP coverage
 - Phase 2 scheduled payment-monitoring detection migration and local pgTAP coverage
 - Phase 3 sanitized administrator alert-delivery outbox, restricted RPCs, Edge Function, Cron wrapper, and local tests
+- Phase 4 restricted operational views, health RPC, invocation correlation, runbook, and local tests (ready for controlled activation; not deployed by this phase)
 - Migration-history repair and alignment
 - Shared Edge Function infrastructure
 - Create subscription Edge Function

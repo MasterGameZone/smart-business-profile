@@ -1,7 +1,9 @@
 import {
   getPaymentMonitoringEmailConfig,
+  buildPaymentMonitoringAlertOperationalLog,
   isPaymentMonitoringAlertPostRequest,
   isPaymentMonitoringCronRequestAuthorized,
+  parsePaymentMonitoringInvocationId,
   runPaymentMonitoringAlertDelivery,
   sendPaymentMonitoringAlertEmail,
   type PaymentMonitoringAlertDelivery,
@@ -106,7 +108,7 @@ function configurationErrorResponse(request: Request): Response {
   });
 }
 
-async function deliverAlerts(request: Request, config: PaymentMonitoringEmailConfig): Promise<Response> {
+async function deliverAlerts(request: Request, invocationId: string): Promise<Response> {
   const contextResult = await createWebhookContext(request);
   if (!contextResult.ok) {
     return jsonError(contextResult.code, contextResult.message, {
@@ -117,58 +119,147 @@ async function deliverAlerts(request: Request, config: PaymentMonitoringEmailCon
 
   const observedAt = new Date().toISOString();
   const supabaseAdmin = contextResult.context.supabaseAdmin;
-  const summary = await runPaymentMonitoringAlertDelivery(
+  const { data: invocationStarted, error: invocationStartError } = await supabaseAdmin.rpc(
+    "start_payment_monitoring_alert_invocation",
     {
-      enqueue: async () => {
-        const { data, error } = await supabaseAdmin.rpc("enqueue_payment_monitoring_alert_deliveries", {
-          p_observed_at: observedAt,
-        });
-        if (error !== null) {
-          throw new Error("enqueue_rpc_failed");
-        }
-        return parseEnqueueSummary(data);
-      },
-      claim: async (maxBatchSize) => {
-        const { data, error } = await supabaseAdmin.rpc("claim_payment_monitoring_alert_deliveries", {
-          p_max_batch_size: maxBatchSize,
-          p_observed_at: observedAt,
-          p_lease_seconds: 300,
-        });
-        if (error !== null) {
-          throw new Error("claim_rpc_failed");
-        }
-        return parseClaimedDeliveries(data);
-      },
-      send: (delivery) => sendPaymentMonitoringAlertEmail(delivery, config),
-      markSent: async (delivery, providerMessageId) => {
-        const { error } = await supabaseAdmin.rpc("mark_payment_monitoring_alert_delivery_sent", {
-          p_delivery_id: delivery.delivery_id,
-          p_claim_token: delivery.claim_token,
-          p_observed_at: observedAt,
-          p_provider_message_id: providerMessageId,
-        });
-        if (error !== null) {
-          throw new Error("sent_rpc_failed");
-        }
-      },
-      markFailed: async (delivery, errorCode: PaymentMonitoringAlertErrorCode, retryable) => {
-        const { error } = await supabaseAdmin.rpc("mark_payment_monitoring_alert_delivery_failed", {
-          p_delivery_id: delivery.delivery_id,
-          p_claim_token: delivery.claim_token,
-          p_observed_at: observedAt,
-          p_error_code: errorCode,
-          p_retryable: retryable,
-        });
-        if (error !== null) {
-          throw new Error("failed_rpc_failed");
-        }
-      },
+      p_invocation_id: invocationId,
+      p_started_at: observedAt,
     },
-    observedAt,
-    MAX_BATCH_SIZE,
   );
+  if (invocationStartError !== null || invocationStarted !== true) {
+    return jsonError("invalid_invocation", "Alert invocation is not valid.", {
+      request,
+      status: 409,
+    });
+  }
 
-  return jsonSuccess(summary, { request });
+  let config: PaymentMonitoringEmailConfig;
+  try {
+    config = getPaymentMonitoringEmailConfig();
+  } catch {
+    await supabaseAdmin.rpc("mark_payment_monitoring_alert_invocation_failed", {
+      p_invocation_id: invocationId,
+      p_completed_at: new Date().toISOString(),
+      p_diagnostic_code: "edge_configuration_missing",
+      p_http_status: 500,
+    });
+    return configurationErrorResponse(request);
+  }
+
+  const startedAt = Date.now();
+  try {
+    const summary = await runPaymentMonitoringAlertDelivery(
+      {
+        enqueue: async () => {
+          const { data, error } = await supabaseAdmin.rpc("enqueue_payment_monitoring_alert_deliveries", {
+            p_observed_at: observedAt,
+          });
+          if (error !== null) {
+            throw new Error("enqueue_rpc_failed");
+          }
+          return parseEnqueueSummary(data);
+        },
+        claim: async (maxBatchSize) => {
+          const { data, error } = await supabaseAdmin.rpc("claim_payment_monitoring_alert_deliveries", {
+            p_max_batch_size: maxBatchSize,
+            p_observed_at: observedAt,
+            p_lease_seconds: 300,
+          });
+          if (error !== null) {
+            throw new Error("claim_rpc_failed");
+          }
+          return parseClaimedDeliveries(data);
+        },
+        send: (delivery) => sendPaymentMonitoringAlertEmail(delivery, config),
+        markSent: async (delivery, providerMessageId) => {
+          const { error } = await supabaseAdmin.rpc("mark_payment_monitoring_alert_delivery_sent", {
+            p_delivery_id: delivery.delivery_id,
+            p_claim_token: delivery.claim_token,
+            p_observed_at: observedAt,
+            p_provider_message_id: providerMessageId,
+          });
+          if (error !== null) {
+            throw new Error("sent_rpc_failed");
+          }
+        },
+        markFailed: async (delivery, errorCode: PaymentMonitoringAlertErrorCode, retryable) => {
+          const { error } = await supabaseAdmin.rpc("mark_payment_monitoring_alert_delivery_failed", {
+            p_delivery_id: delivery.delivery_id,
+            p_claim_token: delivery.claim_token,
+            p_observed_at: observedAt,
+            p_error_code: errorCode,
+            p_retryable: retryable,
+          });
+          if (error !== null) {
+            throw new Error("failed_rpc_failed");
+          }
+        },
+      },
+      observedAt,
+      MAX_BATCH_SIZE,
+    );
+
+    try {
+      await supabaseAdmin.rpc("mark_payment_monitoring_alert_invocation_succeeded", {
+        p_invocation_id: invocationId,
+        p_completed_at: new Date().toISOString(),
+        p_http_status: 200,
+        p_enqueued_count: summary.enqueued,
+        p_claimed_count: summary.claimed,
+        p_sent_count: summary.sent,
+        p_retry_scheduled_count: summary.retry_scheduled,
+        p_failed_count: summary.failed,
+        p_suppressed_count: summary.suppressed,
+      });
+    } catch {
+      // Delivery finalization is authoritative; an audit-write failure must not
+      // turn a completed delivery run into a retryable provider invocation.
+    }
+
+    console.info(JSON.stringify(buildPaymentMonitoringAlertOperationalLog(
+      "payment_monitoring_alert_delivery_completed",
+      invocationId,
+      {
+        status: "completed",
+        ...summary,
+        duration_ms: Date.now() - startedAt,
+      },
+    )));
+
+    return jsonSuccess({ ...summary, invocation_id: invocationId }, { request });
+  } catch {
+    try {
+      await supabaseAdmin.rpc("mark_payment_monitoring_alert_invocation_failed", {
+        p_invocation_id: invocationId,
+        p_completed_at: new Date().toISOString(),
+        p_diagnostic_code: "alert_delivery_failed",
+        p_http_status: 500,
+      });
+    } catch {
+      // The operational audit is best effort and never replaces delivery state.
+    }
+
+    console.info(JSON.stringify(buildPaymentMonitoringAlertOperationalLog(
+      "payment_monitoring_alert_delivery_failed",
+      invocationId,
+      {
+        status: "failed",
+        enqueued: 0,
+        claimed: 0,
+        sent: 0,
+        retry_scheduled: 0,
+        failed: 0,
+        suppressed: 0,
+        diagnostic_code: "alert_delivery_failed",
+        duration_ms: Date.now() - startedAt,
+      },
+    )));
+
+    return jsonError("internal_error", "Alert delivery could not be completed.", {
+      request,
+      status: 500,
+    });
+  }
 }
 
 Deno.serve(async (request) => {
@@ -185,15 +276,22 @@ Deno.serve(async (request) => {
     return jsonError("unauthorized", "Request authorization failed.", { request, status: 401 });
   }
 
-  let config: PaymentMonitoringEmailConfig;
+  let requestBody: unknown;
   try {
-    config = getPaymentMonitoringEmailConfig();
+    requestBody = await request.json();
   } catch {
-    return configurationErrorResponse(request);
+    return jsonError("invalid_invocation", "Alert invocation is not valid.", { request, status: 400 });
+  }
+
+  const invocationId = parsePaymentMonitoringInvocationId(
+    isRecord(requestBody) ? requestBody.invocation_id : null,
+  );
+  if (invocationId === null) {
+    return jsonError("invalid_invocation", "Alert invocation is not valid.", { request, status: 400 });
   }
 
   try {
-    return await deliverAlerts(request, config);
+    return await deliverAlerts(request, invocationId);
   } catch {
     return jsonError("internal_error", "Alert delivery could not be completed.", {
       request,
